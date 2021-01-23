@@ -281,7 +281,8 @@ namespace MVCore.GMDL
             }
 
             int activeFrameCount = (FrameEnd == 0 ? animMeta.FrameCount : Math.Min(FrameEnd, animMeta.FrameCount)) - (FrameStart != 0 ? FrameStart : 0);
-            float activeAnimDuration = activeFrameCount * 1000.0f / Common.RenderState.renderSettings.animFPS; // In ms TOTAL
+            //Assuming a fixed frequency of 60 fps for the animations
+            float activeAnimDuration = activeFrameCount * 1000.0f / 60.0f; // In ms TOTAL
             float activeAnimInterval = activeAnimDuration / (activeFrameCount - 1); // Per frame time
 
             if (animationTime > activeAnimDuration)
@@ -364,10 +365,9 @@ namespace MVCore.GMDL
             Vector3 next_s = animMeta.anim_scales[node][nextFrameIndex];
 
             //Interpolate
-            q = Quaternion.Slerp(next_q, prev_q, LERP_coeff);
-            p = next_p * LERP_coeff + prev_p * (1.0f - LERP_coeff);
-            s = next_s * LERP_coeff + prev_s * (1.0f - LERP_coeff);
-
+            q = Quaternion.Slerp(prev_q, next_q, LERP_coeff);
+            p = Vector3.Lerp(prev_p, next_p, LERP_coeff);
+            s = Vector3.Lerp(prev_s, next_s, LERP_coeff);
             
         }
 

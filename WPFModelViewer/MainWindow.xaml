@@ -531,8 +531,8 @@
                             <CheckBox Width="20" HorizontalAlignment="Right" IsChecked="{Binding UseBLOOM}"></CheckBox>
                         </DockPanel>
                         <DockPanel Grid.Row="9" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
-                            <TextBlock HorizontalAlignment="Left">Animation FPS</TextBlock>
-                            <TextBox Width="50" TextAlignment="Right" HorizontalAlignment="Right" Text="{Binding AnimFPS, Mode=TwoWay}" KeyUp="TextBox_KeyUp" AcceptsReturn="False" AcceptsTab="False"/>
+                            <TextBlock HorizontalAlignment="Left">FPS</TextBlock>
+                            <TextBox Width="50" TextAlignment="Right" HorizontalAlignment="Right" Text="{Binding FPS, Mode=TwoWay}" KeyUp="TextBox_KeyUp" AcceptsReturn="False" AcceptsTab="False"/>
                         </DockPanel>
                         <DockPanel Grid.Row="10" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
                             <TextBlock HorizontalAlignment="Left">HDR Exposure</TextBlock>

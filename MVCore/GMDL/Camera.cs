@@ -165,7 +165,7 @@ namespace MVCore.GMDL
             float actual_speed = (float) Math.Pow(Speed, SpeedPower);
             
 
-            float step = 0.001f;
+            float step = 0.00001f;
             Vector3 offset = new Vector3();
             offset += step * actual_speed * target.PosImpulse.X * Right;
             offset += step * actual_speed * target.PosImpulse.Y * Front;
@@ -265,7 +265,7 @@ namespace MVCore.GMDL
 
         public bool frustum_occlude(Vector3 AABBMIN, Vector3 AABBMAX, Matrix4 transform)
         {
-            if (!Common.RenderState.renderSettings.UseFrustumCulling)
+            if (!Common.RenderState.settings.rendering.UseFrustumCulling)
                 return true;
 
             float radius = 0.5f * (AABBMIN - AABBMAX).Length;

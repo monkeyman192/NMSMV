@@ -438,7 +438,7 @@ namespace WPFModelViewer
 
             //Bind Settings
             RenderViewOptionsControl.Content = RenderState.renderViewSettings;
-            RenderOptionsControl.Content = RenderState.renderSettings;
+            RenderOptionsControl.Content = RenderState.settings.rendering;
 
             //Add event handlers to GUI elements
             sliderzNear.ValueChanged += Sliders_OnValueChanged;
@@ -790,13 +790,13 @@ namespace WPFModelViewer
             switch (name)
             {
                 case "TestOpt1":
-                    RenderState.renderSettings.testOpt1 = (float) s.Value;
+                    RenderState.settings.rendering.testOpt1 = (float) s.Value;
                     break;
                 case "TestOpt2":
-                    RenderState.renderSettings.testOpt2 = (float)s.Value;
+                    RenderState.settings.rendering.testOpt2 = (float)s.Value;
                     break;
                 case "TestOpt3":
-                    RenderState.renderSettings.testOpt3 = (float)s.Value;
+                    RenderState.settings.rendering.testOpt3 = (float)s.Value;
                     break;
             }
         }

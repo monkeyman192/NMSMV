@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Engine\Engine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Engine\MTimer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\RequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\Systems\ActionSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\Systems\AnimationSystem.cs" />

@@ -27,7 +27,7 @@ namespace WPFModelViewer
 
             //Load settings from environment
             SettingsContainer.Content = RenderState.settings;
-            RenderSettingsContainer.Content = RenderState.renderSettings;
+            RenderSettingsContainer.Content = RenderState.settings.rendering;
         }
 
         public static void loadSettingsStatic()
@@ -36,8 +36,7 @@ namespace WPFModelViewer
             try
             {
                 string jsonstring = File.ReadAllText("settings.json");
-                JSONSettings lSettings = JsonConvert.DeserializeObject<JSONSettings>(jsonstring);
-                saveSettingsToEnv(lSettings);
+                RenderState.settings = JsonConvert.DeserializeObject<Settings>(jsonstring);
             }
             catch (FileNotFoundException)
             {
@@ -86,49 +85,17 @@ namespace WPFModelViewer
                 //Save path settings to the environment
                 RenderState.settings.GameDir = gamedir;
                 RenderState.settings.UnpackDir = unpackdir;
-
+                
                 saveSettingsStatic(); //Save Settings right away
                 
             }
 
         }
 
-        public static void saveSettingsToEnv(JSONSettings settings)
-        {
-            //IF BINDINGS ARE CORRECT I DON"THAVE TO DO SHIT
-
-            //Save values to the environment
-            RenderState.settings.GameDir = settings.GameDir;
-            RenderState.settings.UnpackDir = settings.UnpackDir;
-            RenderState.settings.ProcGenWinNum = settings.ProcGenWinNum;
-            RenderState.settings.ForceProcGen = settings.ForceProcGen;
-            RenderState.renderSettings.UseVSYNC = (settings.UseVSYNC > 0);
-            RenderState.renderSettings._HDRExposure = settings.HDRExposure;
-            RenderState.renderSettings.animFPS = settings.AnimFPS;
-        }
-
-        public static void loadSettingsFromEnv(JSONSettings settings)
-        {
-            //IF BINDINGS ARE CORRECT I DON"THAVE TO DO SHIT
-
-            //Load values from the environment
-            settings.GameDir = RenderState.settings.GameDir;
-            settings.UnpackDir = RenderState.settings.UnpackDir;
-            settings.ProcGenWinNum = RenderState.settings.ProcGenWinNum;
-            settings.ForceProcGen = RenderState.settings.ForceProcGen;
-            settings.UseVSYNC = RenderState.renderSettings.UseVSYNC ? 1 : 0;
-            settings.HDRExposure = RenderState.renderSettings._HDRExposure;
-            settings.AnimFPS = RenderState.renderSettings.animFPS;
-        }
-
         public static void saveSettingsStatic()
         {
-            //Create JSONSettings
-            JSONSettings settings = new JSONSettings();
-            loadSettingsFromEnv(settings);
-
-            //Serialize object
-            string jsonstring = JsonConvert.SerializeObject(settings);
+            //Test Serialize object
+            string jsonstring = JsonConvert.SerializeObject(RenderState.settings);
             File.WriteAllText("settings.json", jsonstring);
         }
 
@@ -136,7 +103,7 @@ namespace WPFModelViewer
         {
             saveSettingsStatic();
             Util.showInfo(this, "Settings Saved", "Info");
-            this.Focus(); //Bring focus back to the settings form
+            Focus(); //Bring focus back to the settings form
         }
 
         private void Dirpath_OnGotFocus(object sender, RoutedEventArgs e)
@@ -163,17 +130,5 @@ namespace WPFModelViewer
         }
     }
 
-    //Settings JSON Structure
-
-    public class JSONSettings
-    {
-        public string GameDir;
-        public string UnpackDir;
-        public int ProcGenWinNum;
-        public int ForceProcGen;
-        public int UseVSYNC;
-        public int AnimFPS;
-        public float HDRExposure;
-    }
-   
+    
 }

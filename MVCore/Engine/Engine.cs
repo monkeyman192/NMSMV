@@ -24,6 +24,7 @@ namespace MVCore.Engine
     {
         ACTIVE=0x0,
         REQUEST_HANDLING,
+        UNINITIALIZED,
         PAUSED,
         EXIT
     }
@@ -95,6 +96,9 @@ namespace MVCore.Engine
             actionSys.SetEngine(this);
             animationSys.SetEngine(this);
 
+            //Set Start Status
+            rt_State = EngineRenderingState.UNINITIALIZED;
+
         }
 
         public void init()
@@ -114,6 +118,7 @@ namespace MVCore.Engine
             //Initialize the render manager
             renderMgr.init(resMgr);
             renderMgr.setupGBuffer(Control.ClientSize.Width, Control.ClientSize.Height);
+            rt_State = EngineRenderingState.ACTIVE;
         }
 
         public void handleRequests()
@@ -253,8 +258,8 @@ namespace MVCore.Engine
 
 
             //Stop animation if on
-            bool animToggleStatus = RenderState.renderSettings.ToggleAnimations;
-            RenderState.renderSettings.ToggleAnimations = false;
+            bool animToggleStatus = RenderState.settings.rendering.ToggleAnimations;
+            RenderState.settings.rendering.ToggleAnimations = false;
 
             //Setup new object
             Scene scene = new Scene();
@@ -374,7 +379,7 @@ namespace MVCore.Engine
             RenderState.activeGizmo = new TranslationGizmo();
 
             //Restart anim worker if it was active
-            RenderState.renderSettings.ToggleAnimations = animToggleStatus;
+            RenderState.settings.rendering.ToggleAnimations = animToggleStatus;
 
         }
 
@@ -425,8 +430,8 @@ namespace MVCore.Engine
             RenderStats.ClearStats();
 
             //Stop animation if on
-            bool animToggleStatus = RenderState.renderSettings.ToggleAnimations;
-            RenderState.renderSettings.ToggleAnimations = false;
+            bool animToggleStatus = RenderState.settings.rendering.ToggleAnimations;
+            RenderState.settings.rendering.ToggleAnimations = false;
             
             //Setup new object
             Model root = GEOMMBIN.LoadObjects(filename);
@@ -454,7 +459,7 @@ namespace MVCore.Engine
             RenderState.activeGizmo = new TranslationGizmo();
 
             //Restart anim worker if it was active
-            RenderState.renderSettings.ToggleAnimations = animToggleStatus;
+            RenderState.settings.rendering.ToggleAnimations = animToggleStatus;
         
         }
 

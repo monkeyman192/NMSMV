@@ -83,7 +83,8 @@ namespace MVCore
         private FBO gizmo_fbo;
         private FBO blur_fbo;
         private int blur_fbo_scale = 2;
-        private float gfTime = 0.0f;
+        private double gfTime = 0.0f;
+        private double frameTime = 0.0f;
         private Dictionary<string, int> UBOs = new Dictionary<string, int>();
         private Dictionary<string, int> SSBOs = new Dictionary<string, int>();
 
@@ -230,8 +231,7 @@ namespace MVCore
 
         public void progressTime(double dt)
         {
-            gfTime += (float) dt / 500;
-            gfTime = gfTime % 1000.0f;
+            gfTime += dt;
         }
 
         public void cleanup()
@@ -500,8 +500,8 @@ namespace MVCore
         private void prepareCommonPerFrameUBO()
         {
             //Prepare Struct
-            cpfu.diffuseFlag = RenderState.renderSettings._useTextures;
-            cpfu.use_lighting = RenderState.renderSettings._useLighting;
+            cpfu.diffuseFlag = RenderState.settings.rendering._useTextures;
+            cpfu.use_lighting = RenderState.settings.rendering._useLighting;
             cpfu.frameDim.X = gbuf.size[0];
             cpfu.frameDim.Y = gbuf.size[1];
             cpfu.mvp = RenderState.activeCam.viewMat;
@@ -510,12 +510,12 @@ namespace MVCore
             cpfu.lookMatInv = RenderState.activeCam.lookMatInv;
             cpfu.projMatInv = RenderState.activeCam.projMatInv;
             cpfu.cameraPositionExposure.Xyz = RenderState.activeCam.Position;
-            cpfu.cameraPositionExposure.W = RenderState.renderSettings._HDRExposure;
+            cpfu.cameraPositionExposure.W = RenderState.settings.rendering._HDRExposure;
             cpfu.cameraDirection = RenderState.activeCam.Front;
             cpfu.cameraNearPlane = RenderState.activeCam.zNear;
             cpfu.cameraFarPlane = RenderState.activeCam.zFar;
             cpfu.light_number = Math.Min(32, resMgr.GLlights.Count);
-            cpfu.gfTime = gfTime;
+            cpfu.gfTime = (float) gfTime;
             cpfu.MSAA_SAMPLES = gbuf.msaa_samples;
 
             //Upload light information
@@ -861,7 +861,7 @@ namespace MVCore
                 }
             }
 
-            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.renderSettings.RENDERMODE);
+            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
 
             if (RenderState.renderViewSettings.RenderLocators)
             {
@@ -890,7 +890,7 @@ namespace MVCore
         private void renderStaticMeshes(List<GLSLShaderConfig> shaderList)
         {
             //Set polygon mode
-            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.renderSettings.RENDERMODE);
+            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
             
             foreach (GLSLShaderConfig shader in shaderList)
             {
@@ -910,7 +910,7 @@ namespace MVCore
                     {
                         GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
                         m.render(shader, RENDERPASS.BHULL);
-                        GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.renderSettings.RENDERMODE);
+                        GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
                     }
                         
                 }
@@ -1031,7 +1031,7 @@ namespace MVCore
             GL.BlendFunc(1, BlendingFactorSrc.Zero, BlendingFactorDest.OneMinusSrcAlpha);
 
             //Set polygon mode
-            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.renderSettings.RENDERMODE);
+            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
 
             foreach (GLSLShaderConfig shader in resMgr.activeGLForwardTransparentShaders)
             {
@@ -1141,7 +1141,7 @@ namespace MVCore
             //sortTransparent(); //NOT NEEDED ANYMORE
             
             //LOD filtering
-            if (RenderState.renderSettings.LODFiltering)
+            if (RenderState.settings.rendering.LODFiltering)
             {
                 //LOD_filtering(staticMeshQueue); TODO: FIX
                 //LOD_filtering(transparentMeshQueue); TODO: FIX
@@ -1390,12 +1390,12 @@ namespace MVCore
         private void post_process()
         {
             //Actuall Post Process effects in AA space without tone mapping
-            if (RenderState.renderSettings.UseBLOOM)
+            if (RenderState.settings.rendering.UseBLOOM)
                 bloom(); //BLOOM
 
             tone_mapping(); //FINAL TONE MAPPING, INCLUDES GAMMA CORRECTION
 
-            if (RenderState.renderSettings.UseFXAA)
+            if (RenderState.settings.rendering.UseFXAA)
                 fxaa(); //FXAA (INCLUDING TONE/UNTONE)
         }
 

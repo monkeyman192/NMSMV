@@ -799,7 +799,7 @@ namespace MVCore.GMDL
                 Console.WriteLine("test");
 #endif
 
-            if (!active || !renderable || (parentScene.activeLOD != LodLevel) && RenderState.renderSettings.LODFiltering)
+            if (!active || !renderable || (parentScene.activeLOD != LodLevel) && RenderState.settings.rendering.LODFiltering)
             {
                 base.updateMeshInfo(true);
                 RenderStats.occludedNum += 1;
@@ -807,7 +807,7 @@ namespace MVCore.GMDL
             }
 
             bool fr_status = Common.RenderState.activeCam.frustum_occlude(meshVao, worldMat * RenderState.rotMat);
-            bool occluded_status = !fr_status && Common.RenderState.renderSettings.UseFrustumCulling;
+            bool occluded_status = !fr_status && Common.RenderState.settings.rendering.UseFrustumCulling;
 
             //Recalculations && Data uploads
             if (!occluded_status)
@@ -840,7 +840,6 @@ namespace MVCore.GMDL
                     //Fallback
                     //main_Vao.setDefaultSkinMatrices();
                 }
-
             }
             else
             {

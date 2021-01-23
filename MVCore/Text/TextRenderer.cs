@@ -51,7 +51,7 @@ namespace MVCore.Text
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.Enable(EnableCap.CullFace);
 
-            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.renderSettings.RENDERMODE);
+            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
             GL.Enable(EnableCap.DepthTest);
             GL.Disable(EnableCap.Blend);
 

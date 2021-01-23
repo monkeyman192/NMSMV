@@ -11,6 +11,7 @@ using WPFModelViewer;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Diagnostics.Contracts;
+using Newtonsoft.Json;
 
 namespace MVCore.Common
 {
@@ -40,7 +41,8 @@ namespace MVCore.Common
         public static Vector3 rotAngles = new Vector3(0.0f);
 
         //RenderSettings
-        public static RenderSettings renderSettings = new RenderSettings();
+        //USE SETTINGS CLASS
+        //public static RenderSettings renderSettings = new RenderSettings();
 
         //renderViewSettings
         public static RenderViewSettings renderViewSettings = new RenderViewSettings();
@@ -106,19 +108,24 @@ namespace MVCore.Common
 
     public class RenderSettings: INotifyPropertyChanged
     {
-        public int animFPS = 60;
+        public int _fps = 60;
         public bool _useVSYNC = false;
         public float _HDRExposure = 0.005f;
         //Set Full rendermode by default
+        [JsonIgnore]
         public PolygonMode RENDERMODE = PolygonMode.Fill;
+        [JsonIgnore]
         public System.Drawing.Color clearColor = System.Drawing.Color.FromArgb(255, 33, 33, 33);
         public float _useTextures = 1.0f;
         public float _useLighting = 1.0f;
 
         //Test Settings
 #if (DEBUG)
+        [JsonIgnore]
         public float testOpt1 = 0.0f;
+        [JsonIgnore]
         public float testOpt2 = 0.0f;
+        [JsonIgnore]
         public float testOpt3 = 0.0f;
 #endif
 
@@ -141,14 +148,14 @@ namespace MVCore.Common
             }
         }
 
-        
-        public string AnimFPS
+        [JsonIgnore]
+        public string FPS
         {
-            get => animFPS.ToString();
+            get => _fps.ToString();
             set
             {
-                int.TryParse(value, out animFPS);
-                NotifyPropertyChanged("AnimFPS");
+                int.TryParse(value, out _fps);
+                NotifyPropertyChanged("FPS");
             }
         }
 
@@ -163,6 +170,7 @@ namespace MVCore.Common
         }
 
         //Add properties
+        [JsonIgnore]
         public bool UseTextures
         {
             get
@@ -180,6 +188,7 @@ namespace MVCore.Common
             }
         }
 
+        [JsonIgnore]
         public bool UseLighting
         {
             get
@@ -197,10 +206,13 @@ namespace MVCore.Common
             }
         }
 
+        [JsonIgnore]
         public bool UseFrustumCulling { get; set; } = true;
 
+        [JsonIgnore]
         public bool LODFiltering { get; set; } = true;
 
+        [JsonIgnore]
         public bool ToggleWireframe
         {
             get => (RENDERMODE == PolygonMode.Line);
@@ -213,6 +225,7 @@ namespace MVCore.Common
             }
         }
 
+        [JsonIgnore]
         public bool ToggleAnimations { get; set; } = true;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -228,11 +241,15 @@ namespace MVCore.Common
 
     public class Settings : INotifyPropertyChanged
     {
+        //Public Settings
+        public RenderSettings rendering = new RenderSettings();
+
+        //Private Settings
         private int forceProcGen;
         private string gamedir;
         private string unpackdir;
         private int _procGenWinNum;
-
+        
         public string GameDir
         {
             get
@@ -247,6 +264,7 @@ namespace MVCore.Common
             }
         }
 
+        
         public string UnpackDir
         {
 

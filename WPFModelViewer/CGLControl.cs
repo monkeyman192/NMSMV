@@ -31,7 +31,7 @@ namespace Model_Viewer
 
         //Control Identifier
         private int index;
-        
+
         //Animation Stuff
         private bool animationStatus = false;
 
@@ -52,11 +52,9 @@ namespace Model_Viewer
         public Engine engine;
 
         //Rendering Thread
-        private bool rt_flag;
-        private bool rt_exit;
+        private GraphicsContext gfx_context = null;
         private Thread rendering_thread;
-        private bool rendering_thread_initialized = false;
-
+        
         //Main Work Thread
         private Thread work_thread;
 
@@ -72,11 +70,13 @@ namespace Model_Viewer
         public System.Timers.Timer resizeTimer;
 
         //Private fps Counter
+        private MVCore.Engine.MStopwatch timer;
         private int frames = 0;
         private double dt = 0.0f;
-        private DateTime oldtime;
-        private DateTime prevtime;
-
+        private double rdt = 0.0f;
+        private double prevFrametime;
+        private double oldMeasureFrametime;
+        
         //Gamepad Setup
         private bool disposed;
         public Microsoft.Win32.SafeHandles.SafeFileHandle handle = new Microsoft.Win32.SafeHandles.SafeFileHandle(IntPtr.Zero, true);
@@ -85,7 +85,7 @@ namespace Model_Viewer
         {
             this.Load += new System.EventHandler(genericLoad);
             //this.Paint += new System.Windows.Forms.PaintEventHandler(this.genericPaint);
-            this.Resize += new System.EventHandler(OnResize); 
+            this.Resize += new System.EventHandler(OnResize);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(genericMouseDown);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(genericMouseMove);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(genericMouseUp);
@@ -97,25 +97,28 @@ namespace Model_Viewer
         }
 
         //Default Constructor
-        public CGLControl(): base(new GraphicsMode(32, 24, 0, 8), 4, 6, GraphicsContextFlags.ForwardCompatible)
+        public CGLControl() : base(new GraphicsMode(32, 24, 0, 8), 4, 6, GraphicsContextFlags.ForwardCompatible)
         {
             registerFunctions();
-            
+
             //Default Setup
             RenderState.rotAngles.Y = 0;
-            
+
             //Resize Timer
             resizeTimer = new System.Timers.Timer();
             resizeTimer.Elapsed += new ElapsedEventHandler(ResizeControl);
             resizeTimer.Interval = 10;
 
+            //Timer
+            timer = new MStopwatch();
+
             //Set properties
             DoubleBuffered = true;
-            VSync = RenderState.renderSettings.UseVSYNC;
+            VSync = RenderState.settings.rendering.UseVSYNC;
 
             //Generate Engine instance
             engine = new Engine();
-            
+
             //Initialize Rendering Thread
             rendering_thread = new Thread(Render);
             rendering_thread.IsBackground = true;
@@ -132,43 +135,65 @@ namespace Model_Viewer
         {
             Context.MakeCurrent(null); //Release GL Context from the GLControl
             resizeTimer.Start();
+            timer.Start(); //Start High Precision Timer
+
+            //Rendering Thread;
             rendering_thread.Start(); //A new context is created in the rendering thread
             //work_thread.Start();
         }
 
         private void Render()
         {
-            
-            //Setup new Context
-            Console.WriteLine("Intializing Rendering Thread");
-#if (DEBUG)
-            GraphicsContext gfx_context = new GraphicsContext(new GraphicsMode(32, 24, 0, 8), WindowInfo, 4, 3,
-                GraphicsContextFlags.Debug);
-#else
-            GraphicsContext gfx_context = new GraphicsContext(new GraphicsMode(32, 24, 0, 8), WindowInfo, 4 , 6,
-            GraphicsContextFlags.ForwardCompatible);
-#endif
-            gfx_context.MakeCurrent(WindowInfo);
-            MakeCurrent();
-
-            engine.SetControl(this); //Set engine Window to the GLControl
-            engine.init();
-            rendering_thread_initialized = true;
-
-            while (engine.rt_State != EngineRenderingState.EXIT)
+            while (gfx_context == null)
             {
-                engine.handleRequests();
-                
-                if (engine.rt_State == EngineRenderingState.ACTIVE)
+                try
                 {
-                    frameUpdate();
-                    engine.renderMgr.render(); //Render Everything
-                    SwapBuffers();
-                }
+#if (DEBUG)
+                    gfx_context = new GraphicsContext(new GraphicsMode(32, 24, 0, 8), WindowInfo, 4, 3,
+                        GraphicsContextFlags.Debug);
+#else
+                    gfx_context = new GraphicsContext(new GraphicsMode(32, 24, 0, 8), WindowInfo, 4 , 6,
+                        GraphicsContextFlags.ForwardCompatible);
+#endif
+
+                    gfx_context.MakeCurrent(WindowInfo);
+                    MakeCurrent();
                 
-                Thread.Sleep(1); //TODO: Replace that in the future with some smarter logic to maintain constant framerates
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+                Console.WriteLine("Context Initialized");
             }
-            
+
+
+            while(engine.rt_State != EngineRenderingState.EXIT)
+            {
+                if (engine.rt_State == EngineRenderingState.UNINITIALIZED)
+                {
+                    //Setup new Context
+                    engine.SetControl(this); //Set engine Window to the GLControl
+                    engine.init();
+
+                }
+                else
+                {
+                    engine.handleRequests();
+
+                    if (engine.rt_State == EngineRenderingState.ACTIVE)
+                    {
+                        frameUpdate();
+                        engine.renderMgr.render(); //Render Everything
+                        SwapBuffers();
+
+                    }
+                    
+                }
+
+            }
+
         }
 
         public void setActiveCam(int index)
@@ -712,7 +737,7 @@ namespace Model_Viewer
 
         private void frameUpdate()
         {
-            VSync = RenderState.renderSettings.UseVSYNC; //Update Vsync 
+            VSync = RenderState.settings.rendering.UseVSYNC; //Update Vsync 
 
             //Console.WriteLine(RenderState.renderSettings.RENDERMODE);
 
@@ -767,13 +792,13 @@ namespace Model_Viewer
             //Console.WriteLine("Dt {0}", dt);
             if (RenderState.renderViewSettings.EmulateActions)
             {
-                engine.actionSys.update((float)dt);
+                engine.actionSys.update((float) (1000 * rdt)); //time is expected in ms
             }
 
             //Progress animations
-            if (RenderState.renderSettings.ToggleAnimations)
+            if (RenderState.settings.rendering.ToggleAnimations)
             {
-                engine.animationSys.update((float) dt);
+                engine.animationSys.update((float) (1000 * rdt)); //time is expected in ms
             }
                 
 
@@ -812,24 +837,38 @@ namespace Model_Viewer
         private void fps()
         {
             //Get FPS
-            DateTime now = DateTime.UtcNow;
-            TimeSpan time = now - oldtime;
-            dt = (now - prevtime).TotalMilliseconds;
+            double now = timer.ElapsedSeconds;
+            rdt = now - prevFrametime; //Real Rendering delta time
 
-            if (time.TotalMilliseconds > 1000)
+            //Sleep to match the desired framerate
+            double target_ft = 1.0 / RenderState.settings.rendering._fps;
+            dt = rdt;
+
+            //Console.WriteLine("Should sleep for {0} Seconds", target_ft - tt);
+            
+            while (dt < target_ft)
             {
-                //Console.WriteLine("{0} {1} {2}", frames, RenderStats.fpsCount, time.TotalMilliseconds);
+                double a = target_ft + 1.0;
+                now = timer.ElapsedSeconds;
+                dt = now - prevFrametime;
+                //Console.WriteLine("Sleeping for {0}", ct2 - ct1);
+            }
+
+            double time = now - oldMeasureFrametime;
+            prevFrametime = now;
+
+            //Console.WriteLine("FrameTime {0} ms", dt * 1000.0);
+
+            if (time > 1.0)
+            {
                 //Reset
                 frames = 0;
-                oldtime = now;
+                oldMeasureFrametime = now;
             }
             else
-            {
                 frames += 1;
-                prevtime = now;
-            }
-
-            RenderStats.fpsCount = 1000.0f * frames / (float)time.TotalMilliseconds;
+            
+            RenderStats.fpsCount = 1.0f / (float) dt;
         }
 
 
