@@ -1,11 +1,10 @@
 //Light struct
-struct Light //locations:5
+struct Light //locations:6
 {
-    vec4 position; //w is renderable
+    vec4 position; //w is empty
     vec4 color; //w is intensity
-    vec4 direction; //w is fov
-    float falloff;
-    int type;
+    vec4 direction; //w is empty
+    vec4 parameters; //x: falloff, y: fov, z: type, w: empty
 };
 
 struct MeshInstance
@@ -66,8 +65,7 @@ struct CustomPerMaterialUniforms  //locations:73
     sampler2DArray gDiffuse2Map;
     sampler2DArray gMasksMap;
     sampler2DArray gNormalMap;
-    samplerBuffer skinMatsTex;
-
+    
     vec4 gMaterialColourVec4;
     vec4 gMaterialParamsVec4;
     vec4 gMaterialSFXVec4;

@@ -10,13 +10,15 @@ namespace MVCore.GMDL
 {
     public class Locator : Model
     {
+        public GLInstancedMeshVao meshVao;
+
         public Locator()
         {
             //Set type
             type = TYPES.LOCATOR;
             //Set BBOX
-            AABBMIN = new Vector3(-0.1f, -0.1f, -0.1f);
-            AABBMAX = new Vector3(0.1f, 0.1f, 0.1f);
+            AABBMIN = new MVector3(-0.1f, -0.1f, -0.1f);
+            AABBMAX = new MVector3(0.1f, 0.1f, 0.1f);
 
             //Assemble geometry in the constructor
             meshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshVaos["default_cross"];
@@ -74,7 +76,6 @@ namespace MVCore.GMDL
             }
 
             base.updateMeshInfo();
-            updated = false; //All done
         }
 
 

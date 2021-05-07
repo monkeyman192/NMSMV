@@ -20,7 +20,7 @@ in vec3 color;
 
 #include "/common.glsl"
 
-out vec4 gl_FragColor;
+out vec4 fragColor;
 
 vec3
 Recolour(
@@ -138,6 +138,6 @@ vec4 MixTextures(){
 
 void main()
 {
-	gl_FragColor = MixTextures();
+	fragColor = MixTextures();
 	//gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
 }

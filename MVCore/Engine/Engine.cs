@@ -101,6 +101,11 @@ namespace MVCore.Engine
 
         }
 
+        private void Log(string msg, LogVerbosityLevel lvl)
+        {
+            CallBacks.Log("* ENGINE : " + msg, lvl);
+        }
+
         public void init()
         {
             //Start Timers
@@ -119,36 +124,36 @@ namespace MVCore.Engine
             renderMgr.init(resMgr);
             renderMgr.setupGBuffer(Control.ClientSize.Width, Control.ClientSize.Height);
             rt_State = EngineRenderingState.ACTIVE;
+
+            Log("Initialized", LogVerbosityLevel.INFO);
         }
 
         public void handleRequests()
         {
+            Log(string.Format(" {0} Open Requests ", reqHandler.getOpenRequestNum()), LogVerbosityLevel.HIDEBUG);
             if (reqHandler.hasOpenRequests())
             {
                 ThreadRequest req = reqHandler.Fetch();
+                Log("Handling Request " + req.type, LogVerbosityLevel.HIDEBUG);
                 lock (req)
                 {
                     switch (req.type)
                     {
                         case THREAD_REQUEST_TYPE.QUERY_GLCONTROL_STATUS_REQUEST:
                             //At this point the renderer is up and running
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.INIT_RESOURCE_MANAGER:
                             resMgr.Init();
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.NEW_SCENE_REQUEST:
                             inputPollTimer.Stop();
                             rt_addRootScene((string)req.arguments[0]);
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             inputPollTimer.Start();
                             break;
 #if DEBUG
                         case THREAD_REQUEST_TYPE.NEW_TEST_SCENE_REQUEST:
                             inputPollTimer.Stop();
                             rt_addTestScene((int)req.arguments[0]);
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             inputPollTimer.Start();
                             break;
 #endif
@@ -166,55 +171,48 @@ namespace MVCore.Engine
                                 target.Children.Add(source);
                             }));
 
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.UPDATE_SCENE_REQUEST:
                             Scene req_scn = (Scene)req.arguments[0];
                             req_scn.update();
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_COMPILE_ALL_SHADERS_REQUEST:
                             resMgr.compileMainShaders();
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.MOUSEPOSITION_INFO_REQUEST:
                             Vector4[] t = (Vector4[])req.arguments[2];
                             renderMgr.getMousePosInfo((int)req.arguments[0], (int)req.arguments[1],
                                 ref t);
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_RESIZE_REQUEST:
                             rt_ResizeViewport((int)req.arguments[0], (int)req.arguments[1]);
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_MODIFY_SHADER_REQUEST:
                             GLShaderHelper.modifyShader((GLSLShaderConfig)req.arguments[0],
                                          (GLSLShaderText)req.arguments[1]);
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GIZMO_PICKING_REQUEST:
                             //TODO: Send the nessessary arguments to the render manager and mark the active gizmoparts
                             Gizmo g = (Gizmo)req.arguments[0];
                             renderMgr.gizmoPick(ref g, (Vector2)req.arguments[1]);
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.TERMINATE_REQUEST:
                             rt_State = EngineRenderingState.EXIT;
                             inputPollTimer.Stop();
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_PAUSE_RENDER_REQUEST:
                             rt_State = EngineRenderingState.PAUSED;
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_RESUME_RENDER_REQUEST:
                             rt_State = EngineRenderingState.ACTIVE;
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.NULL:
                             break;
                     }
                 }
+
+                req.status = THREAD_REQUEST_STATUS.FINISHED;
+                Log("Request Handled", LogVerbosityLevel.HIDEBUG);
             }
         }
 
@@ -266,45 +264,61 @@ namespace MVCore.Engine
             scene.name = "DEFAULT SCENE";
 
 
-            //ADd Lights
-            Light l = new Light();
-            l.Name = "Light 1";
-            l.localPosition = new Vector3(0.2f, 0.2f, -2.0f);
-            l.Color = new MVector4(1.0f, 1.0f, 1.0f, 1.0f);
-            l.Intensity = 100.0f;
-            l.falloff = ATTENUATION_TYPE.QUADRATIC;
+            //Add Lights
+            Light l = new Light()
+            {
+                Name = "Light 1",
+                Color = new MVector3(1.0f, 1.0f, 1.0f),
+                IsRenderable = true,
+                Intensity = 100.0f,
+                Attenuation = "QUADRATIC"
+            };
+            l._localPosition.vec = new Vector3(0.2f, 0.2f, -2.0f);
+
             Common.RenderState.activeResMgr.GLlights.Add(l);
             scene.children.Add(l);
 
-            Light l1 = new Light();
-            l1.Name = "Light 2";
-            l1.localPosition = new Vector3(0.2f, -0.2f, -2.0f);
-            l1.Color = new MVector4(1.0f, 1.0f, 1.0f, 1.0f);
-            l1.Intensity = 100.0f;
-            l1.falloff = ATTENUATION_TYPE.QUADRATIC;
+            Light l1 = new Light()
+            {
+                Name = "Light 2",
+                Color = new MVector3(1.0f, 1.0f, 1.0f),
+                IsRenderable = true,
+                Intensity = 100.0f,
+                Attenuation = "QUADRATIC"
+            };
+
+            l._localPosition.vec = new Vector3(0.2f, -0.2f, -2.0f);
             Common.RenderState.activeResMgr.GLlights.Add(l1);
             scene.children.Add(l1);
 
-            Light l2 = new Light();
-            l2.Name = "Light 3";
-            l2.localPosition = new Vector3(-0.2f, 0.2f, -2.0f);
-            l2.Color = new MVector4(1.0f, 1.0f, 1.0f, 1.0f);
+            Light l2 = new Light()
+            {
+                Name = "Light 3",
+                Color = new MVector3(1.0f, 1.0f, 1.0f),
+                IsRenderable = true,
+                Intensity = 100.0f,
+                Attenuation = "QUADRATIC"
+            };
+            
+            l2._localPosition.vec = new Vector3(-0.2f, 0.2f, -2.0f);
             Common.RenderState.activeResMgr.GLlights.Add(l2);
-            l2.Intensity = 100.0f;
-            l2.falloff = ATTENUATION_TYPE.QUADRATIC;
             scene.children.Add(l2);
 
-            Light l3 = new Light();
-            l3.Name = "Light 4";
-            l3.localPosition = new Vector3(-0.2f, -0.2f, -2.0f);
-            l3.Color = new MVector4(1.0f, 1.0f, 1.0f, 1.0f);
-            Common.RenderState.activeResMgr.GLlights.Add(l3);
-            l3.Intensity = 100.0f;
-            l3.falloff = ATTENUATION_TYPE.QUADRATIC;
+            Light l3 = new Light()
+            {
+                Name = "Light 4",
+                Color = new MVector3(1.0f, 1.0f, 1.0f),
+                IsRenderable = true,
+                Intensity = 100.0f,
+                Attenuation = "QUADRATIC"
+            };
+
+            l3._localPosition.vec = new Vector3(-0.2f, -0.2f, -2.0f);
+            Common.RenderState.activeResMgr.GLlights.Add(l2);
             scene.children.Add(l3);
 
             //Generate a Sphere and center it in the scene
-            Model sphere = new Mesh();
+            Mesh sphere = new Mesh();
             sphere.Name = "Test Sphere";
             sphere.parent = scene;
             sphere.setParentScene(scene);
@@ -319,7 +333,7 @@ namespace MVCore.Engine
             sphere_metadata.vertrend_graphics = (bands + 1) * (bands + 1) - 1;
             sphere_metadata.indicesLength = DrawElementsType.UnsignedInt;
 
-            sphere.meshVao = new GLMeshVao(sphere_metadata);
+            sphere.meshVao = new GLInstancedMeshVao(sphere_metadata);
             sphere.meshVao.type = TYPES.MESH;
             sphere.meshVao.vao = (new GMDL.Primitives.Sphere(new Vector3(), 2.0f, 40)).getVAO();
 

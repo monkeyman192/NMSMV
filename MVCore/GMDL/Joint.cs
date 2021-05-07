@@ -24,13 +24,14 @@ namespace MVCore.GMDL
         public List<Vector3> PositionQueue = new List<Vector3>();
         public List<Vector3> ScaleQueue = new List<Vector3>();
         public List<Quaternion> RotationQueue = new List<Quaternion>();
-        
+
+        public GLInstancedMeshVao meshVao;
 
         //Props
         public Matrix4 localPoseMatrix
         {
             get { return _localPoseMatrix; }
-            set { _localPoseMatrix = value; updated = true; }
+            set { _localPoseMatrix = value; }
         }
 
         public Joint()
@@ -45,7 +46,7 @@ namespace MVCore.GMDL
             this.invBMat = input.invBMat;
             this.color = input.color;
 
-            meshVao = new GLMeshVao();
+            meshVao = new GLInstancedMeshVao();
             instanceId = GLMeshBufferManager.addInstance(ref meshVao, this);
             GLMeshBufferManager.setInstanceWorldMat(meshVao, instanceId, Matrix4.Identity);
             meshVao.type = TYPES.JOINT;
@@ -96,7 +97,7 @@ namespace MVCore.GMDL
             j.invBMat = this.invBMat;
             j.color = this.color;
 
-            j.meshVao = new GLMeshVao();
+            j.meshVao = new GLInstancedMeshVao();
             j.instanceId = GLMeshBufferManager.addInstance(ref j.meshVao, j);
             GLMeshBufferManager.setInstanceWorldMat(j.meshVao, j.instanceId, Matrix4.Identity);
             j.meshVao.type = TYPES.JOINT;

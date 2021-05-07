@@ -417,6 +417,167 @@ namespace MVCore.Utils
 
         }
 
+        public static Vector3 quaternionToEuler(OpenTK.Quaternion q)
+        {
+            Matrix4 rotMat = Matrix4.CreateFromQuaternion(q);
+            rotMat.Transpose();
+            Vector3 test;
+            test = matrixToEuler(rotMat, "YZX");
+            return test;
+        }
+
+        public static Vector3 matrixToEuler(Matrix4 rotMat, string order)
+        {
+            Vector3 euler = new Vector3();
+
+            //rotMat.Transpose();
+            double m11 = rotMat[0, 0];
+            double m12 = rotMat[0, 1];
+            double m13 = rotMat[0, 2];
+            double m21 = rotMat[1, 0];
+            double m22 = rotMat[1, 1];
+            double m23 = rotMat[1, 2];
+            double m31 = rotMat[2, 0];
+            double m32 = rotMat[2, 1];
+            double m33 = rotMat[2, 2];
+
+            if (order == "XYZ")
+            {
+
+                euler.Y = (float)Math.Asin(MathUtils.clamp(m13, -1, 1));
+                if (Math.Abs(m13) < 0.99999)
+                {
+
+                    euler.X = (float)Math.Atan2(-m23, m33);
+                    euler.Z = (float)Math.Atan2(-m12, m11);
+                }
+                else
+                {
+
+                    euler.X = (float)Math.Atan2(m32, m22);
+                    euler.Z = 0;
+                }
+
+            }
+            else if (order == "YXZ")
+            {
+
+                euler.X = (float)Math.Asin(-MathUtils.clamp(m23, -1, 1));
+
+                if (Math.Abs(m23) < 0.99999)
+                {
+
+                    euler.Y = (float)Math.Atan2(m13, m33);
+                    euler.Z = (float)Math.Atan2(m21, m22);
+                }
+                else
+                {
+
+                    euler.Y = (float)Math.Atan2(-m31, m11);
+                    euler.Z = 0;
+                }
+
+            }
+            else if (order == "ZXY")
+            {
+
+                euler.X = (float)Math.Asin(MathUtils.clamp(m32, -1, 1));
+
+                if (Math.Abs(m32) < 0.99999)
+                {
+
+                    euler.Y = (float)Math.Atan2(-m31, m33);
+                    euler.Z = (float)Math.Atan2(-m12, m22);
+
+                }
+                else
+                {
+
+                    euler.Y = 0;
+                    euler.Z = (float)Math.Atan2(m21, m11);
+
+                }
+
+            }
+            else if (order == "ZYX")
+            {
+
+                euler.Y = (float)Math.Asin(-MathUtils.clamp(m31, -1, 1));
+
+                if (Math.Abs(m31) < 0.99999)
+                {
+
+                    euler.X = (float)Math.Atan2(m32, m33);
+                    euler.Z = (float)Math.Atan2(m21, m11);
+
+                }
+                else
+                {
+
+                    euler.X = 0;
+                    euler.Z = (float)Math.Atan2(-m12, m22);
+
+                }
+
+            }
+            else if (order == "YZX")
+            {
+
+                euler.Z = (float)Math.Asin(MathUtils.clamp(m21, -1, 1));
+
+                if (Math.Abs(m21) < 0.99999)
+                {
+
+                    euler.X = (float)Math.Atan2(-m23, m22);
+                    euler.Y = (float)Math.Atan2(-m31, m11);
+
+                }
+                else
+                {
+
+                    euler.X = 0;
+                    euler.Y = (float)Math.Atan2(m13, m33);
+
+                }
+
+            }
+            else if (order == "XZY")
+            {
+
+                euler.Z = (float)Math.Asin(-MathUtils.clamp(m12, -1, 1));
+
+                if (Math.Abs(m12) < 0.99999)
+                {
+
+                    euler.X = (float)Math.Atan2(m32, m22);
+                    euler.Y = (float)Math.Atan2(m13, m11);
+
+                }
+                else
+                {
+
+                    euler.X = (float)Math.Atan2(-m23, m33);
+                    euler.Y = 0;
+
+                }
+
+            }
+            else
+            {
+                Console.WriteLine("Unsupported Order");
+            }
+
+
+            //Convert to degrees
+            euler.X = MathUtils.degrees(euler.X);
+            euler.Y = MathUtils.degrees(euler.Y);
+            euler.Z = MathUtils.degrees(euler.Z);
+
+            //Console.WriteLine("Converted Angles {0} {1} {2}", euler.X, euler.Y, euler.Z);
+
+            return euler;
+        }
+
 
     }
 }

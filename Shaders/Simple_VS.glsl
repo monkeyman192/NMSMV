@@ -19,7 +19,7 @@ layout(location=6) in vec4 blendWeights;
 
 
 uniform CustomPerMaterialUniforms mpCustomPerMaterial;
-
+uniform samplerBuffer skinMatsTex;
 
 //Uniform Blocks
 layout (std140, binding=0) uniform _COMMON_PER_FRAME
@@ -45,15 +45,16 @@ out vec4 uv;
 out mat3 TBN;
 flat out int instanceId;
 
+
 /*
 ** Returns matrix4x4 from texture cache.
 */
 mat4 get_skin_matrix(int offset)
 {
-    return (mat4(texelFetch(mpCustomPerMaterial.skinMatsTex, offset),
-                 texelFetch(mpCustomPerMaterial.skinMatsTex, offset + 1),
-                 texelFetch(mpCustomPerMaterial.skinMatsTex, offset + 2),
-                 texelFetch(mpCustomPerMaterial.skinMatsTex, offset + 3)));
+    return (mat4(texelFetch(skinMatsTex, offset),
+                 texelFetch(skinMatsTex, offset + 1),
+                 texelFetch(skinMatsTex, offset + 2),
+                 texelFetch(skinMatsTex, offset + 3)));
 }
 
 

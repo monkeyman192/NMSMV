@@ -8,23 +8,23 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace MVCore.Text
 {
-    public class Text : Primitive, IDisposable
+    public class GLText : Primitive, IDisposable
     {
         public Vector2 pos;
         public Vector2 size;
         public Vector3 color;
         public float lineHeight;
         public string text;
-        public GLMeshVao meshVao;
+        public GLInstancedMeshVao meshVao;
         public Font font; //Keep reference of the Font used
-        public Text()
+        public GLText()
         {
             pos = new Vector2(0.0f);
             lineHeight = 10; //10 pixels text height by default
             color = new Vector3(1.0f);
         }
 
-        public Text(Font f, Vector2 pos, float h, Vector3 c, string text)
+        public GLText(Font f, Vector2 pos, float h, Vector3 c, string text)
         {
             font = f;
             lineHeight = h;
@@ -37,7 +37,7 @@ namespace MVCore.Text
         {
             geom = getGeom();
 
-            meshVao = new GLMeshVao();
+            meshVao = new GLInstancedMeshVao();
             meshVao.type = TYPES.TEXT;
             meshVao.metaData = new MeshMetaData();
             meshVao.metaData.batchcount = geom.indicesCount;

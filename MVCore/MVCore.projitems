@@ -10,11 +10,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Engine\Engine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Engine\Renderers\MeshRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\MTimer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\RequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\Systems\ActionSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\Systems\AnimationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\AnimData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\AnimComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Camera.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\Common.cs" />
@@ -23,6 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\LODModelComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\PhysicsComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\TriggerActionComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLLightBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Joint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Light.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Locator.cs" />
@@ -31,15 +34,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Reference.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Scene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\TextureMixer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\DDSImage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLMeshBufferManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLMeshBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\TextureManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\Font.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\FontManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\Text.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\TextManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Text\TextRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\FileUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\GamepadHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\Gbuffer.cs" />
@@ -57,11 +60,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)Palettes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\RenderManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\ResourceManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Engine\ShadowRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Engine\Renderers\ShadowRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\ThreadRequest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Common\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Engine\Renderers\" />
     <Folder Include="$(MSBuildThisFileDirectory)Image\" />
     <Folder Include="$(MSBuildThisFileDirectory)Input\" />
   </ItemGroup>

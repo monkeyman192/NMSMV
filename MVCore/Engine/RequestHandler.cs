@@ -26,6 +26,11 @@ namespace MVCore.Engine
             return req_queue.Count > 0;
         }
 
+        public int getOpenRequestNum()
+        {
+            return req_queue.Count;
+        }
+
         public ThreadRequest Fetch()
         {
             lock (req_queue)

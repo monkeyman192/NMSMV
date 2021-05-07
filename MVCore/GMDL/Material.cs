@@ -15,6 +15,7 @@ namespace MVCore.GMDL
         public string name_key = "";
         public textureManager texMgr;
         public int shaderHash = int.MaxValue;
+        public GLSLShaderConfig shader;
 
         public static List<string> supported_flags = new List<string>() {
                 "_F01_DIFFUSEMAP",
@@ -92,6 +93,8 @@ namespace MVCore.GMDL
                 return _CustomPerMaterialUniforms;
             }
         }
+
+        public List<Uniform> activeUniforms = new List<Uniform>();
 
         public Material()
         {
@@ -226,9 +229,17 @@ namespace MVCore.GMDL
                 try
                 {
                     compileMaterialShader();
+
+                    //Get Active Uniforms
+                    foreach (Uniform un in CustomPerMaterialUniforms.Values)
+                    {
+                        if (shader.uniformLocations.ContainsKey(un.Name))
+                            activeUniforms.Add(un);
+                    }
+
                 } catch (Exception e)
                 {
-                    Common.CallBacks.Log("Error during material shader compilation: " + e.Message);
+                    Common.CallBacks.Log("Error during material shader compilation: " + e.Message, Common.LogVerbosityLevel.ERROR);
                 }
             }
                 
@@ -320,7 +331,7 @@ namespace MVCore.GMDL
         private void compileMaterialShader()
         {
             Dictionary<int, GLSLShaderConfig> shaderDict;
-            Dictionary<int, List<GLMeshVao>> meshList;
+            Dictionary<int, List<GLInstancedMeshVao>> meshList;
 
             List<string> includes = new List<string>();
             List<string> defines = new List<string>();
@@ -347,16 +358,9 @@ namespace MVCore.GMDL
                 shaderDict = Common.RenderState.activeResMgr.GLForwardShaderMapTransparent;
                 meshList = Common.RenderState.activeResMgr.transparentMeshShaderMap;
             }
-
-            else if (MaterialFlags.Contains("_F07_UNLIT"))
-            {
-                shaderDict = Common.RenderState.activeResMgr.GLDeferredUNLITShaderMap;
-                meshList = Common.RenderState.activeResMgr.opaqueMeshShaderMap;
-                defines.Add("_D_DEFERRED_RENDERING");
-            }
             else
             {
-                shaderDict = Common.RenderState.activeResMgr.GLDeferredLITShaderMap;
+                shaderDict = Common.RenderState.activeResMgr.GLDeferredShaderMap;
                 meshList = Common.RenderState.activeResMgr.opaqueMeshShaderMap;
                 defines.Add("_D_DEFERRED_RENDERING");
             }
@@ -367,9 +371,10 @@ namespace MVCore.GMDL
                     includes.Add(MaterialFlags[i]);
             }
 
-            GLSLShaderConfig shader = GLShaderHelper.compileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl", null, null, null,
-                defines, includes, SHADER_TYPE.MATERIAL_SHADER, ref Common.RenderState.shaderCompilationLog);
-
+            shader = GLShaderHelper.compileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl", null, null, null,
+                defines, includes, SHADER_TYPE.MATERIAL_SHADER);
+            
+            //TODO: Add shader compilation log of material shaders
 
             //Attach UBO binding Points
             GLShaderHelper.attachUBOToShaderBindingPoint(shader, "_COMMON_PER_FRAME", 0);
@@ -378,7 +383,7 @@ namespace MVCore.GMDL
 
             //Save shader to the resource Manager
             shaderDict[shader.shaderHash] = shader;
-            meshList[shader.shaderHash] = new List<GLMeshVao>(); //Init list
+            meshList[shader.shaderHash] = new List<GLInstancedMeshVao>(); //Init list
         }
 
     }

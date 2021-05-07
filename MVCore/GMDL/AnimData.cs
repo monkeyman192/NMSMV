@@ -348,8 +348,8 @@ namespace MVCore.GMDL
 
             //Convert transforms
             m.localRotation = Matrix4.CreateFromQuaternion(q);
-            m.localPosition = p;
-            m.localScale = s;
+            m.localPosition.vec = p;
+            m.localScale.vec = s;
         }
 
         public void getCurrentTransform(ref Vector3 p, ref Vector3 s, ref Quaternion q, string node)

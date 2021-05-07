@@ -429,7 +429,7 @@ void pbr_lighting(){
 	    //Albedo
 		outcolors[0] = lColourVec4;
 		//Normals
-		outcolors[1].rgb = lNormalVec3;
+		outcolors[1].rgb = lNormalVec3.xyz;
 		outcolors[1].a = isLit; //TODO: Use the alpha channel of that attachment to upload any extra material flags
 
 		//Export Frag Params
@@ -461,8 +461,6 @@ void pbr_lighting(){
 		            lColourVec4.rgb, lfMetallic, lfRoughness, ao);
 			} 
 		}
-		#else
-			finalColor = lColourVec4;
 		#endif
 
 		//Weighted Blended order independent transparency

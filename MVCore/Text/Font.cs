@@ -145,9 +145,6 @@ namespace MVCore.Text
             //Generate Font Material
             material = new Material();
             material.PSamplers[sampl.Name] = sampl;
-            Uniform uf = new Uniform("size");
-            uf.Vec.X = Size;
-            material.CustomPerMaterialUniforms["size"] = uf;
         }
 
         private void loadJsonFont(StreamReader fnt_sr, Bitmap img_data)

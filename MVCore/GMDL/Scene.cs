@@ -53,7 +53,7 @@ namespace MVCore.GMDL
                     //j.localPosition = tr;
 
                     j.localRotation = Matrix4.CreateFromQuaternion(q) * j.__localRotation;
-                    j.localScale = sc;
+                    j.localScale.vec = sc;
 
                     //j.localPoseMatrix = kp.Value;
                 }
@@ -67,9 +67,9 @@ namespace MVCore.GMDL
         {
             foreach (Joint j in jointDict.Values)
             {
-                j._localScale = j.BindMat.ExtractScale();
+                j._localScale.Vec = j.BindMat.ExtractScale();
                 j._localRotation = Matrix4.CreateFromQuaternion(j.BindMat.ExtractRotation());
-                j._localPosition = j.BindMat.ExtractTranslation();
+                j._localPosition.Vec = j.BindMat.ExtractTranslation();
                 j._localPoseMatrix = Matrix4.Identity;
             }
         }

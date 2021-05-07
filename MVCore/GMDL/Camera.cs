@@ -282,7 +282,7 @@ namespace MVCore.GMDL
         }
 
 
-        public bool frustum_occlude(GMDL.GLMeshVao meshVao, Matrix4 transform)
+        public bool frustum_occlude(GLInstancedMeshVao meshVao, Matrix4 transform)
         {
             if (!culling) return true;
 

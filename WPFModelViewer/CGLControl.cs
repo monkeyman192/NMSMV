@@ -83,17 +83,17 @@ namespace Model_Viewer
 
         private void registerFunctions()
         {
-            this.Load += new System.EventHandler(genericLoad);
+            this.Load += new EventHandler(genericLoad);
             //this.Paint += new System.Windows.Forms.PaintEventHandler(this.genericPaint);
-            this.Resize += new System.EventHandler(OnResize);
-            this.MouseDown += new System.Windows.Forms.MouseEventHandler(genericMouseDown);
-            this.MouseMove += new System.Windows.Forms.MouseEventHandler(genericMouseMove);
-            this.MouseUp += new System.Windows.Forms.MouseEventHandler(genericMouseUp);
-            this.MouseClick += new System.Windows.Forms.MouseEventHandler(genericMouseClick);
+            this.Resize += new EventHandler(OnResize);
+            this.MouseDown += new MouseEventHandler(genericMouseDown);
+            this.MouseMove += new MouseEventHandler(genericMouseMove);
+            this.MouseUp += new MouseEventHandler(genericMouseUp);
+            this.MouseClick += new MouseEventHandler(genericMouseClick);
             //this.glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.glControl1_Scroll);
-            this.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(generic_KeyDown);
-            this.MouseEnter += new System.EventHandler(genericEnter);
-            this.MouseLeave += new System.EventHandler(genericLeave);
+            this.PreviewKeyDown += new PreviewKeyDownEventHandler(generic_KeyDown);
+            this.MouseEnter += new EventHandler(genericEnter);
+            this.MouseLeave += new EventHandler(genericLeave);
         }
 
         //Default Constructor
@@ -184,8 +184,12 @@ namespace Model_Viewer
 
                     if (engine.rt_State == EngineRenderingState.ACTIVE)
                     {
+                        CallBacks.Log("* CONTROL : STARTING FRAME UPDATE", LogVerbosityLevel.DEBUG);
                         frameUpdate();
+                        CallBacks.Log("* CONTROL : FRAME UPDATED", LogVerbosityLevel.DEBUG);
+                        CallBacks.Log("* CONTROL : STARTING FRAME RENDER", LogVerbosityLevel.DEBUG);
                         engine.renderMgr.render(); //Render Everything
+                        CallBacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
                         SwapBuffers();
 
                     }
@@ -768,6 +772,7 @@ namespace Model_Viewer
                 m.update();
             }
 
+            
             //rootObject?.update(); //Update Distances from camera
             RenderState.rootObject?.updateLODDistances(); //Update Distances from camera
             engine.renderMgr.clearInstances(); //Clear All mesh instances

@@ -23,7 +23,7 @@ public class GizmoPart
 	public GIZMO_PART_TYPE type;
 	public Vector3 pick_color;
 	public bool active = false;
-	public GLMeshVao meshVao;
+	public GLInstancedMeshVao meshVao;
 	public bool isSelected = false;
 	
 	

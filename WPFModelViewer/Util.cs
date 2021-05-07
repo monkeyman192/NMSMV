@@ -13,7 +13,7 @@ namespace WPFModelViewer
     {
         public static int VersionMajor = 0;
         public static int VersionMedium = 90;
-        public static int VersionMinor = 1;
+        public static int VersionMinor = 2;
         
         public static string donateLink = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=4365XYBWGTBSU&currency_code=USD&source=url";
         public static readonly Random randgen = new Random();
@@ -91,13 +91,14 @@ namespace WPFModelViewer
             //scn.animMeta = (libMBIN.NMS.Toolkit.TkAnimMetadata) mbinf.GetData();
         }
 
-        public static void Log(string msg)
+        public static void Log(string msg, LogVerbosityLevel lvl)
         {
-#if DEBUG
-            Console.WriteLine(msg); //Write to console if we are in debug mode
-#endif
-            loggingSr.WriteLine(msg);
-            loggingSr.Flush();
+            if (lvl >= RenderState.settings.LogVerbosity)
+            {
+                Console.WriteLine(msg);
+                loggingSr.WriteLine(msg);
+                loggingSr.Flush();
+            }
         }
 
         public static void sendRequest(ref ThreadRequest req)

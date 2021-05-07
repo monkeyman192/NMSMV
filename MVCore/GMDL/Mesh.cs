@@ -147,17 +147,71 @@ namespace MVCore.GMDL
     }
 
 
+    public class GLInstancedLightMeshVao: GLInstancedMeshVao
+    {
+        public const int MAX_INSTANCED = 1024; //Max Instances for lights
 
-    public class GLMeshVao : IDisposable
+        public int instanceLightTex;
+        public int instanceLightTexTBO;
+
+        
+        public GLInstancedLightMeshVao() : base()
+        {
+            initializeLightTex();
+        }
+
+        public GLInstancedLightMeshVao(MeshMetaData data) : base(data)
+        {
+            initializeLightTex();
+        }
+
+        public void initializeLightTex()
+        {
+            //Setup the TBO
+            instanceLightTex = GL.GenTexture();
+            instanceLightTexTBO = GL.GenBuffer();
+
+            GL.BindBuffer(BufferTarget.TextureBuffer, instanceLightTexTBO);
+            GL.BufferData(BufferTarget.TextureBuffer, dataBuffer.Length * sizeof(float), dataBuffer, BufferUsageHint.StreamDraw);
+            GL.TexBuffer(TextureBufferTarget.TextureBuffer, SizedInternalFormat.Rgba32f, instanceLightTexTBO);
+            GL.BindBuffer(BufferTarget.TextureBuffer, 0);
+        }
+
+        public void uploadData()
+        {
+            GL.BindBuffer(BufferTarget.TextureBuffer, instanceLightTexTBO);
+
+            int gpuBuffSize = 0;
+            GL.GetBufferParameter(BufferTarget.TextureBuffer, BufferParameterName.BufferSize, out gpuBuffSize);
+
+            int cpuBuffSize = dataBuffer.Length * sizeof(float);
+
+            //Check if the buffer has to be resized
+            if (cpuBuffSize > gpuBuffSize)
+            {
+                GL.BufferData(BufferTarget.TextureBuffer, cpuBuffSize, dataBuffer, BufferUsageHint.StreamDraw);
+            } else
+            {
+                int bufferSize = instance_count * GLLightBufferManager.instance_struct_size_bytes;
+                GL.BufferSubData(BufferTarget.TextureBuffer, IntPtr.Zero, bufferSize, dataBuffer);
+            }
+            GL.BindBuffer(BufferTarget.TextureBuffer, 0);
+        }
+
+    }
+
+
+    public class GLInstancedMeshVao: IDisposable
     {
         //Class static properties
         public const int MAX_INSTANCES = 512;
+        
 
         public GLVao vao;
         public GLVao bHullVao;
         public MeshMetaData metaData;
         public float[] dataBuffer = new float[256];
-
+        
         //Mesh type
         public COLLISIONTYPES collisionType;
         public TYPES type;
@@ -166,39 +220,34 @@ namespace MVCore.GMDL
         public int UBO_aligned_size = 0; //Actual size of the data for the UBO, multiple to 256
         public int UBO_offset = 0; //Offset 
 
-        public int instance_count = 0;
-        public int visible_instances = 0;
-        public List<Model> instanceRefs = new List<Model>();
-        public float[] instanceBoneMatrices;
-        private int instanceBoneMatricesTex;
-        private int instanceBoneMatricesTexTBO;
-
         //Animation Properties
         //TODO : At some point include that shit into the instance data
         public int BoneRemapIndicesCount;
         public int[] BoneRemapIndices;
-        //public float[] BoneRemapMatrices = new float[16 * 128];
         public bool skinned = false;
-
 
         //Material Properties
         public Material material;
         public Vector3 color;
 
+        public int instance_count = 0;
+        public int visible_instances = 0;
+        public List<Model> instanceRefs = new List<Model>();
+        public float[] instanceBoneMatrices;
+        public int instanceBoneMatricesTex;
+        public int instanceBoneMatricesTexTBO;
 
-
-        //Constructor
-        public GLMeshVao()
+        
+        public GLInstancedMeshVao()
         {
             vao = new GLVao();
         }
 
-        public GLMeshVao(MeshMetaData data)
+        public GLInstancedMeshVao(MeshMetaData data)
         {
             vao = new GLVao();
             metaData = new MeshMetaData(data);
         }
-
 
         //Geometry Setup
         //BSphere calculator
@@ -212,329 +261,6 @@ namespace MVCore.GMDL
 
             //Create Sphere vbo
             return new Primitives.Sphere(bsh_center.Xyz, radius).getVAO();
-        }
-
-
-        //Rendering Methods
-
-        public void renderBBoxes(int pass)
-        {
-            for (int i = 0; i > instance_count; i++)
-                renderBbox(pass, i);
-        }
-
-
-        public void renderBbox(int pass, int instance_id)
-        {
-            if (GLMeshBufferManager.getInstanceOccludedStatus(this, instance_id))
-                return;
-
-            Matrix4 worldMat = GLMeshBufferManager.getInstanceWorldMat(this, instance_id);
-            //worldMat = worldMat.ClearRotation();
-
-            Vector4[] tr_AABB = new Vector4[2];
-            //tr_AABB[0] = new Vector4(metaData.AABBMIN, 1.0f) * worldMat;
-            //tr_AABB[1] = new Vector4(metaData.AABBMAX, 1.0f) * worldMat;
-
-            tr_AABB[0] = new Vector4(instanceRefs[instance_id].AABBMIN, 1.0f);
-            tr_AABB[1] = new Vector4(instanceRefs[instance_id].AABBMAX, 1.0f);
-
-            //tr_AABB[0] = new Vector4(metaData.AABBMIN, 0.0f);
-            //tr_AABB[1] = new Vector4(metaData.AABBMAX, 0.0f);
-
-            //Generate all 8 points from the AABB
-            float[] verts1 = new float[] {  tr_AABB[0].X, tr_AABB[0].Y, tr_AABB[0].Z,
-                                           tr_AABB[1].X, tr_AABB[0].Y, tr_AABB[0].Z,
-                                           tr_AABB[0].X, tr_AABB[1].Y, tr_AABB[0].Z,
-                                           tr_AABB[1].X, tr_AABB[1].Y, tr_AABB[0].Z,
-
-                                           tr_AABB[0].X, tr_AABB[0].Y, tr_AABB[1].Z,
-                                           tr_AABB[1].X, tr_AABB[0].Y, tr_AABB[1].Z,
-                                           tr_AABB[0].X, tr_AABB[1].Y, tr_AABB[1].Z,
-                                           tr_AABB[1].X, tr_AABB[1].Y, tr_AABB[1].Z };
-
-            //Indices
-            Int32[] indices = new Int32[] { 0,1,2,
-                                            2,1,3,
-                                            1,5,3,
-                                            5,7,3,
-                                            5,4,6,
-                                            5,6,7,
-                                            0,2,4,
-                                            2,6,4,
-                                            3,6,2,
-                                            7,6,3,
-                                            0,4,5,
-                                            1,0,5};
-            //Generate OpenGL buffers
-            int arraysize = sizeof(float) * verts1.Length;
-            int vb_bbox, eb_bbox;
-            GL.GenBuffers(1, out vb_bbox);
-            GL.GenBuffers(1, out eb_bbox);
-
-            //Upload vertex buffer
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vb_bbox);
-            //Allocate to NULL
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(2 * arraysize), (IntPtr)null, BufferUsageHint.StaticDraw);
-            //Add verts data
-            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, (IntPtr)arraysize, verts1);
-
-            ////Upload index buffer
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, eb_bbox);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(sizeof(Int32) * indices.Length), indices, BufferUsageHint.StaticDraw);
-
-
-            //Render
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vb_bbox);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(0);
-
-            //InverseBind Matrices
-            //loc = GL.GetUniformLocation(shader_program, "invBMs");
-            //GL.UniformMatrix4(loc, this.vbo.jointData.Count, false, this.vbo.invBMats);
-
-            //Render Elements
-            GL.PointSize(5.0f);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, eb_bbox);
-
-            GL.DrawRangeElements(PrimitiveType.Triangles, 0, verts1.Length,
-                indices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero);
-
-            GL.DisableVertexAttribArray(0);
-
-            GL.DeleteBuffer(vb_bbox);
-            GL.DeleteBuffer(eb_bbox);
-
-        }
-
-
-        public void renderBSphere(GLSLHelper.GLSLShaderConfig shader)
-        {
-            for (int i = 0; i < instance_count; i++)
-            {
-                GLVao bsh_Vao = setupBSphere(i);
-
-                //Rendering
-
-                GL.UseProgram(shader.program_id);
-
-                //Step 2 Bind & Render Vao
-                //Render Bounding Sphere
-                GL.BindVertexArray(bsh_Vao.vao_id);
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-                GL.DrawElements(PrimitiveType.Triangles, 600, DrawElementsType.UnsignedInt, (IntPtr)0);
-
-                GL.BindVertexArray(0);
-                bsh_Vao.Dispose();
-            }
-
-
-        }
-
-        private void renderMesh()
-        {
-            GL.BindVertexArray(vao.vao_id);
-            GL.DrawElementsInstanced(PrimitiveType.Triangles, 
-                metaData.batchcount, metaData.indicesLength, IntPtr.Zero, instance_count);
-            GL.BindVertexArray(0);
-        }
-
-        private void renderLight()
-        {
-            GL.BindVertexArray(vao.vao_id);
-            GL.PointSize(5.0f);
-            GL.DrawArraysInstanced(PrimitiveType.Lines, 0, 2, instance_count);
-            GL.DrawArraysInstanced(PrimitiveType.Points, 0, 2, instance_count); //Draw both points
-            GL.BindVertexArray(0);
-        }
-
-        private void renderCollision()
-        {
-            //Step 2: Render Elements
-            GL.PointSize(8.0f);
-            GL.BindVertexArray(vao.vao_id);
-
-            switch (collisionType)
-            {
-                //Rendering based on the original mesh buffers
-                case COLLISIONTYPES.MESH:
-                    GL.DrawElementsInstancedBaseVertex(PrimitiveType.Points, metaData.batchcount,
-                        metaData.indicesLength, IntPtr.Zero, instance_count, -metaData.vertrstart_physics);
-                    GL.DrawElementsInstancedBaseVertex(PrimitiveType.Triangles, metaData.batchcount,
-                        metaData.indicesLength, IntPtr.Zero, instance_count, -metaData.vertrstart_physics);
-                    break;
-
-                //Rendering custom geometry
-                case COLLISIONTYPES.BOX:
-                case COLLISIONTYPES.CYLINDER:
-                case COLLISIONTYPES.CAPSULE:
-                case COLLISIONTYPES.SPHERE:
-                    GL.DrawElementsInstanced(PrimitiveType.Points, metaData.batchcount,
-                        DrawElementsType.UnsignedInt, IntPtr.Zero, instance_count);
-                    GL.DrawElementsInstanced(PrimitiveType.Triangles, metaData.batchcount,
-                        DrawElementsType.UnsignedInt, IntPtr.Zero, instance_count);
-                    break;
-            }
-
-            GL.BindVertexArray(0);
-        }
-
-        private void renderLocator()
-        {
-            GL.BindVertexArray(vao.vao_id);
-            GL.DrawElementsInstanced(PrimitiveType.Lines, 6, 
-                metaData.indicesLength, IntPtr.Zero, instance_count); //Use Instancing
-            GL.BindVertexArray(0);
-        }
-
-        private void renderJoint()
-        {
-            GL.BindVertexArray(vao.vao_id);
-            GL.PointSize(5.0f);
-            GL.DrawArrays(PrimitiveType.Lines, 0, metaData.batchcount);
-            GL.DrawArrays(PrimitiveType.Points, 0, 1); //Draw only yourself
-            GL.BindVertexArray(0);
-        }
-
-        public virtual void renderMain(GLSLShaderConfig shader)
-        {
-            //Upload Material Information
-
-            //Upload Custom Per Material Uniforms
-            foreach (Uniform un in material.CustomPerMaterialUniforms.Values)
-            {
-                if (shader.uniformLocations.Keys.Contains(un.Name))
-                    GL.Uniform4(shader.uniformLocations[un.Name], un.vec.vec4);
-            }
-
-            //BIND TEXTURES
-            //Diffuse Texture
-            foreach (Sampler s in material.PSamplers.Values)
-            {
-                if (shader.uniformLocations.ContainsKey(s.Name) && s.Map != "")
-                {
-                    GL.Uniform1(shader.uniformLocations[s.Name], MyTextureUnit.MapTexUnitToSampler[s.Name]);
-                    GL.ActiveTexture(s.texUnit.texUnit);
-                    GL.BindTexture(s.tex.target, s.tex.texID);
-                }
-            }
-
-            //BIND TEXTURE Buffer
-            if (skinned)
-            {
-                GL.Uniform1(shader.uniformLocations["mpCustomPerMaterial.skinMatsTex"], 6);
-                GL.ActiveTexture(TextureUnit.Texture6);
-                GL.BindTexture(TextureTarget.TextureBuffer, instanceBoneMatricesTex);
-                GL.TexBuffer(TextureBufferTarget.TextureBuffer,
-                    SizedInternalFormat.Rgba32f, instanceBoneMatricesTexTBO);
-            }
-
-            //if (instance_count > 100)
-            //    Console.WriteLine("Increase the buffers");
-
-            switch (type)
-            {
-                case TYPES.GIZMO:
-                case TYPES.GIZMOPART:
-                case TYPES.MESH:
-                case TYPES.TEXT:
-                    renderMesh();
-                    break;
-                case TYPES.LOCATOR:
-                case TYPES.MODEL:
-                    renderLocator();
-                    break;
-                case TYPES.JOINT:
-                    renderJoint();
-                    break;
-                case TYPES.COLLISION:
-                    renderCollision();
-                    break;
-                case TYPES.LIGHT:
-                    renderLight();
-                    break;
-            }
-        }
-
-        private void renderBHull(GLSLShaderConfig shader)
-        {
-            if (bHullVao == null) return;
-            //I ASSUME THAT EVERYTHING I NEED IS ALREADY UPLODED FROM A PREVIOUS PASS
-            GL.PointSize(8.0f);
-            GL.BindVertexArray(bHullVao.vao_id);
-
-            GL.DrawElementsBaseVertex(PrimitiveType.Points, metaData.batchcount,
-                        metaData.indicesLength, IntPtr.Zero, -metaData.vertrstart_physics);
-            GL.DrawElementsBaseVertex(PrimitiveType.Triangles, metaData.batchcount,
-                        metaData.indicesLength, IntPtr.Zero, -metaData.vertrstart_physics);
-            GL.BindVertexArray(0);
-        }
-
-        public virtual void renderDebug(int pass)
-        {
-            GL.UseProgram(pass);
-            //Step 1: Upload Uniforms
-            int loc;
-            //Upload Material Flags here
-            //Reset
-            loc = GL.GetUniformLocation(pass, "matflags");
-
-            for (int i = 0; i < 64; i++)
-                GL.Uniform1(loc + i, 0.0f);
-
-            for (int i = 0; i < material.Flags.Count; i++)
-                GL.Uniform1(loc + (int)material.Flags[i].MaterialFlag, 1.0f);
-
-            //Upload joint transform data
-            //Multiply matrices before sending them
-            //Check if scene has the jointModel
-            /*
-            Util.mulMatArrays(ref skinMats, gobject.invBMats, scene.JMArray, 256);
-            loc = GL.GetUniformLocation(pass, "skinMats");
-            GL.UniformMatrix4(loc, 256, false, skinMats);
-            */
-
-            //Step 2: Render VAO
-            GL.BindVertexArray(vao.vao_id);
-            GL.DrawElements(PrimitiveType.Triangles, metaData.batchcount, DrawElementsType.UnsignedShort, (IntPtr)0);
-            GL.BindVertexArray(0);
-        }
-
-
-
-        //Default render method
-        public bool render(GLSLShaderConfig shader, RENDERPASS pass)
-        {
-            //Render Object
-            switch (pass)
-            {
-                //Render Main
-                case RENDERPASS.DEFERRED:
-                case RENDERPASS.FORWARD:
-                case RENDERPASS.DECAL:
-                    renderMain(shader);
-                    break;
-                case RENDERPASS.BBOX:
-                case RENDERPASS.BHULL:
-                    //renderBbox(shader.program_id, 0);
-                    //renderBSphere(shader);
-                    renderBHull(shader);
-                    break;
-                //Render Debug
-                case RENDERPASS.DEBUG:
-                    //renderDebug(shader.program_id);
-                    break;
-                //Render for Picking
-                case RENDERPASS.PICK:
-                    //renderDebug(shader.program_id);
-                    break;
-                default:
-                    //Do nothing in any other case
-                    break;
-            }
-
-            return true;
         }
 
 
@@ -600,10 +326,6 @@ namespace MVCore.GMDL
 
 
 
-
-
-
-
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -647,13 +369,35 @@ namespace MVCore.GMDL
         }
         #endregion
 
+
+
     }
 
 
 
+    public class GLMeshVao : GLInstancedMeshVao
+    {
+        //Reference
+        public Model refModel;
+        
+        //Constructor
+        public GLMeshVao(): base()
+        {
+            
+        }
+
+        public GLMeshVao(MeshMetaData data) :base(data)
+        {
+            
+        }
+
+    }
+
 
     public class Mesh : Model
     {
+        public GLInstancedMeshVao meshVao;
+
         public int LodLevel
         {
             get

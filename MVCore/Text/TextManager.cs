@@ -16,21 +16,21 @@ namespace MVCore.Text
             CTRL_ID
         }
 
-        public List<Text> texts = new List<Text>();
-        public Dictionary<Semantic, Text> textMap = new Dictionary<Semantic, Text>();
+        public List<GLText> texts = new List<GLText>();
+        public Dictionary<Semantic, GLText> textMap = new Dictionary<Semantic, GLText>();
         public TextManager()
         {
 
         }
 
-        public Text getText(Semantic sem)
+        public GLText getText(Semantic sem)
         {
             if (!textMap.ContainsKey(sem))
                 return null;
             return textMap[sem];
         }
 
-        public void addText(Text t, Semantic sem)
+        public void addText(GLText t, Semantic sem)
         {
             if (t != null)
             {
@@ -49,7 +49,7 @@ namespace MVCore.Text
 
         public void cleanup()
         {
-            foreach (Text t in texts)
+            foreach (GLText t in texts)
                 t.Dispose();
             texts.Clear();
         }

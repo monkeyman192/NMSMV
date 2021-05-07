@@ -33,8 +33,9 @@ namespace GLSLHelper {
         LIGHT_SHADER,
         TEXT_SHADER,
         MATERIAL_SHADER,
-        GBUFFER_LIT_SHADER,
-        GBUFFER_UNLIT_SHADER,
+        GBUFFER_SHADER,
+        LIGHT_PASS_LIT_SHADER,
+        LIGHT_PASS_UNLIT_SHADER, //Stupid but keeping that for testing...
         BRIGHTNESS_EXTRACT_SHADER,
         GAUSSIAN_HORIZONTAL_BLUR_SHADER,
         GAUSSIAN_VERTICAL_BLUR_SHADER,
@@ -361,15 +362,15 @@ namespace GLSLHelper {
         }
 
         //GLPreparation
-        public static GLSLShaderConfig compileShader(GLSLShaderText vs, GLSLShaderText fs, GLSLShaderText gs, GLSLShaderText tes, GLSLShaderText tcs, SHADER_TYPE type, ref string log)
+        public static GLSLShaderConfig compileShader(GLSLShaderText vs, GLSLShaderText fs, GLSLShaderText gs, GLSLShaderText tes, GLSLShaderText tcs, 
+            SHADER_TYPE type)
         {
             GLSLShaderConfig shader_conf = new GLSLShaderConfig(vs, fs, gs, tcs, tes, type);
             //Set modify Shader delegate
             shader_conf.modifyShader = issuemodifyShaderRequest;
 
             compileShader(shader_conf);
-            log += shader_conf.log; //Append log
-
+            
             return shader_conf;
         }
 
@@ -387,7 +388,7 @@ namespace GLSLHelper {
         }
 
         public static GLSLShaderConfig compileShader(string vs_path, string fs_path, string gs_path, string tcs_path, string tes_path,
-            List<string> directives, List<string> includes, SHADER_TYPE type, ref string log)
+            List<string> directives, List<string> includes, SHADER_TYPE type)
         {
             List<string> defines = new List<string>();
 
@@ -411,7 +412,7 @@ namespace GLSLHelper {
             main_deferred_shader_fs.addStringFromFile(fs_path);
 
             GLSLShaderConfig conf = compileShader(main_deferred_shader_vs, main_deferred_shader_fs, null, null, null,
-                type, ref log);
+                type);
 
             conf.shaderHash = calculateShaderHash(includes);
             
@@ -672,7 +673,7 @@ namespace GLSLHelper {
             sr.Write(log);
             sr.Close();
             Console.WriteLine(log);
-            throw new ApplicationException("Shader Compilation Failed. Check Log");
+            CallBacks.showError("Shader Compilation Failed. Check Log", "Shader Compilation Error");
         }
     }
 }

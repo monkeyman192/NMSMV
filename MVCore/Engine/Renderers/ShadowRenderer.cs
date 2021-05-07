@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using OpenTK.Graphics.OpenGL4;
 
-namespace MVCore
+namespace MVCore.Engine
 {
     public class ShadowRenderer : IDisposable
     {

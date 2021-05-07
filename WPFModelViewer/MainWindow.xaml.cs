@@ -68,6 +68,8 @@ namespace WPFModelViewer
 
             //SETUP THE CALLBACKS OF MVCORE
             CallBacks.updateStatus = Util.setStatus;
+            CallBacks.showInfo = Util.showInfo;
+            CallBacks.showError = Util.showError;
             CallBacks.openAnim = Util.loadAnimationFile;
             CallBacks.Log = Util.Log;
             CallBacks.issueRequestToGLControl = Util.sendRequest;
@@ -284,6 +286,7 @@ namespace WPFModelViewer
                                     break;
                             }
                             issuedRequests.RemoveAt(i); //Remove request
+                            CallBacks.Log("* Request " + req.type.ToString() + " Handled Successfully", LogVerbosityLevel.DEBUG);
                         }
                         else
                             i++;
@@ -399,16 +402,20 @@ namespace WPFModelViewer
 
             //Load Settings
             SettingsForm.loadSettingsStatic();
+            CallBacks.Log("* Starting GLControl WorkThreads", LogVerbosityLevel.DEBUG);
             glControl.StartWorkThreads();
             
             //Check if the rt_thread is ready
             ThreadRequest req = new ThreadRequest();
             req.type = THREAD_REQUEST_TYPE.QUERY_GLCONTROL_STATUS_REQUEST;
             issuedRequests.Add(req);
+            CallBacks.Log("* Querying Rendering Thread Status", LogVerbosityLevel.DEBUG);
             glControl.issueRenderingRequest(ref req);
 
             while(req.status != THREAD_REQUEST_STATUS.FINISHED)
                 Thread.Sleep(10);
+
+            CallBacks.Log("* Rendering Thread Initialized", LogVerbosityLevel.DEBUG);
 
             //Populate GLControl
             Scene scene = new Scene();
@@ -464,6 +471,8 @@ namespace WPFModelViewer
             TestOptions.Visibility = Visibility.Visible;
             setTestComponents();
 #endif
+
+            CallBacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
 
             //Issue work request 
             ThreadRequest rq = new ThreadRequest();
@@ -800,6 +809,7 @@ namespace WPFModelViewer
                     break;
             }
         }
+
 #endif
     }
 

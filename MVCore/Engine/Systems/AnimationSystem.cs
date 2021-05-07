@@ -111,13 +111,12 @@ namespace MVCore.Engine.Systems
                     if (jt.PositionQueue.Count == 0)
                     {
                         //Keep last transforms
-                        jt.localPosition = jt._localPosition;
-                        jt.localScale = jt._localScale;
-                        jt.localRotation = jt._localRotation;
+                        //jt.localPosition = jt._localPosition;
+                        //jt.localScale = jt._localScale;
+                        //jt.localRotation = jt._localRotation;
                         continue;
                     }
                         
-                    
                     float blendFactor = 1.0f / jt.PositionQueue.Count;
 
                     Vector3 p = new Vector3();
@@ -133,8 +132,8 @@ namespace MVCore.Engine.Systems
                     }
                     
                     jt.localRotation = Matrix4.CreateFromQuaternion(q);
-                    jt.localPosition = p;
-                    jt.localScale = s;
+                    jt.localPosition.Vec = p;
+                    jt.localScale.Vec = s;
                 }
             }
         }

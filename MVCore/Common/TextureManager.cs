@@ -56,18 +56,6 @@ namespace MVCore
                 return GLtextures[name];
         }
 
-        public void deleteTexture(string name)
-        {
-            if (GLtextures.ContainsKey(name))
-            {
-                GMDL.Texture t = GLtextures[name];
-                t.Dispose();
-                GLtextures.Remove(name);
-            }
-            else
-                CallBacks.Log("Texture not found\n");
-        }
-
         public void setMasterTexManager(textureManager mtMgr)
         {
             masterTexManager = mtMgr;

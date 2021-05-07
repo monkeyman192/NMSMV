@@ -85,6 +85,8 @@ namespace MVCore.Common
 
         public bool RenderLights { get; set; } = true;
 
+        public bool RenderLightVolumes { get; set; } = true;
+
         public bool RenderJoints { get; set; } = true;
 
         public bool RenderLocators { get; set; } = true;
@@ -164,7 +166,7 @@ namespace MVCore.Common
             get => _HDRExposure.ToString();
             set
             {
-                float.TryParse(value, out _HDRExposure);
+                _HDRExposure = Utils.MathUtils.FloatParse(value);
                 NotifyPropertyChanged("HDRExposure");
             }
         }
@@ -249,7 +251,8 @@ namespace MVCore.Common
         private string gamedir;
         private string unpackdir;
         private int _procGenWinNum;
-        
+        private LogVerbosityLevel _logVerbosity;
+
         public string GameDir
         {
             get
@@ -264,7 +267,7 @@ namespace MVCore.Common
             }
         }
 
-        
+
         public string UnpackDir
         {
 
@@ -307,7 +310,20 @@ namespace MVCore.Common
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-        
+
+        public LogVerbosityLevel LogVerbosity
+        {
+            get
+            {
+                return _logVerbosity;
+            }
+
+            set
+            {
+                _logVerbosity = value;
+            }
+        }
+
         private void NotifyPropertyChanged(String info)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
@@ -331,16 +347,31 @@ namespace MVCore.Common
         }
     }
 
+    public enum LogVerbosityLevel
+    {
+        HIDEBUG,
+        DEBUG,
+        INFO,
+        WARNING,
+        ERROR
+    }
+
     //Delegates - Function Types for Callbacks
     public delegate void UpdateStatusCallBack(string msg);
     public delegate void OpenAnimCallBack(string filepath, Model animScene);
     public delegate void OpenPoseCallBack(string filepath, Model animScene);
-    public delegate void LogCallBack(string msg);
+    public delegate void ShowInfoMsg(string msg, string caption);
+    public delegate void ShowErrorMsg(string msg, string caption);
+    public delegate void LogCallBack(string msg, LogVerbosityLevel level);
     public delegate void SendRequestCallBack(ref ThreadRequest req);
     
+    
+
     public static class CallBacks
     {
         public static UpdateStatusCallBack updateStatus = null;
+        public static ShowInfoMsg showInfo = null;
+        public static ShowErrorMsg showError = null;
         public static OpenAnimCallBack openAnim = null;
         public static OpenPoseCallBack openPose = null;
         public static LogCallBack Log = null;

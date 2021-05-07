@@ -40,7 +40,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 }  
 
 float calcLightAttenuation(Light light, vec4 _fragPos){
-    float attenuation = 0.0f;
+    float lfAttenuation = 0.0f;
 
     //General Configuration
     
@@ -58,55 +58,58 @@ float calcLightAttenuation(Light light, vec4 _fragPos){
     float lfDistanceSquared = l_distance * l_distance; //Distance to light squared
     
 
-    float lfFalloffType = light.falloff;
+    float lfFalloffType = light.parameters.x;
     float lfCutOff = 0.05;
 
     vec3 lspotDir = normalize(light.direction.xyz);
 
-    //Point Lights
-    if (light.type < 1.0){
-        lspotDir = lightDir;
-    }
-
-    //SpotLights
-    //Calculate attenuation
+    //Calculate distance attenuation
     if (lfFalloffType < 1.0)
     {
         // Quadratic Distance attenuation
-        //attenuation = 1.0 / max(1.0, 0.5 * lfDistanceSquared * lfDistanceSquared);
-        attenuation = 1.0 / max(1e-6, lfDistanceSquared);
+        lfAttenuation = lfLightIntensity / max(1.0, lfDistanceSquared);
+        //attenuation = 1.0 / max(1e-6, lfDistanceSquared);
+        //lfAttenuation = lfLightIntensity / max(1.0, lfDistanceSquared);
+        if (lfAttenuation <= (lfCutOff / (1.0 - lfCutOff))){
+            //discard;//Discard in light pass 
+            lfAttenuation = 0.0;
+        }
+            
     } else if (lfFalloffType < 2.0) {
         //Constant
-        attenuation = 1.0;
+        lfAttenuation = lfLightIntensity;
     }
     else if (lfFalloffType < 3.0)
     {
         // Linear Distance attenuation
-        attenuation = inversesqrt(lfDistanceSquared);
-        attenuation = min( attenuation, 1.0 );
-        //attenuation *= lfLightIntensity;
+        lfAttenuation = inversesqrt(lfDistanceSquared);
+        lfAttenuation = min( lfAttenuation, 1.0 );
+        lfAttenuation *= lfLightIntensity;
+
+        if (lfAttenuation <= (lfCutOff / (1.0 - lfCutOff))){
+            //discard;//Discard in light pass 
+            lfAttenuation = 0.0;
+        }
     }
 
-    /*
-    //Doing it the NMS way :D
-    float lfLightFOV = cos(light.direction.w / 2.0);
-    float lfConeAngle = dot(lspotDir, lightDir);
-    float lfConeAttenuation   = saturate( (lfConeAngle - lfLightFOV) * 5.0 );
+    //In case of spotlights cutoff cone
+    if (light.parameters.z > 0.0){
+        
+        float lfLightFOV = light.parameters.y;
+        float lfConeAngle = dot(lspotDir, lightDir);
+        float lfConeAttenuation   = saturate( (lfConeAngle - lfLightFOV) * 5.0 );
+        lfAttenuation *= lfConeAttenuation;
 
-    attenuation *= lfConeAttenuation;
-    if (lfConeAngle < lfLightFOV + lfCutOff)
-    //if (attenuation <= (lfCutOff / (1.0 - lfCutOff)))
-    {
-        return 0.0;
+        if (lfAttenuation <= (lfCutOff / (1.0 - lfCutOff))){
+            //discard;//Discard in light pass 
+            lfAttenuation = 0.0;
+        }
     }
-    */
 
-    //Old working
-    //if (lfConeAngle < lfLightFOV + lfCutOff) {
-    //    return 0.0;
-    //} 
+    lfAttenuation = (lfAttenuation - lfCutOff) / (1.0 - lfCutOff);
+    lfAttenuation = max(lfAttenuation, 0.0);
 
-    return attenuation;
+    return lfAttenuation;
 }
 
 
@@ -129,7 +132,7 @@ vec3 calcLighting(Light light, vec4 fragPos, vec3 fragNormal, vec3 cameraPos, ve
     float distance  = length(light.position.xyz - fragPos.xyz);
     //attenuation = 0.001 * 1.0 / (distance * distance); //Default calculation
 
-    vec3 radiance = light.color.xyz * light.color.w * attenuation;
+    vec3 radiance = light.color.xyz * attenuation;
     //vec3 radiance = light.color.xyz * light.color.w / (distance * distance);
     vec3 H = normalize(V + L);
     

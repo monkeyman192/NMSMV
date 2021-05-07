@@ -21,11 +21,11 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <GroupBox Grid.Row="0" Header="Object Information">
+                    <GroupBox Grid.Row="0" Header="Info">
                         <Grid VerticalAlignment="Stretch">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -47,10 +47,45 @@
                                 <TextBlock Text="LOD Distances"></TextBlock>
                                 <ListBox ItemsSource="{Binding LODDistances}" HorizontalContentAlignment="Left"></ListBox>
                             </DockPanel>
-                            <local:ModelTransform Grid.Row="4" Model="{Binding}"/>
                         </Grid>
                     </GroupBox>
-                    <GroupBox Grid.Row="1" Header="Components">
+                    <GroupBox Grid.Row="1" Header="Transform">
+                        <Grid VerticalAlignment="Stretch">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <DockPanel Grid.Row="0" HorizontalAlignment="Stretch" Height="20">
+                                <TextBlock Text="Translation"></TextBlock>
+                                <ContentControl Content="{Binding localPosition}" HorizontalAlignment="Right"/>
+                            </DockPanel>
+                            <DockPanel Grid.Row="1" HorizontalAlignment="Stretch" Height="20">
+                                <TextBlock Text="Rotation"></TextBlock>
+                                <ContentControl Content="{Binding localRotationAngles}" HorizontalAlignment="Right"/>
+                            </DockPanel>
+                            <DockPanel Grid.Row="2" HorizontalAlignment="Stretch" Height="20">
+                                <TextBlock Text="Scale"></TextBlock>
+                                <ContentControl Content="{Binding localScale}" HorizontalAlignment="Right"/>
+                            </DockPanel>
+                            <Grid Grid.Row="3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                </Grid.RowDefinitions>
+                                <Button Grid.Row="0" Grid.Column="0" Command="{Binding Path=ExportToEXML}" CommandParameter="{Binding}">Export Node to EXML</Button>
+                                <Button Grid.Row="0" Grid.Column="1" Command="{Binding Path=ExportToMBIN}" CommandParameter="{Binding}">Export Node to MBIN</Button>
+                                <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Command="{Binding Path=ResetTransform}" CommandParameter="{Binding}">Reset Transform</Button>
+                            </Grid>
+                        </Grid>
+                    </GroupBox>
+                    
+                    <GroupBox Grid.Row="2" Header="Components">
                         <ItemsControl ItemsSource="{Binding Components}" IsTextSearchEnabled="False"/>
                     </GroupBox>
                 </Grid>
@@ -71,6 +106,19 @@
                 </DockPanel>
             </DataTemplate>
 
+            <DataTemplate DataType="{x:Type gmdl:MVector3}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40"/>
+                        <ColumnDefinition Width="40"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding X}" Grid.Column="0" />
+                    <TextBox Text="{Binding Y}" Grid.Column="1" />
+                    <TextBox Text="{Binding Z}" Grid.Column="2" />
+                </Grid>
+            </DataTemplate>
+            
             <DataTemplate DataType="{x:Type gmdl:MVector4}">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -560,6 +608,7 @@
                             <RowDefinition Height="20"/>
                             <RowDefinition Height="20"/>
                             <RowDefinition Height="20"/>
+                            <RowDefinition Height="20"/>
                         </Grid.RowDefinitions>
                         <DockPanel Grid.Row="0" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
                             <TextBlock HorizontalAlignment="Left">Show Info</TextBlock>
@@ -570,26 +619,30 @@
                             <CheckBox Width="20" HorizontalAlignment="Right" IsChecked="{Binding RenderLights}"></CheckBox>
                         </DockPanel>
                         <DockPanel Grid.Row="2" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
+                            <TextBlock HorizontalAlignment="Left">Show Light Volumes</TextBlock>
+                            <CheckBox Width="20" HorizontalAlignment="Right" IsChecked="{Binding RenderLightVolumes}"></CheckBox>
+                        </DockPanel>
+                        <DockPanel Grid.Row="3" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
                             <TextBlock HorizontalAlignment="Left">Show Joints</TextBlock>
                             <CheckBox Width="20" HorizontalAlignment="Right" IsChecked="{Binding RenderJoints}"></CheckBox>
                         </DockPanel>
-                        <DockPanel Grid.Row="3" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
+                        <DockPanel Grid.Row="4" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
                             <TextBlock HorizontalAlignment="Left">Show Locators</TextBlock>
                             <CheckBox Width="20" HorizontalAlignment="Right" IsChecked="{Binding RenderLocators}"></CheckBox>
                         </DockPanel>
-                        <DockPanel Grid.Row="4" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
+                        <DockPanel Grid.Row="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
                             <TextBlock HorizontalAlignment="Left">Show Collisions</TextBlock>
                             <CheckBox Width="20" HorizontalAlignment="Right" IsChecked="{Binding RenderCollisions}"></CheckBox>
                         </DockPanel>
-                        <DockPanel Grid.Row="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
+                        <DockPanel Grid.Row="6" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
                             <TextBlock HorizontalAlignment="Left">Show Bound Hulls</TextBlock>
                             <CheckBox Width="20" HorizontalAlignment="Right" IsEnabled="False" IsChecked="{Binding RenderBoundHulls}"></CheckBox>
                         </DockPanel>
-                        <DockPanel Grid.Row="6" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
+                        <DockPanel Grid.Row="7" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
                             <TextBlock HorizontalAlignment="Left">Show Gizmo</TextBlock>
                             <CheckBox Width="20" HorizontalAlignment="Right" IsEnabled="False" IsChecked="{Binding RenderGizmos}"></CheckBox>
                         </DockPanel>
-                        <DockPanel Grid.Row="7" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
+                        <DockPanel Grid.Row="8" HorizontalAlignment="Stretch" Grid.ColumnSpan="2">
                             <TextBlock HorizontalAlignment="Left">Emulate Actions</TextBlock>
                             <CheckBox Width="20" HorizontalAlignment="Right" IsChecked="{Binding EmulateActions}"></CheckBox>
                         </DockPanel>

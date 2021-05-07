@@ -44,10 +44,12 @@ namespace WPFModelViewer
                     string filepath = (string) tr.arguments[0];
                     string gameDir = (string) tr.arguments[1];
                     ResourceManager resMgr = (ResourceManager) tr.arguments[2];
+                    MVCore.Common.CallBacks.Log("* Issuing PAK Loading Work Thread");
                     t = new Thread(() => NMSUtils.loadNMSArchives(filepath, gameDir, ref resMgr, ref tk.thread_request.response));
                     break;
                 default:
-                    Console.WriteLine("DISPATCHER : Unsupported Thread Request");
+                    Console.WriteLine("");
+                    MVCore.Common.CallBacks.Log("* DISPATCHER : Unsupported Thread Request");
                     break;
             }
 

@@ -167,9 +167,6 @@
     <Compile Include="CGLControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="ModelTransform.xaml.cs">
-      <DependentUpon>ModelTransform.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -196,10 +193,6 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="ModelTransform.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="AboutDialogWPF.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
