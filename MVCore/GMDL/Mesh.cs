@@ -404,7 +404,7 @@ namespace MVCore.GMDL
             //Upload Custom Per Material Uniforms
             foreach (Uniform un in material.CustomPerMaterialUniforms.Values)
             {
-                if (shader.uniformLocations.Keys.Contains(un.Name))
+                if (shader.uniformLocations.Keys.Contains((string)un.Name))
                     GL.Uniform4(shader.uniformLocations[un.Name], un.vec.vec4);
             }
 
@@ -412,7 +412,10 @@ namespace MVCore.GMDL
             //Diffuse Texture
             foreach (Sampler s in material.PSamplers.Values)
             {
-                if (shader.uniformLocations.ContainsKey(s.Name) && s.Map != "")
+                // I don't even slightly understand why this is needed. If we don't do this we get a NullReferenceException.
+                // Best guess is something to do with the string changes... But I don't know enough c# to really say...
+                string fakeMap = s.Map ?? "fake";
+                if (shader.uniformLocations.ContainsKey((string)s.Name) && fakeMap != "")
                 {
                     GL.Uniform1(shader.uniformLocations[s.Name], MyTextureUnit.MapTexUnitToSampler[s.Name]);
                     GL.ActiveTexture(s.texUnit.texUnit);

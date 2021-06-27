@@ -138,6 +138,7 @@ namespace MVCore.Text
             //Generate Sampler
             Sampler sampl = new Sampler();
             sampl.Name = "mpCustomPerMaterial.gDiffuseMap";
+            sampl.Map = null;
             sampl.texUnit = new MyTextureUnit(sampl.Name);
             sampl.texUnit.texUnit = TextureUnit.Texture0;
             sampl.tex = tex;
@@ -186,6 +187,7 @@ namespace MVCore.Text
             //Generate Sampler
             Sampler sampl = new Sampler();
             sampl.Name = "mpCustomPerMaterial.gDiffuseMap";
+            sampl.Map = null;
             sampl.texUnit = new MyTextureUnit(sampl.Name);
             sampl.texUnit.texUnit = TextureUnit.Texture0;
             sampl.tex = tex;

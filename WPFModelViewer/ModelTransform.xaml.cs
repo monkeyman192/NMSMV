@@ -188,7 +188,7 @@ namespace WPFModelViewer
             if (_mdl?.nms_template != null)
             {
                 //Fetch scene name
-                string[] split = _mdl.nms_template.Name.Split('\\');
+                string[] split = ((string)_mdl.nms_template.Name).Split('\\');
                 string scnName = split[split.Length - 1];
 
                 TkSceneNodeData temp = _mdl.ExportTemplate(true);
@@ -205,7 +205,7 @@ namespace WPFModelViewer
             if (_mdl?.nms_template != null)
             {
                 //Fetch scene name
-                string[] split = _mdl.nms_template.Name.Split('\\');
+                string[] split = ((string)_mdl.nms_template.Name).Split('\\');
                 string scnName = split[split.Length - 1];
                 
                 TkSceneNodeData temp = _mdl.ExportTemplate(true);

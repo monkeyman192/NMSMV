@@ -582,13 +582,15 @@ namespace MVCore
         }
 
 
-        private static string parseNMSTemplateAttrib<T>(List<T> temp, string attrib)
+        private static string parseNMSTemplateAttrib<T>(List<TkSceneNodeAttributeData> temp, string attrib)
         {
-            T elem = temp.FirstOrDefault(item => (string) item.GetType().GetField("Name").GetValue(item) == attrib);
-            if (elem == null)
-                return "";
-            else
-                return (string) elem.GetType().GetField("Value").GetValue(elem);
+            foreach (TkSceneNodeAttributeData att in temp)
+            {
+                if (att.Name == attrib) {
+                    return att.Value;
+                }
+            }
+            return "";
         }
 
 
@@ -1200,7 +1202,8 @@ namespace MVCore
             //Get Options
             //In collision objects first child is probably the type
             //string collisionType = ((XmlElement)attribs.ChildNodes[0].SelectSingleNode("Property[@name='Value']")).GetAttribute("value").ToUpper();
-            string collisionType = node.Attributes.FirstOrDefault(item => item.Name == "TYPE").Value.ToUpper();
+            string collisionType = (string)node.Attributes.FirstOrDefault(item => item.Name == "TYPE").Value;
+            collisionType = collisionType.ToUpper();
 
             Common.CallBacks.Log(string.Format("Collision Detected {0} {1}", node.Name, collisionType));
 

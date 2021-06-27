@@ -125,10 +125,6 @@ namespace MVCore.Utils
             filepath = filepath.Replace('\\', '/');
             string effective_filepath = filepath;
 
-            //Checks to prevent malformed paths from further processing
-            if (filepath.Contains(' '))
-                return null;
-
             string exmlpath = Path.ChangeExtension(filepath, "exml");
             exmlpath = exmlpath.ToUpper(); //Make upper case
             
@@ -157,8 +153,7 @@ namespace MVCore.Utils
                 {
                     case 0: //Load EXML
                         {
-                            string xml = File.ReadAllText(Path.Combine(RenderState.settings.UnpackDir, exmlpath));
-                            template = EXmlFile.ReadTemplateFromString(xml);
+                            template = libMBIN.FileIO.LoadExml(Path.Combine(RenderState.settings.UnpackDir, exmlpath));
                             break;
                         }
                     case 1: //Load MBIN
@@ -173,7 +168,7 @@ namespace MVCore.Utils
                     case 2: //Load File from Archive
                         {
                             Stream file = resMgr.NMSFileToArchiveMap[effective_filepath].ExtractFile(effective_filepath);
-                            MBINFile mbinf = new MBINFile(file);
+                            MBINFile mbinf = new MBINFile(file, false);
                             mbinf.Load();
                             template = mbinf.GetData();
                             mbinf.Dispose();
@@ -335,17 +330,17 @@ namespace MVCore.Utils
             if (node.ScaleIndex < frame.Scales.Count)
             {
                 v = new Vector3(
-                    frame.Scales[node.ScaleIndex].x / frame.Scales[node.ScaleIndex].t,
-                    frame.Scales[node.ScaleIndex].y / frame.Scales[node.ScaleIndex].t, 
-                    frame.Scales[node.ScaleIndex].z / frame.Scales[node.ScaleIndex].t );
+                    frame.Scales[node.ScaleIndex].x,
+                    frame.Scales[node.ScaleIndex].y, 
+                    frame.Scales[node.ScaleIndex].z);
             }
             else //Load stillframedata
             {
                 int scaleindex = node.ScaleIndex - frame.Scales.Count;
                 v = new Vector3(
-                    stillframe.Scales[scaleindex].x / stillframe.Scales[scaleindex].t,
-                    stillframe.Scales[scaleindex].y / stillframe.Scales[scaleindex].t,
-                    stillframe.Scales[scaleindex].z / stillframe.Scales[scaleindex].t );
+                    stillframe.Scales[scaleindex].x,
+                    stillframe.Scales[scaleindex].y,
+                    stillframe.Scales[scaleindex].z);
             }
 
             return v;
@@ -371,9 +366,9 @@ namespace MVCore.Utils
                 activeFrame = stillframe;
             }
 
-            s.X = activeFrame.Scales[scaleIndex].x / activeFrame.Scales[scaleIndex].t;
-            s.Y = activeFrame.Scales[scaleIndex].y / activeFrame.Scales[scaleIndex].t;
-            s.Z = activeFrame.Scales[scaleIndex].z / activeFrame.Scales[scaleIndex].t;
+            s.X = activeFrame.Scales[scaleIndex].x;
+            s.Y = activeFrame.Scales[scaleIndex].y;
+            s.Z = activeFrame.Scales[scaleIndex].z;
             
         }
 

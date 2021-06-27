@@ -639,7 +639,7 @@ namespace MVCore.GMDL
 
         public void prepTextures()
         {
-            string[] split = Map.Split('.');
+            string[] split = ((string)Map).Split('.');
 
             string temp = "";
             if (Name == "mpCustomPerMaterial.gDiffuseMap")

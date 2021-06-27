@@ -567,7 +567,7 @@ namespace MVCore.Engine
             if (kbHandler == null) return;
 
             //Camera Movement
-            float step = 0.002f;
+            float step = 0.01f;
             float x, y, z;
 
             x = kbHandler.getKeyStatus(Key.D) - kbHandler.getKeyStatus(Key.A);
