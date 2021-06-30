@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using GLSLHelper;
 using libMBIN.NMS.Toolkit;
 using OpenTK;
+using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
 
@@ -136,6 +137,7 @@ namespace MVCore.Engine
 
             for (int i = 0; i < channel_num; i++)
                 GL.DeleteTexture(channels[i]);
+            
             if (depth_channel != -1)
                 GL.DeleteTexture(depth_channel);
         }
@@ -289,6 +291,7 @@ namespace MVCore.Engine
             GL.DeleteTexture(blur1);
             GL.DeleteTexture(blur2);
             GL.DeleteTexture(composite);
+            GL.DeleteTexture(depth);
         }
 
         public void resize(int w, int h)

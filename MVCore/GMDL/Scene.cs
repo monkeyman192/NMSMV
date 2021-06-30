@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using OpenTK;
+using OpenTK.Mathematics;
 using MVCore.Utils;
 
 namespace MVCore.GMDL
@@ -15,8 +16,7 @@ namespace MVCore.GMDL
         public float[] skinMats; //Final Matrices
         public Dictionary<string, Joint> jointDict;
         public int activeLOD = 0;
-        public int actionComponentID = -1;
-
+        
         public Scene()
         {
             type = TYPES.MODEL;
@@ -47,7 +47,7 @@ namespace MVCore.GMDL
 
                     //Vector3 tr = kp.Value.ExtractTranslation();
                     Vector3 sc = kp.Value.ExtractScale();
-                    OpenTK.Quaternion q = kp.Value.ExtractRotation();
+                    Quaternion q = kp.Value.ExtractRotation();
 
                     //j.localRotation = Matrix4.CreateFromQuaternion(q);
                     //j.localPosition = tr;

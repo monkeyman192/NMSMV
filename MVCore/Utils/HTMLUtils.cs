@@ -5,7 +5,6 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Text;
-using System.Windows.Forms;
 using Newtonsoft.Json;
 
 namespace MVCore.Utils
@@ -29,6 +28,73 @@ namespace MVCore.Utils
             {
                 return reader.ReadToEnd();
             }
+        }
+
+        public static string queryLibMBINDLLLocalVersion()
+        {
+            string assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string assemblyLoc = Path.Combine(assemblyDir, "libMBIN.dll");
+            string assemblyVersion = Assembly.LoadFile(assemblyLoc).GetName().Version.ToString();
+
+            return assemblyVersion;
+        }
+
+        public static void updateLibMBIN()
+        {
+            Uri uri = new Uri("https://api.github.com/repos/monkeyman192/MBINCompiler/releases/latest");
+            string resp = request(uri);
+
+            Dictionary<string, dynamic> data = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(resp);
+
+            var assets = data["assets"];
+            var libMBINVersion = data["tag_name"];
+            //Iterate in assets
+            //Dictionary<string, dynamic> assets = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(data["assets"]);
+
+            string downloadUrl = "";
+            foreach (var k in assets)
+            {
+                if (k["name"] == "libMBIN.dll")
+                {
+                    downloadUrl = k["browser_download_url"];
+                    break;
+                }
+            }
+
+            if (downloadUrl != "")
+            {
+                if (File.Exists("libMBIN_old.dll"))
+                    File.Delete("libMBIN_old.dll");
+                File.Move("libMBIN.dll", "libMBIN_old.dll");
+
+                try
+                {
+                    using (var client = new WebClient())
+                    {
+                        client.DownloadFile(downloadUrl, "libMBIN.dll");
+                    }
+                }
+                catch
+                {
+                    //Restore the old file if the download was interrupted
+                    File.Move("libMBIN_old.dll", "libMBIN.dll");
+                }
+                
+            }
+        }
+
+        public static string queryLibMBINDLLOnlineVersion()
+        {
+            Uri uri = new Uri("https://api.github.com/repos/monkeyman192/MBINCompiler/releases/latest");
+            string resp = request(uri);
+
+            Dictionary<string, dynamic> data = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(resp);
+
+            var assets = data["assets"];
+            var libMBINVersion = data["tag_name"];
+
+            return libMBINVersion;
+
         }
 
         public static void fetchLibMBINDLL()
@@ -63,21 +129,8 @@ namespace MVCore.Utils
                 string productVersion = FileVersionInfo.GetVersionInfo(assemblyLoc).ProductVersion;
 
 
-                DialogResult res = MessageBox.Show("Old Version: " + assemblyVersion + " Online Version: " + libMBINVersion + "\nDo you want to update?", "Info", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
 
-                if (res == DialogResult.Yes)
-                {
-                    if (File.Exists("libMBIN_old.dll"))
-                        File.Delete("libMBIN_old.dll");
-                    File.Move("libMBIN.dll", "libMBIN_old.dll");
-
-                    using (var client = new WebClient())
-                    {
-                        client.DownloadFile(downloadUrl, "libMBIN.dll");
-                    }
-                    MessageBox.Show("Please restart the app to re-load the assembly", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-
+                
             }
 
             //get download url
@@ -89,10 +142,7 @@ namespace MVCore.Utils
             //}
 
 
-
-
         }
-
 
     }
 }

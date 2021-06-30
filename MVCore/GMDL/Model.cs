@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using OpenTK;
+using OpenTK.Mathematics;
 using libMBIN.NMS.Toolkit;
 using System.Collections.ObjectModel;
 using MVCore.Utils;
@@ -336,7 +337,7 @@ namespace MVCore.GMDL
             if (parent != null)
             {
                 //Add Translation as well
-                worldPosition = (Vector4.Transform(new Vector4(0.0f, 0.0f, 0.0f, 1.0f), this.worldMat)).Xyz;
+                worldPosition = (Vector4.TransformRow(new Vector4(0.0f, 0.0f, 0.0f, 1.0f), this.worldMat)).Xyz;
             }
             else
                 worldPosition = localPosition.Vec;
@@ -594,7 +595,7 @@ namespace MVCore.GMDL
 
             foreach (TkAnimNodeData node in apc._poseFrameData.NodeData)
             {
-                List<OpenTK.Quaternion> quats = new List<OpenTK.Quaternion>();
+                List<Quaternion> quats = new List<Quaternion>();
                 List<Vector3> translations = new List<Vector3>();
                 List<Vector3> scales = new List<Vector3>();
 
@@ -608,7 +609,7 @@ namespace MVCore.GMDL
                     int poseFrameIndex = apc._poseData[i].PActivePoseFrame;
 
                     Vector3 v_t, v_s;
-                    OpenTK.Quaternion lq;
+                    Quaternion lq;
                     //Fetch Rotation Quaternion
                     lq = NMSUtils.fetchRotQuaternion(node, apc._poseFrameData, poseFrameIndex);
                     v_t = NMSUtils.fetchTransVector(node, apc._poseFrameData, poseFrameIndex);
@@ -705,7 +706,7 @@ namespace MVCore.GMDL
             if (nms_template != null)
             {
                 //Fetch scene name
-                string[] split = nms_template.Name.Split('\\');
+                string[] split = nms_template.Name.Value.Split('\\');
                 string scnName = split[split.Length - 1];
 
                 TkSceneNodeData temp = ExportTemplate(true);
@@ -727,7 +728,7 @@ namespace MVCore.GMDL
             if (nms_template != null)
             {
                 //Fetch scene name
-                string[] split = nms_template.Name.Split('\\');
+                string[] split = nms_template.Name.Value.Split('\\');
                 string scnName = split[split.Length - 1];
 
                 TkSceneNodeData temp = ExportTemplate(true);

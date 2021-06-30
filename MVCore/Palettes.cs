@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
+using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using System.Reflection;
 using System.Drawing;
@@ -89,7 +90,7 @@ namespace Model_Viewer
                     newPal[f.Name]["Alternative4"] = new Vector4(palette[alternative4], 1.0f);
                     newPal[f.Name]["Unique"] = new Vector4(palette[unique], 1.0f);
                 }
-                catch (ArgumentOutOfRangeException e)
+                catch (ArgumentOutOfRangeException)
                 {
                     CallBacks.Log("Missing Options for Palette " + f.Name, LogVerbosityLevel.WARNING);
                     //Choose the first color in all cases that the palette files have not been properly imported
@@ -114,7 +115,7 @@ namespace Model_Viewer
             try {
                  template = NMSUtils.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN",
                     ref RenderState.activeResMgr) as GcPaletteList;
-            } catch (Exception ex) {
+            } catch (Exception) {
                 CallBacks.Log("Using Default Palettes", LogVerbosityLevel.WARNING);
                 return createPalette();
             }

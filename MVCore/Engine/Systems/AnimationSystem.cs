@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Policy;
-using System.Security.RightsManagement;
 using System.Text;
 using MVCore.GMDL;
 using OpenTK;
+using OpenTK.Mathematics;
 
 namespace MVCore.Engine.Systems
 {
-    public class AnimationSystem
+    public class AnimationSystem :EngineSystem
     {
         public List<Model> AnimScenes = new List<Model>();
         public Dictionary<Model, List<AnimData>> AnimQueues = new Dictionary<Model, List<AnimData>>();
@@ -16,23 +15,18 @@ namespace MVCore.Engine.Systems
         private float timeInterval = 20.0f;
         private float time = 0.0f;
 
-        public AnimationSystem()
+        public AnimationSystem() : base(EngineSystemEnum.ANIMATION_SYSTEM)
         {
             
         }
 
-        public void CleanUp()
+        public override void CleanUp()
         {
             AnimScenes.Clear();
             AnimQueues.Clear();
         }
 
-        public void SetEngine(Engine e)
-        {
-            engine = e;
-        }
-
-        public void update(float dt)
+        public override void Update(float dt)
         {
             //Clear queues for all the joints
             foreach (Model anim_model in AnimScenes)

@@ -6,15 +6,17 @@ using GLSLHelper;
 using libMBIN.NMS.Toolkit;
 using MVCore.Common;
 using MVCore.Engine;
+
 using MVCore.GMDL;
 using MVCore.Text;
 using OpenTK;
+using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
 
-namespace MVCore
+namespace MVCore.Engine.Systems
 {
-    //Render Structs
+    //Framebuffer Structs
     [StructLayout(LayoutKind.Explicit)]
     struct CommonPerFrameSamplers
     {
@@ -63,7 +65,7 @@ namespace MVCore
         public static readonly int SizeInBytes = 8592;
     };
 
-    public class renderManager : baseResourceManager, IDisposable
+    public class RenderingSystem : EngineSystem, IDisposable
     {
         List<GLInstancedMeshVao> staticObjectsQueue = new List<GLInstancedMeshVao>();
         List<GLInstancedMeshVao> movingMeshQueue = new List<GLInstancedMeshVao>();
@@ -107,8 +109,12 @@ namespace MVCore
         private int MULTI_BUFFER_COUNT = 3;
         private DebugProc GLDebug;
 
+        public RenderingSystem() : base(EngineSystemEnum.RENDERING_SYSTEM)
+        {
 
-        public void init(ResourceManager input_resMgr)
+        }
+
+        public void init(ResourceManager input_resMgr, int width, int height)
         {
 #if (DEBUG)
             GL.Enable(EnableCap.DebugOutput);
@@ -143,7 +149,10 @@ namespace MVCore
             //Initialize Octree
             octree = new Octree(MAX_OCTREE_WIDTH);
 
-            CallBacks.Log("*Resource Manager Initialized", LogVerbosityLevel.INFO);
+            //Initialize Gbuffer
+            setupGBuffer(width,height);
+
+            Log("Resource Manager Initialized", LogVerbosityLevel.INFO);
         }
 
         private void GLDebugMessage(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
@@ -158,9 +167,11 @@ namespace MVCore
 
             if (report)
             {
-                Console.WriteLine(source == DebugSource.DebugSourceApplication ?
+                string msg = source == DebugSource.DebugSourceApplication ?
                 $"openGL - {Marshal.PtrToStringAnsi(message, length)}" :
-                $"openGL - {Marshal.PtrToStringAnsi(message, length)}\n\tid:{id} severity:{severity} type:{type} source:{source}\n");
+                $"openGL - {Marshal.PtrToStringAnsi(message, length)}\n\tid:{id} severity:{severity} type:{type} source:{source}\n";
+
+                CallBacks.Log(msg, LogVerbosityLevel.DEBUG);
             }
         }
 
@@ -171,6 +182,8 @@ namespace MVCore
             pbuf = new PBuffer(width, height);
             blur_fbo = new FBO(TextureTarget.Texture2D, 3, width / blur_fbo_scale, height / blur_fbo_scale, false);
             gizmo_fbo = new FBO(TextureTarget.Texture2D, 2, width, height, false);
+
+            Log("GBuffer Initialized", LogVerbosityLevel.INFO);
         }
 
         public void getMousePosInfo(int x, int y, ref Vector4[] arr)
@@ -235,7 +248,7 @@ namespace MVCore
             gfTime += dt;
         }
 
-        public void cleanup()
+        public override void CleanUp()
         {
             //Just cleanup the queues
             //The resource manager will handle the cleanup of the buffers and shit
@@ -280,7 +293,7 @@ namespace MVCore
 
         public void populate(GMDL.Model root)
         {
-            cleanup();
+            CleanUp();
 
             //Populate octree
             octree.insert(root);
@@ -1126,7 +1139,7 @@ namespace MVCore
 
         private void renderUI()
         {
-            
+
             if (RenderState.renderViewSettings.RenderGizmos)
             {
                 GL.Clear(ClearBufferMask.DepthBufferBit); //Clear depth
@@ -1207,6 +1220,59 @@ namespace MVCore
         }
 
         //Rendering Mechanism
+        public void testrender()
+        {
+            //Prepare UBOs
+            prepareCommonPerFrameUBO();
+
+            render_quad(Array.Empty<string>(), Array.Empty<float>(), Array.Empty<string>(), Array.Empty<TextureTarget>(), Array.Empty<int>(), resMgr.GLShaders[SHADER_TYPE.RED_FILL_SHADER]);
+            //return;
+
+            if (RenderState.renderViewSettings.RenderInfo)
+            {
+                GL.Enable(EnableCap.Blend);
+                GL.Disable(EnableCap.DepthTest);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                //Render info right on the 0 buffer
+
+                GLSLShaderConfig shader = resMgr.GLShaders[SHADER_TYPE.TEXT_SHADER];
+                GL.UseProgram(shader.program_id);
+
+#if (DEBUG)
+                //Upload test options to the shader
+                //GL.Uniform1(shader.uniformLocations["edge"], RenderState.renderSettings.testOpt1);
+                //GL.Uniform1(shader.uniformLocations["width"], RenderState.renderSettings.testOpt2);
+#endif
+
+                GL.Disable(EnableCap.CullFace);
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+
+                //Render texts included in Text manager
+                foreach (GLText t in resMgr.txtMgr.texts)
+                {
+                    GLInstancedMeshVao m = t.meshVao;
+
+                    //Render Start
+                    GL.Uniform1(shader.uniformLocations["fontSize"], (float)t.font.Size);
+                    GL.Uniform1(shader.uniformLocations["textSize"], t.lineHeight);
+                    GL.Uniform2(shader.uniformLocations["offset"], t.pos);
+                    GL.Uniform3(shader.uniformLocations["color"], t.color);
+                    //GL.Uniform2(shader.uniformLocations["textDim"], t.size);
+                    MeshRenderer.render(m, shader, RENDERPASS.FORWARD);
+                }
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+                GL.Enable(EnableCap.CullFace);
+
+                GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
+                GL.Enable(EnableCap.DepthTest);
+                GL.Disable(EnableCap.Blend);
+            }
+
+
+
+
+        }
+
         public void render()
         {
             //Prepare UBOs
@@ -1377,13 +1443,13 @@ namespace MVCore
                 GL.DrawBuffer(DrawBufferMode.ColorAttachment1); //blur2
                 GL.Clear(ClearBufferMask.ColorBufferBit);
                 
-                render_quad(new string[] { }, new float[] { }, new string[] { "diffuseTex" }, new TextureTarget[] { TextureTarget.Texture2D }, new int[] { blur_fbo.channels[0]}, gs_horizontal_blur_program);
+                render_quad(Array.Empty<string>(), Array.Empty<float>(), new string[] { "diffuseTex" }, new TextureTarget[] { TextureTarget.Texture2D }, new int[] { blur_fbo.channels[0]}, gs_horizontal_blur_program);
 
                 //Step 2- Apply horizontal blur
                 GL.DrawBuffer(DrawBufferMode.ColorAttachment0); //blur2
                 GL.Clear(ClearBufferMask.ColorBufferBit);
 
-                render_quad(new string[] { }, new float[] { }, new string[] { "diffuseTex" }, new TextureTarget[] { TextureTarget.Texture2D }, new int[] { blur_fbo.channels[1] }, gs_vertical_blur_program);
+                render_quad(Array.Empty<string>(), Array.Empty<float>(), new string[] { "diffuseTex" }, new TextureTarget[] { TextureTarget.Texture2D }, new int[] { blur_fbo.channels[1] }, gs_vertical_blur_program);
             }
 
             //Blit to screen
@@ -1587,7 +1653,7 @@ namespace MVCore
             {
                 if (disposing)
                 {
-                    cleanup(); //Clean local resources
+                    CleanUp(); //Clean local resources
                     gbuf.Dispose(); //Dispose gbuffer
                     shdwRenderer.Dispose(); //Dispose shadowRenderer
                 }

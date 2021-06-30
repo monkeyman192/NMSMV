@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using OpenTK;
+using OpenTK.Mathematics;
 using MVCore.Utils;
 using MVCore.Common;
 using OpenTK.Graphics.OpenGL4;
@@ -407,7 +408,7 @@ namespace MVCore.GMDL
     public class LightGLMeshVao : GLInstancedMeshVao
     {
         //Class static properties
-        public const int MAX_INSTANCES = 1024;
+        public new const int MAX_INSTANCES = 1024;
         
         //Constructor
         public LightGLMeshVao() : base()
@@ -425,24 +426,14 @@ namespace MVCore.GMDL
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
-
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects).
-                    BoneRemapIndices = null;
-                    instanceBoneMatrices = null;
-
-                    vao?.Dispose();
-
-                    if (instanceBoneMatricesTex > 0)
-                    {
-                        GL.DeleteTexture(instanceBoneMatricesTex);
-                        GL.DeleteBuffer(instanceBoneMatricesTexTBO);
-                    }
+                    base.Dispose(disposing);
+                    //TODO: dispose extra stuff here
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
@@ -460,7 +451,7 @@ namespace MVCore.GMDL
         // }
 
         // This code added to correctly implement the disposable pattern.
-        public void Dispose()
+        public new void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);

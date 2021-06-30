@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using Assimp.Unmanaged;
+using ImGuiNET;
 using GLSLHelper;
 //Custom Imports
 using MVCore;
@@ -52,7 +53,6 @@ namespace Model_Viewer
         public Engine engine;
 
         //Rendering Thread
-        private GraphicsContext gfx_context = null;
         private Thread rendering_thread;
         
         //Main Work Thread
@@ -65,7 +65,7 @@ namespace Model_Viewer
         private ToolStripMenuItem exportToAssimpMenuItem;
         private OpenFileDialog openFileDialog1;
         private Form pform;
-
+        
         //Resize Timer
         public System.Timers.Timer resizeTimer;
 
@@ -83,17 +83,17 @@ namespace Model_Viewer
 
         private void registerFunctions()
         {
-            this.Load += new EventHandler(genericLoad);
+            Load += new EventHandler(genericLoad);
             //this.Paint += new System.Windows.Forms.PaintEventHandler(this.genericPaint);
-            this.Resize += new EventHandler(OnResize);
-            this.MouseDown += new MouseEventHandler(genericMouseDown);
-            this.MouseMove += new MouseEventHandler(genericMouseMove);
-            this.MouseUp += new MouseEventHandler(genericMouseUp);
-            this.MouseClick += new MouseEventHandler(genericMouseClick);
+            Resize += new EventHandler(OnResize);
+            MouseDown += new MouseEventHandler(genericMouseDown);
+            MouseMove += new MouseEventHandler(genericMouseMove);
+            MouseUp += new MouseEventHandler(genericMouseUp);
+            MouseClick += new MouseEventHandler(genericMouseClick);
             //this.glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.glControl1_Scroll);
-            this.PreviewKeyDown += new PreviewKeyDownEventHandler(generic_KeyDown);
-            this.MouseEnter += new EventHandler(genericEnter);
-            this.MouseLeave += new EventHandler(genericLeave);
+            PreviewKeyDown += new PreviewKeyDownEventHandler(generic_KeyDown);
+            MouseEnter += new EventHandler(genericEnter);
+            MouseLeave += new EventHandler(genericLeave);
         }
 
         //Default Constructor
@@ -144,6 +144,9 @@ namespace Model_Viewer
 
         private void Render()
         {
+            GraphicsContext gfx_context = null;
+            ImGuiController _imguiController = null;
+
             while (gfx_context == null)
             {
                 try
@@ -165,7 +168,9 @@ namespace Model_Viewer
                     Console.WriteLine(ex.Message);
                 }
 
-                Console.WriteLine("Context Initialized");
+                CallBacks.Log("* CONTROL RENDERING THREAD : OpenGL Context Initialized", LogVerbosityLevel.INFO);
+                _imguiController = new ImGuiController(Width, Height);
+                CallBacks.Log("* CONTROL RENDERING THREAD : ImGUI Controller Initialized", LogVerbosityLevel.INFO);
             }
 
 
@@ -174,24 +179,30 @@ namespace Model_Viewer
                 if (engine.rt_State == EngineRenderingState.UNINITIALIZED)
                 {
                     //Setup new Context
-                    engine.SetControl(this); //Set engine Window to the GLControl
-                    engine.init();
-
+                    engine.init(Width, Height);
                 }
                 else
                 {
                     engine.handleRequests();
-
+                    
                     if (engine.rt_State == EngineRenderingState.ACTIVE)
                     {
                         CallBacks.Log("* CONTROL : STARTING FRAME UPDATE", LogVerbosityLevel.DEBUG);
                         frameUpdate();
                         CallBacks.Log("* CONTROL : FRAME UPDATED", LogVerbosityLevel.DEBUG);
                         CallBacks.Log("* CONTROL : STARTING FRAME RENDER", LogVerbosityLevel.DEBUG);
-                        engine.renderMgr.render(); //Render Everything
+                        engine.renderSys.render(); //Render Everything
                         CallBacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
-                        SwapBuffers();
 
+
+                        //ImGUi Controls
+
+                        _imguiController.Update(this, (float) dt);
+                        ImGui.ShowDemoWindow();
+                        _imguiController.Render();
+
+                        
+                        SwapBuffers();
                     }
                     
                 }
@@ -760,7 +771,7 @@ namespace Model_Viewer
             }
 
             //Set time to the renderManager
-            engine.renderMgr.progressTime(dt);
+            engine.renderSys.progressTime(dt);
             
             //Reset Stats
             RenderStats.occludedNum = 0;
@@ -775,7 +786,7 @@ namespace Model_Viewer
             
             //rootObject?.update(); //Update Distances from camera
             RenderState.rootObject?.updateLODDistances(); //Update Distances from camera
-            engine.renderMgr.clearInstances(); //Clear All mesh instances
+            engine.renderSys.clearInstances(); //Clear All mesh instances
             RenderState.rootObject?.updateMeshInfo(); //Reapply frustum culling and re-setup visible instances
 
             //Update gizmo
@@ -797,13 +808,13 @@ namespace Model_Viewer
             //Console.WriteLine("Dt {0}", dt);
             if (RenderState.renderViewSettings.EmulateActions)
             {
-                engine.actionSys.update((float) (1000 * rdt)); //time is expected in ms
+                engine.actionSys.Update((float) (1000 * rdt)); //time is expected in ms
             }
 
             //Progress animations
             if (RenderState.settings.rendering.ToggleAnimations)
             {
-                engine.animationSys.update((float) (1000 * rdt)); //time is expected in ms
+                engine.animationSys.Update((float) (1000 * rdt)); //time is expected in ms
             }
                 
 
@@ -831,12 +842,6 @@ namespace Model_Viewer
             RenderState.activeResMgr.txtMgr.getText(TextManager.Semantic.OCCLUDED_COUNT).update(string.Format("OccludedNum: {0:0000}",
                                                                         RenderStats.occludedNum));
 
-        }
-
-        private void progressAnimations()
-        {
-            //Update active animations
-            
         }
 
         private void fps()

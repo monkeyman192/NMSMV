@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using libMBIN.NMS.GameComponents;
-using System.Security.RightsManagement;
 using libMBIN.NMS;
 
 namespace MVCore.GMDL

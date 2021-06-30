@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.ServiceModel.Configuration;
 using System.Text;
 using libMBIN.NMS;
 using libMBIN.NMS.GameComponents;
@@ -11,7 +10,7 @@ using MVCore.GMDL;
 
 namespace MVCore.Engine.Systems
 {
-    public class ActionSystem
+    public class ActionSystem : EngineSystem
     {
         public List<Model> ActionScenes = new List<Model>();
         public Dictionary<Model, string> ActionSceneStateMap = new Dictionary<Model, string>();
@@ -21,23 +20,18 @@ namespace MVCore.Engine.Systems
         private float timeInterval = 1000.0f / 60.0f;
         private float time = 0.0f;
 
-        public ActionSystem()
+        public ActionSystem() : base(EngineSystemEnum.ACTION_SYSTEM)
         {
 
         }
 
-        public void CleanUp()
+        public override void CleanUp()
         {
             ActionSceneStateMap.Clear();
             ActionScenes.Clear();
         }
 
-        public void SetEngine(Engine e)
-        {
-            engine = e;
-        }
-
-        public void update(float dt)
+        public override void Update(float dt)
         {
             time += dt;
 
@@ -133,7 +127,6 @@ namespace MVCore.Engine.Systems
             return false;
         }
 
-
         private void ExecuteAction(Model m, GMDL.Action action)
         {
             
@@ -203,7 +196,6 @@ namespace MVCore.Engine.Systems
             }
 
         }
-
 
         public void Add(Model scn)
         {

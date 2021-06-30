@@ -51,61 +51,62 @@ namespace KUtility {
 	    public List<byte[]> mipMaps = new List<byte[]>(); //TODO load and upload them separately.
 
 	    public DDSImage(byte[] rawdata) {
-			using (MemoryStream ms = new MemoryStream(rawdata)) {
-				using (BinaryReader r = new BinaryReader(ms)) {
-					dwMagic = r.ReadInt32();
-					if (dwMagic != 0x20534444) {
-						throw new Exception("This is not a DDS!");
-					}
-
-					Read_DDS_HEADER(header, r);
-
-					if (((header.ddspf.dwFlags & DDPF_FOURCC) != 0) && (header.ddspf.dwFourCC == FOURCC_DX10 /*DX10*/)) {
-                        header10 = new DDS_HEADER_DXT10();
-                        Read_DDS_HEADER10(header10, r);
-                        //Override PitchOrLinearSize in case of BC7 textures
-					    switch (header10.dxgiFormat)
-					    {
-                            case DXGI_FORMAT.DXGI_FORMAT_BC7_UNORM:
-                                header.dwPitchOrLinearSize = header.dwWidth * header.dwHeight;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-					int mipMapCount = 1;
-					if ((header.dwFlags & DDSD_MIPMAPCOUNT) != 0) 
-						mipMapCount = header.dwMipMapCount;
-
-				    if (header.dwPitchOrLinearSize == 0)
-                        System.Diagnostics.Debug.Fail("0 size texture data, check what is going on");
-
-				    bdata = r.ReadBytes((int) (r.BaseStream.Length - r.BaseStream.Position)); //Read everything
-				    //I don't need decoded images
-				    //images = new Bitmap[mipMapCount];
-                    //for (int i = 0; i < mipMapCount; ++i) {
-                                                       //	// Version .2 changes <AmaroK86>
-                                                       //	int w = (int)(header.dwWidth / Math.Pow(2, i));
-                                                       //	int h = (int)(header.dwHeight / Math.Pow(2, i));
-
-                    //	if ((header.ddspf.dwFlags & DDPF_RGB) != 0) {
-                    //		images[i]= readLinearImage(bdata, w, h);
-                    //	} else if ((header.ddspf.dwFlags & DDPF_FOURCC) != 0) {
-                    //		images[i] = readBlockImage(bdata, w, h);
-                    //	} else if ((header.ddspf.dwFlags & DDPF_FOURCC) == 0 &&
-                    //				header.ddspf.dwRGBBitCount == 0x10 &&
-                    //				header.ddspf.dwRBitMask == 0xFF &&
-                    //				header.ddspf.dwGBitMask == 0xFF00 &&
-                    //				header.ddspf.dwBBitMask == 0x00 &&
-                    //				header.ddspf.dwABitMask == 0x00) {
-                    //		images[i] = UncompressV8U8(bdata, w, h);// V8U8 normalmap format
-                    //	}
-                    //}
-
+            using MemoryStream ms = new MemoryStream(rawdata); using (BinaryReader r = new BinaryReader(ms))
+            {
+                dwMagic = r.ReadInt32();
+                if (dwMagic != 0x20534444)
+                {
+                    throw new Exception("This is not a DDS!");
                 }
+
+                Read_DDS_HEADER(header, r);
+
+                if (((header.ddspf.dwFlags & DDPF_FOURCC) != 0) && (header.ddspf.dwFourCC == FOURCC_DX10 /*DX10*/))
+                {
+                    header10 = new DDS_HEADER_DXT10();
+                    Read_DDS_HEADER10(header10, r);
+                    //Override PitchOrLinearSize in case of BC7 textures
+                    switch (header10.dxgiFormat)
+                    {
+                        case DXGI_FORMAT.DXGI_FORMAT_BC7_UNORM:
+                            header.dwPitchOrLinearSize = header.dwWidth * header.dwHeight;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                int mipMapCount = 1;
+                if ((header.dwFlags & DDSD_MIPMAPCOUNT) != 0)
+                    mipMapCount = header.dwMipMapCount;
+
+                if (header.dwPitchOrLinearSize == 0)
+                    System.Diagnostics.Debug.Fail("0 size texture data, check what is going on");
+
+                bdata = r.ReadBytes((int)(r.BaseStream.Length - r.BaseStream.Position)); //Read everything
+                                                                                         //I don't need decoded images
+                                                                                         //images = new Bitmap[mipMapCount];
+                                                                                         //for (int i = 0; i < mipMapCount; ++i) {
+                                                                                         //	// Version .2 changes <AmaroK86>
+                                                                                         //	int w = (int)(header.dwWidth / Math.Pow(2, i));
+                                                                                         //	int h = (int)(header.dwHeight / Math.Pow(2, i));
+
+                //	if ((header.ddspf.dwFlags & DDPF_RGB) != 0) {
+                //		images[i]= readLinearImage(bdata, w, h);
+                //	} else if ((header.ddspf.dwFlags & DDPF_FOURCC) != 0) {
+                //		images[i] = readBlockImage(bdata, w, h);
+                //	} else if ((header.ddspf.dwFlags & DDPF_FOURCC) == 0 &&
+                //				header.ddspf.dwRGBBitCount == 0x10 &&
+                //				header.ddspf.dwRBitMask == 0xFF &&
+                //				header.ddspf.dwGBitMask == 0xFF00 &&
+                //				header.ddspf.dwBBitMask == 0x00 &&
+                //				header.ddspf.dwABitMask == 0x00) {
+                //		images[i] = UncompressV8U8(bdata, w, h);// V8U8 normalmap format
+                //	}
+                //}
+
             }
-		}
+        }
 
         private Bitmap readBlockImage(byte[] data, int w, int h) {
 			switch (header.ddspf.dwFourCC) {

@@ -65,7 +65,6 @@ float LinearDepth(float perspectiveDepth)
 void main()
 {
 	//sample our texture
-	vec4 bloomColor = vec4(0.0, 0.0, 0.0, 0.0);
 	vec3 clearColor = vec3(0.13, 0.13, 0.13);
 	vec2 uv = gl_FragCoord.xy / (1.0 * mpCommonPerFrame.frameDim);
     
@@ -102,7 +101,7 @@ void main()
 	vec4 ambient = vec4(vec3(0.03) * albedoColor.rgb, 0.0);
 
 	if (dot(albedoColor, vec4(1.0)) < 1e-3){
-		fragColor = vec4(clearColor, 1.0);
+		//fragColor = vec4(clearColor, 1.0);
 		return;
 	}
 

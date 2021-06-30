@@ -4,6 +4,7 @@ using System.Text;
 using GLSLHelper;
 using MVCore.GMDL;
 using OpenTK;
+using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
 
@@ -59,9 +60,8 @@ namespace MVCore.Engine
                                             1,0,5};
             //Generate OpenGL buffers
             int arraysize = sizeof(float) * verts1.Length;
-            int vb_bbox, eb_bbox;
-            GL.GenBuffers(1, out vb_bbox);
-            GL.GenBuffers(1, out eb_bbox);
+            GL.GenBuffers(1, out int vb_bbox);
+            GL.GenBuffers(1, out int eb_bbox);
 
             //Upload vertex buffer
             GL.BindBuffer(BufferTarget.ArrayBuffer, vb_bbox);

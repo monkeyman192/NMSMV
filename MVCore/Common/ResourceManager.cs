@@ -8,7 +8,9 @@ using MVCore.GMDL;
 using MVCore.Text;
 using MVCore.Utils;
 using OpenTK;
+using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
+using ImGUI_SDL_ModelViewer.Properties;
 
 
 namespace MVCore
@@ -23,48 +25,48 @@ namespace MVCore
     public class ResourceManager
     {
         //public Dictionary<string, GMDL.Texture> GLtextures = new Dictionary<string, GMDL.Texture>();
-        public Dictionary<string, Material> GLmaterials = new Dictionary<string, GMDL.Material>();
-        public Dictionary<string, GeomObject> GLgeoms = new Dictionary<string, GMDL.GeomObject>();
-        public Dictionary<string, Scene> GLScenes = new Dictionary<string, GMDL.Scene>();
-        public Dictionary<string, Texture> GLTextures = new Dictionary<string, GMDL.Texture>();
-        public Dictionary<string, AnimMetadata> Animations = new Dictionary<string, AnimMetadata>();
+        public Dictionary<string, Material> GLmaterials = new();
+        public Dictionary<string, GeomObject> GLgeoms = new();
+        public Dictionary<string, Scene> GLScenes = new();
+        public Dictionary<string, Texture> GLTextures = new();
+        public Dictionary<string, AnimMetadata> Animations = new();
 
-        public Dictionary<string, GLVao> GLPrimitiveVaos = new Dictionary<string, GLVao>();
-        public Dictionary<string, GLVao> GLVaos = new Dictionary<string, GLVao>();
-        public Dictionary<string, GLInstancedMeshVao> GLPrimitiveMeshVaos = new Dictionary<string, GLInstancedMeshVao>();
+        public Dictionary<string, GLVao> GLPrimitiveVaos = new();
+        public Dictionary<string, GLVao> GLVaos = new();
+        public Dictionary<string, GLInstancedMeshVao> GLPrimitiveMeshVaos = new();
 
-        public List<GMDL.Light> GLlights = new List<GMDL.Light>();
-        public List<Camera> GLCameras = new List<Camera>();
-        public Dictionary<string, Font> FontMap = new Dictionary<string, Font>();
+        public List<GMDL.Light> GLlights = new();
+        public List<Camera> GLCameras = new();
+        public Dictionary<string, Font> FontMap = new();
         //public Dictionary<string, int> GLShaders = new Dictionary<string, int>();
-        public Dictionary<GLSLHelper.SHADER_TYPE, GLSLHelper.GLSLShaderConfig> GLShaders = new Dictionary<GLSLHelper.SHADER_TYPE, GLSLHelper.GLSLShaderConfig>(); //Generic Shaders
+        public Dictionary<GLSLHelper.SHADER_TYPE, GLSLHelper.GLSLShaderConfig> GLShaders = new(); //Generic Shaders
 
-        public Dictionary<int, GLSLShaderConfig> GLDeferredShaderMap = new Dictionary<int, GLSLShaderConfig>();
-        public Dictionary<int, GLSLShaderConfig> GLForwardShaderMapTransparent = new Dictionary<int, GLSLShaderConfig>();
-        public Dictionary<int, GLSLShaderConfig> GLDeferredShaderMapDecal = new Dictionary<int, GLSLShaderConfig>();
-        public Dictionary<int, GLSLShaderConfig> GLDefaultShaderMap = new Dictionary<int, GLSLShaderConfig>();
+        public Dictionary<int, GLSLShaderConfig> GLDeferredShaderMap = new();
+        public Dictionary<int, GLSLShaderConfig> GLForwardShaderMapTransparent = new();
+        public Dictionary<int, GLSLShaderConfig> GLDeferredShaderMapDecal = new();
+        public Dictionary<int, GLSLShaderConfig> GLDefaultShaderMap = new();
 
-        public List<GLSLHelper.GLSLShaderConfig> activeGLDeferredShaders = new List<GLSLHelper.GLSLShaderConfig>();
-        public List<GLSLHelper.GLSLShaderConfig> activeGLForwardTransparentShaders = new List<GLSLHelper.GLSLShaderConfig>();
-        public List<GLSLHelper.GLSLShaderConfig> activeGLDeferredDecalShaders = new List<GLSLHelper.GLSLShaderConfig>();
+        public List<GLSLHelper.GLSLShaderConfig> activeGLDeferredShaders = new();
+        public List<GLSLHelper.GLSLShaderConfig> activeGLForwardTransparentShaders = new();
+        public List<GLSLHelper.GLSLShaderConfig> activeGLDeferredDecalShaders = new();
 
-        public Dictionary<int, List<GLInstancedMeshVao>> opaqueMeshShaderMap = new Dictionary<int, List<GLInstancedMeshVao>>();
-        public Dictionary<int, List<GLInstancedMeshVao>> defaultMeshShaderMap = new Dictionary<int, List<GLInstancedMeshVao>>();
-        public Dictionary<int, List<GLInstancedMeshVao>> transparentMeshShaderMap = new Dictionary<int, List<GLInstancedMeshVao>>();
-        public Dictionary<int, List<GLInstancedMeshVao>> decalMeshShaderMap = new Dictionary<int, List<GLInstancedMeshVao>>();
+        public Dictionary<int, List<GLInstancedMeshVao>> opaqueMeshShaderMap = new();
+        public Dictionary<int, List<GLInstancedMeshVao>> defaultMeshShaderMap = new();
+        public Dictionary<int, List<GLInstancedMeshVao>> transparentMeshShaderMap = new();
+        public Dictionary<int, List<GLInstancedMeshVao>> decalMeshShaderMap = new();
 
         //BufferManagers
-        public GLLightBufferManager lightBufferMgr = new GLLightBufferManager();
+        public GLLightBufferManager lightBufferMgr = new();
 
         //Global NMS File Archive handles
-        public Dictionary<string, libPSARC.PSARC.Archive> NMSFileToArchiveMap = new Dictionary<string, libPSARC.PSARC.Archive>();
-        public SortedDictionary<string, libPSARC.PSARC.Archive> NMSArchiveMap = new SortedDictionary<string, libPSARC.PSARC.Archive>();
+        public Dictionary<string, libPSARC.PSARC.Archive> NMSFileToArchiveMap = new();
+        public SortedDictionary<string, libPSARC.PSARC.Archive> NMSArchiveMap = new();
 
         //public int[] shader_programs;
         //Extra manager
-        public textureManager texMgr = new textureManager();
-        public FontManager fontMgr = new FontManager();
-        public TextManager txtMgr = new TextManager();
+        public textureManager texMgr = new();
+        public FontManager fontMgr = new();
+        public TextManager txtMgr = new();
 
         public bool initialized = false;
 
@@ -341,7 +343,18 @@ namespace MVCore
             sr.WriteLine("###COMPILING PASSTHROUGH SHADER ###");
             sr.WriteLine(shader_conf.log);
 
+            //Red Shader
+            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
+            GLSLShaderText red_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
+            red_shader_fs.addStringFromFile("Shaders/RedFill.glsl");
+            shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, red_shader_fs, null, null, null,
+                            SHADER_TYPE.RED_FILL_SHADER);
+            GLShaders[SHADER_TYPE.RED_FILL_SHADER] = shader_conf;
+            sr.WriteLine("###COMPILING RED FILL SHADER ###");
+            sr.WriteLine(shader_conf.log);
 
+            
             sr.WriteLine("###FINISHED SHADER COMPILATION###");
 
             sr.Close();
@@ -351,12 +364,16 @@ namespace MVCore
 
         private void addDefaultCameras()
         {
-            Camera cam = new Camera(90, -1, 0, true);
-            cam.isActive = false;
+            Camera cam = new Camera(90, -1, 0, true)
+            {
+                isActive = false
+            };
             GLCameras.Add(cam);
 
-            cam = new Camera(90, -1, 0, false);
-            cam.isActive = false;
+            cam = new Camera(90, -1, 0, false)
+            {
+                isActive = false
+            };
             GLCameras.Add(cam);
 
             //Set as active camera the first one by default
@@ -371,13 +388,14 @@ namespace MVCore
             //White tex
             string texpath = "default.dds";
             Texture tex = new Texture();
-            tex.textureInit(WPFModelViewer.Properties.Resources._default, texpath); //Manually load data
+            tex.textureInit(ImGUI_SDL_ModelViewer.Properties.Resources.default_tex, texpath); //Manually load data
+
             texMgr.addTexture(tex);
 
             //Transparent Mask
             texpath = "default_mask.dds";
             tex = new Texture();
-            tex.textureInit(WPFModelViewer.Properties.Resources.default_mask, texpath);
+            tex.textureInit(ImGUI_SDL_ModelViewer.Properties.Resources.default_mask_tex, texpath);
             texMgr.addTexture(tex);
         }
 
@@ -404,28 +422,24 @@ namespace MVCore
             mat.Name = "crossMat";
             mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
             mat.add_flag(TkMaterialFlags.UberFlagEnum._F21_VERTEXCOLOUR);
-            TkMaterialUniform uf = new TkMaterialUniform();
-            uf.Name = "gMaterialColourVec4";
-            uf.Values = new libMBIN.NMS.Vector4f();
-            uf.Values.x = 1.0f;
-            uf.Values.y = 1.0f;
-            uf.Values.z = 1.0f;
-            uf.Values.t = 1.0f;
+            TkMaterialUniform uf = new TkMaterialUniform
+            {
+                Name = "gMaterialColourVec4",
+                Values = new libMBIN.NMS.Vector4f(1.0f, 1.0f,1.0f,1.0f)
+            };
             mat.Uniforms.Add(uf);
             mat.init();
             GLmaterials["crossMat"] = mat;
 
             //Joint Material
-            mat = new Material();
-            mat.Name = "jointMat";
+            mat = new Material
+            {
+                Name = "jointMat"
+            };
             mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
 
             uf.Name = "gMaterialColourVec4";
-            uf.Values = new libMBIN.NMS.Vector4f();
-            uf.Values.x = 1.0f;
-            uf.Values.y = 0.0f;
-            uf.Values.z = 0.0f;
-            uf.Values.t = 1.0f;
+            uf.Values = new libMBIN.NMS.Vector4f(1.0f,0.0f,0.0f,1.0f);
             mat.Uniforms.Add(uf);
             mat.init();
             GLmaterials["jointMat"] = mat;
@@ -468,13 +482,13 @@ namespace MVCore
         {
             Font f;
             //Droid Sans
-            f = new Font(WPFModelViewer.Properties.Resources.droid_fnt,
-                        WPFModelViewer.Properties.Resources.droid_png, 1);
+            f = new Font(ImGUI_SDL_ModelViewer.Properties.Resources.droid_fnt,
+                        ImGUI_SDL_ModelViewer.Properties.Resources.droid_png, 1);
             fontMgr.addFont(f);
 
             //Segoe
-            f = new Font(WPFModelViewer.Properties.Resources.segoe_fnt,
-                        WPFModelViewer.Properties.Resources.segoe_png, 1);
+            f = new Font(ImGUI_SDL_ModelViewer.Properties.Resources.segoe_fnt,
+                        ImGUI_SDL_ModelViewer.Properties.Resources.segoe_png, 1);
             fontMgr.addFont(f);
         }
 

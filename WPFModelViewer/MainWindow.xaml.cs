@@ -428,7 +428,7 @@ namespace WPFModelViewer
             //Force rootobject
             RenderState.rootObject = scene;
             glControl.modelUpdateQueue.Enqueue(scene);
-            glControl.engine.renderMgr.populate(scene);
+            glControl.engine.renderSys.populate(scene);
             
             SceneTreeView.Items.Clear();
             SceneTreeView.Items.Add(scene);

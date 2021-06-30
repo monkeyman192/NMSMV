@@ -6,8 +6,9 @@ using System.IO;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
-using OpenTK.Graphics.OpenGL4;
 using OpenTK;
+using OpenTK.Mathematics;
+using OpenTK.Graphics.OpenGL4;
 using KUtility;
 using Model_Viewer;
 using System.Linq;
@@ -18,7 +19,6 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Runtime.InteropServices;
 using GLSLHelper;
-using WPFModelViewer;
 using MVCore.Common;
 using MVCore.Utils;
 
@@ -320,10 +320,11 @@ namespace MVCore.GMDL
             if (size != vx_size * (so.metaData.vertrend_graphics + 1))
             {
                 //throw new ApplicationException(String.Format("Problem with vertex buffer"));
-                Util.showError("Mesh metadata does not match the vertex buffer size from the geometry file", "Error");
+                CallBacks.showError("Mesh metadata does not match the vertex buffer size from the geometry file",
+                    "Error");
             }
                 
-            Common.RenderStats.vertNum += so.metaData.vertrend_graphics + 1; //Accumulate settings
+            RenderStats.vertNum += so.metaData.vertrend_graphics + 1; //Accumulate settings
 
             //Assign VertexAttribPointers
             for (int i = 0; i < 7; i++)
@@ -342,7 +343,7 @@ namespace MVCore.GMDL
                 out size);
             if (size != meshMetaDataDict[so.metaData.Hash].is_size)
             {
-                Util.showError("Mesh metadata does not match the index buffer size from the geometry file", "Error");
+                CallBacks.showError("Mesh metadata does not match the index buffer size from the geometry file", "Error");
                 //throw new ApplicationException(String.Format("Problem with vertex buffer"));
             }
 
@@ -641,7 +642,7 @@ namespace MVCore.GMDL
 
         public void prepTextures()
         {
-            string[] split = Map.Split('.');
+            string[] split = Map.Value.Split('.');
 
             string temp = "";
             if (Name == "mpCustomPerMaterial.gDiffuseMap")
@@ -1058,7 +1059,7 @@ namespace MVCore.GMDL
     
     public class AnimNodeFrameData
     {
-        public List<OpenTK.Quaternion> rotations = new List<OpenTK.Quaternion>();
+        public List<Quaternion> rotations = new List<Quaternion>();
         public List<Vector3> translations = new List<Vector3>();
         public List<Vector3> scales = new List<Vector3>();
 
@@ -1067,7 +1068,7 @@ namespace MVCore.GMDL
             BinaryReader br = new BinaryReader(fs);
             for (int i = 0; i < count; i++)
             {
-                OpenTK.Quaternion q = new OpenTK.Quaternion();
+                Quaternion q = new Quaternion();
                 q.X = br.ReadSingle();
                 q.Y = br.ReadSingle();
                 q.Z = br.ReadSingle();
@@ -1164,7 +1165,7 @@ namespace MVCore.GMDL
     public class AnimMetadata: TkAnimMetadata
     {
         public float duration;
-        public Dictionary<string, OpenTK.Quaternion[]> anim_rotations;
+        public Dictionary<string, Quaternion[]> anim_rotations;
         public Dictionary<string, Vector3[]> anim_positions;
         public Dictionary<string, Vector3[]> anim_scales;
 
@@ -1188,7 +1189,7 @@ namespace MVCore.GMDL
         public void load()
         {
             //Init dictionaries
-            anim_rotations = new Dictionary<string, OpenTK.Quaternion[]>();
+            anim_rotations = new Dictionary<string, Quaternion[]>();
             anim_positions = new Dictionary<string, Vector3[]>();
             anim_scales = new Dictionary<string, Vector3[]>();
 
@@ -1202,7 +1203,7 @@ namespace MVCore.GMDL
                 TkAnimNodeData node = NodeData[j];
                 //Init dictionary entries
 
-                anim_rotations[node.Node] = new OpenTK.Quaternion[FrameCount];
+                anim_rotations[node.Node] = new Quaternion[FrameCount];
                 anim_positions[node.Node] = new Vector3[FrameCount];
                 anim_scales[node.Node] = new Vector3[FrameCount];
 
@@ -1247,7 +1248,7 @@ namespace MVCore.GMDL
 
             //Calculate Binding Matrix
             Vector3 BindTranslate, BindScale;
-            OpenTK.Quaternion BindRotation = new OpenTK.Quaternion();
+            Quaternion BindRotation = new Quaternion();
 
             //Get Translate
             BindTranslate.X = br.ReadSingle();

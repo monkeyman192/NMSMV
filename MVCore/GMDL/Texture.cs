@@ -1,6 +1,7 @@
-﻿using OpenTK.Graphics.OpenGL4;
-using System;
+﻿using System;
 using OpenTK;
+using OpenTK.Mathematics;
+using OpenTK.Graphics.OpenGL4;
 using MVCore.Utils;
 using System.IO;
 using KUtility;
@@ -38,7 +39,7 @@ namespace MVCore.GMDL
                     {
                         fs = NMSUtils.LoadNMSFileStream(path, ref Common.RenderState.activeResMgr);
                     }
-                    catch (FileNotFoundException ex)
+                    catch (FileNotFoundException)
                     {
                         //FileNotFoundExceptions during texture loading, are caught so that default textures are loaded
                         fs = null;
@@ -66,10 +67,10 @@ namespace MVCore.GMDL
                 fs.Read(image_data, 0, data_length);
 
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 //Fallback to the default.dds
-                image_data = WPFModelViewer.Properties.Resources._default;
+                image_data = (byte[]) AppResourceManager.getEmbeddedResource("default_tex");
             }
 
             textureInit(image_data, path);
@@ -164,10 +165,8 @@ namespace MVCore.GMDL
             float af_amount = GL.GetFloat((GetPName)All.MaxTextureMaxAnisotropy);
             af_amount = (float)Math.Max(af_amount, 4.0f);
             //GL.TexParameter(TextureTarget.Texture2D,  (TextureParameterName) 0x84FE, af_amount);
-            int max_level = 0;
-            GL.GetTexParameter(target, GetTextureParameter.TextureMaxLevel, out max_level);
-            int base_level = 0;
-            GL.GetTexParameter(target, GetTextureParameter.TextureBaseLevel, out base_level);
+            GL.GetTexParameter(target, GetTextureParameter.TextureMaxLevel, out int max_level);
+            GL.GetTexParameter(target, GetTextureParameter.TextureBaseLevel, out int base_level);
 
             int maxsize = Math.Max(height, width);
             int p = (int)Math.Floor(Math.Log(maxsize, 2)) + base_level;

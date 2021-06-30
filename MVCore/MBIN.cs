@@ -6,6 +6,7 @@ using System;
 using System.Reflection;
 using System.Globalization;
 using OpenTK;
+using OpenTK.Mathematics;
 using Model_Viewer;
 using libMBIN;
 using libMBIN.NMS.Toolkit;
@@ -13,7 +14,6 @@ using System.Linq;
 using MVCore;
 using MVCore.GMDL;
 using Console = System.Console;
-using WPFModelViewer;
 using MVCore.Utils;
 using libMBIN.NMS.GameComponents;
 using libMBIN.NMS;
@@ -355,9 +355,11 @@ namespace MVCore
             foreach (KeyValuePair<ulong, geomMeshMetaData> pair in geom.meshMetaDataDict)
             {
                 geomMeshMetaData mmd = pair.Value;
-                geomMeshData md = new geomMeshData();
-                md.vs_buffer = new byte[mmd.vs_size];
-                md.is_buffer = new byte[mmd.is_size];
+                geomMeshData md = new geomMeshData
+                {
+                    vs_buffer = new byte[mmd.vs_size],
+                    is_buffer = new byte[mmd.is_size]
+                };
 
                 //Fetch Buffers
                 gfs.Seek((int) mmd.vs_abs_offset, SeekOrigin.Begin);
@@ -553,7 +555,7 @@ namespace MVCore
 
                 if (fs is null)
                 {
-                    Util.showError("Could not find geometry file " + geomfile + ".PC", "Error");
+                    Common.CallBacks.showError("Could not find geometry file " + geomfile + ".PC", "Error");
                     Common.CallBacks.Log(string.Format("Could not find geometry file {0} ", geomfile + ".PC"), Common.LogVerbosityLevel.ERROR);
 
                     //Create Dummy Scene
@@ -857,7 +859,7 @@ namespace MVCore
                 {
                     so.metaData.LODLevel = (int)Char.GetNumericValue(so.name[so.name.IndexOf("LOD") + 3]);
                 }
-                catch (IndexOutOfRangeException ex)
+                catch (IndexOutOfRangeException)
                 {
                     Common.CallBacks.Log("Unable to fetch lod level from mesh name", Common.LogVerbosityLevel.WARNING);
                     so.metaData.LODLevel = 0;
@@ -947,7 +949,7 @@ namespace MVCore
                 {
                     meshVao.bHullVao = gobject.getCollisionMeshVao(so.metaData); //Missing data
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     Common.CallBacks.Log("Error while fetching bHull Collision Mesh", Common.LogVerbosityLevel.ERROR);
                     meshVao.bHullVao = null;
@@ -1063,14 +1065,14 @@ namespace MVCore
                 {
                     attachment_data = NMSUtils.LoadNMSTemplate(attachment, ref Common.RenderState.activeResMgr) as TkAttachmentData;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     attachment_data = null;
                 }
             }
 
             if (node.Attributes.Count > 1)
-                Util.showError("DM THE IDIOT TO ADD SUPPORT FOR FUCKING MULTIPLE ATTACHMENTS...", "DM THE IDIOT");
+                Common.CallBacks.showError("DM THE IDIOT TO ADD SUPPORT FOR FUCKING MULTIPLE ATTACHMENTS...", "DM THE IDIOT");
 
             //Set Properties
             //Testingso.Name = name + "_LOC";
@@ -1206,7 +1208,7 @@ namespace MVCore
             //Get Options
             //In collision objects first child is probably the type
             //string collisionType = ((XmlElement)attribs.ChildNodes[0].SelectSingleNode("Property[@name='Value']")).GetAttribute("value").ToUpper();
-            string collisionType = node.Attributes.FirstOrDefault(item => item.Name == "TYPE").Value.ToUpper();
+            string collisionType = node.Attributes.FirstOrDefault(item => item.Name == "TYPE").Value.Value.ToUpper();
 
             Common.CallBacks.Log(string.Format("Collision Detected {0} {1}", node.Name, collisionType), 
                 Common.LogVerbosityLevel.INFO);
@@ -1545,8 +1547,7 @@ namespace MVCore
                 Common.LogVerbosityLevel.INFO);
             Common.CallBacks.updateStatus("Importing Scene: " + scene?.name + " Part: " + node.Name);
 
-            TYPES typeEnum;
-            if (!Enum.TryParse<TYPES>(node.Type, out typeEnum))
+            if (!Enum.TryParse<TYPES>(node.Type, out TYPES typeEnum))
                 throw new Exception("Node Type " + node.Type + "Not supported");
 
             if (typeEnum == TYPES.MESH)

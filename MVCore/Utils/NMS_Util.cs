@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using libMBIN;
 using OpenTK;
+using OpenTK.Mathematics;
 using libMBIN.NMS.Toolkit;
 using System.Security.Permissions;
-using WPFModelViewer;
 using System.Linq;
 using OpenTK.Graphics.OpenGL4;
 using Microsoft.Win32;
@@ -53,12 +53,12 @@ namespace MVCore.Utils
             {
                 if (ex is System.IO.DirectoryNotFoundException || ex is System.IO.FileNotFoundException)
                 {
-                    Util.showError("File " + filepath + " Not Found...", "Error");
+                    CallBacks.showError("File " + filepath + " Not Found...", "Error");
 
 
                 } else if (ex is System.Reflection.TargetInvocationException)
                 {
-                    Util.showError("libMBIN failed to decompile the file. Try to update the libMBIN.dll (File->updateLibMBIN). If the issue persists contact the developer", "Error");
+                    CallBacks.showError("libMBIN failed to decompile the file. Try to update the libMBIN.dll (File->updateLibMBIN). If the issue persists contact the developer", "Error");
                 }
                 return null;
 
@@ -92,7 +92,7 @@ namespace MVCore.Utils
             } else
             {
                 CallBacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", LogVerbosityLevel.ERROR);
-                Util.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
+                CallBacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
                 throw new FileNotFoundException("File not found\n " + filepath);
             }
             switch (load_mode)
@@ -149,7 +149,7 @@ namespace MVCore.Utils
             else
             {
                 CallBacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", LogVerbosityLevel.ERROR);
-                Util.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
+                CallBacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
                 return null;
             }
 
@@ -185,17 +185,17 @@ namespace MVCore.Utils
             } catch (Exception ex)
             {
                 if (ex is System.IO.DirectoryNotFoundException || ex is System.IO.FileNotFoundException)
-                    Util.showError("File " + effective_filepath + " Not Found...", "Error");
+                    CallBacks.showError("File " + effective_filepath + " Not Found...", "Error");
                 else if (ex is System.IO.IOException)
-                    Util.showError("File " + effective_filepath + " problem...", "Error");
+                    CallBacks.showError("File " + effective_filepath + " problem...", "Error");
                 else if (ex is System.Reflection.TargetInvocationException)
                 {
-                    Util.showError("libMBIN failed to decompile file. If this is a vanilla file, contact the MbinCompiler developer",
+                    CallBacks.showError("libMBIN failed to decompile file. If this is a vanilla file, contact the MbinCompiler developer",
                     "Error");
                 }
                 else
                 {
-                    Util.showError("Unhandled Exception " + ex.Message, "Error");
+                    CallBacks.showError("Unhandled Exception " + ex.Message, "Error");
                 }
                 return null;
 
@@ -219,12 +219,12 @@ namespace MVCore.Utils
             TkAnimNodeFrameData frame = animMeta.AnimFrameData[frameCounter];
             TkAnimNodeFrameData stillframe = animMeta.StillFrameData;
 
-            OpenTK.Quaternion q;
+            Quaternion q;
             //Check if there is a rotation for that node
             if (node.RotIndex < frame.Rotations.Count)
             {
                 int rotindex = node.RotIndex;
-                q = new OpenTK.Quaternion(frame.Rotations[rotindex].x,
+                q = new Quaternion(frame.Rotations[rotindex].x,
                                 frame.Rotations[rotindex].y,
                                 frame.Rotations[rotindex].z,
                                 frame.Rotations[rotindex].w);
@@ -232,7 +232,7 @@ namespace MVCore.Utils
             else //Load stillframedata
             {
                 int rotindex = node.RotIndex - frame.Rotations.Count;
-                q = new OpenTK.Quaternion(stillframe.Rotations[rotindex].x,
+                q = new Quaternion(stillframe.Rotations[rotindex].x,
                                 stillframe.Rotations[rotindex].y,
                                 stillframe.Rotations[rotindex].z,
                                 stillframe.Rotations[rotindex].w);
@@ -337,17 +337,17 @@ namespace MVCore.Utils
             if (node.ScaleIndex < frame.Scales.Count)
             {
                 v = new Vector3(
-                    frame.Scales[node.ScaleIndex].x / frame.Scales[node.ScaleIndex].t,
-                    frame.Scales[node.ScaleIndex].y / frame.Scales[node.ScaleIndex].t, 
-                    frame.Scales[node.ScaleIndex].z / frame.Scales[node.ScaleIndex].t );
+                    frame.Scales[node.ScaleIndex].x,
+                    frame.Scales[node.ScaleIndex].y, 
+                    frame.Scales[node.ScaleIndex].z);
             }
             else //Load stillframedata
             {
                 int scaleindex = node.ScaleIndex - frame.Scales.Count;
                 v = new Vector3(
-                    stillframe.Scales[scaleindex].x / stillframe.Scales[scaleindex].t,
-                    stillframe.Scales[scaleindex].y / stillframe.Scales[scaleindex].t,
-                    stillframe.Scales[scaleindex].z / stillframe.Scales[scaleindex].t );
+                    stillframe.Scales[scaleindex].x,
+                    stillframe.Scales[scaleindex].y,
+                    stillframe.Scales[scaleindex].z);
             }
 
             return v;
@@ -373,9 +373,9 @@ namespace MVCore.Utils
                 activeFrame = stillframe;
             }
 
-            s.X = activeFrame.Scales[scaleIndex].x / activeFrame.Scales[scaleIndex].t;
-            s.Y = activeFrame.Scales[scaleIndex].y / activeFrame.Scales[scaleIndex].t;
-            s.Z = activeFrame.Scales[scaleIndex].z / activeFrame.Scales[scaleIndex].t;
+            s.X = activeFrame.Scales[scaleIndex].x;
+            s.Y = activeFrame.Scales[scaleIndex].y;
+            s.Z = activeFrame.Scales[scaleIndex].z;
             
         }
 
@@ -387,7 +387,7 @@ namespace MVCore.Utils
             CallBacks.Log("Trying to load PAK files from " + gameDir, LogVerbosityLevel.INFO);
             if (!Directory.Exists(gameDir))
             {
-                Util.showError("Unable to locate game Directory. PAK files (Vanilla + Mods) not loaded. You can still work using unpacked files", "Info");
+                CallBacks.showError("Unable to locate game Directory. PAK files (Vanilla + Mods) not loaded. You can still work using unpacked files", "Info");
                 status = - 1;
                 return;
             }
@@ -414,7 +414,7 @@ namespace MVCore.Utils
                 }
                 catch (Exception ex)
                 {
-                    Util.showError("An Error Occured : " + ex.Message, "Error");
+                    CallBacks.showError("An Error Occured : " + ex.Message, "Error");
                     CallBacks.Log("Pak file " + pak_path + " failed to load", LogVerbosityLevel.ERROR);
                     CallBacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, LogVerbosityLevel.ERROR);
                 }
@@ -440,7 +440,7 @@ namespace MVCore.Utils
                     }
                     catch (Exception ex)
                     {
-                        Util.showError("An Error Occured : " + ex.Message, "Error");
+                        CallBacks.showError("An Error Occured : " + ex.Message, "Error");
                         CallBacks.Log("Pak file " + pak_path + " failed to load", LogVerbosityLevel.ERROR);
                         CallBacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, LogVerbosityLevel.ERROR);
                     }
@@ -569,7 +569,7 @@ namespace MVCore.Utils
             try
             {
                 val = fetchSteamGameInstallationDir() as string;
-            } catch (Exception e) {
+            } catch (Exception) {
                 val = null;
             }
 

@@ -68,7 +68,6 @@ namespace MVCore.Text
 
         private void loadHieroFont(StreamReader fnt_sr, Bitmap img_data)
         {
-            string texFilePath = "";
             while (!fnt_sr.EndOfStream)
             {
                 string line = fnt_sr.ReadLine();
@@ -101,8 +100,6 @@ namespace MVCore.Text
                 {
 
                     sp = line.Split(new string[] { "page id=", "file=" }, StringSplitOptions.None);
-
-                    texFilePath = sp[2].Trim(' ').Trim('\"');
                 }
                 else if (line.StartsWith("chars"))
                 {
@@ -114,8 +111,7 @@ namespace MVCore.Text
                                                    "xoffset=", "yoffset=", "xadvance=", "page=", "chnl="}, StringSplitOptions.None);
 
                     Symbol s = new Symbol();
-                    int char_id;
-                    int.TryParse(sp[1].Trim(' '), out char_id);
+                    int.TryParse(sp[1].Trim(' '), out int char_id);
                     s.symbol = char.ConvertFromUtf32(char_id);
                     int.TryParse(sp[2].Trim(' '), out s.x_pos);
                     int.TryParse(sp[3].Trim(' '), out s.y_pos);

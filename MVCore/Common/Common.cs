@@ -2,16 +2,17 @@
 using System.Collections.Generic;
 using System.Text;
 using OpenTK;
+using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using MVCore.GMDL;
 using MVCore.Input;
 using MVCore;
 using GLSLHelper;
-using WPFModelViewer;
 using System.ComponentModel;
-using System.Windows.Forms;
 using System.Diagnostics.Contracts;
 using Newtonsoft.Json;
+using System.Resources;
+using System.Reflection;
 
 namespace MVCore.Common
 {
@@ -71,7 +72,7 @@ namespace MVCore.Common
         public static float progressTime(double dt)
         {
             float new_time = (float) dt / 500;
-            new_time = new_time % 1000.0f;
+            new_time %= 1000.0f;
             return new_time;
         }
 
@@ -240,6 +241,22 @@ namespace MVCore.Common
     }
 
 
+    public static class AppResourceManager
+    {
+        public static object getEmbeddedResource(string name)
+        {
+            string resxFile = @".\Resources.resx";
+            byte[] data = null;
+
+            using (ResourceReader rr = new ResourceReader(resxFile))
+            {
+                string resType;
+                rr.GetResourceData(name, out resType, out data);
+            }
+            
+            return data;
+        }
+    }
 
     public class Settings : INotifyPropertyChanged
     {

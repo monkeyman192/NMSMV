@@ -4,6 +4,7 @@ using MVCore;
 using MVCore.GMDL;
 using MVCore.GMDL.Primitives;
 using OpenTK;
+using OpenTK.Mathematics;
 
 public enum GIZMO_PART_TYPE{
 	T_X = 0x0,

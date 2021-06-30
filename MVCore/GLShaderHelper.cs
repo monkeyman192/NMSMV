@@ -6,7 +6,6 @@ using System.Reflection;
 using MVCore;
 using MVCore.Common;
 using System.Windows;
-using WPFModelViewer;
 using MVCore.Utils;
 
 namespace GLSLHelper { 
@@ -30,6 +29,7 @@ namespace GLSLHelper {
         CAMERA_SHADER,
         TEXTURE_MIX_SHADER,
         PASSTHROUGH_SHADER,
+        RED_FILL_SHADER,
         LIGHT_SHADER,
         TEXT_SHADER,
         MATERIAL_SHADER,
@@ -59,10 +59,10 @@ namespace GLSLHelper {
 
         public string compilation_log = ""; //Keep track of the generated log during shader compilation
         
-        public List<GLSLShaderConfig> parentShaders = new List<GLSLShaderConfig>(); //Keeps track of all the Shaders that the current text belongs to
+        public List<GLSLShaderConfig> parentShaders = new(); //Keeps track of all the Shaders that the current text belongs to
 
         //Static random generator used in temp file name generation
-        private static Random rand_gen = new Random(999991);
+        private static readonly Random rand_gen = new(999991);
 
         //FileSystemWatcher lists
         private Dictionary<FileSystemWatcher, int> FileWatcherDict = new Dictionary<FileSystemWatcher, int>();
@@ -106,24 +106,23 @@ namespace GLSLHelper {
         {
             compilation_log = ""; //Reset compilation log
             shader_object_id = GL.CreateShader(shader_type);
-            string info, actual_shader_source;
-            int status_code, actual_shader_length;
             
             //Compile Shader
             GL.ShaderSource(shader_object_id, string_num, strings, (int[]) null);
             //Get resolved shader text
-            GL.GetShaderSource(shader_object_id, 32768, out actual_shader_length, out actual_shader_source);
+            GL.GetShaderSource(shader_object_id, 32768, out int actual_shader_length, out string actual_shader_source);
             resolved_text = actual_shader_source; //Store full shader code
             
             GL.CompileShader(shader_object_id);
-            GL.GetShaderInfoLog(shader_object_id, out info);
+            GL.GetShaderInfoLog(shader_object_id, out string info);
 
             compilation_log += info + "\n";
-            GL.GetShader(shader_object_id, ShaderParameter.CompileStatus, out status_code);
+            GL.GetShader(shader_object_id, ShaderParameter.CompileStatus, out int status_code);
             if (status_code != 1)
             {
                 Console.WriteLine(GLShaderHelper.NumberLines(actual_shader_source));
-                Util.showError("Failed to compile shader for the model. Contact Dev",
+                
+                CallBacks.showError("Failed to compile shader for the model. Contact Dev",
                     "Shader Compilation Error");
                 GLShaderHelper.throwCompilationError(compilation_log +
                     GLShaderHelper.NumberLines(actual_shader_source) + "\n" + info);
@@ -439,27 +438,23 @@ namespace GLSLHelper {
         {
             //Print Debug Information for the UBO
             // Get named blocks info
-            int count, info, length;
             int test_program = shader_conf.program_id;
-            GL.GetProgram(test_program, GetProgramParameterName.ActiveUniformBlocks, out count);
+            GL.GetProgram(test_program, GetProgramParameterName.ActiveUniformBlocks, out int count);
 
             for (int i = 0; i < count; ++i)
             {
                 // Get blocks name
-                string block_name;
-                int block_size, block_bind_index;
-                GL.GetActiveUniformBlockName(test_program, i, 256, out length, out block_name);
-                GL.GetActiveUniformBlock(test_program, i, ActiveUniformBlockParameter.UniformBlockDataSize, out block_size);
+                GL.GetActiveUniformBlockName(test_program, i, 256, out int length, out string block_name);
+                GL.GetActiveUniformBlock(test_program, i, ActiveUniformBlockParameter.UniformBlockDataSize, out int block_size);
                 Console.WriteLine("Block {0} Data Size {1}", block_name, block_size);
 
-                GL.GetActiveUniformBlock(test_program, i, ActiveUniformBlockParameter.UniformBlockBinding, out block_bind_index);
+                GL.GetActiveUniformBlock(test_program, i, ActiveUniformBlockParameter.UniformBlockBinding, out int block_bind_index);
                 Console.WriteLine("    Block Binding Point {0}", block_bind_index);
 
-                GL.GetInteger(GetIndexedPName.UniformBufferBinding, block_bind_index, out info);
+                GL.GetInteger(GetIndexedPName.UniformBufferBinding, block_bind_index, out int info);
                 Console.WriteLine("    Block Bound to Binding Point: {0} {{", info);
 
-                int block_active_uniforms;
-                GL.GetActiveUniformBlock(test_program, i, ActiveUniformBlockParameter.UniformBlockActiveUniforms, out block_active_uniforms);
+                GL.GetActiveUniformBlock(test_program, i, ActiveUniformBlockParameter.UniformBlockActiveUniforms, out int block_active_uniforms);
                 int[] uniform_indices = new int[block_active_uniforms];
                 GL.GetActiveUniformBlock(test_program, i, ActiveUniformBlockParameter.UniformBlockActiveUniformIndices, uniform_indices);
 
@@ -475,10 +470,7 @@ namespace GLSLHelper {
 
                 for (int k = 0; k < block_active_uniforms; ++k)
                 {
-                    int actual_name_length;
-                    string name;
-
-                    GL.GetActiveUniformName(test_program, uniform_indices[k], 256, out actual_name_length, out name);
+                    GL.GetActiveUniformName(test_program, uniform_indices[k], 256, out int actual_name_length, out string name);
                     Console.WriteLine("\t{0}", name);
 
                     Console.WriteLine("\t\t    type: {0}", uniform_types[k]);
@@ -509,8 +501,6 @@ namespace GLSLHelper {
         //Shader Creation
         static public void CreateShaders(GLSLShaderConfig config)
         {
-            int status_code;
-            string info;
             bool gsflag = false;
             bool tsflag = false;
 
@@ -575,11 +565,11 @@ namespace GLSLHelper {
             //Check Linking
             if (RenderState.enableShaderCompilationLog)
             {
-                GL.GetProgramInfoLog(config.program_id, out info);
+                GL.GetProgramInfoLog(config.program_id, out string info);
                 config.log += info + "\n";
             }
                 
-            GL.GetProgram(config.program_id, GetProgramParameterName.LinkStatus, out status_code);
+            GL.GetProgram(config.program_id, GetProgramParameterName.LinkStatus, out int status_code);
             if (status_code != 1)
                 throwCompilationError(config.log);
 
@@ -589,21 +579,16 @@ namespace GLSLHelper {
 
         static private void loadActiveUniforms(GLSLShaderConfig shader_conf)
         {
-            int active_uniforms_count;
-            GL.GetProgram(shader_conf.program_id, GetProgramParameterName.ActiveUniforms, out active_uniforms_count);
+            GL.GetProgram(shader_conf.program_id, GetProgramParameterName.ActiveUniforms, out int active_uniforms_count);
 
             shader_conf.uniformLocations.Clear(); //Reset locataions
             shader_conf.log += "Active Uniforms: " + active_uniforms_count.ToString() + "\n";
             for (int i = 0; i < active_uniforms_count; i++)
             {
-                int size;
                 int bufSize = 64;
-                int length;
-                string name;
-                ActiveUniformType type;
                 int loc;
 
-                GL.GetActiveUniform(shader_conf.program_id, i, bufSize, out size, out length, out type, out name);
+                GL.GetActiveUniform(shader_conf.program_id, i, bufSize, out int size, out int length, out ActiveUniformType type, out string name);
                 loc = GL.GetUniformLocation(shader_conf.program_id, name);
                 shader_conf.uniformLocations[name] = loc; //Store location
                 
@@ -621,9 +606,7 @@ namespace GLSLHelper {
             Console.WriteLine("Actually Modifying Shader");
 
             int[] attached_shaders = new int[20];
-            int count;
-            int status_code;
-            GL.GetAttachedShaders(shader_conf.program_id, 20, out count, attached_shaders);
+            GL.GetAttachedShaders(shader_conf.program_id, 20, out int count, attached_shaders);
 
             for (int i = 0; i < count; i++)
             {
@@ -642,7 +625,7 @@ namespace GLSLHelper {
                     GL.AttachShader(shader_conf.program_id, shaderText.shader_object_id);
                     GL.LinkProgram(shader_conf.program_id);
 
-                    GL.GetProgram(shader_conf.program_id, GetProgramParameterName.LinkStatus, out status_code);
+                    GL.GetProgram(shader_conf.program_id, GetProgramParameterName.LinkStatus, out int status_code);
                     if (status_code != 1)
                     {
                         Console.WriteLine("Unable to link the new shader. Reverting to the old shader");

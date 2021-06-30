@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using OpenTK;
+using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using GLSLHelper;
 using System.IO;
@@ -918,7 +919,7 @@ namespace MVCore.GMDL
                 }
 
 
-                v = Vector4.Transform(v, this.worldMat);
+                v = Vector4.TransformRow(v, this.worldMat);
 
                 //s.WriteLine("v " + Half.decompress(v1).ToString() + " "+ Half.decompress(v2).ToString() + " " + Half.decompress(v3).ToString());
                 s.WriteLine("v " + v.X.ToString() + " " + v.Y.ToString() + " " + v.Z.ToString());
@@ -981,7 +982,7 @@ namespace MVCore.GMDL
                 //Transform normal with normalMatrix
 
 
-                vN = Vector4.Transform(vN, nMat);
+                vN = Vector4.TransformRow(vN, nMat);
 
                 s.WriteLine("vn " + vN.X.ToString() + " " + vN.Y.ToString() + " " + vN.Z.ToString());
                 vbr.BaseStream.Seek(gobject.vx_size - n_section_bytes, SeekOrigin.Current);

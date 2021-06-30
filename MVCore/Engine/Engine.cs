@@ -5,6 +5,8 @@ using System.Threading;
 using OpenTK;
 using OpenTK.Input;
 using OpenTK.Graphics;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common.Input;
 using OpenTK.Graphics.OpenGL4;
 using MVCore.Common;
 using MVCore.GMDL;
@@ -14,9 +16,11 @@ using GLSLHelper;
 using MVCore.Text;
 using MVCore.Utils;
 using Model_Viewer;
-using OpenTK.Platform;
 using MVCore.Engine.Systems;
 using libMBIN.NMS.Toolkit;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using OpenTK.Windowing.Desktop;
+
 
 namespace MVCore.Engine
 {
@@ -31,23 +35,22 @@ namespace MVCore.Engine
 
     public class Engine
     {
-        //Window References
-        private GLControl Control;
-        
         public ResourceManager resMgr;
 
         //Init Systems
         public ActionSystem actionSys;
         public AnimationSystem animationSys;
+        public RenderingSystem renderSys;//TODO: Try to make it private. Noone should have a reason to access it
         private RequestHandler reqHandler;
-        
+        private NativeWindow windowHandler;
+
         //Rendering 
-        public renderManager renderMgr; //TODO: Try to make it private. Noone should have a reason to access it
+        
         public EngineRenderingState rt_State;
 
         //Input
         public BaseGamepadHandler gpHandler;
-        public KeyboardHandler kbHandler;
+        public KeyboardState kbState;
         private System.Timers.Timer inputPollTimer;
 
         //Camera Stuff
@@ -66,9 +69,11 @@ namespace MVCore.Engine
         //Palette
         Dictionary<string, Dictionary<string, Vector4>> palette;
 
-        public Engine()
+        public Engine(NativeWindow win)
         {
-            kbHandler = new KeyboardHandler();
+            //Store Window handler
+            windowHandler = win;
+            
             //gpHandler = new PS4GamePadHandler(0); //TODO: Add support for PS4 controller
             reqHandler = new RequestHandler();
 
@@ -77,7 +82,7 @@ namespace MVCore.Engine
             //Assign new palette to GLControl
             palette = Palettes.createPalettefromBasePalettes();
 
-            renderMgr = new renderManager(); //Init renderManager of the engine
+            renderSys = new RenderingSystem(); //Init renderManager of the engine
 
             //Input Polling Timer
             inputPollTimer = new System.Timers.Timer();
@@ -106,7 +111,7 @@ namespace MVCore.Engine
             CallBacks.Log("* ENGINE : " + msg, lvl);
         }
 
-        public void init()
+        public void init(int width, int height)
         {
             //Start Timers
             inputPollTimer.Start();
@@ -121,8 +126,8 @@ namespace MVCore.Engine
                 resMgr.Init();
 
             //Initialize the render manager
-            renderMgr.init(resMgr);
-            renderMgr.setupGBuffer(Control.ClientSize.Width, Control.ClientSize.Height);
+            renderSys.init(resMgr, width, height);
+            
             rt_State = EngineRenderingState.ACTIVE;
 
             Log("Initialized", LogVerbosityLevel.INFO);
@@ -134,30 +139,40 @@ namespace MVCore.Engine
             if (reqHandler.hasOpenRequests())
             {
                 ThreadRequest req = reqHandler.Fetch();
+                THREAD_REQUEST_STATUS req_status = THREAD_REQUEST_STATUS.FINISHED;
                 Log("Handling Request " + req.type, LogVerbosityLevel.HIDEBUG);
                 lock (req)
                 {
                     switch (req.type)
                     {
                         case THREAD_REQUEST_TYPE.QUERY_GLCONTROL_STATUS_REQUEST:
+                            if (rt_State == EngineRenderingState.UNINITIALIZED)
+                                req_status = THREAD_REQUEST_STATUS.ACTIVE;
+                            else
+                                req_status = THREAD_REQUEST_STATUS.FINISHED;
                             //At this point the renderer is up and running
                             break;
                         case THREAD_REQUEST_TYPE.INIT_RESOURCE_MANAGER:
                             resMgr.Init();
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.NEW_SCENE_REQUEST:
                             inputPollTimer.Stop();
                             rt_addRootScene((string)req.arguments[0]);
                             inputPollTimer.Start();
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-#if DEBUG
+#if DEBUG               
                         case THREAD_REQUEST_TYPE.NEW_TEST_SCENE_REQUEST:
                             inputPollTimer.Stop();
                             rt_addTestScene((int)req.arguments[0]);
                             inputPollTimer.Start();
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
 #endif
                         case THREAD_REQUEST_TYPE.CHANGE_MODEL_PARENT_REQUEST:
+                            throw new Exception("Not Implemented");
+                            /*
                             Model source = (Model) req.arguments[0];
                             Model target = (Model) req.arguments[1];
 
@@ -170,62 +185,69 @@ namespace MVCore.Engine
                                 source.parent = target;
                                 target.Children.Add(source);
                             }));
-
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
+                            */
                             break;
                         case THREAD_REQUEST_TYPE.UPDATE_SCENE_REQUEST:
                             Scene req_scn = (Scene)req.arguments[0];
                             req_scn.update();
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_COMPILE_ALL_SHADERS_REQUEST:
                             resMgr.compileMainShaders();
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.MOUSEPOSITION_INFO_REQUEST:
                             Vector4[] t = (Vector4[])req.arguments[2];
-                            renderMgr.getMousePosInfo((int)req.arguments[0], (int)req.arguments[1],
+                            renderSys.getMousePosInfo((int)req.arguments[0], (int)req.arguments[1],
                                 ref t);
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_RESIZE_REQUEST:
                             rt_ResizeViewport((int)req.arguments[0], (int)req.arguments[1]);
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_MODIFY_SHADER_REQUEST:
                             GLShaderHelper.modifyShader((GLSLShaderConfig)req.arguments[0],
                                          (GLSLShaderText)req.arguments[1]);
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GIZMO_PICKING_REQUEST:
                             //TODO: Send the nessessary arguments to the render manager and mark the active gizmoparts
                             Gizmo g = (Gizmo)req.arguments[0];
-                            renderMgr.gizmoPick(ref g, (Vector2)req.arguments[1]);
+                            renderSys.gizmoPick(ref g, (Vector2)req.arguments[1]);
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.TERMINATE_REQUEST:
                             rt_State = EngineRenderingState.EXIT;
                             inputPollTimer.Stop();
+                            resMgr.Cleanup(); //Free Resources
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_PAUSE_RENDER_REQUEST:
                             rt_State = EngineRenderingState.PAUSED;
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_RESUME_RENDER_REQUEST:
                             rt_State = EngineRenderingState.ACTIVE;
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.NULL:
+                            req_status = THREAD_REQUEST_STATUS.ACTIVE;
                             break;
                     }
                 }
 
-                req.status = THREAD_REQUEST_STATUS.FINISHED;
+                req.status = req_status;
                 Log("Request Handled", LogVerbosityLevel.HIDEBUG);
             }
-        }
-
-        public void SetControl(CGLControl control)
-        {
-            Control = control;
         }
 
         //Main Rendering Routines
 
         private void rt_ResizeViewport(int w, int h)
         {
-            renderMgr.resize(w, h);
+            renderSys.resize(w, h);
         }
 
 #if DEBUG
@@ -260,12 +282,12 @@ namespace MVCore.Engine
             RenderState.settings.rendering.ToggleAnimations = false;
 
             //Setup new object
-            Scene scene = new Scene();
+            Scene scene = new();
             scene.name = "DEFAULT SCENE";
 
 
             //Add Lights
-            Light l = new Light()
+            Light l = new()
             {
                 Name = "Light 1",
                 Color = new MVector3(1.0f, 1.0f, 1.0f),
@@ -278,7 +300,7 @@ namespace MVCore.Engine
             Common.RenderState.activeResMgr.GLlights.Add(l);
             scene.children.Add(l);
 
-            Light l1 = new Light()
+            Light l1 = new()
             {
                 Name = "Light 2",
                 Color = new MVector3(1.0f, 1.0f, 1.0f),
@@ -291,7 +313,7 @@ namespace MVCore.Engine
             Common.RenderState.activeResMgr.GLlights.Add(l1);
             scene.children.Add(l1);
 
-            Light l2 = new Light()
+            Light l2 = new()
             {
                 Name = "Light 3",
                 Color = new MVector3(1.0f, 1.0f, 1.0f),
@@ -304,7 +326,7 @@ namespace MVCore.Engine
             Common.RenderState.activeResMgr.GLlights.Add(l2);
             scene.children.Add(l2);
 
-            Light l3 = new Light()
+            Light l3 = new()
             {
                 Name = "Light 4",
                 Color = new MVector3(1.0f, 1.0f, 1.0f),
@@ -318,7 +340,7 @@ namespace MVCore.Engine
             scene.children.Add(l3);
 
             //Generate a Sphere and center it in the scene
-            Mesh sphere = new Mesh();
+            Mesh sphere = new();
             sphere.Name = "Test Sphere";
             sphere.parent = scene;
             sphere.setParentScene(scene);
@@ -344,11 +366,7 @@ namespace MVCore.Engine
             
             Uniform uf = new Uniform();
             uf.Name = "gMaterialColourVec4";
-            uf.Values = new libMBIN.NMS.Vector4f();
-            uf.Values.x = 1.0f;
-            uf.Values.y = 0.0f;
-            uf.Values.z = 0.0f;
-            uf.Values.t = 1.0f;
+            uf.Values = new(1.0f,0.0f,0.0f,1.0f);
             mat.Uniforms.Add(uf);
 
             uf = new Uniform();
@@ -378,10 +396,10 @@ namespace MVCore.Engine
             RenderState.activeResMgr.GLScenes["TEST_SCENE_1"] = scene; //Use input path
 
             //Populate RenderManager
-            renderMgr.populate(scene);
+            renderSys.populate(scene);
 
             //Clear Instances
-            renderMgr.clearInstances();
+            renderSys.clearInstances();
             scene.updateMeshInfo(); //Update all mesh info
 
             scene.selected = 1;
@@ -458,10 +476,10 @@ namespace MVCore.Engine
             root.setupSkinMatrixArrays();
 
             //Populate RenderManager
-            renderMgr.populate(root);
+            renderSys.populate(root);
 
             //Clear Instances
-            renderMgr.clearInstances();
+            renderSys.clearInstances();
             root.updateMeshInfo(); //Update all mesh info
 
             root.selected = 1;
@@ -499,7 +517,7 @@ namespace MVCore.Engine
             });
             */
 
-            kbHandler?.updateState();
+            kbState = windowHandler?.KeyboardState;
             if (focused)
             {
                 
@@ -581,24 +599,28 @@ namespace MVCore.Engine
         }
 
         //Keyboard handler
+        private int keyDownStateToInt(Keys k)
+        {
+            bool state = kbState.IsKeyDown(k);
+
+            return state ? 1 : 0;
+        }
         private void keyboardController()
         {
-            if (kbHandler == null) return;
-
             //Camera Movement
             float step = 0.002f;
             float x, y, z;
 
-            x = kbHandler.getKeyStatus(Key.D) - kbHandler.getKeyStatus(Key.A);
-            y = kbHandler.getKeyStatus(Key.W) - kbHandler.getKeyStatus(Key.S);
-            z = kbHandler.getKeyStatus(Key.R) - kbHandler.getKeyStatus(Key.F);
+            x = keyDownStateToInt(Keys.D) - keyDownStateToInt(Keys.A);
+            y = keyDownStateToInt(Keys.W) - keyDownStateToInt(Keys.S);
+            z = keyDownStateToInt(Keys.R) - keyDownStateToInt(Keys.F);
 
             //Camera rotation is done exclusively using the mouse
 
             //rotx = 50 * step * (kbHandler.getKeyStatus(OpenTK.Input.Key.E) - kbHandler.getKeyStatus(OpenTK.Input.Key.Q));
             //float roty = (kbHandler.getKeyStatus(Key.C) - kbHandler.getKeyStatus(Key.Z));
 
-            RenderState.rotAngles.Y += 100 * step * (kbHandler.getKeyStatus(Key.E) - kbHandler.getKeyStatus(Key.Q));
+            RenderState.rotAngles.Y += 100 * step * (keyDownStateToInt(Keys.E) - keyDownStateToInt(Keys.Q));
             RenderState.rotAngles.Y %= 360;
 
             //Move Camera
