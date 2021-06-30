@@ -1269,8 +1269,6 @@ namespace MVCore.Engine.Systems
             }
 
 
-
-
         }
 
         public void render()

@@ -134,7 +134,6 @@ namespace MVCore.Utils
             string exmlpath = Path.ChangeExtension(filepath, "exml");
             exmlpath = exmlpath.ToUpper(); //Make upper case
             
-
             if (File.Exists(Path.Combine(RenderState.settings.UnpackDir, exmlpath)))
                 load_mode = 0; //Load Exml
             else if (File.Exists(Path.Combine(RenderState.settings.UnpackDir, filepath)))
