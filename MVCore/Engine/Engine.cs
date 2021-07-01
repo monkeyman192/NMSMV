@@ -50,8 +50,10 @@ namespace MVCore.Engine
 
         //Input
         public BaseGamepadHandler gpHandler;
-        public KeyboardState kbState;
         private System.Timers.Timer inputPollTimer;
+
+        //Keyboard State
+        private KeyboardState kbState;
 
         //Camera Stuff
         public System.Timers.Timer cameraMovementTimer;
@@ -73,7 +75,8 @@ namespace MVCore.Engine
         {
             //Store Window handler
             windowHandler = win;
-            
+            kbState = win.KeyboardState;
+
             //gpHandler = new PS4GamePadHandler(0); //TODO: Add support for PS4 controller
             reqHandler = new RequestHandler();
 
@@ -103,7 +106,6 @@ namespace MVCore.Engine
 
             //Set Start Status
             rt_State = EngineRenderingState.UNINITIALIZED;
-
         }
 
         private void Log(string msg, LogVerbosityLevel lvl)
@@ -120,22 +122,22 @@ namespace MVCore.Engine
             //Init Gizmos
             //gizTranslate = new TranslationGizmo();
             //activeGizmo = gizTranslate;
-            resMgr = new ResourceManager();
-            RenderState.activeResMgr = resMgr; //Set reference first because the object generators use the activeResMgr
+            resMgr = RenderState.activeResMgr;
             if (!resMgr.initialized)
-                resMgr.Init();
-
+            {
+                throw new Exception("Resource Manager not initialized");
+                //resMgr.Init();
+            }
+            
             //Initialize the render manager
             renderSys.init(resMgr, width, height);
-            
             rt_State = EngineRenderingState.ACTIVE;
-
             Log("Initialized", LogVerbosityLevel.INFO);
         }
 
         public void handleRequests()
         {
-            Log(string.Format(" {0} Open Requests ", reqHandler.getOpenRequestNum()), LogVerbosityLevel.HIDEBUG);
+            //Log(string.Format(" {0} Open Requests ", reqHandler.getOpenRequestNum()), LogVerbosityLevel.HIDEBUG);
             if (reqHandler.hasOpenRequests())
             {
                 ThreadRequest req = reqHandler.Fetch();
@@ -517,7 +519,6 @@ namespace MVCore.Engine
             });
             */
 
-            kbState = windowHandler?.KeyboardState;
             if (focused)
             {
                 
@@ -602,9 +603,9 @@ namespace MVCore.Engine
         private int keyDownStateToInt(Keys k)
         {
             bool state = kbState.IsKeyDown(k);
-
             return state ? 1 : 0;
         }
+
         private void keyboardController()
         {
             //Camera Movement

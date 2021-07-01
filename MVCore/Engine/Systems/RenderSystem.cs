@@ -87,9 +87,11 @@ namespace MVCore.Engine.Systems
         private PBuffer pbuf;
         private FBO gizmo_fbo;
         private FBO blur_fbo;
+        private FBO render_fbo;
+        private Vector2i ViewportSize;
         private int blur_fbo_scale = 2;
         private double gfTime = 0.0f;
-        private double frameTime = 0.0f;
+        
         private Dictionary<string, int> UBOs = new Dictionary<string, int>();
         private Dictionary<string, int> SSBOs = new Dictionary<string, int>();
 
@@ -182,8 +184,14 @@ namespace MVCore.Engine.Systems
             pbuf = new PBuffer(width, height);
             blur_fbo = new FBO(TextureTarget.Texture2D, 3, width / blur_fbo_scale, height / blur_fbo_scale, false);
             gizmo_fbo = new FBO(TextureTarget.Texture2D, 2, width, height, false);
+            render_fbo = new FBO(TextureTarget.Texture2D, 1, width, height, false);
 
-            Log("GBuffer Initialized", LogVerbosityLevel.INFO);
+            Log("FBOs Initialized", LogVerbosityLevel.INFO);
+        }
+
+        public FBO getRenderFBO()
+        {
+            return render_fbo;
         }
 
         public void getMousePosInfo(int x, int y, ref Vector4[] arr)
@@ -241,7 +249,6 @@ namespace MVCore.Engine.Systems
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
         }
-
 
         public void progressTime(double dt)
         {
@@ -649,14 +656,19 @@ namespace MVCore.Engine.Systems
             GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, UBOs["_COMMON_PER_FRAME"]);
         }
 
+        public void resize(Vector2i size)
+        {
+            resize(size.X, size.Y);
+        }
 
         public void resize(int w, int h)
         {
+            ViewportSize = new Vector2i(w, h);
             gbuf?.resize(w, h);
             pbuf?.resize(w, h);
+            render_fbo?.resize(w, h);
+            gizmo_fbo?.resize(w, h);
             blur_fbo?.resize(w / blur_fbo_scale, h / blur_fbo_scale);
-            
-            GL.Viewport(0, 0, w, h);
         }
 
 
@@ -1225,8 +1237,12 @@ namespace MVCore.Engine.Systems
             //Prepare UBOs
             prepareCommonPerFrameUBO();
 
+            //Render to render_fbo
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, render_fbo.fbo);
+            GL.Viewport(0, 0, ViewportSize.X, ViewportSize.Y);
             render_quad(Array.Empty<string>(), Array.Empty<float>(), Array.Empty<string>(), Array.Empty<TextureTarget>(), Array.Empty<int>(), resMgr.GLShaders[SHADER_TYPE.RED_FILL_SHADER]);
-            //return;
+            
+            return;
 
             if (RenderState.renderViewSettings.RenderInfo)
             {
@@ -1253,7 +1269,7 @@ namespace MVCore.Engine.Systems
                     GLInstancedMeshVao m = t.meshVao;
 
                     //Render Start
-                    GL.Uniform1(shader.uniformLocations["fontSize"], (float)t.font.Size);
+                    GL.Uniform1(shader.uniformLocations["fontSize"], (float) t.font.Size);
                     GL.Uniform1(shader.uniformLocations["textSize"], t.lineHeight);
                     GL.Uniform2(shader.uniformLocations["offset"], t.pos);
                     GL.Uniform3(shader.uniformLocations["color"], t.color);

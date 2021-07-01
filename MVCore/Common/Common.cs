@@ -13,6 +13,9 @@ using System.Diagnostics.Contracts;
 using Newtonsoft.Json;
 using System.Resources;
 using System.Reflection;
+using System.IO;
+using MVCore.Utils;
+using System.Drawing;
 
 namespace MVCore.Common
 {
@@ -241,23 +244,6 @@ namespace MVCore.Common
     }
 
 
-    public static class AppResourceManager
-    {
-        public static object getEmbeddedResource(string name)
-        {
-            string resxFile = @".\Resources.resx";
-            byte[] data = null;
-
-            using (ResourceReader rr = new ResourceReader(resxFile))
-            {
-                string resType;
-                rr.GetResourceData(name, out resType, out data);
-            }
-            
-            return data;
-        }
-    }
-
     public class Settings : INotifyPropertyChanged
     {
         //Public Settings
@@ -345,6 +331,43 @@ namespace MVCore.Common
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
         }
+
+        //Methods
+        public static Settings generateDefaultSettings()
+        {
+            Settings settings = new Settings();
+
+            settings.GameDir = NMSUtils.getGameInstallationDir();
+            settings.unpackdir = settings.GameDir;
+
+            return settings;
+        }
+
+        public static Settings loadFromDisk()
+        {
+            //Load jsonstring
+            Settings settings;
+            if (File.Exists("settings.json"))
+            {
+                string jsonstring = File.ReadAllText("settings.json");
+                settings =  JsonConvert.DeserializeObject<Settings>(jsonstring);
+            } else
+            {
+                //Generate Settings
+                //Generating new settings file
+                settings = generateDefaultSettings();
+                saveToDisk(settings);
+            }
+            
+            return settings;
+        }
+
+        public static void saveToDisk(Settings settings)
+        {
+            //Test Serialize object
+            string jsonstring = JsonConvert.SerializeObject(settings);
+            File.WriteAllText("settings.json", jsonstring);
+        }
     }
 
     public static class RenderStats
@@ -381,8 +404,10 @@ namespace MVCore.Common
     public delegate void ShowErrorMsg(string msg, string caption);
     public delegate void LogCallBack(string msg, LogVerbosityLevel level);
     public delegate void SendRequestCallBack(ref ThreadRequest req);
-    
-    
+    public delegate byte[] GetResourceCallBack(string resourceName);
+    public delegate Bitmap GetBitMapResourceCallBack(string resourceName);
+    public delegate string GetTextResourceCallBack(string resourceName);
+    public delegate object GetResourceWithTypeCallBack(string resourceName, out string resourceType);
 
     public static class CallBacks
     {
@@ -393,5 +418,9 @@ namespace MVCore.Common
         public static OpenPoseCallBack openPose = null;
         public static LogCallBack Log = null;
         public static SendRequestCallBack issueRequestToGLControl = null;
+        public static GetResourceCallBack getResource = null;
+        public static GetBitMapResourceCallBack getBitMapResource = null;
+        public static GetTextResourceCallBack getTextResource = null;
+        public static GetResourceWithTypeCallBack getResourceWithType = null;
     }
 }

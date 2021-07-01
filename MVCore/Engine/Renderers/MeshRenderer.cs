@@ -198,14 +198,14 @@ namespace MVCore.Engine
             //Diffuse Texture
             foreach (Sampler s in mesh.material.PSamplers.Values)
             {
-                if (shader.uniformLocations.ContainsKey(s.Name) && s.Map != "")
+                if (shader.uniformLocations.ContainsKey(s.Name.Value) && s.Map != "")
                 {
-                    GL.Uniform1(shader.uniformLocations[s.Name], MyTextureUnit.MapTexUnitToSampler[s.Name]);
+                    GL.Uniform1(shader.uniformLocations[s.Name.Value], MyTextureUnit.MapTexUnitToSampler[s.Name.Value]);
                     GL.ActiveTexture(s.texUnit.texUnit);
                     GL.BindTexture(s.tex.target, s.tex.texID);
                 }
             }
-
+            
             //BIND TEXTURE Buffer
             if (mesh.skinned)
             {

@@ -63,6 +63,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Common\ResourceManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine\Renderers\ShadowRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\ThreadRequest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)WorkThreadDispacher.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Common\" />

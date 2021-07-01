@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using MVCore;
 using MVCore.Common;
-using OpenTK;
-using ImGuiHelper;
 using ImGuiNET;
+using System.Drawing;
+using System.Reflection;
+
+
 
 namespace ImGUI_SDL_ModelViewer
 {
@@ -19,7 +21,7 @@ namespace ImGUI_SDL_ModelViewer
         public static readonly Random randgen = new Random();
         
         //Current GLControl Handle
-        public static OpenTK.Windowing.Desktop.GameWindow activeWindow;
+        public static OpenTK.Windowing.Desktop.NativeWindow activeWindow;
         public static string StatusStripText;
         
         //Public LogFile
@@ -45,13 +47,18 @@ namespace ImGUI_SDL_ModelViewer
 
         public static void showError(string message, string caption)
         {
+            Console.WriteLine(string.Format("%s", message));
+            //Cannot use ImGui from here
+            /*
             if (ImGui.BeginPopupModal("show-error"))
             {
-                ImGui.Text(string.Format("%s", message));
+                ImGui.Text();
                 ImGui.EndPopup();
             }
+            */
         }
-
+        
+        
         public static void showInfo(string message, string caption)
         {
 
@@ -74,6 +81,62 @@ namespace ImGUI_SDL_ModelViewer
             }
         }
     
+
+        //Resource Handler
+        public static byte[] getResource(string resource_name)
+        {
+            string nspace = nameof(ImGUI_SDL_ModelViewer);
+
+            byte[] data = null; //output data
+
+            // Determine path
+            var assembly = Assembly.GetExecutingAssembly();
+            string resourcePath = resource_name;
+
+            Assembly _assembly = Assembly.GetExecutingAssembly();
+            string[] resources = _assembly.GetManifestResourceNames();
+
+            try
+            {
+                BinaryReader _textStreamReader = new BinaryReader(_assembly.GetManifestResourceStream(nspace + ".Resources." + resource_name));
+                data = _textStreamReader.ReadBytes((int) _textStreamReader.BaseStream.Length);
+            } catch
+            {
+                CallBacks.Log("Unable to Fetch Resource", LogVerbosityLevel.ERROR);
+            }
+            
+            return data;
+        }
+
+        public static Bitmap getBitMapResource(string resource_name)
+        {
+            byte[] data = getResource(resource_name);
+
+            if (data != null)
+            {
+                MemoryStream ms = new MemoryStream(data);
+                Bitmap im = new Bitmap(ms);
+                return im;
+            }
+
+            return null;
+        }
+
+        public static string getTextResource(string resource_name)
+        {
+            byte[] data = getResource(resource_name);
+
+            if (data != null)
+            {
+                MemoryStream ms = new MemoryStream(data);
+                StreamReader tr = new StreamReader(ms);
+                return tr.ReadToEnd();
+            }
+
+            return "";
+        }
+
+
     }
 
 }

@@ -21,7 +21,7 @@ namespace MVCore.GMDL
             AABBMAX = new MVector3(0.1f, 0.1f, 0.1f);
 
             //Assemble geometry in the constructor
-            meshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshVaos["default_cross"];
+            meshVao = RenderState.activeResMgr.GLPrimitiveMeshVaos["default_cross"];
             instanceId = GLMeshBufferManager.addInstance(ref meshVao, this);
         }
 

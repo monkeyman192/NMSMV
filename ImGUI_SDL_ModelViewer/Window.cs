@@ -14,6 +14,7 @@ using MVCore.GMDL;
 using MVCore.Text;
 using System.IO;
 
+
 namespace ImGUI_SDL_ModelViewer
 {
     public class Window : GameWindow
@@ -35,61 +36,81 @@ namespace ImGUI_SDL_ModelViewer
         //Scene Stuff
         //public Model rootObject;
         public Model activeModel; //Active Model Reference
-        public Queue<Model> modelUpdateQueue = new Queue<Model>();
-        public List<Tuple<AnimComponent, AnimData>> activeAnimScenes = new List<Tuple<AnimComponent, AnimData>>();
+        public Queue<Model> modelUpdateQueue = new();
+        public List<Tuple<AnimComponent, AnimData>> activeAnimScenes = new();
 
         //Engine
         private Engine engine;
 
+        //Workers
+        private WorkThreadDispacher workDispatcher = new();
+        private List<ThreadRequest> issuedRequests = new();
 
         //ImGui Variables
         private bool show_open_file_dialog = false;
         private bool show_open_file_dialog_pak = false;
+        private bool open_file_disabled = true;
         private bool show_update_libmbin_dialog = false;
-        private int active_tab_id = 0;
+        private bool show_settings_window = false;
+        private bool show_test_components = false;
         private string libMbinOnlineVersion = null;
         private string libMbinLocalVersion = null;
 
+        private Vector2i SceneViewSize = new();
         //ImguiPalette Colors
         //Blue
-        private System.Numerics.Vector4 DarkBlue = new System.Numerics.Vector4(0.04f, 0.2f, 0.96f, 1.0f);
+        private System.Numerics.Vector4 DarkBlue = new(0.04f, 0.2f, 0.96f, 1.0f);
 
-
+        
         public Window() : base(GameWindowSettings.Default, 
             new NativeWindowSettings() { Size = new Vector2i(800, 600), APIVersion = new Version(4, 5) })
         {
+            //Set Window Title
+            Title = "NMSMV " + Util.getVersion();
+
+            //Setup Logger
+            Util.loggingSr = new StreamWriter("log.out");
+
+            //SETUP THE CALLBACKS FOR THE MVCORE ENVIRONMENT
+            CallBacks.updateStatus = Util.setStatus;
+            CallBacks.showInfo = Util.showInfo;
+            CallBacks.showError = Util.showError;
+            CallBacks.Log = Util.Log;
+            CallBacks.getResource = Util.getResource;
+            CallBacks.getBitMapResource = Util.getBitMapResource;
+            CallBacks.getTextResource = Util.getTextResource;
+
             RenderFrequency = 240;
             UpdateFrequency = RenderFrequency * 2;
+            SceneViewSize = Size;
+
+            //Start worker thread
+            workDispatcher.Start();
+
+            //Initialize Resource Manager
+            RenderState.activeResMgr = new ResourceManager();
+            RenderState.activeResMgr.Init();
         }
 
         protected override void OnLoad()
         {
             base.OnLoad();
-            Title = "NMSMV " + Util.getVersion();
+            
             _controller = new ImGuiController(ClientSize.X, ClientSize.Y);
-
-            //Setup Logger
-            Util.loggingSr = new StreamWriter("log.out");
-
-            //SETUP THE CALLBACKS OF MVCORE
-            CallBacks.updateStatus = Util.setStatus;
-            CallBacks.showInfo = Util.showInfo;
-            CallBacks.showError = Util.showError;
-            CallBacks.Log = Util.Log;
-
-
 
             //OVERRIDE SETTINGS
             //FileUtils.dirpath = "I:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\PCBANKS";
 
             //Load Settings
-            SettingsForm.loadSettingsStatic();
-            CallBacks.Log("* Starting GLControl WorkThreads", LogVerbosityLevel.DEBUG);
-
+            if (!File.Exists("settings.json"))
+                show_settings_window = true;
+            
+            RenderState.settings = Settings.loadFromDisk();
+            
             //Initialize Engine backend
             engine = new Engine(this);
-
-
+            engine.init(Size.X, Size.Y); //Initialize Engine
+            
             //Populate GLControl
             Scene scene = new Scene()
             {
@@ -102,8 +123,8 @@ namespace ImGUI_SDL_ModelViewer
 
             //Force rootobject
             RenderState.rootObject = scene;
-            glControl.modelUpdateQueue.Enqueue(scene);
-            glControl.engine.renderSys.populate(scene);
+            modelUpdateQueue.Enqueue(scene);
+            engine.renderSys.populate(scene);
 
             //SceneTreeView.Items.Clear();
             //SceneTreeView.Items.Add(scene);
@@ -113,8 +134,6 @@ namespace ImGUI_SDL_ModelViewer
             if (!Directory.Exists("Temp")) Directory.CreateDirectory("Temp");
 #endif
             //Set active Components
-            Util.activeStatusStrip = StatusLabel;
-            Util.activeControl = glControl;
             Util.activeWindow = this;
 
             //Bind Settings
@@ -134,20 +153,14 @@ namespace ImGUI_SDL_ModelViewer
 
             //TODO: Bring that back
             //Sliders_OnValueChanged(null, new RoutedPropertyChangedEventArgs<double>(0.0f, 0.0f));
-            this.Dispatcher.UnhandledException += OnDispatcherUnhandledException;
+            
 
-
-            //Disable Open File Functions
-            OpenFileHandle.IsEnabled = false;
-            OpenFilePAKHandle.IsEnabled = false;
-            //TestOptions.Visibility = Visibility.Hidden; //Hide the test options by default
-
+            
 #if (DEBUG)
             //Enable the Test options if it is a debug version
             //TestOptions.Visibility = Visibility.Visible;
-            setTestComponents();
+            show_test_components = true;
 #endif
-
             CallBacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
 
             //Issue work request 
@@ -160,12 +173,9 @@ namespace ImGUI_SDL_ModelViewer
 
             issuedRequests.Add(rq);
 
-
-
             //Basic Initialization of ImGui
             InitImGUI();
-
-            
+    
         }
 
         private void InitImGUI()
@@ -178,9 +188,6 @@ namespace ImGUI_SDL_ModelViewer
         {
             base.OnResize(e);
 
-            // Update the opengl viewport
-            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
-
             // Tell ImGui of the new size
             _controller.WindowResized(ClientSize.X, ClientSize.Y);
         }
@@ -188,21 +195,20 @@ namespace ImGUI_SDL_ModelViewer
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-            _controller.Update(this, (float)e.Time);
-            Console.WriteLine("Updating Frame");
+            //Console.WriteLine("Updating Frame");
             
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
                 engine.handleRequests();
                 frameUpdate(e.Time);
             }
-
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
-            
+            _controller.Update(this, (float) e.Time);
+            //Console.WriteLine("Rendering Frame");
             GL.ClearColor(new Color4(5, 5, 5, 255));
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
@@ -213,32 +219,22 @@ namespace ImGUI_SDL_ModelViewer
                 //CallBacks.Log("* CONTROL : FRAME UPDATED", LogVerbosityLevel.DEBUG);
                 //CallBacks.Log("* CONTROL : STARTING FRAME RENDER", LogVerbosityLevel.DEBUG);
 
-                ErrorCode err;
-                err = GL.GetError();
-                if (err != ErrorCode.NoError)
-                    Console.WriteLine("test");
-
                 engine.renderSys.testrender(); //Render Everything
-
-                err = GL.GetError();
-                if (err != ErrorCode.NoError)
-                    Console.WriteLine("test");
 
                 //CallBacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
             }
-
-
             
-            //UI
-            DrawUI();
+            //Bind Default Framebuffer
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+
+            DrawUI(); //UI
             //ImGui.ShowDemoWindow();
             _controller.Render();
-
 
             //ImGuiUtil.CheckGLError("End of frame");
 
             RenderStats.fpsCount = 1.0f / (float)e.Time;
-
+            Console.WriteLine(RenderStats.fpsCount);
             SwapBuffers();
         }
 
@@ -339,9 +335,10 @@ namespace ImGUI_SDL_ModelViewer
             _controller.PressChar((char)e.Unicode);
         }
         
-
         private void DrawUI()
         {
+            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+
             //Enable docking in main view
             ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags.None;
             dockspace_flags |= ImGuiDockNodeFlags.PassthruCentralNode;
@@ -407,7 +404,38 @@ namespace ImGUI_SDL_ModelViewer
 
             ImGui.SetCursorPosX(0.0f);
             bool main_view = true;
-            
+
+
+            //Scene Render
+            bool scene_view = true;
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new System.Numerics.Vector2(0.0f, 0.0f));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, new System.Numerics.Vector2(0.0f, 0.0f));
+            if (ImGui.Begin("Scene", ref scene_view, ImGuiWindowFlags.NoScrollbar))
+            {
+                //Update RenderSize
+                System.Numerics.Vector2 csize = ImGui.GetContentRegionAvail();
+                Vector2i csizetk = new Vector2i( (int) ImGui.GetContentRegionAvail().X,
+                                               (int) ImGui.GetContentRegionAvail().Y);
+
+                ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().channels[0]),
+                                csize,
+                                new System.Numerics.Vector2(0.0f, 1.0f),
+                                new System.Numerics.Vector2(1.0f, 0.0f));
+                
+                if (csizetk != SceneViewSize)
+                {
+                    SceneViewSize = csizetk;
+                    engine.renderSys.resize(csizetk);
+                }
+                
+                ImGui.End();
+                ImGui.PopStyleVar();
+                ImGui.PopStyleVar();
+
+            }
+
+            //SideBar
+
             if (ImGui.Begin("SideBar", ref main_view))
             {
                 if (ImGui.BeginChild("RightView"))

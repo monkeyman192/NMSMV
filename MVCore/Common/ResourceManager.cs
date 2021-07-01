@@ -10,7 +10,6 @@ using MVCore.Utils;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
-using ImGUI_SDL_ModelViewer.Properties;
 
 
 namespace MVCore
@@ -350,11 +349,15 @@ namespace MVCore
             red_shader_fs.addStringFromFile("Shaders/RedFill.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, red_shader_fs, null, null, null,
                             SHADER_TYPE.RED_FILL_SHADER);
+            
+            //Attach UBO binding Points
+            GLShaderHelper.attachUBOToShaderBindingPoint(shader_conf, "_COMMON_PER_FRAME", 0);
+
             GLShaders[SHADER_TYPE.RED_FILL_SHADER] = shader_conf;
             sr.WriteLine("###COMPILING RED FILL SHADER ###");
             sr.WriteLine(shader_conf.log);
 
-            
+
             sr.WriteLine("###FINISHED SHADER COMPILATION###");
 
             sr.Close();
@@ -388,14 +391,14 @@ namespace MVCore
             //White tex
             string texpath = "default.dds";
             Texture tex = new Texture();
-            tex.textureInit(ImGUI_SDL_ModelViewer.Properties.Resources.default_tex, texpath); //Manually load data
+            tex.textureInit((byte[]) CallBacks.getResource("default.dds"), texpath); //Manually load data
 
             texMgr.addTexture(tex);
 
             //Transparent Mask
             texpath = "default_mask.dds";
             tex = new Texture();
-            tex.textureInit(ImGUI_SDL_ModelViewer.Properties.Resources.default_mask_tex, texpath);
+            tex.textureInit((byte[]) CallBacks.getResource("default_mask.dds"), texpath);
             texMgr.addTexture(tex);
         }
 
@@ -482,19 +485,18 @@ namespace MVCore
         {
             Font f;
             //Droid Sans
-            f = new Font(ImGUI_SDL_ModelViewer.Properties.Resources.droid_fnt,
-                        ImGUI_SDL_ModelViewer.Properties.Resources.droid_png, 1);
+            f = new Font(CallBacks.getResource("droid.fnt"),
+                         CallBacks.getBitMapResource("droid.png"), 1);
             fontMgr.addFont(f);
-
+            
             //Segoe
-            f = new Font(ImGUI_SDL_ModelViewer.Properties.Resources.segoe_fnt,
-                        ImGUI_SDL_ModelViewer.Properties.Resources.segoe_png, 1);
+            f = new Font(CallBacks.getResource("segoe.fnt"),
+                         CallBacks.getBitMapResource("segoe.png"), 1);
             fontMgr.addFont(f);
         }
 
         //fontMgr.addFont("droid.fnt");
-    
-
+        
         private void addDefaultTexts()
         {
             Font f = fontMgr.getFont("Segoe UI");

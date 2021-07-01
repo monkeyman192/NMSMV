@@ -292,6 +292,7 @@ namespace MVCore.Engine
             GL.DeleteTexture(blur2);
             GL.DeleteTexture(composite);
             GL.DeleteTexture(depth);
+
         }
 
         public void resize(int w, int h)

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ImGUI_SDL_ModelViewer
 {
     class Program
-    {
+    {   
         static void Main()
         {
             Window wnd = new Window();

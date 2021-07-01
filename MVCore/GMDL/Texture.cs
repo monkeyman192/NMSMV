@@ -70,7 +70,7 @@ namespace MVCore.GMDL
             catch (FileNotFoundException)
             {
                 //Fallback to the default.dds
-                image_data = (byte[]) AppResourceManager.getEmbeddedResource("default_tex");
+                image_data = (byte[]) CallBacks.getResource("default_tex");
             }
 
             textureInit(image_data, path);

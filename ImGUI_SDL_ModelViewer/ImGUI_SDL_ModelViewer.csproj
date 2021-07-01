@@ -16,13 +16,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\default.dds" />
+    <None Remove="Resources\default_mask.dds" />
     <None Remove="Resources\droid.fnt" />
+    <None Remove="Resources\droid.png" />
     <None Remove="Resources\segoe.fnt" />
+    <None Remove="Resources\segoe.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\default.dds" />
+    <EmbeddedResource Include="Resources\default_mask.dds" />
     <EmbeddedResource Include="Resources\droid.fnt" />
+    <EmbeddedResource Include="Resources\droid.png" />
     <EmbeddedResource Include="Resources\segoe.fnt" />
+    <EmbeddedResource Include="Resources\segoe.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +44,7 @@
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
     <PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />
+    <PackageReference Include="zlib.net-mutliplatform" Version="1.0.5" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,5 +72,9 @@
   </ItemGroup>
 
   <Import Project="..\MVCore\MVCore.projitems" Label="Shared" />
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="XCOPY &quot;$(SolutionDir)Shaders&quot; &quot;$(TargetDir)Shaders&quot; /s /i /y" />
+  </Target>
 
 </Project>

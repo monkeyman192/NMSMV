@@ -403,7 +403,7 @@ namespace MVCore.Utils
             {
                 if (!pak_path.EndsWith(".pak"))
                     continue;
-
+                
                 try
                 {
                     FileStream arc_stream = new FileStream(pak_path, FileMode.Open);
@@ -542,7 +542,7 @@ namespace MVCore.Utils
             */
 
             status = 0; // All good
-            Common.CallBacks.updateStatus("Ready");
+            CallBacks.updateStatus("Ready");
         }
 
         public static void unloadNMSArchives(ResourceManager resMgr)
@@ -563,20 +563,17 @@ namespace MVCore.Utils
             string gog64_keyval = "PATH";
 
             //Check Steam
-            string val;
+            string val = null;
 
-            try
+
+            val = fetchSteamGameInstallationDir() as string;
+            if (val != null)
             {
-                val = fetchSteamGameInstallationDir() as string;
-            } catch (Exception) {
-                val = null;
-            }
-
-            if (val != null || val == "")  
+                CallBacks.Log("Found Steam Version: " + val, LogVerbosityLevel.INFO);
                 return val;
-            else
-                CallBacks.Log("Unable to find Steam Version", LogVerbosityLevel.INFO);
-
+            } else
+                CallBacks.Log("Unable to find Steam Version: ", LogVerbosityLevel.INFO);
+                
             //Check GOG32
             val = Registry.GetValue(gog32_keyname, gog32_keyval, "") as string;
             if (val != null)
@@ -587,7 +584,7 @@ namespace MVCore.Utils
             else
                 CallBacks.Log("Unable to find GOG32 Version: " + val, LogVerbosityLevel.INFO);
 
-
+            
             //Check GOG64
             val = Registry.GetValue(gog64_keyname, gog64_keyval, "") as string;
             if (val != null)
@@ -598,7 +595,7 @@ namespace MVCore.Utils
             else
                 CallBacks.Log("Unable to find GOG64 Version: " + val, LogVerbosityLevel.INFO);
 
-            return null;
+            return "";
         }
 
         private static string fetchSteamGameInstallationDir()
