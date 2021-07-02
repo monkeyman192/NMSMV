@@ -59,6 +59,7 @@ namespace MVCore
 
         //Global NMS File Archive handles
         public Dictionary<string, libPSARC.PSARC.Archive> NMSFileToArchiveMap = new();
+        public List<string> NMSSceneFilesList = new();
         public SortedDictionary<string, libPSARC.PSARC.Archive> NMSArchiveMap = new();
 
         //public int[] shader_programs;

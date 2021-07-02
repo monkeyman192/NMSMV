@@ -17,7 +17,7 @@ namespace ImGUI_SDL_ModelViewer
         public static int VersionMedium = 91;
         public static int VersionMinor = 0;
         
-        public static string DonateLink = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=4365XYBWGTBSU&currency_code=USD&source=url";
+        public static string DonateLink = @"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=4365XYBWGTBSU&currency_code=USD&source=url";
         public static readonly Random randgen = new Random();
         
         //Current GLControl Handle

@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MVCore.Engine
+namespace MVCore
 {
     public class RequestHandler
     {
         private Queue<ThreadRequest> req_queue;
-
+        
         public RequestHandler()
         {
             req_queue = new Queue<ThreadRequest>();
         }
 
-        public virtual void issueRequest(ref ThreadRequest req)
+        public virtual void sendRequest(ref ThreadRequest req)
         {
             lock (req_queue)
             {

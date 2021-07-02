@@ -528,9 +528,9 @@ namespace MVCore.Engine
 
         }
 
-        public void issueRenderingRequest(ref ThreadRequest r)
+        public void sendRequest(ref ThreadRequest r)
         {
-            reqHandler.issueRequest(ref r);
+            reqHandler.sendRequest(ref r);
         }
 
 #region Camera Update Functions

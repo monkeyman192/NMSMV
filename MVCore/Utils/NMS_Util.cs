@@ -422,7 +422,7 @@ namespace MVCore.Utils
             if (Directory.Exists(Path.Combine(gameDir, "MODS")))
             {
                 pak_files = Directory.GetFiles(Path.Combine(gameDir, "MODS"));
-                Common.CallBacks.updateStatus("Loading Modded NMS Archives...");
+                CallBacks.updateStatus("Loading Modded NMS Archives...");
                 foreach (string pak_path in pak_files)
                 {
                     if (pak_path.Contains("CUSTOMMODELS"))
@@ -464,82 +464,15 @@ namespace MVCore.Utils
                 }
             }
 
-            //NOT WORTH TO USE MANIFEST FILES
 
-
-            /*
-            //Check if manifest file exists
-            if (File.Exists(filepath))
+            //Detect and save list of scene files
+            foreach (string path in RenderState.activeResMgr.NMSFileToArchiveMap.Keys)
             {
-                Common.CallBacks.updateStatus("Loading NMS File manifest...");
-                
-                //Read Input Data
-                FileStream fs = new FileStream(filepath, FileMode.Open);
-                byte[] comp_data = new byte[fs.Length];
-                fs.Read(comp_data, 0, (int) fs.Length);
-                fs.Close();
-
-                MemoryStream decomp_ms = new MemoryStream();
-                zlib.ZOutputStream zout = new zlib.ZOutputStream(decomp_ms);
-                zout.Write(comp_data, 0, comp_data.Length);
-                zout.finish();
-
-                //Read the assignment from the files
-                decomp_ms.Seek(0, SeekOrigin.Begin);
-                StreamReader sr = new StreamReader(decomp_ms);
-
-                while (!sr.EndOfStream)
-                {
-                    string line = sr.ReadLine();
-                    string[] sp = line.Split('\t');
-                    if (sp.Length != 2)
-                        Console.WriteLine(sp[0] + "   " + sp[1]);
-                    resMgr.NMSFileToArchiveMap[sp[0]] = resMgr.NMSArchiveMap[sp[1]];
-                }
-
-                sr.Close();
-                zout.Close();
-
+                if (path.EndsWith(".SCENE.MBIN"))
+                    resMgr.NMSSceneFilesList.Add(path);
             }
-            else
-            {
-                Common.CallBacks.updateStatus("NMS File Manifest not found. Creating...");
+            resMgr.NMSSceneFilesList.Sort();
 
-                MemoryStream ms = new MemoryStream();
-                MemoryStream comp_ms = new MemoryStream();
-                StreamWriter sw = new StreamWriter(ms);
-
-                foreach (string arc_path in resMgr.NMSArchiveMap.Keys.Reverse())
-                {
-                    libPSARC.PSARC.Archive arc = resMgr.NMSArchiveMap[arc_path];
-
-                    foreach (string f in arc.filePaths)
-                    {
-                        sw.WriteLine(f + '\t' + arc_path);
-                        resMgr.NMSFileToArchiveMap[f] = resMgr.NMSArchiveMap[arc_path];
-                    }
-                }
-
-                //Compress memorystream
-                zlib.ZOutputStream zout = new zlib.ZOutputStream(comp_ms, zlib.zlibConst.Z_DEFAULT_COMPRESSION);
-
-                //Copy Data to the zlib stream\
-                sw.Flush();
-                byte[] comp_data = ms.ToArray();
-                
-                zout.Write(comp_data, 0, (int) ms.Length);
-                zout.finish(); //Compress
-
-                //Write memorystream to file
-                comp_ms.Seek(0, SeekOrigin.Begin);
-                FileStream fs = new FileStream(filepath, FileMode.CreateNew);
-                fs.Write(comp_ms.ToArray(), 0, (int) comp_ms.Length);
-                fs.Close();
-                comp_ms.Close();
-                ms.Close();
-            
-            }
-            */
 
             status = 0; // All good
             CallBacks.updateStatus("Ready");
@@ -551,6 +484,9 @@ namespace MVCore.Utils
             {
                 arc.Dispose();
             }
+            resMgr.NMSArchiveMap.Clear();
+            resMgr.NMSFileToArchiveMap.Clear();
+            resMgr.NMSSceneFilesList.Clear();
         }
 
         public static string getGameInstallationDir()

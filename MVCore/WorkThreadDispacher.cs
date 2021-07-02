@@ -9,7 +9,7 @@ namespace MVCore
 {
     class Task
     {
-        public int task_uid;
+        public ulong task_uid;
         public Thread thread;
         public ThreadRequest thread_request;
     }
@@ -17,7 +17,7 @@ namespace MVCore
     class WorkThreadDispacher : System.Timers.Timer
     {
         private List<Task> tasks = new List<Task>();
-        private int taskGUIDCounter = 0;
+        private ulong taskGUIDCounter = 0;
 
         public WorkThreadDispacher()
         {
@@ -25,9 +25,12 @@ namespace MVCore
             Elapsed += queryTasks;
         }
 
-        public void sendRequest(ThreadRequest tr)
+        public Task sendRequest(ThreadRequest tr)
         {
-            tasks.Add(createTask(tr));
+            Task t = createTask(tr);
+            tasks.Add(t);
+
+            return t;
         }
 
         private Task createTask(ThreadRequest tr)
@@ -82,8 +85,6 @@ namespace MVCore
                 i++;
             }
         }
-
-
 
     }
 }

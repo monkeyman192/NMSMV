@@ -20,6 +20,7 @@ namespace ImGUI_SDL_ModelViewer
     public class Window : GameWindow
     {
         ImGuiController _controller;
+        
 
         //Parameters
         private string current_file_path = Environment.CurrentDirectory;
@@ -44,19 +45,24 @@ namespace ImGUI_SDL_ModelViewer
 
         //Workers
         private WorkThreadDispacher workDispatcher = new();
-        private List<ThreadRequest> issuedRequests = new();
+        private List<Task> workTasks = new(); //Keep track of the issued tasks
 
         //ImGui Variables
+        private ImGUIPakBrowser PackBrowser;
+        private ImGuiAboutWindow AboutWindow;
         private bool show_open_file_dialog = false;
         private bool show_open_file_dialog_pak = false;
-        private bool open_file_disabled = true;
+        private bool open_file_enabled = false;
         private bool show_update_libmbin_dialog = false;
         private bool show_settings_window = false;
+        private bool show_about_window = false;
         private bool show_test_components = false;
         private string libMbinOnlineVersion = null;
         private string libMbinLocalVersion = null;
 
+
         private Vector2i SceneViewSize = new();
+        private int ItemCounter = 0;
         //ImguiPalette Colors
         //Blue
         private System.Numerics.Vector4 DarkBlue = new(0.04f, 0.2f, 0.96f, 1.0f);
@@ -97,7 +103,7 @@ namespace ImGUI_SDL_ModelViewer
             base.OnLoad();
             
             _controller = new ImGuiController(ClientSize.X, ClientSize.Y);
-
+            
             //OVERRIDE SETTINGS
             //FileUtils.dirpath = "I:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\PCBANKS";
 
@@ -161,6 +167,11 @@ namespace ImGUI_SDL_ModelViewer
             //TestOptions.Visibility = Visibility.Visible;
             show_test_components = true;
 #endif
+
+            //Initialize ImGUi Objectives
+            PackBrowser = new ImGUIPakBrowser();
+            AboutWindow = new ImGuiAboutWindow();
+
             CallBacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
 
             //Issue work request 
@@ -169,9 +180,7 @@ namespace ImGUI_SDL_ModelViewer
             rq.arguments.Add(Path.Combine(RenderState.settings.GameDir, "PCBANKS"));
             rq.arguments.Add(RenderState.activeResMgr);
             rq.type = THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST;
-            workDispatcher.sendRequest(rq);
-
-            issuedRequests.Add(rq);
+            workTasks.Add(workDispatcher.sendRequest(rq));
 
             //Basic Initialization of ImGui
             InitImGUI();
@@ -199,7 +208,8 @@ namespace ImGUI_SDL_ModelViewer
             
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
-                engine.handleRequests();
+                engine.handleRequests(); //Handle engine requests
+                handleRequests(); //Handle window requests
                 frameUpdate(e.Time);
             }
         }
@@ -226,15 +236,16 @@ namespace ImGUI_SDL_ModelViewer
             
             //Bind Default Framebuffer
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-
-            DrawUI(); //UI
+            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+            
+            //UI
+            DrawUI();
             //ImGui.ShowDemoWindow();
             _controller.Render();
 
             //ImGuiUtil.CheckGLError("End of frame");
 
             RenderStats.fpsCount = 1.0f / (float)e.Time;
-            Console.WriteLine(RenderStats.fpsCount);
             SwapBuffers();
         }
 
@@ -257,7 +268,7 @@ namespace ImGUI_SDL_ModelViewer
                 req.arguments.Clear();
                 req.arguments.Add(activeGizmo);
                 req.arguments.Add(mouseState.Position);
-                engine.issueRenderingRequest(ref req);
+                engine.sendRequest(ref req);
             }
 
             //Set time to the renderManager
@@ -337,8 +348,6 @@ namespace ImGUI_SDL_ModelViewer
         
         private void DrawUI()
         {
-            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
-
             //Enable docking in main view
             ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags.None;
             dockspace_flags |= ImGuiDockNodeFlags.PassthruCentralNode;
@@ -371,12 +380,12 @@ namespace ImGUI_SDL_ModelViewer
             {
                 if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.MenuItem("Open", "Ctrl + O"))
+                    if (ImGui.MenuItem("Open", "Ctrl + O", false, open_file_enabled))
                     {
                         show_open_file_dialog = true;
                     }
 
-                    if (ImGui.MenuItem("Open from PAK"))
+                    if (ImGui.MenuItem("Open from PAK", "", false, open_file_enabled))
                     {
                         show_open_file_dialog_pak = true;
                     }
@@ -396,6 +405,11 @@ namespace ImGUI_SDL_ModelViewer
                     ImGui.EndMenu();
                 }
 
+                if (ImGui.MenuItem("About"))
+                {
+                    show_about_window = true;
+                }
+
                 ImGui.EndMenuBar();
             }
 
@@ -405,7 +419,7 @@ namespace ImGUI_SDL_ModelViewer
             ImGui.SetCursorPosX(0.0f);
             bool main_view = true;
 
-
+            
             //Scene Render
             bool scene_view = true;
             ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new System.Numerics.Vector2(0.0f, 0.0f));
@@ -563,7 +577,6 @@ namespace ImGUI_SDL_ModelViewer
             }
 
             
-
             //StatusBar
 
             ImGui.SetNextWindowPos(new System.Numerics.Vector2(0, Size.Y - 2.0f * ImGui.CalcTextSize("test").Y));
@@ -593,10 +606,22 @@ namespace ImGUI_SDL_ModelViewer
                 show_open_file_dialog = false;
             }
 
+            if (show_open_file_dialog_pak)
+            {
+                ImGui.OpenPopup("open-file-pak");
+                show_open_file_dialog_pak = false;
+            }
+
             if (show_update_libmbin_dialog)
             {
                 ImGui.OpenPopup("update-libmbin");
                 show_update_libmbin_dialog = false;
+            }
+
+            if (show_about_window)
+            {
+                ImGui.OpenPopup("show-about");
+                show_about_window = false;
             }
 
                 
@@ -612,6 +637,28 @@ namespace ImGUI_SDL_ModelViewer
                 }
                 ImGui.EndPopup();
             }
+
+            if (ImGui.BeginPopupModal("open-file-pak", ref isOpen))
+            {
+                if (PackBrowser.isFinished())
+                {
+                    PackBrowser.Clear();
+                    ImGui.CloseCurrentPopup();
+                    //Issue File Open Request
+                } else
+                {
+                    PackBrowser.Draw();
+                }
+                
+                if (ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGuiKey.Escape)))
+                {
+                    PackBrowser.Clear();
+                    ImGui.CloseCurrentPopup();
+                }
+
+                ImGui.EndPopup();
+            }
+
 
             if (ImGui.BeginPopupModal("update-libmbin", ref isOpen, ImGuiWindowFlags.None))
             {
@@ -652,8 +699,367 @@ namespace ImGUI_SDL_ModelViewer
 
             }
 
+            
+            if (ImGui.BeginPopupModal("show-about", ref isOpen, ImGuiWindowFlags.NoResize)){
+
+                ImGuiNative.igSetNextWindowSize(new System.Numerics.Vector2(256 + 36, 256 + 60), ImGuiCond.Appearing);
+                if (ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGuiKey.Escape)))
+                {
+                    ImGui.CloseCurrentPopup();
+                }
+
+                AboutWindow.Draw();
+
+                ImGui.EndPopup();
+            }
+
+            //Debugging Tools
+
+            if (ImGui.Begin("Statistics"))
+            {
+                ImGui.Text(string.Format("FPS : {0, 3:F1}", RenderStats.fpsCount));
+                ImGui.Text(string.Format("VertexCount : {0}", RenderStats.vertNum));
+                ImGui.Text(string.Format("TrisCount : {0}", RenderStats.trisNum));
+                ImGui.End();
+            }
+
 
         }
 
+        private void OpenFile(string filename, bool testScene, int testSceneID)
+        {
+            Console.WriteLine("Importing " + filename);
+            ThreadRequest req;
+
+            //Pause renderer
+            req = new()
+            {
+                type = THREAD_REQUEST_TYPE.GL_PAUSE_RENDER_REQUEST
+            };
+            req.arguments.Clear();
+
+            //Send request to engine
+            engine.sendRequest(ref req);
+            
+            //Ask window to wait for the request to Finish
+            //For now the engine and the window belong to the same thread so this
+            //does not make any difference
+            waitForRequest(ref req);
+
+            RenderState.rootObject?.Dispose();
+
+            if (testScene)
+                addTestScene(testSceneID);
+            else
+                addScene(filename);
+
+            //Populate 
+            RenderState.rootObject.ID = ItemCounter;
+            Util.setStatus("Creating Treeview...");
+            
+            //Cache the treeview and pass it to ImGUI
+
+            //Add to UI
+            Util.setStatus("Ready");
+
+            //Generate Request for resuming rendering
+            ThreadRequest req2 = new()
+            {
+                type = THREAD_REQUEST_TYPE.GL_RESUME_RENDER_REQUEST
+            };
+
+            engine.sendRequest(ref req2);
+        
+        }
+
+
+        public void handleRequests()
+        {
+            int i = 0;
+            while (i < workTasks.Count){
+
+                Task t = workTasks[i];
+
+
+                //Finalize tasks
+                if (!t.thread.IsAlive)
+                {
+                    switch (t.thread_request.type)
+                    {
+                        case THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST:
+                            open_file_enabled = true;
+                            break;
+
+                    }
+                    workTasks.RemoveAt(i);
+                    continue;
+                } 
+                i++;
+            }
+
+        }
+
+        public void waitForRequest(ref ThreadRequest req)
+        {
+            while (true)
+            {
+                int a = 0;
+                lock (req)
+                {
+                    if (req.status == THREAD_REQUEST_STATUS.FINISHED)
+                        return;
+                    else
+                        a++; // Do some dummy stuff
+                }
+            }
+        }
+
+
+        //Scene Loading
+        public void addTestScene(int sceneID)
+        {
+            //Cleanup first
+            modelUpdateQueue.Clear(); //Clear Update Queues
+
+            //Generate Request for rendering thread
+            ThreadRequest req1 = new()
+            {
+                type = THREAD_REQUEST_TYPE.NEW_TEST_SCENE_REQUEST
+            };
+            req1.arguments.Add(sceneID);
+
+            engine.sendRequest(ref req1);
+
+            //Wait for requests to finish before return
+            waitForRequest(ref req1);
+
+            //find Animation Capable nodes
+            activeModel = null; //TODO: Fix that with the gizmos
+            findAnimScenes(RenderState.rootObject); //Repopulate animScenes
+            findActionScenes(RenderState.rootObject); //Re-populate actionSystem
+
+        }
+
+        public void addScene(string filename)
+        {
+            //Cleanup first
+            modelUpdateQueue.Clear(); //Clear Update Queues
+
+            //Generate Request for rendering thread
+            ThreadRequest req1 = new()
+            {
+                type = THREAD_REQUEST_TYPE.NEW_SCENE_REQUEST
+            };
+            req1.arguments.Clear();
+            req1.arguments.Add(filename);
+
+            engine.sendRequest(ref req1);
+
+            //Wait for requests to finish before return
+            waitForRequest(ref req1);
+
+            //find Animation Capable nodes
+            activeModel = null; //TODO: Fix that with the gizmos
+            findAnimScenes(RenderState.rootObject); //Repopulate animScenes
+            findActionScenes(RenderState.rootObject); //Re-populate actionSystem
+        }
+
+        public void findAnimScenes(Model node)
+        {
+            if (node.animComponentID >= 0)
+                engine.animationSys.Add(node);
+            foreach (Model child in node.children)
+                findAnimScenes(child);
+        }
+
+        public void findActionScenes(Model node)
+        {
+            if (node.actionComponentID >= 0)
+                engine.actionSys.Add(node);
+
+            foreach (Model child in node.children)
+                findActionScenes(child);
+        }
+
     }
+
+
+    unsafe public class ImGUIPakBrowser
+    {
+        ImGuiTextFilterPtr _filter;
+        string selected_item = "";
+        bool DialogFinished;
+
+        public ImGUIPakBrowser()
+        {
+            var filterPtr = ImGuiNative.ImGuiTextFilter_ImGuiTextFilter(null);
+            _filter = new ImGuiTextFilterPtr(filterPtr);
+            DialogFinished = false;
+        }
+
+        public void Draw()
+        {
+            _filter.Draw("Filter");
+            //Draw listbox
+            ImGui.BeginChild("ListBox", new System.Numerics.Vector2(ImGui.GetWindowSize().X, 250), true);
+            foreach (var line in RenderState.activeResMgr.NMSSceneFilesList)
+            {
+                if (_filter.PassFilter(line))
+                {
+                    if (ImGui.Selectable(line, line == selected_item)){
+                        selected_item = line;
+                    }
+                }
+                    
+            }
+            ImGui.EndChild();
+            ImGui.Text(string.Format("Selected Item: {0}", selected_item));
+            ImGui.SameLine();
+            if (ImGui.Button("Open"))
+                DialogFinished = true;
+        }
+
+        public void Clear()
+        {
+            _filter.Clear();
+            selected_item = "";
+            DialogFinished = false;
+        }
+
+        public bool isFinished()
+        {
+            return DialogFinished;
+        }
+
+        public void Destroy()
+        {
+            ImGuiNative.ImGuiTextFilter_destroy(_filter.NativePtr);
+        }
+    }
+
+
+    public class ImGuiAboutWindow
+    {
+        Texture tex;
+
+        public ImGuiAboutWindow()
+        {
+            //Load Logo Texture to the GPU
+            byte[] imgData = CallBacks.getResource("ianm32logo_border.png");
+
+            tex = new Texture();
+            tex.textureInit(imgData, "ianm32logo_border.png");
+        }
+
+        private void TextCenter(string text, bool ishyperlink, string url = "")
+        {
+            float font_size = ImGui.GetFontSize() * text.Length / 2;
+            ImGui.SameLine(
+                ImGui.GetColumnWidth() / 2 -
+                font_size + (font_size / 2)
+            );
+
+            ImGui.Text(text);
+
+            if (ishyperlink)
+            {
+                var min = ImGui.GetItemRectMin();
+                var max = ImGui.GetItemRectMax();
+                min.Y = max.Y;
+
+                if (ImGui.IsItemHovered())
+                {
+                    if (ImGui.IsMouseClicked(0))
+                    {
+                        
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+                        {
+                            Verb = "open",
+                            UseShellExecute = true
+                        });
+                    }
+                        
+                    
+                    //System.Diagnostics.Process.Start("explorer.exe", new Uri(url).ToString());
+                    ImGui.GetWindowDrawList().AddLine(min, max, 0x0010FFFF);
+                }
+                else
+                {
+                    ImGui.GetWindowDrawList().AddLine(min, max, 0xFFFFFFFF);
+                }
+            }
+            
+        }
+
+
+
+        private void Text(string text, bool ishyperlink, string url = "")
+        {
+            ImGui.Text(text);
+
+            if (ishyperlink)
+            {
+                var min = ImGui.GetItemRectMin();
+                var max = ImGui.GetItemRectMax();
+                min.Y = max.Y;
+
+                if (ImGui.IsItemHovered())
+                {
+                    if (ImGui.IsMouseClicked(0))
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+                        {
+                            Verb = "open",
+                            UseShellExecute = true
+                        });
+                    }
+                    
+                    ImGui.GetWindowDrawList().AddLine(min, max, 0x0010FFFF);
+                }
+                else
+                {
+                    ImGui.GetWindowDrawList().AddLine(min, max, 0xFFFFFFFF);
+                }
+            }
+            
+        }
+
+        
+        public void Draw()
+        {
+            
+            //Assume that a Popup has begun
+            ImGui.BeginChild("AboutWindow", ImGui.GetContentRegionAvail(), 
+                true, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
+
+            ImGui.Image(new IntPtr(tex.texID),
+                        new System.Numerics.Vector2(256, 256),
+                        new System.Numerics.Vector2(0, 0),
+                        new System.Numerics.Vector2(1, 1));
+            
+            if (ImGui.BeginChildFrame(0, ImGui.GetContentRegionAvail(), ImGuiWindowFlags.NoBackground)){
+                TextCenter("No Man's Sky Model Viewer", false);
+                ImGui.NewLine();
+                TextCenter(Util.getVersion(), false);
+                ImGui.NewLine();
+                ImGui.Columns(2, "Links", false);
+                //Donation link
+                TextCenter("Donate", true, Util.DonateLink);
+                ImGui.NextColumn();
+                TextCenter("Github", true, "https://github.com/gregkwaste/NMSMV");
+                ImGui.NewLine();
+                ImGui.Columns(1);
+                TextCenter("Created by gregkwaste", false);
+                ImGui.EndChildFrame();
+            }
+            ImGui.EndChild();
+
+        }
+
+        ~ImGuiAboutWindow()
+        {
+            tex.Dispose();
+        }
+    }
+
 }

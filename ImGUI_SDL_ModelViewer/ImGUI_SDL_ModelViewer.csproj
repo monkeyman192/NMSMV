@@ -20,6 +20,7 @@
     <None Remove="Resources\default_mask.dds" />
     <None Remove="Resources\droid.fnt" />
     <None Remove="Resources\droid.png" />
+    <None Remove="Resources\ianm32logo_border.png" />
     <None Remove="Resources\segoe.fnt" />
     <None Remove="Resources\segoe.png" />
   </ItemGroup>
@@ -29,6 +30,7 @@
     <EmbeddedResource Include="Resources\default_mask.dds" />
     <EmbeddedResource Include="Resources\droid.fnt" />
     <EmbeddedResource Include="Resources\droid.png" />
+    <EmbeddedResource Include="Resources\ianm32logo_border.png" />
     <EmbeddedResource Include="Resources\segoe.fnt" />
     <EmbeddedResource Include="Resources\segoe.png" />
   </ItemGroup>
@@ -40,7 +42,6 @@
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="OpenTK" Version="4.6.4" />
-    <PackageReference Include="SDL2-CS" Version="2.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
     <PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />

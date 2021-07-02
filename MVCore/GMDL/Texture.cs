@@ -6,6 +6,8 @@ using MVCore.Utils;
 using System.IO;
 using KUtility;
 using MVCore.Common;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace MVCore.GMDL
 {
@@ -31,52 +33,91 @@ namespace MVCore.GMDL
             Stream fs;
             byte[] image_data;
             int data_length;
-            try
+
+            if (!isCustom)
             {
-                if (!isCustom)
+                try
                 {
-                    try
-                    {
-                        fs = NMSUtils.LoadNMSFileStream(path, ref Common.RenderState.activeResMgr);
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        //FileNotFoundExceptions during texture loading, are caught so that default textures are loaded
-                        fs = null;
-                    }
+                    fs = NMSUtils.LoadNMSFileStream(path, ref RenderState.activeResMgr);
                 }
-
-                else
-                    fs = new FileStream(path, FileMode.Open);
-
-                if (fs == null)
+                catch (FileNotFoundException)
                 {
-                    //throw new System.IO.FileNotFoundException();
-                    Console.WriteLine("Texture {0} Missing. Using default.dds", path);
-
-                    //Load default.dds from resources
-                    image_data = File.ReadAllBytes("default.dds");
-                    data_length = image_data.Length;
+                    //FileNotFoundExceptions during texture loading, are caught so that default textures are loaded
+                    fs = null;
                 }
-                else
-                {
-                    data_length = (int)fs.Length;
-                    image_data = new byte[data_length];
-                }
-
-                fs.Read(image_data, 0, data_length);
-
             }
-            catch (FileNotFoundException)
+            else
+                fs = new FileStream(path, FileMode.Open);
+
+
+            if (fs == null)
             {
-                //Fallback to the default.dds
-                image_data = (byte[]) CallBacks.getResource("default_tex");
+                //throw new System.IO.FileNotFoundException();
+                Console.WriteLine("Texture {0} Missing. Using default.dds", path);
+
+                //Load default.dds from resources
+                image_data = File.ReadAllBytes("default.dds");
+                data_length = image_data.Length;
+            }
+            else
+            {
+                data_length = (int)fs.Length;
+                image_data = new byte[data_length];
             }
 
+            fs.Read(image_data, 0, data_length);
+
+            
             textureInit(image_data, path);
         }
 
-        public void textureInit(byte[] imageData, string _name)
+        private void textureInitPNG(byte[] imageData, string _name)
+        {
+            MemoryStream ms = new MemoryStream(imageData);
+            
+            //Load the image from file
+            Bitmap bmpTexture = new Bitmap(ms);
+            bmpTexture.Save("test_image.bmp");
+            
+            //Convert the image to a form compatible with openGL
+            Rectangle rctImageBounds = new Rectangle(0, 0, bmpTexture.Width, bmpTexture.Height);
+
+            BitmapData oTextureData = bmpTexture.LockBits(rctImageBounds, ImageLockMode.ReadOnly,
+                                                            System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            Console.WriteLine(GL.GetError());
+            //Generate PBO
+            //pboID = GL.GenBuffer();
+            //GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pboID);
+            //GL.BufferData(BufferTarget.PixelUnpackBuffer, 
+            //        oTextureData.Stride * oTextureData.Height, oTextureData.Scan0, 
+            //        BufferUsageHint.StaticDraw);
+            
+            //Upload to GPU
+            texID = GL.GenTexture();
+            target = TextureTarget.Texture2D;
+
+            //Copy the image data into the texture
+            GL.BindTexture(target, texID);
+            GL.TexImage2D(target, 0, PixelInternalFormat.Rgba, bmpTexture.Width, bmpTexture.Height, 0, 
+                OpenTK.Graphics.OpenGL4.PixelFormat.Bgra, PixelType.UnsignedByte, oTextureData.Scan0);
+            
+            GL.TexParameter(target, TextureParameterName.TextureMinFilter, (float) TextureMinFilter.Linear);
+            GL.TexParameter(target, TextureParameterName.TextureMagFilter, (float) TextureMagFilter.Linear);
+
+            Console.WriteLine(GL.GetError());
+
+
+            bmpTexture.UnlockBits(oTextureData);
+
+            //Cleanup
+            bmpTexture = null;
+            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0); //Unbind texture PBO
+
+            Console.WriteLine(GL.GetError());
+        }
+
+        private void textureInitDDS(byte[] imageData, string _name)
         {
             DDSImage ddsImage;
             name = _name;
@@ -95,10 +136,12 @@ namespace MVCore.GMDL
                     pif = InternalFormat.CompressedSrgbAlphaS3tcDxt1Ext;
                     blocksize = 8;
                     break;
+                //DXT5
                 case (0x35545844):
                     pif = InternalFormat.CompressedSrgbAlphaS3tcDxt5Ext;
                     break;
-                case (0x32495441): //ATI2A2XY
+                //ATI2A2XY
+                case (0x32495441):
                     pif = InternalFormat.CompressedRgRgtc2; //Normal maps are probably never srgb
                     break;
                 //DXT10 HEADER
@@ -193,6 +236,31 @@ namespace MVCore.GMDL
             //avgColor = getAvgColor(pixels);
             ddsImage = null;
             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0); //Unbind texture PBO
+        }
+
+        public void textureInit(byte[] imageData, string _name)
+        {
+            string ext = Path.GetExtension(_name).ToUpper();
+
+            switch (ext)
+            {
+                case ".DDS":
+                    {
+                        textureInitDDS(imageData, _name);
+                        break;
+                    }
+                case ".PNG":
+                    {
+                        textureInitPNG(imageData, _name);
+                        break;
+                    }
+                default:
+                    {
+                        Console.WriteLine("Unsupported Texture Extension");
+                        break;
+                    }
+            }
+
         }
 
         public void Dispose()
