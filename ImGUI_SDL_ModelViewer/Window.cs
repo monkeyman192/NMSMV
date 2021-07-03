@@ -50,6 +50,7 @@ namespace ImGUI_SDL_ModelViewer
         //ImGui Variables
         private ImGUIPakBrowser PackBrowser;
         private ImGuiAboutWindow AboutWindow;
+        private ImGuiSettingsWindow SettingsWindow;
         private bool show_open_file_dialog = false;
         private bool show_open_file_dialog_pak = false;
         private bool open_file_enabled = false;
@@ -65,9 +66,8 @@ namespace ImGUI_SDL_ModelViewer
         private int ItemCounter = 0;
         //ImguiPalette Colors
         //Blue
-        private System.Numerics.Vector4 DarkBlue = new(0.04f, 0.2f, 0.96f, 1.0f);
+        public static System.Numerics.Vector4 DarkBlue = new(0.04f, 0.2f, 0.96f, 1.0f);
 
-        
         public Window() : base(GameWindowSettings.Default, 
             new NativeWindowSettings() { Size = new Vector2i(800, 600), APIVersion = new Version(4, 5) })
         {
@@ -86,8 +86,6 @@ namespace ImGUI_SDL_ModelViewer
             CallBacks.getBitMapResource = Util.getBitMapResource;
             CallBacks.getTextResource = Util.getTextResource;
 
-            RenderFrequency = 240;
-            UpdateFrequency = RenderFrequency * 2;
             SceneViewSize = Size;
 
             //Start worker thread
@@ -112,7 +110,11 @@ namespace ImGUI_SDL_ModelViewer
                 show_settings_window = true;
             
             RenderState.settings = Settings.loadFromDisk();
-            
+
+            //Pass rendering settings to the Window
+            RenderFrequency = RenderState.settings.rendering._fps;
+            UpdateFrequency = RenderFrequency * 2;
+
             //Initialize Engine backend
             engine = new Engine(this);
             engine.init(Size.X, Size.Y); //Initialize Engine
@@ -171,6 +173,7 @@ namespace ImGUI_SDL_ModelViewer
             //Initialize ImGUi Objectives
             PackBrowser = new ImGUIPakBrowser();
             AboutWindow = new ImGuiAboutWindow();
+            SettingsWindow = new ImGuiSettingsWindow();
 
             CallBacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
 
@@ -392,8 +395,13 @@ namespace ImGUI_SDL_ModelViewer
 
                     if (ImGui.MenuItem("Update LibMBIN"))
                     {
-                        //TODO
                         show_update_libmbin_dialog = true;
+                    }
+
+                    if (ImGui.MenuItem("Settings"))
+                    {
+                        //TODO
+                        show_settings_window = true;
                     }
 
                     if (ImGui.MenuItem("Close", "Ctrl + Q"))
@@ -624,7 +632,12 @@ namespace ImGUI_SDL_ModelViewer
                 show_about_window = false;
             }
 
-                
+            if (show_settings_window)
+            {
+                ImGui.OpenPopup("show-settings");
+                show_settings_window = false;
+            }
+
             var isOpen = true;
             if (ImGui.BeginPopupModal("open-file", ref isOpen, ImGuiWindowFlags.NoTitleBar))
             {
@@ -709,6 +722,20 @@ namespace ImGUI_SDL_ModelViewer
                 }
 
                 AboutWindow.Draw();
+
+                ImGui.EndPopup();
+            }
+
+            if (ImGui.BeginPopupModal("show-settings", ref isOpen))
+            {
+
+                ImGuiNative.igSetNextWindowSize(new System.Numerics.Vector2(800, 256 + 60), ImGuiCond.Always);
+                if (ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGuiKey.Escape)))
+                {
+                    ImGui.CloseCurrentPopup();
+                }
+
+                SettingsWindow.Draw();
 
                 ImGui.EndPopup();
             }
@@ -1059,6 +1086,117 @@ namespace ImGUI_SDL_ModelViewer
         ~ImGuiAboutWindow()
         {
             tex.Dispose();
+        }
+    }
+
+    public class ImGuiSettingsWindow
+    {
+        private bool show_gamedir_folder_select = false;
+        private bool show_unpackdir_folder_select = false;
+        private string current_file_path = "";
+        private FilePicker activePicker;
+
+        public ImGuiSettingsWindow()
+        {
+            
+        }
+
+        public void Draw()
+        {
+
+            //Assume that a Popup has begun
+            ImGui.BeginChild("SettingsWindow", ImGui.GetContentRegionAvail(),
+                true, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
+
+
+            ImGui.Columns(2);
+            //Game Directory
+            ImGui.Text("NMS Installation Folder");
+            ImGui.NextColumn();
+            ImGui.Text(RenderState.settings.GameDir);
+            ImGui.SameLine();
+
+            if (ImGui.Button("Select"))
+            {
+                activePicker = FilePicker.GetFilePicker(this, current_file_path, null, true);
+                show_gamedir_folder_select = true;
+            }
+
+            ImGui.NextColumn();
+            //Unpacked Files Directory
+            ImGui.Text("NMS Unpacked Folder");
+            ImGui.NextColumn();
+            ImGui.Text(RenderState.settings.UnpackDir);
+            ImGui.SameLine();
+
+            if (ImGui.Button("Select"))
+            {
+                activePicker = FilePicker.GetFilePicker(this, current_file_path, null, true);
+                show_unpackdir_folder_select = true;
+            }
+
+            ImGui.Columns(1);
+            ImGui.SliderInt("ProcGen Window Number", ref RenderState.settings.ProcGenWinNum, 1, 10);
+            ImGui.Checkbox("Force ProcGen", ref RenderState.settings.ForceProcGen);
+            
+            //Render Settings
+            ImGui.BeginGroup();
+            ImGui.TextColored(Window.DarkBlue, "Rendering Settings");
+            ImGui.SliderFloat("HDR Exposure", ref RenderState.settings.rendering._HDRExposure, 0.001f, 0.5f);
+            ImGui.InputInt("FPS", ref RenderState.settings.rendering._fps);
+            ImGui.Checkbox("Vsync", ref RenderState.settings.rendering._useVSYNC);
+            ImGui.EndGroup();
+
+
+
+
+
+            ImGui.EndChild();
+
+            //Popup Init
+
+            if (show_gamedir_folder_select)
+            {
+                ImGui.OpenPopup("Select Game Directory");
+                show_gamedir_folder_select = false;
+            }
+
+            if (show_unpackdir_folder_select)
+            {
+                ImGui.OpenPopup("Select Unpacked File Directory");
+                show_unpackdir_folder_select = false;
+            }
+
+
+            //Popup Actions
+
+            if (ImGui.BeginPopupModal("Select Game Directory"))
+            {
+                if (activePicker.Draw())
+                {
+                    RenderState.settings.GameDir = activePicker.SelectedFile;
+                    FilePicker.RemoveFilePicker(this);
+                }
+                ImGui.EndPopup();
+            }
+
+            if (ImGui.BeginPopupModal("Select Unpacked File Directory"))
+            {
+                if (activePicker.Draw())
+                {
+                    RenderState.settings.GameDir = activePicker.SelectedFile;
+                    FilePicker.RemoveFilePicker(this);
+                }
+                ImGui.EndPopup();
+            }
+
+            
+
+        }
+
+        ~ImGuiSettingsWindow()
+        {
+            
         }
     }
 

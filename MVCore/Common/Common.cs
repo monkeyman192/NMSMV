@@ -253,7 +253,6 @@ namespace MVCore.Common
         private int forceProcGen;
         private string gamedir;
         private string unpackdir;
-        private int _procGenWinNum;
         private LogVerbosityLevel _logVerbosity;
 
         public string GameDir
@@ -287,30 +286,9 @@ namespace MVCore.Common
 
         }
 
-        public int ProcGenWinNum {
-            get
-            {
-                return _procGenWinNum;
-            }
-            set
-            {
-                _procGenWinNum = value;
-                NotifyPropertyChanged("ProcGenWinNum");
-            }
-        }
+        public int ProcGenWinNum;
 
-        public int ForceProcGen
-        {
-            get => forceProcGen;
-            set
-            {
-                if (value > 0)
-                    forceProcGen = 1;
-                else
-                    forceProcGen = 0;
-                NotifyPropertyChanged("ForceProcGen");
-            }
-        }
+        public bool ForceProcGen;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
