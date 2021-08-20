@@ -114,14 +114,14 @@ namespace MVCore.Common
 
     public class RenderSettings: INotifyPropertyChanged
     {
-        public int _fps = 60;
-        public bool _useVSYNC = false;
-        public float _HDRExposure = 0.005f;
+        public int FPS = 60;
+        public bool UseVSync = false;
+        public float HDRExposure = 0.005f;
         //Set Full rendermode by default
         [JsonIgnore]
         public PolygonMode RENDERMODE = PolygonMode.Fill;
         [JsonIgnore]
-        public System.Drawing.Color clearColor = System.Drawing.Color.FromArgb(255, 33, 33, 33);
+        public Color clearColor = System.Drawing.Color.FromArgb(255, 33, 33, 33);
         public float _useTextures = 1.0f;
         public float _useLighting = 1.0f;
 
@@ -140,40 +140,6 @@ namespace MVCore.Common
         public bool UseFXAA { get; set; } = true;
 
         public bool UseBLOOM { get; set; } = true;
-
-        public bool UseVSYNC
-        {
-            get
-            {
-                return _useVSYNC;
-            }
-            set
-            {
-                _useVSYNC = value;
-                NotifyPropertyChanged("UseVSYNC");
-            }
-        }
-
-        [JsonIgnore]
-        public string FPS
-        {
-            get => _fps.ToString();
-            set
-            {
-                int.TryParse(value, out _fps);
-                NotifyPropertyChanged("FPS");
-            }
-        }
-
-        public string HDRExposure
-        {
-            get => _HDRExposure.ToString();
-            set
-            {
-                _HDRExposure = Utils.MathUtils.FloatParse(value);
-                NotifyPropertyChanged("HDRExposure");
-            }
-        }
 
         //Add properties
         [JsonIgnore]

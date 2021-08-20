@@ -25,6 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\Component.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\LODModelComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\PhysicsComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\TransformComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Components\TriggerActionComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLLightBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Joint.cs" />

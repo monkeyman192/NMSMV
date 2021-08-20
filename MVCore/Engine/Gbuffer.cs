@@ -417,11 +417,12 @@ namespace MVCore.Engine
             GL.PatchParameter(PatchParameterFloat.PatchDefaultOuterLevel, new float[] { 4.0f, 4.0f, 4.0f });
             GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
         }
-
+        
         public void bind()
         {
             //Bind Gbuffer fbo
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, fbo);
+            GL.Viewport(0, 0, size[0], size[1]);
             GL.DrawBuffers(3, new DrawBuffersEnum[] { DrawBuffersEnum.ColorAttachment0,
                                                       DrawBuffersEnum.ColorAttachment1,
                                                       DrawBuffersEnum.ColorAttachment2} );

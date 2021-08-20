@@ -21,11 +21,10 @@ namespace ImGUI_SDL_ModelViewer
     {
         ImGuiController _controller;
         
-
         //Parameters
         private string current_file_path = Environment.CurrentDirectory;
         private string status_string = "Ready";
-
+        
         //Mouse Pos
         private MouseMovementState mouseState = new MouseMovementState();
         private MouseMovementStatus mouseMovementStatus = MouseMovementStatus.IDLE;
@@ -47,26 +46,11 @@ namespace ImGUI_SDL_ModelViewer
         private WorkThreadDispacher workDispatcher = new();
         private List<Task> workTasks = new(); //Keep track of the issued tasks
 
-        //ImGui Variables
-        private ImGUIPakBrowser PackBrowser;
-        private ImGuiAboutWindow AboutWindow;
-        private ImGuiSettingsWindow SettingsWindow;
-        private bool show_open_file_dialog = false;
-        private bool show_open_file_dialog_pak = false;
-        private bool open_file_enabled = false;
-        private bool show_update_libmbin_dialog = false;
-        private bool show_settings_window = false;
-        private bool show_about_window = false;
-        private bool show_test_components = false;
-        private string libMbinOnlineVersion = null;
-        private string libMbinLocalVersion = null;
-
-
+        
         private Vector2i SceneViewSize = new();
         private int ItemCounter = 0;
-        //ImguiPalette Colors
-        //Blue
-        public static System.Numerics.Vector4 DarkBlue = new(0.04f, 0.2f, 0.96f, 1.0f);
+        
+        static private bool open_file_enabled = false;
 
         public Window() : base(GameWindowSettings.Default, 
             new NativeWindowSettings() { Size = new Vector2i(800, 600), APIVersion = new Version(4, 5) })
@@ -85,9 +69,9 @@ namespace ImGUI_SDL_ModelViewer
             CallBacks.getResource = Util.getResource;
             CallBacks.getBitMapResource = Util.getBitMapResource;
             CallBacks.getTextResource = Util.getTextResource;
-
+            
             SceneViewSize = Size;
-
+            
             //Start worker thread
             workDispatcher.Start();
 
@@ -101,18 +85,18 @@ namespace ImGUI_SDL_ModelViewer
             base.OnLoad();
             
             _controller = new ImGuiController(ClientSize.X, ClientSize.Y);
-            
+
             //OVERRIDE SETTINGS
             //FileUtils.dirpath = "I:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\PCBANKS";
 
             //Load Settings
             if (!File.Exists("settings.json"))
-                show_settings_window = true;
+                ImGuiManager.ShowSettingsWindow();
             
             RenderState.settings = Settings.loadFromDisk();
 
             //Pass rendering settings to the Window
-            RenderFrequency = RenderState.settings.rendering._fps;
+            RenderFrequency = RenderState.settings.rendering.FPS;
             UpdateFrequency = RenderFrequency * 2;
 
             //Initialize Engine backend
@@ -122,9 +106,22 @@ namespace ImGUI_SDL_ModelViewer
             //Populate GLControl
             Scene scene = new Scene()
             {
-                type = TYPES.MODEL,
                 name = "DEFAULT SCENE"
             };
+
+            Locator test1 = new()
+            {
+                name = "Test Locator 1"
+            };
+            
+            scene.AddChild(test1);
+
+            Locator test2 = new()
+            {
+                name = "Test Locator 2"
+            };
+
+            scene.AddChild(test2);
 
             //Add default scene to the resource manager
             RenderState.activeResMgr.GLScenes["DEFAULT_SCENE"] = scene;
@@ -134,8 +131,9 @@ namespace ImGUI_SDL_ModelViewer
             modelUpdateQueue.Enqueue(scene);
             engine.renderSys.populate(scene);
 
-            //SceneTreeView.Items.Clear();
-            //SceneTreeView.Items.Add(scene);
+
+            //Populate SceneGraphView
+            ImGuiManager.PopulateSceneGraph(scene);
 
             //Check if Temp folder exists
 #if DEBUG
@@ -161,22 +159,10 @@ namespace ImGUI_SDL_ModelViewer
 
             //TODO: Bring that back
             //Sliders_OnValueChanged(null, new RoutedPropertyChangedEventArgs<double>(0.0f, 0.0f));
-            
 
             
-#if (DEBUG)
-            //Enable the Test options if it is a debug version
-            //TestOptions.Visibility = Visibility.Visible;
-            show_test_components = true;
-#endif
-
-            //Initialize ImGUi Objectives
-            PackBrowser = new ImGUIPakBrowser();
-            AboutWindow = new ImGuiAboutWindow();
-            SettingsWindow = new ImGuiSettingsWindow();
-
             CallBacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
-
+            
             //Issue work request 
             ThreadRequest rq = new ThreadRequest();
             rq.arguments.Add("NMSmanifest");
@@ -184,16 +170,10 @@ namespace ImGUI_SDL_ModelViewer
             rq.arguments.Add(RenderState.activeResMgr);
             rq.type = THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST;
             workTasks.Add(workDispatcher.sendRequest(rq));
-
+            
             //Basic Initialization of ImGui
-            InitImGUI();
+            ImGuiManager.InitImGUI();
     
-        }
-
-        private void InitImGUI()
-        {
-            ImGuiIOPtr io = ImGui.GetIO();
-            io.ConfigFlags |= ImGuiConfigFlags.DockingEnable; //Enable Docking
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -243,6 +223,7 @@ namespace ImGUI_SDL_ModelViewer
             
             //UI
             DrawUI();
+            
             //ImGui.ShowDemoWindow();
             _controller.Render();
 
@@ -348,411 +329,7 @@ namespace ImGUI_SDL_ModelViewer
             base.OnTextInput(e);
             _controller.PressChar((char)e.Unicode);
         }
-        
-        private void DrawUI()
-        {
-            //Enable docking in main view
-            ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags.None;
-            dockspace_flags |= ImGuiDockNodeFlags.PassthruCentralNode;
-
-            ImGuiWindowFlags window_flags = ImGuiWindowFlags.NoResize | 
-                                            ImGuiWindowFlags.NoTitleBar |
-                                            ImGuiWindowFlags.NoBackground |
-                                            ImGuiWindowFlags.NoCollapse;
-
-            ImGuiViewportPtr vp = ImGui.GetMainViewport();
-            ImGui.SetNextWindowPos(vp.GetWorkPos());
-            ImGui.SetNextWindowSize(vp.GetWorkSize());
-            ImGui.SetNextWindowViewport(vp.ID);
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.0f);
-
-            //Main View
-            bool dockspace_open = true;
-            ImGui.Begin("DockSpaceDemo", ref dockspace_open, window_flags);
-
-            uint dockSpaceID = ImGui.GetID("MyDockSpace");
-            ImGui.DockSpace(dockSpaceID,
-                new System.Numerics.Vector2(0.0f, 0.0f), dockspace_flags);
-
-            ImGui.End();
-
-
-            //Main Menu
-            if (ImGui.BeginMainMenuBar())
-            {
-                if (ImGui.BeginMenu("File"))
-                {
-                    if (ImGui.MenuItem("Open", "Ctrl + O", false, open_file_enabled))
-                    {
-                        show_open_file_dialog = true;
-                    }
-
-                    if (ImGui.MenuItem("Open from PAK", "", false, open_file_enabled))
-                    {
-                        show_open_file_dialog_pak = true;
-                    }
-
-                    if (ImGui.MenuItem("Update LibMBIN"))
-                    {
-                        show_update_libmbin_dialog = true;
-                    }
-
-                    if (ImGui.MenuItem("Settings"))
-                    {
-                        //TODO
-                        show_settings_window = true;
-                    }
-
-                    if (ImGui.MenuItem("Close", "Ctrl + Q"))
-                    {
-                        //TODO, properly cleanup and close the window
-                        Close();
-                    }
-
-                    ImGui.EndMenu();
-                }
-
-                if (ImGui.MenuItem("About"))
-                {
-                    show_about_window = true;
-                }
-
-                ImGui.EndMenuBar();
-            }
-
-            //ImGui.SetNextWindowPos(new System.Numerics.Vector2(0, Size.Y - 2.0f * ImGui.CalcTextSize("test").Y));
-            //ImGui.SetNextWindowSize(new System.Numerics.Vector2(Size.X, Size.Y - 2.0f * ImGui.CalcTextSize("test").Y));
-
-            ImGui.SetCursorPosX(0.0f);
-            bool main_view = true;
-
             
-            //Scene Render
-            bool scene_view = true;
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new System.Numerics.Vector2(0.0f, 0.0f));
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, new System.Numerics.Vector2(0.0f, 0.0f));
-            if (ImGui.Begin("Scene", ref scene_view, ImGuiWindowFlags.NoScrollbar))
-            {
-                //Update RenderSize
-                System.Numerics.Vector2 csize = ImGui.GetContentRegionAvail();
-                Vector2i csizetk = new Vector2i( (int) ImGui.GetContentRegionAvail().X,
-                                               (int) ImGui.GetContentRegionAvail().Y);
-
-                ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().channels[0]),
-                                csize,
-                                new System.Numerics.Vector2(0.0f, 1.0f),
-                                new System.Numerics.Vector2(1.0f, 0.0f));
-                
-                if (csizetk != SceneViewSize)
-                {
-                    SceneViewSize = csizetk;
-                    engine.renderSys.resize(csizetk);
-                }
-                
-                ImGui.End();
-                ImGui.PopStyleVar();
-                ImGui.PopStyleVar();
-
-            }
-
-            //SideBar
-
-            if (ImGui.Begin("SideBar", ref main_view))
-            {
-                if (ImGui.BeginChild("RightView"))
-                {
-                    ImGui.BeginGroup();
-
-                    if (ImGui.TreeNode("SceneGraph"))
-                    {
-                        //TODO populate scenegraph
-                        ImGui.TreePop();
-                    }
-                    ImGui.Text("End of SceneGraph");
-                    ImGui.EndGroup();
-                    ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMin(), 0x00FFFFFF);
-
-                    ImGui.Separator();
-                    
-                    //Draw Tab Controls
-                    if (ImGui.BeginTabBar("Tab Control", ImGuiTabBarFlags.None))
-                    {
-                        if (ImGui.BeginTabItem("Camera"))
-                        {
-                            //Camera Settings
-                            ImGui.BeginGroup();
-                            ImGui.TextColored(DarkBlue, "Camera Settings");
-                            float test = 0.0f;
-                            ImGui.SliderFloat("FOV", ref test, 90.0f, 100.0f);
-                            /*
-                            ImGui.SliderFloat("FOV", ref MVCore.Common.RenderState.activeCam.fov, 90.0f, 100.0f);
-                            ImGui.SliderFloat("MovementSpeed", ref MVCore.Common.RenderState.activeCam.Speed, 1.0f, 20.0f);
-                            ImGui.SliderFloat("MovementPower", ref MVCore.Common.RenderState.activeCam.SpeedPower, 1.0f, 10.0f);
-                            ImGui.SliderFloat("zNear", ref MVCore.Common.RenderState.activeCam.zNear, 0.01f, 1.0f);
-                            ImGui.SliderFloat("zFar", ref MVCore.Common.RenderState.activeCam.zFar, 101.0f, 30000.0f);
-                                
-                            ImGui.SliderFloat("lightDistance", ????, 0.0f, 20.0f);
-                            ImGui.SliderFloat("lightIntensity", ????, 0.0f, 20.0f);
-                            */
-
-                            if (ImGui.Button("Reset Camera"))
-                            {
-                                //TODO
-                            }
-
-                            ImGui.SameLine();
-                                
-                            if (ImGui.Button("Reset Scene Rotation"))
-                            {
-                                //TODO
-                            }
-
-                            ImGui.EndGroup();
-
-
-                            ImGui.Separator();
-                            ImGui.BeginGroup();
-                            ImGui.TextColored(DarkBlue, "Camera Controls");
-                            
-                            ImGui.Columns(2);
-
-                            ImGui.Text("Horizontal Camera Movement");
-                            ImGui.Text("Vertical Camera Movement");
-                            ImGui.Text("Camera Rotation");
-                            ImGui.Text("Scene Rotate (Y Axis)");
-                            ImGui.NextColumn();
-                            ImGui.Text("W, A, S, D");
-                            ImGui.Text("R, F");
-                            ImGui.Text("Hold RMB +Move");
-                            ImGui.Text("Q, E");
-                            ImGui.EndGroup();
-
-                            ImGui.Columns(1);
-                            
-                            ImGui.EndTabItem();
-                        }
-
-                        if (ImGui.BeginTabItem("View Options"))
-                        {
-                            
-                            ImGui.EndTabItem();
-                        }
-
-                        if (ImGui.BeginTabItem("Test Options"))
-                        {
-
-                            ImGui.EndTabItem();
-                        }
-                        
-                        if (ImGui.BeginTabItem("RenderInfoOptions"))
-                        {
-
-                            ImGui.EndTabItem();
-                        }
-                        
-                        if (ImGui.BeginTabItem("Tools"))
-                        {
-
-                            if (ImGui.Button("ProcGen", new System.Numerics.Vector2(80.0f, 40.0f)))
-                            {
-                                //TODO generate proc gen view
-                            }
-
-                            ImGui.SameLine();
-
-                            if (ImGui.Button("Reset Pose", new System.Numerics.Vector2(80.0f, 40.0f)))
-                            {
-                                //TODO Reset The models pose
-                            }
-                            
-                            ImGui.EndTabItem();
-                        }
-
-                        if (ImGui.BeginTabItem("Object Info"))
-                        {
-
-                            ImGui.EndTabItem();
-                        }
-
-                        ImGui.EndTabBar();
-                    }
-
-                    ImGui.EndChild();
-                }
-
-                ImGui.End();
-            }
-
-            
-            //StatusBar
-
-            ImGui.SetNextWindowPos(new System.Numerics.Vector2(0, Size.Y - 2.0f * ImGui.CalcTextSize("test").Y));
-            ImGui.SetNextWindowSize(new System.Numerics.Vector2(Size.X, 1.75f * ImGui.CalcTextSize("test").Y));
-
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
-            
-            if (ImGui.Begin("StatusBar", ImGuiWindowFlags.NoMove |
-                                         ImGuiWindowFlags.NoDecoration))
-            {
-                ImGui.Columns(2, "statusbarColumns", false);
-                ImGui.Text(status_string);
-                ImGui.NextColumn();
-                string text = "Created by gregkwaste";
-                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetColumnWidth() - ImGui.CalcTextSize(text).X
-                    - ImGui.GetScrollX() - 2 * ImGui.GetStyle().ItemSpacing.X);
-                
-                ImGui.Text(text);
-                ImGui.End();
-            }
-
-            //Functionality
-                
-            if (show_open_file_dialog)
-            {
-                ImGui.OpenPopup("open-file");
-                show_open_file_dialog = false;
-            }
-
-            if (show_open_file_dialog_pak)
-            {
-                ImGui.OpenPopup("open-file-pak");
-                show_open_file_dialog_pak = false;
-            }
-
-            if (show_update_libmbin_dialog)
-            {
-                ImGui.OpenPopup("update-libmbin");
-                show_update_libmbin_dialog = false;
-            }
-
-            if (show_about_window)
-            {
-                ImGui.OpenPopup("show-about");
-                show_about_window = false;
-            }
-
-            if (show_settings_window)
-            {
-                ImGui.OpenPopup("show-settings");
-                show_settings_window = false;
-            }
-
-            var isOpen = true;
-            if (ImGui.BeginPopupModal("open-file", ref isOpen, ImGuiWindowFlags.NoTitleBar))
-            {
-                var picker = ImGuiHelper.FilePicker.GetFilePicker(this, current_file_path, ".SCENE.MBIN|.SCENE.EXML");
-                if (picker.Draw())
-                {
-                    Console.WriteLine(picker.SelectedFile);
-                    current_file_path = picker.CurrentFolder;
-                    FilePicker.RemoveFilePicker(this);
-                }
-                ImGui.EndPopup();
-            }
-
-            if (ImGui.BeginPopupModal("open-file-pak", ref isOpen))
-            {
-                if (PackBrowser.isFinished())
-                {
-                    PackBrowser.Clear();
-                    ImGui.CloseCurrentPopup();
-                    //Issue File Open Request
-                } else
-                {
-                    PackBrowser.Draw();
-                }
-                
-                if (ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGuiKey.Escape)))
-                {
-                    PackBrowser.Clear();
-                    ImGui.CloseCurrentPopup();
-                }
-
-                ImGui.EndPopup();
-            }
-
-
-            if (ImGui.BeginPopupModal("update-libmbin", ref isOpen, ImGuiWindowFlags.None))
-            {
-                if (libMbinLocalVersion == null)
-                    libMbinLocalVersion = MVCore.Utils.HTMLUtils.queryLibMBINDLLLocalVersion();
-                
-                if (libMbinOnlineVersion == null)
-                {
-                    libMbinOnlineVersion = MVCore.Utils.HTMLUtils.queryLibMBINDLLOnlineVersion();
-                }
-                    
-                ImGui.Text("Old Version: " + libMbinLocalVersion);
-                ImGui.Text("Online Version: " + libMbinOnlineVersion);
-                ImGui.Text("Do you want to update?");
-
-                bool updatelibmbin = false;
-                if (ImGui.Button("YES"))
-                {
-                    updatelibmbin = true;
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("NO"))
-                {
-                    libMbinLocalVersion = null;
-                    libMbinOnlineVersion = null;
-                    ImGui.CloseCurrentPopup();
-                }
-
-                if (updatelibmbin)
-                {
-                    //MVCore.Utils.HTMLUtils.fetchLibMBINDLL();
-                    libMbinLocalVersion = null;
-                    libMbinOnlineVersion = null;
-                    ImGui.CloseCurrentPopup();
-                }
-
-                ImGui.EndPopup();
-
-            }
-
-            
-            if (ImGui.BeginPopupModal("show-about", ref isOpen, ImGuiWindowFlags.NoResize)){
-
-                ImGuiNative.igSetNextWindowSize(new System.Numerics.Vector2(256 + 36, 256 + 60), ImGuiCond.Appearing);
-                if (ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGuiKey.Escape)))
-                {
-                    ImGui.CloseCurrentPopup();
-                }
-
-                AboutWindow.Draw();
-
-                ImGui.EndPopup();
-            }
-
-            if (ImGui.BeginPopupModal("show-settings", ref isOpen))
-            {
-
-                ImGuiNative.igSetNextWindowSize(new System.Numerics.Vector2(800, 256 + 60), ImGuiCond.Always);
-                if (ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGuiKey.Escape)))
-                {
-                    ImGui.CloseCurrentPopup();
-                }
-
-                SettingsWindow.Draw();
-
-                ImGui.EndPopup();
-            }
-
-            //Debugging Tools
-
-            if (ImGui.Begin("Statistics"))
-            {
-                ImGui.Text(string.Format("FPS : {0, 3:F1}", RenderStats.fpsCount));
-                ImGui.Text(string.Format("VertexCount : {0}", RenderStats.vertNum));
-                ImGui.Text(string.Format("TrisCount : {0}", RenderStats.trisNum));
-                ImGui.End();
-            }
-
-
-        }
-
         private void OpenFile(string filename, bool testScene, int testSceneID)
         {
             Console.WriteLine("Importing " + filename);
@@ -841,7 +418,6 @@ namespace ImGUI_SDL_ModelViewer
             }
         }
 
-
         //Scene Loading
         public void addTestScene(int sceneID)
         {
@@ -890,7 +466,7 @@ namespace ImGUI_SDL_ModelViewer
             findAnimScenes(RenderState.rootObject); //Repopulate animScenes
             findActionScenes(RenderState.rootObject); //Re-populate actionSystem
         }
-
+        
         public void findAnimScenes(Model node)
         {
             if (node.animComponentID >= 0)
@@ -908,296 +484,288 @@ namespace ImGUI_SDL_ModelViewer
                 findActionScenes(child);
         }
 
-    }
-
-
-    unsafe public class ImGUIPakBrowser
-    {
-        ImGuiTextFilterPtr _filter;
-        string selected_item = "";
-        bool DialogFinished;
-
-        public ImGUIPakBrowser()
+        public void DrawUI()
         {
-            var filterPtr = ImGuiNative.ImGuiTextFilter_ImGuiTextFilter(null);
-            _filter = new ImGuiTextFilterPtr(filterPtr);
-            DialogFinished = false;
-        }
+            //Enable docking in main view
+            ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags.None;
+            dockspace_flags |= ImGuiDockNodeFlags.PassthruCentralNode;
 
-        public void Draw()
-        {
-            _filter.Draw("Filter");
-            //Draw listbox
-            ImGui.BeginChild("ListBox", new System.Numerics.Vector2(ImGui.GetWindowSize().X, 250), true);
-            foreach (var line in RenderState.activeResMgr.NMSSceneFilesList)
+            ImGuiWindowFlags window_flags = ImGuiWindowFlags.NoBackground |
+                                            ImGuiWindowFlags.NoCollapse |
+                                            ImGuiWindowFlags.NoResize |
+                                            ImGuiWindowFlags.NoDocking;
+
+            ImGuiViewportPtr vp = ImGui.GetMainViewport();
+            ImGui.SetNextWindowPos(vp.GetWorkPos());
+            ImGui.SetNextWindowSize(vp.GetWorkSize());
+            ImGui.SetNextWindowViewport(vp.ID);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.0f);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, 0.0f);
+
+            int statusBarHeight = (int) (1.75f * ImGui.CalcTextSize("Status").Y);
+
+            
+            //DockSpace
+            bool dockspace_open = true;
+            ImGui.Begin("DockSpaceDemo", ref dockspace_open, window_flags);
+
+            ImGui.PopStyleVar(2);
+            
+            uint dockSpaceID = ImGui.GetID("MainDockSpace");
+            //System.Numerics.Vector2 dockSpaceSize = vp.GetWorkSize();
+            System.Numerics.Vector2 dockSpaceSize = new(0.0f, -statusBarHeight);
+            ImGui.DockSpace(dockSpaceID,
+                dockSpaceSize, dockspace_flags);
+
+            //Main Menu
+            if (ImGui.BeginMainMenuBar())
             {
-                if (_filter.PassFilter(line))
+                if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.Selectable(line, line == selected_item)){
-                        selected_item = line;
-                    }
-                }
-                    
-            }
-            ImGui.EndChild();
-            ImGui.Text(string.Format("Selected Item: {0}", selected_item));
-            ImGui.SameLine();
-            if (ImGui.Button("Open"))
-                DialogFinished = true;
-        }
-
-        public void Clear()
-        {
-            _filter.Clear();
-            selected_item = "";
-            DialogFinished = false;
-        }
-
-        public bool isFinished()
-        {
-            return DialogFinished;
-        }
-
-        public void Destroy()
-        {
-            ImGuiNative.ImGuiTextFilter_destroy(_filter.NativePtr);
-        }
-    }
-
-
-    public class ImGuiAboutWindow
-    {
-        Texture tex;
-
-        public ImGuiAboutWindow()
-        {
-            //Load Logo Texture to the GPU
-            byte[] imgData = CallBacks.getResource("ianm32logo_border.png");
-
-            tex = new Texture();
-            tex.textureInit(imgData, "ianm32logo_border.png");
-        }
-
-        private void TextCenter(string text, bool ishyperlink, string url = "")
-        {
-            float font_size = ImGui.GetFontSize() * text.Length / 2;
-            ImGui.SameLine(
-                ImGui.GetColumnWidth() / 2 -
-                font_size + (font_size / 2)
-            );
-
-            ImGui.Text(text);
-
-            if (ishyperlink)
-            {
-                var min = ImGui.GetItemRectMin();
-                var max = ImGui.GetItemRectMax();
-                min.Y = max.Y;
-
-                if (ImGui.IsItemHovered())
-                {
-                    if (ImGui.IsMouseClicked(0))
+                    if (ImGui.MenuItem("Open", "Ctrl + O", false, open_file_enabled))
                     {
-                        
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
-                        {
-                            Verb = "open",
-                            UseShellExecute = true
-                        });
+                        ImGuiManager.ShowOpenFileDialog();
                     }
-                        
-                    
-                    //System.Diagnostics.Process.Start("explorer.exe", new Uri(url).ToString());
-                    ImGui.GetWindowDrawList().AddLine(min, max, 0x0010FFFF);
-                }
-                else
-                {
-                    ImGui.GetWindowDrawList().AddLine(min, max, 0xFFFFFFFF);
-                }
-            }
-            
-        }
 
-
-
-        private void Text(string text, bool ishyperlink, string url = "")
-        {
-            ImGui.Text(text);
-
-            if (ishyperlink)
-            {
-                var min = ImGui.GetItemRectMin();
-                var max = ImGui.GetItemRectMax();
-                min.Y = max.Y;
-
-                if (ImGui.IsItemHovered())
-                {
-                    if (ImGui.IsMouseClicked(0))
+                    if (ImGui.MenuItem("Open from PAK", "", false, open_file_enabled))
                     {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
-                        {
-                            Verb = "open",
-                            UseShellExecute = true
-                        });
+                        ImGuiManager.ShowOpenFileDialogPak();
                     }
-                    
-                    ImGui.GetWindowDrawList().AddLine(min, max, 0x0010FFFF);
+
+                    if (ImGui.MenuItem("Update LibMBIN"))
+                    {
+                        ImGuiManager.ShowUpdateLibMBINDialog();
+                    }
+
+                    if (ImGui.MenuItem("Settings"))
+                    {
+                        ImGuiManager.ShowSettingsWindow();
+                    }
+
+                    if (ImGui.MenuItem("Close", "Ctrl + Q"))
+                    {
+                        //TODO, properly cleanup and close the window
+                        Close();
+                    }
+
+                    ImGui.EndMenu();
                 }
-                else
+
+                if (ImGui.MenuItem("About"))
                 {
-                    ImGui.GetWindowDrawList().AddLine(min, max, 0xFFFFFFFF);
+                    ImGuiManager.ShowAboutWindow();
                 }
+
+                ImGui.EndMenuBar();
             }
-            
-        }
 
-        
-        public void Draw()
-        {
-            
-            //Assume that a Popup has begun
-            ImGui.BeginChild("AboutWindow", ImGui.GetContentRegionAvail(), 
-                true, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
+            //Generate StatusBar
+            //StatusBar
 
-            ImGui.Image(new IntPtr(tex.texID),
-                        new System.Numerics.Vector2(256, 256),
-                        new System.Numerics.Vector2(0, 0),
-                        new System.Numerics.Vector2(1, 1));
+            ImGui.SetNextWindowPos(new System.Numerics.Vector2(0, Size.Y - statusBarHeight));
+            ImGui.SetNextWindowSize(new System.Numerics.Vector2(Size.X, statusBarHeight));
             
-            if (ImGui.BeginChildFrame(0, ImGui.GetContentRegionAvail(), ImGuiWindowFlags.NoBackground)){
-                TextCenter("No Man's Sky Model Viewer", false);
-                ImGui.NewLine();
-                TextCenter(Util.getVersion(), false);
-                ImGui.NewLine();
-                ImGui.Columns(2, "Links", false);
-                //Donation link
-                TextCenter("Donate", true, Util.DonateLink);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
+            
+
+            if (ImGui.Begin("StatusBar", ImGuiWindowFlags.NoMove | 
+                                         ImGuiWindowFlags.NoDocking |
+                                         ImGuiWindowFlags.NoDecoration))
+            {
+                
+                ImGui.Columns(2, "statusbarColumns", false);
+                ImGui.SetCursorPosY(0.25f * statusBarHeight);
+                ImGui.Text(status_string);
                 ImGui.NextColumn();
-                TextCenter("Github", true, "https://github.com/gregkwaste/NMSMV");
-                ImGui.NewLine();
-                ImGui.Columns(1);
-                TextCenter("Created by gregkwaste", false);
-                ImGui.EndChildFrame();
+                string text = "Created by gregkwaste";
+                ImGui.SetCursorPosY(0.25f * statusBarHeight);
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ImGui.GetColumnWidth() - ImGui.CalcTextSize(text).X
+                    - ImGui.GetScrollX() - 2 * ImGui.GetStyle().ItemSpacing.X);
+                
+                ImGui.Text(text);
+                ImGui.End();
             }
-            ImGui.EndChild();
+            ImGui.PopStyleVar();
+
+            ImGui.End();
+
+            ImGui.SetNextWindowDockID(dockSpaceID, ImGuiCond.Once);
+            ImGui.SetCursorPosX(0.0f);
+            bool main_view = true;
+
+            //Scene Render
+            bool scene_view = true;
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new System.Numerics.Vector2(0.0f, 0.0f));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, new System.Numerics.Vector2(0.0f, 0.0f));
+
+            //Cause of ImguiNET that does not yet support DockBuilder. The main Viewport will be docked to the main window.
+            //All other windows will be separate.
+
+            if (ImGui.Begin("Scene", ref scene_view, ImGuiWindowFlags.NoScrollbar))
+            {
+                //Update RenderSize
+                System.Numerics.Vector2 csize = ImGui.GetContentRegionAvail();
+                Vector2i csizetk = new Vector2i((int) csize.X,
+                                               (int) csize.Y);
+                
+                ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().channels[0]),
+                                csize,
+                                new System.Numerics.Vector2(0.0f, 1.0f),
+                                new System.Numerics.Vector2(1.0f, 0.0f));
+
+                if (csizetk != SceneViewSize)
+                {
+                    SceneViewSize = csizetk;
+                    engine.renderSys.resize(csizetk);
+                }
+
+                ImGui.PopStyleVar();
+                ImGui.End();
+            }
+
+
+            //SideBar
+            if (ImGui.Begin("SideBar", ref main_view))
+            {
+                ImGui.BeginGroup();
+
+                ImGui.Text("SceneGraph");
+                ImGuiManager.DrawSceneGraph();
+                ImGui.EndGroup();
+                //ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMin(), 0x00FFFFFF);
+
+                ImGui.Separator();
+                
+                ////Draw Tab Controls
+                if (ImGui.BeginTabBar("Tab Control", ImGuiTabBarFlags.None))
+                {
+                    if (ImGui.BeginTabItem("Camera"))
+                    {
+                        //Camera Settings
+                        ImGui.BeginGroup();
+                        ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Settings");
+                        float test = 0.0f;
+                        ImGui.SliderFloat("FOV", ref test, 90.0f, 100.0f);
+                        /*
+                        ImGui.SliderFloat("FOV", ref MVCore.Common.RenderState.activeCam.fov, 90.0f, 100.0f);
+                        ImGui.SliderFloat("MovementSpeed", ref MVCore.Common.RenderState.activeCam.Speed, 1.0f, 20.0f);
+                        ImGui.SliderFloat("MovementPower", ref MVCore.Common.RenderState.activeCam.SpeedPower, 1.0f, 10.0f);
+                        ImGui.SliderFloat("zNear", ref MVCore.Common.RenderState.activeCam.zNear, 0.01f, 1.0f);
+                        ImGui.SliderFloat("zFar", ref MVCore.Common.RenderState.activeCam.zFar, 101.0f, 30000.0f);
+
+                        ImGui.SliderFloat("lightDistance", ????, 0.0f, 20.0f);
+                        ImGui.SliderFloat("lightIntensity", ????, 0.0f, 20.0f);
+                        */
+
+                        if (ImGui.Button("Reset Camera"))
+                        {
+                            //TODO
+                        }
+
+                        ImGui.SameLine();
+
+                        if (ImGui.Button("Reset Scene Rotation"))
+                        {
+                            //TODO
+                        }
+
+                        ImGui.EndGroup();
+
+
+                        ImGui.Separator();
+                        ImGui.BeginGroup();
+                        ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Controls");
+
+                        ImGui.Columns(2);
+
+                        ImGui.Text("Horizontal Camera Movement");
+                        ImGui.Text("Vertical Camera Movement");
+                        ImGui.Text("Camera Rotation");
+                        ImGui.Text("Scene Rotate (Y Axis)");
+                        ImGui.NextColumn();
+                        ImGui.Text("W, A, S, D");
+                        ImGui.Text("R, F");
+                        ImGui.Text("Hold RMB +Move");
+                        ImGui.Text("Q, E");
+                        ImGui.EndGroup();
+
+                        ImGui.Columns(1);
+
+                        ImGui.EndTabItem();
+                    }
+
+                    if (ImGui.BeginTabItem("View Options"))
+                    {
+                        ImGui.Text("TODO");
+                        ImGui.EndTabItem();
+                    }
+
+#if (DEBUG)
+                    if (ImGui.BeginTabItem("Test Options"))
+                    {
+                        ImGui.Text("TODO REnder Test Elements");
+                        ImGui.EndTabItem();
+                    }
+#endif
+
+                    if (ImGui.BeginTabItem("RenderInfoOptions"))
+                    {
+                        ImGui.Text("TODO");
+                        ImGui.EndTabItem();
+                    }
+
+                    if (ImGui.BeginTabItem("Tools"))
+                    {
+
+                        if (ImGui.Button("ProcGen", new System.Numerics.Vector2(80.0f, 40.0f)))
+                        {
+                            //TODO generate proc gen view
+                        }
+
+                        ImGui.SameLine();
+
+                        if (ImGui.Button("Reset Pose", new System.Numerics.Vector2(80.0f, 40.0f)))
+                        {
+                            //TODO Reset The models pose
+                        }
+
+                        ImGui.EndTabItem();
+                    }
+
+                    if (ImGui.BeginTabItem("Object Info"))
+                    {
+                        ImGuiManager.DrawObjectInfoViewer();
+                        ImGui.EndTabItem();
+                    }
+
+                    ImGui.EndTabBar();
+                }
+                
+                ImGui.End();
+            }
+
+
+
+            ImGuiManager.ProcessModals(this, current_file_path);
+
+            //Debugging Information
+            if (ImGui.Begin("Statistics"))
+            {
+                ImGui.Text(string.Format("FPS : {0, 3:F1}", RenderStats.fpsCount));
+                ImGui.Text(string.Format("VertexCount : {0}", RenderStats.vertNum));
+                ImGui.Text(string.Format("TrisCount : {0}", RenderStats.trisNum));
+                ImGui.End();
+            }
+
+
 
         }
+        
 
-        ~ImGuiAboutWindow()
-        {
-            tex.Dispose();
-        }
     }
 
-    public class ImGuiSettingsWindow
-    {
-        private bool show_gamedir_folder_select = false;
-        private bool show_unpackdir_folder_select = false;
-        private string current_file_path = "";
-        private FilePicker activePicker;
-
-        public ImGuiSettingsWindow()
-        {
-            
-        }
-
-        public void Draw()
-        {
-
-            //Assume that a Popup has begun
-            ImGui.BeginChild("SettingsWindow", ImGui.GetContentRegionAvail(),
-                true, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
 
 
-            ImGui.Columns(2);
-            //Game Directory
-            ImGui.Text("NMS Installation Folder");
-            ImGui.NextColumn();
-            ImGui.Text(RenderState.settings.GameDir);
-            ImGui.SameLine();
-
-            if (ImGui.Button("Select"))
-            {
-                activePicker = FilePicker.GetFilePicker(this, current_file_path, null, true);
-                show_gamedir_folder_select = true;
-            }
-
-            ImGui.NextColumn();
-            //Unpacked Files Directory
-            ImGui.Text("NMS Unpacked Folder");
-            ImGui.NextColumn();
-            ImGui.Text(RenderState.settings.UnpackDir);
-            ImGui.SameLine();
-
-            if (ImGui.Button("Select"))
-            {
-                activePicker = FilePicker.GetFilePicker(this, current_file_path, null, true);
-                show_unpackdir_folder_select = true;
-            }
-
-            ImGui.Columns(1);
-            ImGui.SliderInt("ProcGen Window Number", ref RenderState.settings.ProcGenWinNum, 1, 10);
-            ImGui.Checkbox("Force ProcGen", ref RenderState.settings.ForceProcGen);
-            
-            //Render Settings
-            ImGui.BeginGroup();
-            ImGui.TextColored(Window.DarkBlue, "Rendering Settings");
-            ImGui.SliderFloat("HDR Exposure", ref RenderState.settings.rendering._HDRExposure, 0.001f, 0.5f);
-            ImGui.InputInt("FPS", ref RenderState.settings.rendering._fps);
-            ImGui.Checkbox("Vsync", ref RenderState.settings.rendering._useVSYNC);
-            ImGui.EndGroup();
-
-
-
-
-
-            ImGui.EndChild();
-
-            //Popup Init
-
-            if (show_gamedir_folder_select)
-            {
-                ImGui.OpenPopup("Select Game Directory");
-                show_gamedir_folder_select = false;
-            }
-
-            if (show_unpackdir_folder_select)
-            {
-                ImGui.OpenPopup("Select Unpacked File Directory");
-                show_unpackdir_folder_select = false;
-            }
-
-
-            //Popup Actions
-
-            if (ImGui.BeginPopupModal("Select Game Directory"))
-            {
-                if (activePicker.Draw())
-                {
-                    RenderState.settings.GameDir = activePicker.SelectedFile;
-                    FilePicker.RemoveFilePicker(this);
-                }
-                ImGui.EndPopup();
-            }
-
-            if (ImGui.BeginPopupModal("Select Unpacked File Directory"))
-            {
-                if (activePicker.Draw())
-                {
-                    RenderState.settings.GameDir = activePicker.SelectedFile;
-                    FilePicker.RemoveFilePicker(this);
-                }
-                ImGui.EndPopup();
-            }
-
-            
-
-        }
-
-        ~ImGuiSettingsWindow()
-        {
-            
-        }
-    }
 
 }

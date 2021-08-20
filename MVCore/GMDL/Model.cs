@@ -351,6 +351,12 @@ namespace MVCore.GMDL
         }
 
 
+        public void AddChild(Model m)
+        {
+            children.Add(m);
+            m.parent = this;
+        }
+
         public void findNode(string name, ref Model m)
         {
             if (Name == name)

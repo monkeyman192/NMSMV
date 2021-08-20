@@ -546,7 +546,7 @@ namespace MVCore.Engine.Systems
             cpfu.lookMatInv = RenderState.activeCam.lookMatInv;
             cpfu.projMatInv = RenderState.activeCam.projMatInv;
             cpfu.cameraPositionExposure.Xyz = RenderState.activeCam.Position;
-            cpfu.cameraPositionExposure.W = RenderState.settings.rendering._HDRExposure;
+            cpfu.cameraPositionExposure.W = RenderState.settings.rendering.HDRExposure;
             cpfu.cameraDirection = RenderState.activeCam.Front;
             cpfu.cameraNearPlane = RenderState.activeCam.zNear;
             cpfu.cameraFarPlane = RenderState.activeCam.zFar;
@@ -1144,11 +1144,11 @@ namespace MVCore.Engine.Systems
         {
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, pbuf.fbo);
             GL.ReadBuffer(ReadBufferMode.ColorAttachment0);
-            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            GL.BlitFramebuffer(0, 0, gbuf.size[0], gbuf.size[1], 0, 0, gbuf.size[0], gbuf.size[1], 
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, render_fbo.fbo);
+            GL.BlitFramebuffer(0, 0, pbuf.size[0], pbuf.size[1], 0, 0, render_fbo.size_x, render_fbo.size_y, 
                 ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
         }
-
+        
         private void renderUI()
         {
 
@@ -1234,56 +1234,25 @@ namespace MVCore.Engine.Systems
         //Rendering Mechanism
         public void testrender()
         {
+
             //Prepare UBOs
             prepareCommonPerFrameUBO();
 
-            //Render to render_fbo
-            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, render_fbo.fbo);
-            GL.Viewport(0, 0, ViewportSize.X, ViewportSize.Y);
-            render_quad(Array.Empty<string>(), Array.Empty<float>(), Array.Empty<string>(), Array.Empty<TextureTarget>(), Array.Empty<int>(), resMgr.GLShaders[SHADER_TYPE.RED_FILL_SHADER]);
+            //Prepare Mesh UBO
+            prepareCommonPerMeshSSBOs();
+
+            //Render Geometry
+            renderGeometry();
+
+            //Pass result to Render FBO
+            renderFinalPass();
             
-            return;
 
-            if (RenderState.renderViewSettings.RenderInfo)
-            {
-                GL.Enable(EnableCap.Blend);
-                GL.Disable(EnableCap.DepthTest);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                //Render info right on the 0 buffer
-
-                GLSLShaderConfig shader = resMgr.GLShaders[SHADER_TYPE.TEXT_SHADER];
-                GL.UseProgram(shader.program_id);
-
-#if (DEBUG)
-                //Upload test options to the shader
-                //GL.Uniform1(shader.uniformLocations["edge"], RenderState.renderSettings.testOpt1);
-                //GL.Uniform1(shader.uniformLocations["width"], RenderState.renderSettings.testOpt2);
-#endif
-
-                GL.Disable(EnableCap.CullFace);
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-
-                //Render texts included in Text manager
-                foreach (GLText t in resMgr.txtMgr.texts)
-                {
-                    GLInstancedMeshVao m = t.meshVao;
-
-                    //Render Start
-                    GL.Uniform1(shader.uniformLocations["fontSize"], (float) t.font.Size);
-                    GL.Uniform1(shader.uniformLocations["textSize"], t.lineHeight);
-                    GL.Uniform2(shader.uniformLocations["offset"], t.pos);
-                    GL.Uniform3(shader.uniformLocations["color"], t.color);
-                    //GL.Uniform2(shader.uniformLocations["textDim"], t.size);
-                    MeshRenderer.render(m, shader, RENDERPASS.FORWARD);
-                }
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-                GL.Enable(EnableCap.CullFace);
-
-                GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
-                GL.Enable(EnableCap.DepthTest);
-                GL.Disable(EnableCap.Blend);
-            }
-
+            //Pass Result to Render FBO
+            //Render to render_fbo
+            //GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, render_fbo.fbo);
+            //GL.Viewport(0, 0, ViewportSize.X, ViewportSize.Y);
+            //render_quad(Array.Empty<string>(), Array.Empty<float>(), Array.Empty<string>(), Array.Empty<TextureTarget>(), Array.Empty<int>(), resMgr.GLShaders[SHADER_TYPE.RED_FILL_SHADER]);
 
         }
 
