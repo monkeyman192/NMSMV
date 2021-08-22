@@ -1,5 +1,5 @@
 ﻿using ImGuiNET;
-using MVCore.GMDL;
+using MVCore;
 
 
 namespace ImGuiHelper
@@ -65,25 +65,28 @@ namespace ImGuiHelper
             ImGui.Text(_model.ID.ToString());
             ImGui.Text(_model.Type);
             ImGui.Text(_model.LODNumber.ToString());
+
+            ImGui.Columns(1);
             //TODO LOD Distances
-
-
 
         }
 
         private void DrawLocator()
         {
             DrawModel();
+            //TODO Add Locator Stuff
         }
 
         private void DrawMesh()
         {
             DrawModel();
+            //TODO add Mesh Stuff
         }
 
         private void DrawLight()
         {
             DrawModel();
+            //Todo add Light Stuff
         }
 
         

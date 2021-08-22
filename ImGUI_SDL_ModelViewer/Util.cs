@@ -80,6 +80,13 @@ namespace ImGUI_SDL_ModelViewer
                 loggingSr.Flush();
             }
         }
+
+        public static void Assert(bool status, string msg)
+        {
+            if (!status)
+                Callbacks.Log(msg, LogVerbosityLevel.ERROR);
+            System.Diagnostics.Trace.Assert(status);
+        }
     
 
         //Resource Handler
@@ -102,7 +109,7 @@ namespace ImGUI_SDL_ModelViewer
                 data = _textStreamReader.ReadBytes((int) _textStreamReader.BaseStream.Length);
             } catch
             {
-                CallBacks.Log("Unable to Fetch Resource", LogVerbosityLevel.ERROR);
+                Callbacks.Log("Unable to Fetch Resource", LogVerbosityLevel.ERROR);
             }
             
             return data;

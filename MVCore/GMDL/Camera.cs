@@ -11,7 +11,7 @@ using System.ComponentModel;
 using System.Drawing.Design;
 using System.Security.Permissions;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public struct CameraPos
     {
@@ -28,40 +28,40 @@ namespace MVCore.GMDL
     public class Camera
     {
         //Base Coordinate System
-        public Vector3 BaseRight = new Vector3(1.0f, 0.0f, 0.0f);
-        public Vector3 BaseFront = new Vector3(0.0f, 0.0f, -1.0f);
-        public Vector3 BaseUp = new Vector3(0.0f, 1.0f, 0.0f);
+        public Vector3 BaseRight = new(1.0f, 0.0f, 0.0f);
+        public Vector3 BaseFront = new(0.0f, 0.0f, -1.0f);
+        public Vector3 BaseUp = new(0.0f, 1.0f, 0.0f);
 
         //Prev Vectors
-        public Quaternion PrevDirection = new Quaternion(new Vector3(0.0f, (float)Math.PI / 2.0f, 0.0f));
-        public Vector3 PrevPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        public Quaternion PrevDirection = new(new(0.0f, (float)Math.PI / 2.0f, 0.0f));
+        public Vector3 PrevPosition = new(0.0f, 0.0f, 0.0f);
         
         //Target Vectors
-        public Quaternion TargetDirection = new Quaternion(new Vector3(0.0f, (float)Math.PI / 2.0f, 0.0f));
-        public Vector3 TargetPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        public Quaternion TargetDirection = new(new(0.0f, (float)Math.PI / 2.0f, 0.0f));
+        public Vector3 TargetPosition = new(0.0f, 0.0f, 0.0f);
 
         //Current Vectors
-        public Vector3 Right = new Vector3(1.0f, 0.0f, 0.0f);
-        public Vector3 Front = new Vector3(0.0f, 0.0f, -1.0f);
-        public Vector3 Up = new Vector3(0.0f, 1.0f, 0.0f);
-        public Quaternion Direction = new Quaternion(new Vector3(0.0f, (float)Math.PI / 2.0f, 0.0f));
-        public Vector3 Position = new Vector3(0.0f, 0.0f, 0.0f);
+        public Vector3 Right = new(1.0f, 0.0f, 0.0f);
+        public Vector3 Front = new(0.0f, 0.0f, -1.0f);
+        public Vector3 Up = new(0.0f, 1.0f, 0.0f);
+        public Quaternion Direction = new(new(0.0f, (float)Math.PI / 2.0f, 0.0f));
+        public Vector3 Position = new(0.0f, 0.0f, 0.0f);
 
         //Movement Time
         private float t_pos_move = 100.0f;
         private float t_rot_move = 100.0f;
         private float t_start = 0.0f;
-
+        
         public float Speed = 1.0f; //Speed in Units/Sec
         public float SpeedPower = 1.0f; //Coefficient to which speed is raised
         public float Sensitivity = 0.001f;
         public bool isActive = false;
         //Projection variables Set defaults
-        public float fov;
+        public float fov = 90.0f; //Angle in degrees
         public float zNear = 0.05f;
         public float zFar = 15000.0f;
         public float aspect = 1.0f;
-
+        
         //Matrices
         public Matrix4 projMat;
         public Matrix4 projMatInv;
@@ -72,17 +72,17 @@ namespace MVCore.GMDL
         public bool culling;
 
         //Camera Frustum Planes
-        private Frustum extFrustum = new Frustum();
+        private Frustum extFrustum = new();
         public Vector4[] frPlanes = new Vector4[6];
 
         //Rendering Stuff
-        public GMDL.GLMeshVao vao;
+        public GLMeshVao vao;
         public int program;
 
         public Camera(int angle, int program, int mode, bool cull)
         {
             //Set fov on init
-            this.setFOV(angle);
+            fov = angle;
             vao = new GLMeshVao();
             vao.vao = (new Primitives.Box(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true)).getVAO();
             this.program = program;
@@ -99,20 +99,19 @@ namespace MVCore.GMDL
         public void updateViewMatrix()
         {
             lookMat = Matrix4.LookAt(Position, Position + Front, Up);
+            float fov_rad = MVCore.Utils.MathUtils.radians(fov);
             
-            //lookMat = Matrix4.LookAt(new Vector3(0.0f,0.0f,0.0f), lookat, Vector3.UnitY);
-
             if (type == 0) {
                 //projMat = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, zNear, zFar);
                 //Call Custom
                 //projMat = this.ComputeFOVProjection();
                 float w, h;
-                float tangent = (float) Math.Tan(fov / 2.0f);   // tangent of half fovY
+                float tangent = (float) Math.Tan(fov_rad / 2.0f);   // tangent of half fovY
                 h = zNear * tangent;  // half height of near plane
                 w = h * aspect;       // half width of near plane
 
                 //projMat = Matrix4.CreatePerspectiveOffCenter(-w, w, -h, h, zNear, zFar);
-                Matrix4.CreatePerspectiveFieldOfView(fov, aspect, zNear, zFar, out projMat);
+                Matrix4.CreatePerspectiveFieldOfView(fov_rad, aspect, zNear, zFar, out projMat);
                 viewMat = lookMat * projMat;
             }
             else
@@ -121,7 +120,7 @@ namespace MVCore.GMDL
                 Matrix4.CreateOrthographic(aspect * 2.0f, 2.0f, zNear, zFar, out projMat);
                 //projMat.Transpose();
                 //Create scale matrix based on the fov
-                Matrix4 scaleMat = Matrix4.CreateScale(0.8f * fov);
+                Matrix4 scaleMat = Matrix4.CreateScale(0.8f * fov_rad);
                 viewMat = scaleMat * lookMat * projMat;
             }
             
@@ -132,21 +131,6 @@ namespace MVCore.GMDL
             updateFrustumPlanes();
         }
 
-        private void calcCameraOrientation(ref Vector3 front, ref Vector3 right, ref Vector3 up, 
-            float yaw, float pitch)
-        {
-            //Recalculate front vector
-            front.X = (float) Math.Cos(yaw) * (float)Math.Cos(pitch);
-            front.Y = (float) Math.Sin(pitch);
-            front.Z = (float) Math.Sin(yaw) * (float)Math.Cos(pitch);
-            front.Normalize();
-
-            //Recalculate right vector
-            right = Vector3.Cross(front, new Vector3(0.0f, 1.0f, 0.0f)).Normalized();
-            up = Vector3.Cross(right, front).Normalized();
-        
-        }
-
         public void updateTarget(CameraPos target, float interval)
         {
             //Interval is the update interval of the movement defined in the control camera timer
@@ -155,7 +139,6 @@ namespace MVCore.GMDL
             PrevPosition = Position;
             PrevDirection = Direction;
 
-            
             //Rotate Direction
             Quaternion rx = Quaternion.FromAxisAngle(Up, -target.Rotation.X * Sensitivity);
             Quaternion ry = Quaternion.FromAxisAngle(Right, -target.Rotation.Y * Sensitivity); //Looks OK
@@ -167,7 +150,7 @@ namespace MVCore.GMDL
             
 
             float step = 0.00001f;
-            Vector3 offset = new Vector3();
+            Vector3 offset = new();
             offset += step * actual_speed * target.PosImpulse.X * Right;
             offset += step * actual_speed * target.PosImpulse.Y * Front;
             offset += step * actual_speed * target.PosImpulse.Z * Up;
@@ -203,15 +186,12 @@ namespace MVCore.GMDL
             t_start += (float) dt;
             float pos_lerp_coeff, rot_lerp_coeff;
 
-            
             pos_lerp_coeff = t_start / (float) Math.Max(t_pos_move, 1e-4);
             pos_lerp_coeff = MathUtils.clamp(pos_lerp_coeff, 0.0f, 1.0f);
-            
             
             rot_lerp_coeff = t_start / (float)Math.Max(t_rot_move, 1e-4);
             rot_lerp_coeff = MathUtils.clamp(rot_lerp_coeff, 0.0f, 1.0f);
             
-
             //Interpolate Quaternions/Vectors
             Direction = PrevDirection * (1.0f - rot_lerp_coeff) +
                         TargetDirection * rot_lerp_coeff;
@@ -223,11 +203,6 @@ namespace MVCore.GMDL
             Front = newFront.Xyz.Normalized();
             Right = Vector3.Cross(Front, BaseUp).Normalized();
             Up = Vector3.Cross(Right, Front).Normalized();
-        }
-
-        public void setFOV(int angle)
-        {
-            this.fov = MathUtils.radians(angle);
         }
 
         public void updateFrustumPlanes()
@@ -266,7 +241,7 @@ namespace MVCore.GMDL
 
         public bool frustum_occlude(Vector3 AABBMIN, Vector3 AABBMAX, Matrix4 transform)
         {
-            if (!Common.RenderState.settings.rendering.UseFrustumCulling)
+            if (!Common.RenderState.settings.renderSettings.UseFrustumCulling)
                 return true;
 
             float radius = 0.5f * (AABBMIN - AABBMAX).Length;

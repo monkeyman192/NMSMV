@@ -4,17 +4,14 @@ using System.Net;
 using System.Runtime.InteropServices;
 using GLSLHelper;
 using libMBIN.NMS.Toolkit;
+using MVCore;
 using MVCore.Common;
-using MVCore.Engine;
-
-using MVCore.GMDL;
-using MVCore.Text;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
 
-namespace MVCore.Engine.Systems
+namespace MVCore.Systems
 {
     //Framebuffer Structs
     [StructLayout(LayoutKind.Explicit)]
@@ -173,7 +170,7 @@ namespace MVCore.Engine.Systems
                 $"openGL - {Marshal.PtrToStringAnsi(message, length)}" :
                 $"openGL - {Marshal.PtrToStringAnsi(message, length)}\n\tid:{id} severity:{severity} type:{type} source:{source}\n";
 
-                CallBacks.Log(msg, LogVerbosityLevel.DEBUG);
+                Callbacks.Log(msg, LogVerbosityLevel.DEBUG);
             }
         }
 
@@ -220,7 +217,7 @@ namespace MVCore.Engine.Systems
                 //Render Translation Gizmo
                 GLInstancedMeshVao m = gzPart.meshVao;
                 //Render Start
-                Matrix4 mWMat = GLMeshBufferManager.getInstanceWorldMat(m, 0);
+                Matrix4 mWMat = GLMeshBufferManager.GetInstanceWorldMat(m, 0);
                 GL.UniformMatrix4(shader.uniformLocations["worldMat"], false, ref mWMat);
                 GL.Uniform1(shader.uniformLocations["is_active"], 0.0f); //Render with default color
                 MeshRenderer.render(m, shader, RENDERPASS.FORWARD);
@@ -298,7 +295,7 @@ namespace MVCore.Engine.Systems
             }
         }
 
-        public void populate(GMDL.Model root)
+        public void populate(Model root)
         {
             CleanUp();
 
@@ -434,7 +431,7 @@ namespace MVCore.Engine.Systems
             lock (globalMeshList)
             {
                 foreach (GLInstancedMeshVao m in globalMeshList)
-                    GLMeshBufferManager.clearInstances(m);
+                    GLMeshBufferManager.ClearInstances(m);
             }
         }
 
@@ -536,8 +533,8 @@ namespace MVCore.Engine.Systems
         private void prepareCommonPerFrameUBO()
         {
             //Prepare Struct
-            cpfu.diffuseFlag = RenderState.settings.rendering._useTextures;
-            cpfu.use_lighting = RenderState.settings.rendering._useLighting;
+            cpfu.diffuseFlag = (RenderState.settings.renderSettings.UseTextures) ? 1.0f : 0.0f;
+            cpfu.use_lighting = (RenderState.settings.renderSettings.UseLighting) ? 1.0f : 0.0f;
             cpfu.frameDim.X = gbuf.size[0];
             cpfu.frameDim.Y = gbuf.size[1];
             cpfu.mvp = RenderState.activeCam.viewMat;
@@ -546,7 +543,7 @@ namespace MVCore.Engine.Systems
             cpfu.lookMatInv = RenderState.activeCam.lookMatInv;
             cpfu.projMatInv = RenderState.activeCam.projMatInv;
             cpfu.cameraPositionExposure.Xyz = RenderState.activeCam.Position;
-            cpfu.cameraPositionExposure.W = RenderState.settings.rendering.HDRExposure;
+            cpfu.cameraPositionExposure.W = RenderState.settings.renderSettings.HDRExposure;
             cpfu.cameraDirection = RenderState.activeCam.Front;
             cpfu.cameraNearPlane = RenderState.activeCam.zNear;
             cpfu.cameraFarPlane = RenderState.activeCam.zFar;
@@ -784,7 +781,7 @@ namespace MVCore.Engine.Systems
             WaitSyncStatus result = WaitSyncStatus.WaitFailed;
             while (result == WaitSyncStatus.TimeoutExpired || result == WaitSyncStatus.WaitFailed)
             {
-                //CallBacks.Log(result.ToString());
+                //Callbacks.Log(result.ToString());
                 //Console.WriteLine("Gamithike o dias");
                 result = GL.ClientWaitSync(multiBufferSyncStatuses[multiBufferActiveId], 0, 10);
             }
@@ -855,7 +852,7 @@ namespace MVCore.Engine.Systems
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
 
             //Collisions
-            if (RenderState.renderViewSettings.RenderCollisions)
+            if (RenderState.settings.viewSettings.ViewCollisions)
             {
                 Material mat = resMgr.GLmaterials["collisionMat"];
                 GLSLShaderConfig shader = mat.shader;
@@ -875,7 +872,7 @@ namespace MVCore.Engine.Systems
             }
 
             //Lights
-            if (RenderState.renderViewSettings.RenderLights)
+            if (RenderState.settings.viewSettings.ViewLights)
             {
                 Material mat = resMgr.GLmaterials["lightMat"];
                 GLSLShaderConfig shader = mat.shader;
@@ -895,7 +892,7 @@ namespace MVCore.Engine.Systems
             }
 
             //Lights
-            if (RenderState.renderViewSettings.RenderLightVolumes)
+            if (RenderState.settings.viewSettings.ViewLightVolumes)
             {
                 Material mat = resMgr.GLmaterials["lightMat"];
                 GLSLShaderConfig shader = mat.shader;
@@ -915,7 +912,7 @@ namespace MVCore.Engine.Systems
             }
 
             //Joints
-            if (RenderState.renderViewSettings.RenderJoints)
+            if (RenderState.settings.viewSettings.ViewJoints)
             {
                 Material mat = resMgr.GLmaterials["jointMat"];
                 GLSLShaderConfig shader = mat.shader;
@@ -935,10 +932,10 @@ namespace MVCore.Engine.Systems
                 }
             }
 
-            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
+            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.renderSettings.RENDERMODE);
 
             //Locators
-            if (RenderState.renderViewSettings.RenderLocators)
+            if (RenderState.settings.viewSettings.ViewLocators)
             {
                 Material mat = resMgr.GLmaterials["crossMat"];
                 GLSLShaderConfig shader = mat.shader;
@@ -966,7 +963,7 @@ namespace MVCore.Engine.Systems
         private void renderStaticMeshes(List<GLSLShaderConfig> shaderList)
         {
             //Set polygon mode
-            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
+            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.renderSettings.RENDERMODE);
             
             foreach (GLSLShaderConfig shader in shaderList)
             {
@@ -982,11 +979,11 @@ namespace MVCore.Engine.Systems
                         (IntPtr)(m.UBO_offset), m.UBO_aligned_size);
 
                     MeshRenderer.render(m, shader, RENDERPASS.DEFERRED);
-                    if (RenderState.renderViewSettings.RenderBoundHulls)
+                    if (RenderState.settings.viewSettings.ViewBoundHulls)
                     {
                         GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
                         MeshRenderer.render(m, shader, RENDERPASS.BHULL);
-                        GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
+                        GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.renderSettings.RENDERMODE);
                     }
                 }
 
@@ -1099,7 +1096,7 @@ namespace MVCore.Engine.Systems
             GL.BlendFunc(1, BlendingFactorSrc.Zero, BlendingFactorDest.OneMinusSrcAlpha);
 
             //Set polygon mode
-            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
+            GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.renderSettings.RENDERMODE);
 
             foreach (GLSLShaderConfig shader in resMgr.activeGLForwardTransparentShaders)
             {
@@ -1152,7 +1149,7 @@ namespace MVCore.Engine.Systems
         private void renderUI()
         {
 
-            if (RenderState.renderViewSettings.RenderGizmos)
+            if (RenderState.settings.viewSettings.ViewGizmos)
             {
                 GL.Clear(ClearBufferMask.DepthBufferBit); //Clear depth
                 GL.Enable(EnableCap.DepthTest);
@@ -1174,56 +1171,16 @@ namespace MVCore.Engine.Systems
                     GLInstancedMeshVao m = resMgr.GLPrimitiveMeshVaos[name];
                     //Render Start
                     //TODO: Bind the Mesh UBO directly
-                    Matrix4 mWMat = GLMeshBufferManager.getInstanceWorldMat(m, 0);
+                    Matrix4 mWMat = GLMeshBufferManager.GetInstanceWorldMat(m, 0);
                     GL.UniformMatrix4(shader.uniformLocations["worldMat"], false, ref mWMat);
-                    GL.Uniform1(shader.uniformLocations["is_active"], GLMeshBufferManager.getInstanceSelectedStatus(m, 0) ? 1.0f: 0.0f);
+                    GL.Uniform1(shader.uniformLocations["is_active"], GLMeshBufferManager.GetInstanceSelectedStatus(m, 0) ? 1.0f: 0.0f);
                     MeshRenderer.render(m, shader, RENDERPASS.FORWARD);
                 }
 
                 GL.Enable(EnableCap.CullFace);
 
             }
-
-            if (RenderState.renderViewSettings.RenderInfo)
-            {
-                GL.Enable(EnableCap.Blend);
-                GL.Disable(EnableCap.DepthTest);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                //Render info right on the 0 buffer
-
-                GLSLShaderConfig shader = resMgr.GLShaders[SHADER_TYPE.TEXT_SHADER];
-                GL.UseProgram(shader.program_id);
-
-#if (DEBUG)
-                //Upload test options to the shader
-                //GL.Uniform1(shader.uniformLocations["edge"], RenderState.renderSettings.testOpt1);
-                //GL.Uniform1(shader.uniformLocations["width"], RenderState.renderSettings.testOpt2);
-#endif
-
-                GL.Disable(EnableCap.CullFace);
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-
-                //Render texts included in Text manager
-                foreach (GLText t in resMgr.txtMgr.texts)
-                {
-                    GLInstancedMeshVao m = t.meshVao;
-
-                    //Render Start
-                    GL.Uniform1(shader.uniformLocations["fontSize"], (float)t.font.Size);
-                    GL.Uniform1(shader.uniformLocations["textSize"], t.lineHeight);
-                    GL.Uniform2(shader.uniformLocations["offset"], t.pos);
-                    GL.Uniform3(shader.uniformLocations["color"], t.color);
-                    //GL.Uniform2(shader.uniformLocations["textDim"], t.size);
-                    MeshRenderer.render(m, shader, RENDERPASS.FORWARD);
-                }
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-                GL.Enable(EnableCap.CullFace);
-
-                GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.rendering.RENDERMODE);
-                GL.Enable(EnableCap.DepthTest);
-                GL.Disable(EnableCap.Blend);
-            }
-                
+    
         }
 
         private void renderShadows()
@@ -1271,7 +1228,7 @@ namespace MVCore.Engine.Systems
             //sortTransparent(); //NOT NEEDED ANYMORE
             
             //LOD filtering
-            if (RenderState.settings.rendering.LODFiltering)
+            if (RenderState.settings.renderSettings.LODFiltering)
             {
                 //LOD_filtering(staticMeshQueue); TODO: FIX
                 //LOD_filtering(transparentMeshQueue); TODO: FIX
@@ -1520,12 +1477,12 @@ namespace MVCore.Engine.Systems
         private void post_process()
         {
             //Actuall Post Process effects in AA space without tone mapping
-            if (RenderState.settings.rendering.UseBLOOM)
+            if (RenderState.settings.renderSettings.UseBLOOM)
                 bloom(); //BLOOM
 
             tone_mapping(); //FINAL TONE MAPPING, INCLUDES GAMMA CORRECTION
 
-            if (RenderState.settings.rendering.UseFXAA)
+            if (RenderState.settings.renderSettings.UseFXAA)
                 fxaa(); //FXAA (INCLUDING TONE/UNTONE)
         }
 

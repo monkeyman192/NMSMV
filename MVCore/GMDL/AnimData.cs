@@ -9,7 +9,7 @@ using MVCore.Utils;
 using OpenTK;
 using OpenTK.Mathematics;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class AnimTransform
     {
@@ -26,7 +26,7 @@ namespace MVCore.GMDL
 
         public static AnimTransform Lerp(AnimTransform prev, AnimTransform next, float x)
         {
-            AnimTransform t = new AnimTransform();
+            AnimTransform t = new();
             t.position = Vector3.Lerp(prev.position, next.position, x);
             t.rotation = Quaternion.Slerp(prev.rotation, next.rotation, x);
             t.scale = Vector3.Lerp(prev.scale, next.scale, x);
@@ -73,16 +73,16 @@ namespace MVCore.GMDL
 
         }
 
-        public Assimp.Animation assimpExport(ref Assimp.Scene scn)
+        public Assimp.Animation AssimpExport(ref Assimp.Scene scn)
         {
-            Assimp.Animation asAnim = new Assimp.Animation();
+            Assimp.Animation asAnim = new();
             asAnim.Name = Anim;
 
 
             //Make sure keyframe data is loaded from the files
             if (!loaded)
             {
-                fetchAnimMetaData();
+                FetchAnimMetaData();
                 loaded = true;
             }
 
@@ -97,7 +97,7 @@ namespace MVCore.GMDL
             for (int i = 0; i < animMeta.NodeCount; i++)
             {
                 string name = animMeta.NodeData[i].Node;
-                Assimp.NodeAnimationChannel mChannel = new Assimp.NodeAnimationChannel();
+                Assimp.NodeAnimationChannel mChannel = new();
                 mChannel.NodeName = name;
 
                 //mChannel.PostState = Assimp.AnimationBehaviour.Linear;
@@ -109,13 +109,13 @@ namespace MVCore.GMDL
                 {
 
                     //Position
-                    Assimp.VectorKey vk = new Assimp.VectorKey(j * time_interval, MathUtils.convertVector(animMeta.anim_positions[name][j]));
+                    Assimp.VectorKey vk = new(j * time_interval, MathUtils.convertVector(animMeta.anim_positions[name][j]));
                     mChannel.PositionKeys.Add(vk);
                     //Rotation
-                    Assimp.QuaternionKey qk = new Assimp.QuaternionKey(j * time_interval, MathUtils.convertQuaternion(animMeta.anim_rotations[name][j]));
+                    Assimp.QuaternionKey qk = new(j * time_interval, MathUtils.convertQuaternion(animMeta.anim_rotations[name][j]));
                     mChannel.RotationKeys.Add(qk);
                     //Scale
-                    Assimp.VectorKey sk = new Assimp.VectorKey(j * time_interval, MathUtils.convertVector(animMeta.anim_scales[name][j]));
+                    Assimp.VectorKey sk = new(j * time_interval, MathUtils.convertVector(animMeta.anim_scales[name][j]));
                     mChannel.ScalingKeys.Add(sk);
 
                 }
@@ -130,7 +130,7 @@ namespace MVCore.GMDL
 
         public AnimData Clone()
         {
-            AnimData ad = new AnimData();
+            AnimData ad = new();
 
             ad.Anim = Anim;
             ad.Filename = Filename;
@@ -200,7 +200,7 @@ namespace MVCore.GMDL
             get { return (animMeta != null) ?  animMeta.FrameCount - 1 : 0;}
         }
 
-        public bool isValid
+        public bool IsValid
         {
             get { return Filename != ""; }
         }
@@ -231,14 +231,14 @@ namespace MVCore.GMDL
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
         }
 
-        public void loadData()
+        public void LoadData()
         {
             if (Filename != "")
-                fetchAnimMetaData();
+                FetchAnimMetaData();
         }
 
 
-        private void fetchAnimMetaData()
+        private void FetchAnimMetaData()
         {
             if (Common.RenderState.activeResMgr.Animations.ContainsKey(Filename))
             {
@@ -256,20 +256,20 @@ namespace MVCore.GMDL
         }
 
 
-        public void update(float dt) //time in milliseconds
+        public void Update(float dt) //time in milliseconds
         {
             if (!loaded)
             {
-                fetchAnimMetaData();
+                FetchAnimMetaData();
                 loaded = true;
             }
             
             animationTime += dt;
-            progress();
+            Progress();
         }
 
 
-        public void progress() 
+        public void Progress() 
         {
             //Override frame based on the GUI
             if (Override)
@@ -330,7 +330,7 @@ namespace MVCore.GMDL
 
         //TODO: Use this new definition for animation blending
         //public void applyNodeTransform(model m, string node, out Quaternion q, out Vector3 p)
-        public void applyNodeTransform(Model m, string node)
+        public void ApplyNodeTransform(Model m, string node)
         {
             //Fetch prevFrame stuff
             Quaternion prev_q = animMeta.anim_rotations[node][prevFrameIndex];
@@ -349,11 +349,11 @@ namespace MVCore.GMDL
 
             //Convert transforms
             m.localRotation = Matrix4.CreateFromQuaternion(q);
-            m.localPosition.vec = p;
-            m.localScale.vec = s;
+            m.localPosition = p;
+            m.localScale = s;
         }
 
-        public void getCurrentTransform(ref Vector3 p, ref Vector3 s, ref Quaternion q, string node)
+        public void GetCurrentTransform(ref Vector3 p, ref Vector3 s, ref Quaternion q, string node)
         {
             //Fetch prevFrame stuff
             Quaternion prev_q = animMeta.anim_rotations[node][prevFrameIndex];

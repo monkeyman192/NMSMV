@@ -22,8 +22,8 @@ using GLSLHelper;
 using MVCore.Common;
 using MVCore.Utils;
 
-namespace MVCore.GMDL
-{
+namespace MVCore
+{   
     public enum RENDERPASS
     {
         DEFERRED = 0x0,
@@ -47,10 +47,6 @@ namespace MVCore.GMDL
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
-    
-    
-
-    
     public class gizmo: Model
     {
         public GLInstancedMeshVao meshVao;
@@ -60,10 +56,10 @@ namespace MVCore.GMDL
             
             //Assemble geometry in the constructor
             meshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshVaos["default_translation_gizmo"];
-            instanceId = GLMeshBufferManager.addInstance(ref meshVao, this);
+            instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
         }
 
-        public override GMDL.Model Clone()
+        public override Model Clone()
         {
             return new gizmo();
         }
@@ -119,7 +115,7 @@ namespace MVCore.GMDL
             new_m.copyFrom(this);
 
             new_m.meshVao = this.meshVao;
-            new_m.instanceId = GLMeshBufferManager.addInstance(ref new_m.meshVao, new_m);
+            new_m.instanceId = GLMeshBufferManager.AddInstance(ref new_m.meshVao, new_m);
             
             //Clone children
             foreach (Model child in children)
@@ -148,7 +144,7 @@ namespace MVCore.GMDL
         {
             if (renderable)
             {
-                instanceId = GLMeshBufferManager.addInstance(ref meshVao, this);
+                instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
                 base.updateMeshInfo(lod_filter);
                 return;
             }
@@ -185,7 +181,7 @@ namespace MVCore.GMDL
         public byte[] tbuffer;
         public List<int[]> bIndices = new List<int[]>();
         public List<float[]> bWeights = new List<float[]>();
-        public List<bufInfo> bufInfo = new List<GMDL.bufInfo>();
+        public List<bufInfo> bufInfo = new();
         public int[] offsets; //List to save strides according to meshdescr
         public int[] small_offsets; //Same thing for the small description
         public short[] boneRemap;
@@ -200,13 +196,13 @@ namespace MVCore.GMDL
 
         //Joint info
         public int jointCount;
-        public List<JointBindingData> jointData = new List<JointBindingData>();
+        public List<JointBindingData> jointData = new();
         public float[] invBMats = new float[256 * 16];
 
         //Dictionary with the compiled VAOs belonging on this gobject
-        private Dictionary<ulong, GMDL.GLVao> GLVaos = new Dictionary<ulong, GLVao>();
+        private Dictionary<ulong, GLVao> GLVaos = new();
         //Dictionary to index 
-        private Dictionary<ulong, Dictionary<string, GLInstancedMeshVao>> GLMeshVaos = new Dictionary<ulong, Dictionary<string, GLInstancedMeshVao>>();
+        private Dictionary<ulong, Dictionary<string, GLInstancedMeshVao>> GLMeshVaos = new();
 
 
 
@@ -320,7 +316,7 @@ namespace MVCore.GMDL
             if (size != vx_size * (so.metaData.vertrend_graphics + 1))
             {
                 //throw new ApplicationException(String.Format("Problem with vertex buffer"));
-                CallBacks.showError("Mesh metadata does not match the vertex buffer size from the geometry file",
+                Callbacks.showError("Mesh metadata does not match the vertex buffer size from the geometry file",
                     "Error");
             }
                 
@@ -343,7 +339,7 @@ namespace MVCore.GMDL
                 out size);
             if (size != meshMetaDataDict[so.metaData.Hash].is_size)
             {
-                CallBacks.showError("Mesh metadata does not match the index buffer size from the geometry file", "Error");
+                Callbacks.showError("Mesh metadata does not match the index buffer size from the geometry file", "Error");
                 //throw new ApplicationException(String.Format("Problem with vertex buffer"));
             }
 
@@ -387,7 +383,7 @@ namespace MVCore.GMDL
 
             //Set Buffer Offsets
             temp_geom.offsets = new int[7];
-            temp_geom.bufInfo = new List<GMDL.bufInfo>();
+            temp_geom.bufInfo = new();
 
             for (int i = 0; i < 7; i++)
             {
@@ -398,8 +394,8 @@ namespace MVCore.GMDL
             temp_geom.mesh_descr = "vn";
             temp_geom.offsets[0] = 0;
             temp_geom.offsets[2] = 0;
-            temp_geom.bufInfo[0] = new GMDL.bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            temp_geom.bufInfo[2] = new GMDL.bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
+            temp_geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            temp_geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
 
             //Set Buffers
             temp_geom.ibuffer = new byte[temp_geom.indicesLength * metaData.batchcount];
@@ -559,7 +555,7 @@ namespace MVCore.GMDL
     {
         public MyTextureUnit texUnit;
         public Texture tex;
-        public textureManager texMgr; //For now it should be inherited from the scene. In the future I can use a delegate
+        public TextureManager texMgr; //For now it should be inherited from the scene. In the future I can use a delegate
         public bool isProcGen = false;
 
         //Override Properties
@@ -619,7 +615,7 @@ namespace MVCore.GMDL
         }
 
 
-        public void init(textureManager input_texMgr)
+        public void init(TextureManager input_texMgr)
         {
             texMgr = input_texMgr;
             texUnit = new MyTextureUnit(Name);
@@ -634,7 +630,7 @@ namespace MVCore.GMDL
                     prepTextures();
                     break;
                 default:
-                    CallBacks.Log("Not sure how to handle Sampler " + Name, LogVerbosityLevel.WARNING);
+                    Callbacks.Log("Not sure how to handle Sampler " + Name, LogVerbosityLevel.WARNING);
                     break;
             }
         }
@@ -674,9 +670,9 @@ namespace MVCore.GMDL
                 return;
 
             //Try to load the texture
-            if (texMgr.hasTexture(Map))
+            if (texMgr.HasTexture(Map))
             {
-                tex = texMgr.getTexture(Map);
+                tex = texMgr.GetTexture(Map);
             }
             else
             {
@@ -684,7 +680,7 @@ namespace MVCore.GMDL
                 tex.palOpt = new PaletteOpt(false);
                 tex.procColor = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
                 //At this point this should be a common texture. Store it to the master texture manager
-                Common.RenderState.activeResMgr.texMgr.addTexture(tex);
+                RenderState.activeResMgr.texMgr.AddTexture(tex);
             }
         }
         
@@ -854,73 +850,6 @@ namespace MVCore.GMDL
 
     }
 
-    public class MVector3 : INotifyPropertyChanged
-    {
-        public Vector3 vec;
-
-        public MVector3(Vector3 v)
-        {
-            vec = v;
-        }
-
-        public MVector3(float x, float y, float z)
-        {
-            vec = new Vector3(x, y, z);
-        }
-
-        public MVector3(float x)
-        {
-            vec = new Vector3(x);
-        }
-
-        //Properties
-        public Vector3 Vec
-        {
-            get { return vec; }
-            set
-            {
-                vec = value;
-                RaisePropertyChanged("Vec");
-            }
-        }
-        public float X
-        {
-            get { return vec.X; }
-            set
-            {
-                vec.X = value;
-                RaisePropertyChanged("X");
-            }
-        }
-        public float Y
-        {
-            get { return vec.Y; }
-            set { vec.Y = value; RaisePropertyChanged("Y"); }
-        }
-
-        public float Z
-        {
-            get { return vec.Z; }
-            set { vec.Z = value; RaisePropertyChanged("Z"); }
-        }
-
-        public static MVector3 operator -(MVector3 a, MVector3 b)
-        {
-            return new MVector3(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
-        }
-
-
-        //Property Change callbacks
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void RaisePropertyChanged(string prop)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(prop));
-        }
-
-    }
-
     public class MVector4: INotifyPropertyChanged
     {
         public Vector4 vec4;
@@ -981,7 +910,7 @@ namespace MVCore.GMDL
         }
 
 
-        //Property Change callbacks
+        //Property Change Callbacks
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void RaisePropertyChanged(string prop)
@@ -1000,7 +929,6 @@ namespace MVCore.GMDL
         public string link;
         public string shadername;
     }
-
 
     public class MyTextureUnit
     {
@@ -1029,9 +957,6 @@ namespace MVCore.GMDL
             texUnit = MapTextureUnit[sampler_name];
         }
     }
-
-
-    
 
 
     public class PaletteOpt
@@ -1217,7 +1142,6 @@ namespace MVCore.GMDL
         }
     }
 
-    
     
     public class JointBindingData
     {

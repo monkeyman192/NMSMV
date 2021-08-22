@@ -53,12 +53,12 @@ namespace MVCore.Utils
             {
                 if (ex is System.IO.DirectoryNotFoundException || ex is System.IO.FileNotFoundException)
                 {
-                    CallBacks.showError("File " + filepath + " Not Found...", "Error");
+                    Callbacks.showError("File " + filepath + " Not Found...", "Error");
 
 
                 } else if (ex is System.Reflection.TargetInvocationException)
                 {
-                    CallBacks.showError("libMBIN failed to decompile the file. Try to update the libMBIN.dll (File->updateLibMBIN). If the issue persists contact the developer", "Error");
+                    Callbacks.showError("libMBIN failed to decompile the file. Try to update the libMBIN.dll (File->updateLibMBIN). If the issue persists contact the developer", "Error");
                 }
                 return null;
 
@@ -91,8 +91,8 @@ namespace MVCore.Utils
                 load_mode = 2; //Extract file from archive
             } else
             {
-                CallBacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", LogVerbosityLevel.ERROR);
-                CallBacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
+                Callbacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", LogVerbosityLevel.ERROR);
+                Callbacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
                 throw new FileNotFoundException("File not found\n " + filepath);
             }
             switch (load_mode)
@@ -103,10 +103,10 @@ namespace MVCore.Utils
                     return new FileStream(Path.Combine(RenderState.settings.UnpackDir, filepath), FileMode.Open);
                 case 2: //Load File from Archive
                     {
-                        CallBacks.Log("Trying to export File" + effective_filepath, LogVerbosityLevel.INFO);
+                        Callbacks.Log("Trying to export File" + effective_filepath, LogVerbosityLevel.INFO);
                         if (resMgr.NMSFileToArchiveMap.ContainsKey(effective_filepath))
                         {
-                            CallBacks.Log("File was found in archives. File Index: " + resMgr.NMSFileToArchiveMap[effective_filepath].GetFileIndex(effective_filepath), 
+                            Callbacks.Log("File was found in archives. File Index: " + resMgr.NMSFileToArchiveMap[effective_filepath].GetFileIndex(effective_filepath), 
                                 LogVerbosityLevel.INFO);
                         }
 
@@ -147,8 +147,8 @@ namespace MVCore.Utils
             }
             else
             {
-                CallBacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", LogVerbosityLevel.ERROR);
-                CallBacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
+                Callbacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", LogVerbosityLevel.ERROR);
+                Callbacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
                 return null;
             }
 
@@ -184,17 +184,17 @@ namespace MVCore.Utils
             } catch (Exception ex)
             {
                 if (ex is System.IO.DirectoryNotFoundException || ex is System.IO.FileNotFoundException)
-                    CallBacks.showError("File " + effective_filepath + " Not Found...", "Error");
+                    Callbacks.showError("File " + effective_filepath + " Not Found...", "Error");
                 else if (ex is System.IO.IOException)
-                    CallBacks.showError("File " + effective_filepath + " problem...", "Error");
+                    Callbacks.showError("File " + effective_filepath + " problem...", "Error");
                 else if (ex is System.Reflection.TargetInvocationException)
                 {
-                    CallBacks.showError("libMBIN failed to decompile file. If this is a vanilla file, contact the MbinCompiler developer",
+                    Callbacks.showError("libMBIN failed to decompile file. If this is a vanilla file, contact the MbinCompiler developer",
                     "Error");
                 }
                 else
                 {
-                    CallBacks.showError("Unhandled Exception " + ex.Message, "Error");
+                    Callbacks.showError("Unhandled Exception " + ex.Message, "Error");
                 }
                 return null;
 
@@ -383,10 +383,10 @@ namespace MVCore.Utils
         
         public static void loadNMSArchives(string filepath, string gameDir, ref ResourceManager resMgr, ref int status)
         {
-            CallBacks.Log("Trying to load PAK files from " + gameDir, LogVerbosityLevel.INFO);
+            Callbacks.Log("Trying to load PAK files from " + gameDir, LogVerbosityLevel.INFO);
             if (!Directory.Exists(gameDir))
             {
-                CallBacks.showError("Unable to locate game Directory. PAK files (Vanilla + Mods) not loaded. You can still work using unpacked files", "Info");
+                Callbacks.showError("Unable to locate game Directory. PAK files (Vanilla + Mods) not loaded. You can still work using unpacked files", "Info");
                 status = - 1;
                 return;
             }
@@ -397,7 +397,7 @@ namespace MVCore.Utils
             string[] pak_files = Directory.GetFiles(gameDir);
             resMgr.NMSArchiveMap.Clear();
 
-            CallBacks.updateStatus("Loading Vanilla NMS Archives...");
+            Callbacks.updateStatus("Loading Vanilla NMS Archives...");
 
             foreach (string pak_path in pak_files)
             {
@@ -408,21 +408,21 @@ namespace MVCore.Utils
                 {
                     FileStream arc_stream = new FileStream(pak_path, FileMode.Open);
                     libPSARC.PSARC.Archive psarc = new libPSARC.PSARC.Archive(arc_stream, true);
-                    CallBacks.Log("Loaded :" + pak_path, LogVerbosityLevel.INFO);
+                    Callbacks.Log("Loaded :" + pak_path, LogVerbosityLevel.INFO);
                     resMgr.NMSArchiveMap[pak_path] = psarc;
                 }
                 catch (Exception ex)
                 {
-                    CallBacks.showError("An Error Occured : " + ex.Message, "Error");
-                    CallBacks.Log("Pak file " + pak_path + " failed to load", LogVerbosityLevel.ERROR);
-                    CallBacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, LogVerbosityLevel.ERROR);
+                    Callbacks.showError("An Error Occured : " + ex.Message, "Error");
+                    Callbacks.Log("Pak file " + pak_path + " failed to load", LogVerbosityLevel.ERROR);
+                    Callbacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, LogVerbosityLevel.ERROR);
                 }
             }
             
             if (Directory.Exists(Path.Combine(gameDir, "MODS")))
             {
                 pak_files = Directory.GetFiles(Path.Combine(gameDir, "MODS"));
-                CallBacks.updateStatus("Loading Modded NMS Archives...");
+                Callbacks.updateStatus("Loading Modded NMS Archives...");
                 foreach (string pak_path in pak_files)
                 {
                     if (pak_path.Contains("CUSTOMMODELS"))
@@ -439,21 +439,21 @@ namespace MVCore.Utils
                     }
                     catch (Exception ex)
                     {
-                        CallBacks.showError("An Error Occured : " + ex.Message, "Error");
-                        CallBacks.Log("Pak file " + pak_path + " failed to load", LogVerbosityLevel.ERROR);
-                        CallBacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, LogVerbosityLevel.ERROR);
+                        Callbacks.showError("An Error Occured : " + ex.Message, "Error");
+                        Callbacks.Log("Pak file " + pak_path + " failed to load", LogVerbosityLevel.ERROR);
+                        Callbacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, LogVerbosityLevel.ERROR);
                     }
                 }
             }
 
             if (resMgr.NMSArchiveMap.Keys.Count == 0)
             {
-                CallBacks.Log("No pak files found. Not creating/reading manifest file.", LogVerbosityLevel.WARNING);
+                Callbacks.Log("No pak files found. Not creating/reading manifest file.", LogVerbosityLevel.WARNING);
                 return;
             }
 
             //Populate resource manager with the files
-            CallBacks.updateStatus("Populating Resource Manager...");
+            Callbacks.updateStatus("Populating Resource Manager...");
             foreach (string arc_path in resMgr.NMSArchiveMap.Keys.Reverse())
             {
                 libPSARC.PSARC.Archive arc = resMgr.NMSArchiveMap[arc_path];
@@ -475,7 +475,7 @@ namespace MVCore.Utils
 
 
             status = 0; // All good
-            CallBacks.updateStatus("Ready");
+            Callbacks.updateStatus("Ready");
         }
 
         public static void unloadNMSArchives(ResourceManager resMgr)
@@ -505,31 +505,31 @@ namespace MVCore.Utils
             val = fetchSteamGameInstallationDir() as string;
             if (val != null)
             {
-                CallBacks.Log("Found Steam Version: " + val, LogVerbosityLevel.INFO);
+                Callbacks.Log("Found Steam Version: " + val, LogVerbosityLevel.INFO);
                 return val;
             } else
-                CallBacks.Log("Unable to find Steam Version: ", LogVerbosityLevel.INFO);
+                Callbacks.Log("Unable to find Steam Version: ", LogVerbosityLevel.INFO);
                 
             //Check GOG32
             val = Registry.GetValue(gog32_keyname, gog32_keyval, "") as string;
             if (val != null)
             {
-                CallBacks.Log("Found GOG32 Version: " + val, LogVerbosityLevel.INFO);
+                Callbacks.Log("Found GOG32 Version: " + val, LogVerbosityLevel.INFO);
                 return val;
             }
             else
-                CallBacks.Log("Unable to find GOG32 Version: " + val, LogVerbosityLevel.INFO);
+                Callbacks.Log("Unable to find GOG32 Version: " + val, LogVerbosityLevel.INFO);
 
             
             //Check GOG64
             val = Registry.GetValue(gog64_keyname, gog64_keyval, "") as string;
             if (val != null)
             {
-                CallBacks.Log("Found GOG64 Version: " + val, LogVerbosityLevel.INFO);
+                Callbacks.Log("Found GOG64 Version: " + val, LogVerbosityLevel.INFO);
                 return val;
             }
             else
-                CallBacks.Log("Unable to find GOG64 Version: " + val, LogVerbosityLevel.INFO);
+                Callbacks.Log("Unable to find GOG64 Version: " + val, LogVerbosityLevel.INFO);
 
             return "";
         }
@@ -549,12 +549,12 @@ namespace MVCore.Utils
 
             if (steam_path is null)
             {
-                CallBacks.Log("Failed to find Steam Installation: ", LogVerbosityLevel.INFO);
+                Callbacks.Log("Failed to find Steam Installation: ", LogVerbosityLevel.INFO);
                 return null;
             }
                 
-            CallBacks.Log("Found Steam Installation: " + steam_path, LogVerbosityLevel.INFO);
-            CallBacks.Log("Searching for NMS in the default steam directory...", LogVerbosityLevel.INFO);
+            Callbacks.Log("Found Steam Installation: " + steam_path, LogVerbosityLevel.INFO);
+            Callbacks.Log("Searching for NMS in the default steam directory...", LogVerbosityLevel.INFO);
 
             //At first try to find acf entries in steam installation dir
             foreach (string path in Directory.GetFiles(Path.Combine(steam_path, "steamapps")))
@@ -566,7 +566,7 @@ namespace MVCore.Utils
                     return Path.Combine(steam_path, @"steamapps\common\No Man's Sky\GAMEDATA");
             }
 
-            CallBacks.Log("NMS not found in default folders. Searching Steam Libraries...", LogVerbosityLevel.INFO);
+            Callbacks.Log("NMS not found in default folders. Searching Steam Libraries...", LogVerbosityLevel.INFO);
 
             //If that did't work try to load the libraryfolders.vdf
             StreamReader sr = new StreamReader(Path.Combine(steam_path, @"steamapps\libraryfolders.vdf"));
@@ -606,7 +606,7 @@ namespace MVCore.Utils
                 }
             }
 
-            CallBacks.Log("Unable to locate Steam Installation...", LogVerbosityLevel.INFO);
+            Callbacks.Log("Unable to locate Steam Installation...", LogVerbosityLevel.INFO);
             return null;
         }
 

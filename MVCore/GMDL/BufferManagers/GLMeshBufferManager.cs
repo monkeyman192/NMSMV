@@ -3,7 +3,7 @@ using OpenTK;
 using OpenTK.Mathematics;
 using MVCore.Utils;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public static class GLMeshBufferManager
     {
@@ -35,7 +35,7 @@ namespace MVCore.GMDL
         //public static int instance_LOD_Offset = 268; //TODO make that a vec4
         public const int instance_LOD_Float_Offset = 67;
 
-        public static int instance_struct_size_bytes = 272;
+        public const int instance_struct_size_bytes = 272;
         public const int instance_struct_size_floats = 68;
 
         //Instance Data Format:
@@ -45,7 +45,7 @@ namespace MVCore.GMDL
         //18-20: padding
 
 
-        public static int addInstance(ref GLInstancedMeshVao mesh, Model m)
+        public static int AddInstance(ref GLInstancedMeshVao mesh, Model m)
         {
             int instance_id = mesh.instance_count;
 
@@ -63,9 +63,9 @@ namespace MVCore.GMDL
 
                 Matrix4 actualWorldMat = m.worldMat;
                 Matrix4 actualWorldMatInv = (actualWorldMat).Inverted();
-                setInstanceWorldMat(mesh, instance_id, actualWorldMat);
-                setInstanceWorldMatInv(mesh, instance_id, actualWorldMatInv);
-                setInstanceNormalMat(mesh, instance_id, Matrix4.Transpose(actualWorldMatInv));
+                SetInstanceWorldMat(mesh, instance_id, actualWorldMat);
+                SetInstanceWorldMatInv(mesh, instance_id, actualWorldMatInv);
+                SetInstanceNormalMat(mesh, instance_id, Matrix4.Transpose(actualWorldMatInv));
 
                 mesh.instanceRefs.Add(m); //Keep reference
                 mesh.instance_count++;
@@ -75,7 +75,7 @@ namespace MVCore.GMDL
         }
 
         //Overload with transform overrides
-        public static int addInstance(GLInstancedMeshVao mesh, Model m, Matrix4 worldMat, Matrix4 worldMatInv, Matrix4 normMat)
+        public static int AddInstance(GLInstancedMeshVao mesh, Model m, Matrix4 worldMat, Matrix4 worldMatInv, Matrix4 normMat)
         {
             int instance_id = mesh.instance_count;
 
@@ -89,9 +89,9 @@ namespace MVCore.GMDL
 
             if (instance_id < GLInstancedMeshVao.MAX_INSTANCES)
             {
-                setInstanceWorldMat(mesh, instance_id, worldMat);
-                setInstanceWorldMatInv(mesh, instance_id, worldMatInv);
-                setInstanceNormalMat(mesh, instance_id, normMat);
+                SetInstanceWorldMat(mesh, instance_id, worldMat);
+                SetInstanceWorldMatInv(mesh, instance_id, worldMatInv);
+                SetInstanceNormalMat(mesh, instance_id, normMat);
 
                 mesh.instanceRefs.Add(m); //Keep reference
                 mesh.instance_count++;
@@ -100,13 +100,13 @@ namespace MVCore.GMDL
             return instance_id;
         }
 
-        public static void clearInstances(GLInstancedMeshVao mesh)
+        public static void ClearInstances(GLInstancedMeshVao mesh)
         {
             mesh.instanceRefs.Clear();
             mesh.instance_count = 0;
         }
 
-        public static void removeInstance(GLInstancedMeshVao mesh, Model m)
+        public static void RemoveInstance(GLInstancedMeshVao mesh, Model m)
         {
             int id = mesh.instanceRefs.IndexOf(m);
 
@@ -114,7 +114,7 @@ namespace MVCore.GMDL
         }
 
 
-        public static void setInstanceOccludedStatus(GLInstancedMeshVao mesh, int instance_id, bool status)
+        public static void SetInstanceOccludedStatus(GLInstancedMeshVao mesh, int instance_id, bool status)
         {
             mesh.visible_instances += (status ? -1 : 1);
             unsafe
@@ -123,7 +123,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static bool getInstanceOccludedStatus(GLInstancedMeshVao mesh, int instance_id)
+        public static bool GetInstanceOccludedStatus(GLInstancedMeshVao mesh, int instance_id)
         {
             unsafe
             {
@@ -131,7 +131,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static void setInstanceLODLevel(GLInstancedMeshVao mesh, int instance_id, int level)
+        public static void SetInstanceLODLevel(GLInstancedMeshVao mesh, int instance_id, int level)
         {
             unsafe
             {
@@ -139,15 +139,15 @@ namespace MVCore.GMDL
             }
         }
 
-        public static int getInstanceLODLevel(GLInstancedMeshVao mesh, int instance_id, int level)
+        public static int GetInstanceLODLevel(GLInstancedMeshVao mesh, int instance_id)
         {
             unsafe
             {
-                return (int)mesh.dataBuffer[instance_id * instance_struct_size_floats + instance_LOD_Float_Offset];
+                return (int) mesh.dataBuffer[instance_id * instance_struct_size_floats + instance_LOD_Float_Offset];
             }
         }
 
-        public static void setInstanceSelectedStatus(GLInstancedMeshVao mesh, int instance_id, bool status)
+        public static void SetInstanceSelectedStatus(GLInstancedMeshVao mesh, int instance_id, bool status)
         {
             unsafe
             {
@@ -155,7 +155,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static bool getInstanceSelectedStatus(GLInstancedMeshVao mesh, int instance_id)
+        public static bool GetInstanceSelectedStatus(GLInstancedMeshVao mesh, int instance_id)
         {
             unsafe
             {
@@ -163,7 +163,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static Matrix4 getInstanceWorldMat(GLInstancedMeshVao mesh, int instance_id)
+        public static Matrix4 GetInstanceWorldMat(GLInstancedMeshVao mesh, int instance_id)
         {
             unsafe
             {
@@ -176,7 +176,7 @@ namespace MVCore.GMDL
 
         }
 
-        public static Matrix4 getInstanceNormalMat(GLInstancedMeshVao mesh, int instance_id)
+        public static Matrix4 GetInstanceNormalMat(GLInstancedMeshVao mesh, int instance_id)
         {
             unsafe
             {
@@ -187,7 +187,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static Vector3 getInstanceColor(GLInstancedMeshVao mesh, int instance_id)
+        public static Vector3 GetInstanceColor(GLInstancedMeshVao mesh, int instance_id)
         {
             float col;
             unsafe
@@ -198,7 +198,7 @@ namespace MVCore.GMDL
             return new Vector3(col, col, col);
         }
 
-        public static void setInstanceUniform4(GLInstancedMeshVao mesh, int instance_id, string un_name, Vector4 un)
+        public static void SetInstanceUniform4(GLInstancedMeshVao mesh, int instance_id, string un_name, Vector4 un)
         {
             unsafe
             {
@@ -220,7 +220,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static Vector4 getInstanceUniform(GLInstancedMeshVao mesh, int instance_id, string un_name)
+        public static Vector4 GetInstanceUniform(GLInstancedMeshVao mesh, int instance_id, string un_name)
         {
             Vector4 un;
             unsafe
@@ -245,7 +245,7 @@ namespace MVCore.GMDL
             return un;
         }
 
-        public static void setInstanceWorldMat(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceWorldMat(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
         {
             unsafe
             {
@@ -257,7 +257,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static void setInstanceWorldMatInv(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceWorldMatInv(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
         {
             unsafe
             {
@@ -269,7 +269,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static void setInstanceNormalMat(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceNormalMat(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
         {
             unsafe
             {

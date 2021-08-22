@@ -6,7 +6,6 @@ using ImGuiNET;
 using ImGuiHelper;
 using OpenTK.Windowing.Common;
 using MVCore;
-using MVCore.Engine;
 using MVCore.Common;
 using MVCore.Utils;
 using System.Collections.Generic;
@@ -44,12 +43,11 @@ namespace ImGUI_SDL_ModelViewer
 
         //Workers
         private WorkThreadDispacher workDispatcher = new();
-        private List<Task> workTasks = new(); //Keep track of the issued tasks
-
+        private RequestHandler requestHandler = new();
         
         private Vector2i SceneViewSize = new();
-        private int ItemCounter = 0;
-        
+        private bool isSceneViewActive = false;
+
         static private bool open_file_enabled = false;
 
         public Window() : base(GameWindowSettings.Default, 
@@ -61,14 +59,15 @@ namespace ImGUI_SDL_ModelViewer
             //Setup Logger
             Util.loggingSr = new StreamWriter("log.out");
 
-            //SETUP THE CALLBACKS FOR THE MVCORE ENVIRONMENT
-            CallBacks.updateStatus = Util.setStatus;
-            CallBacks.showInfo = Util.showInfo;
-            CallBacks.showError = Util.showError;
-            CallBacks.Log = Util.Log;
-            CallBacks.getResource = Util.getResource;
-            CallBacks.getBitMapResource = Util.getBitMapResource;
-            CallBacks.getTextResource = Util.getTextResource;
+            //SETUP THE Callbacks FOR THE MVCORE ENVIRONMENT
+            Callbacks.updateStatus = Util.setStatus;
+            Callbacks.showInfo = Util.showInfo;
+            Callbacks.showError = Util.showError;
+            Callbacks.Log = Util.Log;
+            Callbacks.Assert = Util.Assert;
+            Callbacks.getResource = Util.getResource;
+            Callbacks.getBitMapResource = Util.getBitMapResource;
+            Callbacks.getTextResource = Util.getTextResource;
             
             SceneViewSize = Size;
             
@@ -96,7 +95,7 @@ namespace ImGUI_SDL_ModelViewer
             RenderState.settings = Settings.loadFromDisk();
 
             //Pass rendering settings to the Window
-            RenderFrequency = RenderState.settings.rendering.FPS;
+            RenderFrequency = RenderState.settings.renderSettings.FPS;
             UpdateFrequency = RenderFrequency * 2;
 
             //Initialize Engine backend
@@ -161,7 +160,7 @@ namespace ImGUI_SDL_ModelViewer
             //Sliders_OnValueChanged(null, new RoutedPropertyChangedEventArgs<double>(0.0f, 0.0f));
 
             
-            CallBacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
+            Callbacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
             
             //Issue work request 
             ThreadRequest rq = new ThreadRequest();
@@ -169,7 +168,8 @@ namespace ImGUI_SDL_ModelViewer
             rq.arguments.Add(Path.Combine(RenderState.settings.GameDir, "PCBANKS"));
             rq.arguments.Add(RenderState.activeResMgr);
             rq.type = THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST;
-            workTasks.Add(workDispatcher.sendRequest(rq));
+            requestHandler.sendRequest(ref rq); 
+            workDispatcher.sendRequest(ref rq); //Generate worker
             
             //Basic Initialization of ImGui
             ImGuiManager.InitImGUI();
@@ -188,19 +188,26 @@ namespace ImGUI_SDL_ModelViewer
         {
             base.OnUpdateFrame(e);
             //Console.WriteLine("Updating Frame");
-            
+
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
+                frameUpdate(e.Time);
                 engine.handleRequests(); //Handle engine requests
                 handleRequests(); //Handle window requests
-                frameUpdate(e.Time);
             }
+                
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
+            
+            //Capture Keyboard Presses
+            if (isSceneViewActive)
+                engine.UpdateInput();
+            
             _controller.Update(this, (float) e.Time);
+
             //Console.WriteLine("Rendering Frame");
             GL.ClearColor(new Color4(5, 5, 5, 255));
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
@@ -208,13 +215,13 @@ namespace ImGUI_SDL_ModelViewer
             //Render Shit
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
-                //CallBacks.Log("* CONTROL : STARTING FRAME UPDATE", LogVerbosityLevel.DEBUG);
-                //CallBacks.Log("* CONTROL : FRAME UPDATED", LogVerbosityLevel.DEBUG);
-                //CallBacks.Log("* CONTROL : STARTING FRAME RENDER", LogVerbosityLevel.DEBUG);
+                //Callbacks.Log("* CONTROL : STARTING FRAME UPDATE", LogVerbosityLevel.DEBUG);
+                //Callbacks.Log("* CONTROL : FRAME UPDATED", LogVerbosityLevel.DEBUG);
+                //Callbacks.Log("* CONTROL : STARTING FRAME RENDER", LogVerbosityLevel.DEBUG);
 
                 engine.renderSys.testrender(); //Render Everything
 
-                //CallBacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
+                //Callbacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
             }
             
             //Bind Default Framebuffer
@@ -235,15 +242,15 @@ namespace ImGUI_SDL_ModelViewer
 
         private void frameUpdate(double dt)
         {
-            //VSync = RenderState.settings.rendering.UseVSYNC; //Update Vsync 
-
-            //Console.WriteLine(RenderState.renderSettings.RENDERMODE);
-
+            //Pass Global rendering settings
+            VSync = RenderState.settings.renderSettings.UseVSync ? VSyncMode.On : VSyncMode.Off;
+            RenderFrequency = RenderState.settings.renderSettings.FPS;
+            
             //Gizmo Picking
             //Send picking request
             //Make new request
             activeGizmo = null;
-            if (RenderState.renderViewSettings.RenderGizmos)
+            if (RenderState.settings.viewSettings.ViewGizmos)
             {
                 ThreadRequest req = new()
                 {
@@ -282,7 +289,7 @@ namespace ImGUI_SDL_ModelViewer
                 //GLMeshVao gz = resMgr.GLPrimitiveMeshVaos["default_translation_gizmo"];
                 //GLMeshBufferManager.addInstance(ref gz, TranslationGizmo);
             }
-
+            
             //Identify dynamic Objects
             foreach (Model s in engine.animationSys.AnimScenes)
             {
@@ -290,21 +297,20 @@ namespace ImGUI_SDL_ModelViewer
             }
 
             //Console.WriteLine("Dt {0}", dt);
-            if (RenderState.renderViewSettings.EmulateActions)
+            if (RenderState.settings.viewSettings.EmulateActions)
             {
                 engine.actionSys.Update((float)(1000 * dt)); //time is expected in ms
             }
 
             //Progress animations
-            if (RenderState.settings.rendering.ToggleAnimations)
+            if (RenderState.settings.renderSettings.ToggleAnimations)
             {
                 engine.animationSys.Update((float)(1000 * dt)); //time is expected in ms
             }
 
-
             //Camera & Light Positions
             //Update common transforms
-            RenderState.activeResMgr.GLCameras[0].aspect = (float) Size.X / Size.Y;
+            RenderState.activeResMgr.GLCameras[0].aspect = (float) SceneViewSize.X / SceneViewSize.Y;
 
             //Apply extra viewport rotation
             Matrix4 Rotx = Matrix4.CreateRotationX(MathUtils.radians(RenderState.rotAngles.X));
@@ -358,7 +364,7 @@ namespace ImGUI_SDL_ModelViewer
                 addScene(filename);
 
             //Populate 
-            RenderState.rootObject.ID = ItemCounter;
+            RenderState.rootObject.ID = 0; //TODO: Assign IDs through a registry system
             Util.setStatus("Creating Treeview...");
             
             //Cache the treeview and pass it to ImGUI
@@ -376,33 +382,49 @@ namespace ImGUI_SDL_ModelViewer
         
         }
 
+        private void Log(string msg, LogVerbosityLevel lvl)
+        {
+            Callbacks.Log("* WINDOW : " + msg, lvl);
+        }
 
         public void handleRequests()
         {
-            int i = 0;
-            while (i < workTasks.Count){
-
-                Task t = workTasks[i];
-
-
-                //Finalize tasks
-                if (!t.thread.IsAlive)
+            if (requestHandler.hasOpenRequests())
+            {
+                ThreadRequest req = requestHandler.Peek();
+                Log("Peeking Request " + req.type, LogVerbosityLevel.HIDEBUG);
+                
+                //Do stuff with requests that need extra work to get started
+                if (req.status == THREAD_REQUEST_STATUS.NULL)
                 {
-                    switch (t.thread_request.type)
+                    switch (req.type)
                     {
                         case THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST:
-                            open_file_enabled = true;
+                            workDispatcher.sendRequest(ref req);
                             break;
-
+                        default:
+                            break; 
                     }
-                    workTasks.RemoveAt(i);
-                    continue;
-                } 
-                i++;
+                }
+                else if (req.status != THREAD_REQUEST_STATUS.FINISHED)
+                    return;
+                
+                //Finalize finished requests
+                switch (req.type)
+                {
+                    case THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST:
+                        open_file_enabled = true;
+                        break;
+                    case THREAD_REQUEST_TYPE.TERMINATE_REQUEST:
+                        Close();
+                        break;
+                }
+
+                //At this point the peeked request is finished so its safe to pop it from the queue
+                requestHandler.Fetch(); 
             }
-
         }
-
+        
         public void waitForRequest(ref ThreadRequest req)
         {
             while (true)
@@ -505,7 +527,6 @@ namespace ImGUI_SDL_ModelViewer
 
             int statusBarHeight = (int) (1.75f * ImGui.CalcTextSize("Status").Y);
 
-            
             //DockSpace
             bool dockspace_open = true;
             ImGui.Begin("DockSpaceDemo", ref dockspace_open, window_flags);
@@ -545,8 +566,16 @@ namespace ImGUI_SDL_ModelViewer
 
                     if (ImGui.MenuItem("Close", "Ctrl + Q"))
                     {
-                        //TODO, properly cleanup and close the window
-                        Close();
+                        //Stop the renderer
+                        ThreadRequest req = new ThreadRequest();
+                        req.type = THREAD_REQUEST_TYPE.TERMINATE_REQUEST;
+                        engine.sendRequest(ref req);
+
+                        //Send event to close the window
+                        ThreadRequest req1 = new ThreadRequest();
+                        req1.type = THREAD_REQUEST_TYPE.TERMINATE_REQUEST;
+                        requestHandler.sendRequest(ref req1);
+                        
                     }
 
                     ImGui.EndMenu();
@@ -573,8 +602,7 @@ namespace ImGUI_SDL_ModelViewer
                                          ImGuiWindowFlags.NoDocking |
                                          ImGuiWindowFlags.NoDecoration))
             {
-                
-                ImGui.Columns(2, "statusbarColumns", false);
+                ImGui.Columns(2);
                 ImGui.SetCursorPosY(0.25f * statusBarHeight);
                 ImGui.Text(status_string);
                 ImGui.NextColumn();
@@ -608,12 +636,13 @@ namespace ImGUI_SDL_ModelViewer
                 System.Numerics.Vector2 csize = ImGui.GetContentRegionAvail();
                 Vector2i csizetk = new Vector2i((int) csize.X,
                                                (int) csize.Y);
-                
                 ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().channels[0]),
                                 csize,
                                 new System.Numerics.Vector2(0.0f, 1.0f),
                                 new System.Numerics.Vector2(1.0f, 0.0f));
 
+                isSceneViewActive = ImGui.IsItemHovered();
+                
                 if (csizetk != SceneViewSize)
                 {
                     SceneViewSize = csizetk;
@@ -623,7 +652,6 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.PopStyleVar();
                 ImGui.End();
             }
-
 
             //SideBar
             if (ImGui.Begin("SideBar", ref main_view))
@@ -638,29 +666,68 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.Separator();
                 
                 ////Draw Tab Controls
-                if (ImGui.BeginTabBar("Tab Control", ImGuiTabBarFlags.None))
+                if (ImGui.BeginTabBar("TabControl1", ImGuiTabBarFlags.None))
+                {
+                    if (ImGui.BeginTabItem("Object Info"))
+                    {
+                        ImGuiManager.DrawObjectInfoViewer();
+                        ImGui.EndTabItem();
+                    }
+
+                    if (ImGui.BeginTabItem("Tools"))
+                    {
+
+                        if (ImGui.Button("ProcGen", new System.Numerics.Vector2(80.0f, 40.0f)))
+                        {
+                            //TODO generate proc gen view
+                        }
+
+                        ImGui.SameLine();
+
+                        if (ImGui.Button("Reset Pose", new System.Numerics.Vector2(80.0f, 40.0f)))
+                        {
+                            //TODO Reset The models pose
+                        }
+
+                        ImGui.EndTabItem();
+                    }
+
+#if (DEBUG)
+                    if (ImGui.BeginTabItem("Test Options"))
+                    {
+                        ImGui.DragFloat("Test Option 1", ref RenderState.settings.renderSettings.testOpt1);
+                        ImGui.DragFloat("Test Option 2", ref RenderState.settings.renderSettings.testOpt2);
+                        ImGui.DragFloat("Test Option 3", ref RenderState.settings.renderSettings.testOpt3);
+                        ImGui.EndTabItem();
+                    }
+#endif
+                    ImGui.EndTabBar();
+                }
+
+                ImGui.Separator();
+
+                if (ImGui.BeginTabBar("TabControl2", ImGuiTabBarFlags.None))
                 {
                     if (ImGui.BeginTabItem("Camera"))
                     {
                         //Camera Settings
                         ImGui.BeginGroup();
                         ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Settings");
-                        float test = 0.0f;
-                        ImGui.SliderFloat("FOV", ref test, 90.0f, 100.0f);
-                        /*
-                        ImGui.SliderFloat("FOV", ref MVCore.Common.RenderState.activeCam.fov, 90.0f, 100.0f);
-                        ImGui.SliderFloat("MovementSpeed", ref MVCore.Common.RenderState.activeCam.Speed, 1.0f, 20.0f);
-                        ImGui.SliderFloat("MovementPower", ref MVCore.Common.RenderState.activeCam.SpeedPower, 1.0f, 10.0f);
-                        ImGui.SliderFloat("zNear", ref MVCore.Common.RenderState.activeCam.zNear, 0.01f, 1.0f);
-                        ImGui.SliderFloat("zFar", ref MVCore.Common.RenderState.activeCam.zFar, 101.0f, 30000.0f);
+                        ImGui.SliderFloat("FOV", ref RenderState.activeCam.fov, 90.0f, 100.0f);
+                        ImGui.SliderFloat("MovementSpeed", ref RenderState.activeCam.Speed, 1.0f, 20.0f);
+                        ImGui.SliderFloat("MovementPower", ref RenderState.activeCam.SpeedPower, 1.0f, 10.0f);
+                        ImGui.SliderFloat("zNear", ref RenderState.activeCam.zNear, 0.01f, 1.0f);
+                        ImGui.SliderFloat("zFar", ref RenderState.activeCam.zFar, 101.0f, 30000.0f);
 
+                        /*
                         ImGui.SliderFloat("lightDistance", ????, 0.0f, 20.0f);
                         ImGui.SliderFloat("lightIntensity", ????, 0.0f, 20.0f);
                         */
 
                         if (ImGui.Button("Reset Camera"))
                         {
-                            //TODO
+                            RenderState.activeCam.Position = new Vector3(0.0f);
+
                         }
 
                         ImGui.SameLine();
@@ -668,6 +735,7 @@ namespace ImGUI_SDL_ModelViewer
                         if (ImGui.Button("Reset Scene Rotation"))
                         {
                             //TODO
+
                         }
 
                         ImGui.EndGroup();
@@ -697,55 +765,39 @@ namespace ImGUI_SDL_ModelViewer
 
                     if (ImGui.BeginTabItem("View Options"))
                     {
-                        ImGui.Text("TODO");
-                        ImGui.EndTabItem();
-                    }
-
-#if (DEBUG)
-                    if (ImGui.BeginTabItem("Test Options"))
-                    {
-                        ImGui.Text("TODO REnder Test Elements");
-                        ImGui.EndTabItem();
-                    }
-#endif
-
-                    if (ImGui.BeginTabItem("RenderInfoOptions"))
-                    {
-                        ImGui.Text("TODO");
-                        ImGui.EndTabItem();
-                    }
-
-                    if (ImGui.BeginTabItem("Tools"))
-                    {
-
-                        if (ImGui.Button("ProcGen", new System.Numerics.Vector2(80.0f, 40.0f)))
-                        {
-                            //TODO generate proc gen view
-                        }
-
-                        ImGui.SameLine();
-
-                        if (ImGui.Button("Reset Pose", new System.Numerics.Vector2(80.0f, 40.0f)))
-                        {
-                            //TODO Reset The models pose
-                        }
+                        ImGui.Checkbox("Show Lights", ref RenderState.settings.viewSettings.ViewLights);
+                        ImGui.Checkbox("Show Light Volumes", ref RenderState.settings.viewSettings.ViewLightVolumes);
+                        ImGui.Checkbox("Show Joints", ref RenderState.settings.viewSettings.ViewJoints);
+                        ImGui.Checkbox("Show Locators", ref RenderState.settings.viewSettings.ViewLocators);
+                        ImGui.Checkbox("Show Collisions", ref RenderState.settings.viewSettings.ViewCollisions);
+                        ImGui.Checkbox("Show Bounding Hulls", ref RenderState.settings.viewSettings.ViewBoundHulls);
+                        ImGui.Checkbox("Emulate Actions", ref RenderState.settings.viewSettings.EmulateActions);
 
                         ImGui.EndTabItem();
                     }
-
-                    if (ImGui.BeginTabItem("Object Info"))
+                
+                    if (ImGui.BeginTabItem("Rendering Options"))
                     {
-                        ImGuiManager.DrawObjectInfoViewer();
+                        ImGui.Checkbox("Use Textures", ref RenderState.settings.renderSettings.UseTextures);
+                        ImGui.Checkbox("Use Lighting", ref RenderState.settings.renderSettings.UseLighting);
+                        ImGui.Checkbox("Use VSYNC", ref RenderState.settings.renderSettings.UseVSync);
+                        ImGui.Checkbox("Show Animations", ref RenderState.settings.renderSettings.ToggleAnimations);
+                        ImGui.Checkbox("Wireframe", ref RenderState.settings.renderSettings.RenderWireFrame);
+                        ImGui.Checkbox("FXAA", ref RenderState.settings.renderSettings.UseFXAA);
+                        ImGui.Checkbox("Bloom", ref RenderState.settings.renderSettings.UseBLOOM);
+                        ImGui.Checkbox("LOD Filtering", ref RenderState.settings.renderSettings.LODFiltering);
+
+                        ImGui.InputInt("FPS", ref RenderState.settings.renderSettings.FPS);
+                        ImGui.InputFloat("HDR Exposure", ref RenderState.settings.renderSettings.HDRExposure);
+
                         ImGui.EndTabItem();
                     }
 
                     ImGui.EndTabBar();
                 }
-                
+
                 ImGui.End();
             }
-
-
 
             ImGuiManager.ProcessModals(this, current_file_path);
 

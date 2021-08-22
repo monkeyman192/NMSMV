@@ -5,13 +5,13 @@ using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class Joint : Model
     {
         public int jointIndex;
         public Vector3 color;
-
+        
         //Add a bunch of shit for posing
         //public Vector3 _localPosePosition = new Vector3(0.0f);
         //public Matrix4 _localPoseRotation = Matrix4.Identity;
@@ -19,7 +19,6 @@ namespace MVCore.GMDL
         public Matrix4 BindMat = Matrix4.Identity; //This is the local Bind Matrix related to the parent joint
         public Matrix4 invBMat = Matrix4.Identity; //This is the inverse of the local Bind Matrix related to the parent
                                                    //DO NOT MIX WITH THE gobject.invBMat which is reverts the transformation to the global space
-
 
         //Blending Queues
         public List<Vector3> PositionQueue = new List<Vector3>();
@@ -48,8 +47,8 @@ namespace MVCore.GMDL
             this.color = input.color;
 
             meshVao = new GLInstancedMeshVao();
-            instanceId = GLMeshBufferManager.addInstance(ref meshVao, this);
-            GLMeshBufferManager.setInstanceWorldMat(meshVao, instanceId, Matrix4.Identity);
+            instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
+            GLMeshBufferManager.SetInstanceWorldMat(meshVao, instanceId, Matrix4.Identity);
             meshVao.type = TYPES.JOINT;
             meshVao.metaData = new MeshMetaData();
             //TODO: Find a place to keep references from the joint GLMeshVAOs
@@ -82,7 +81,7 @@ namespace MVCore.GMDL
                 GL.BindBuffer(BufferTarget.ArrayBuffer, meshVao.vao.vertex_buffer_object);
                 //Add verts data, color data should stay the same
                 GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, (IntPtr)arraysize, verts);
-                instanceId = GLMeshBufferManager.addInstance(meshVao, this, Matrix4.Identity, Matrix4.Identity, Matrix4.Identity);
+                instanceId = GLMeshBufferManager.AddInstance(meshVao, this, Matrix4.Identity, Matrix4.Identity, Matrix4.Identity);
             }
 
             base.updateMeshInfo();
@@ -99,8 +98,8 @@ namespace MVCore.GMDL
             j.color = this.color;
 
             j.meshVao = new GLInstancedMeshVao();
-            j.instanceId = GLMeshBufferManager.addInstance(ref j.meshVao, j);
-            GLMeshBufferManager.setInstanceWorldMat(j.meshVao, j.instanceId, Matrix4.Identity);
+            j.instanceId = GLMeshBufferManager.AddInstance(ref j.meshVao, j);
+            GLMeshBufferManager.SetInstanceWorldMat(j.meshVao, j.instanceId, Matrix4.Identity);
             j.meshVao.type = TYPES.JOINT;
             j.meshVao.metaData = new MeshMetaData();
             //TODO: Find a place to keep references from the Joint GLMeshVAOs

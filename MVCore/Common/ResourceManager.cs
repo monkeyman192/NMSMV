@@ -14,14 +14,14 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace MVCore
 {
-    public interface baseResourceManager
+    public interface IBaseResourceManager
     {
-        void cleanup();
+        public void Cleanup();
     }
 
 
     //Class Which will store all the texture resources for better memory management
-    public class ResourceManager
+    public class ResourceManager : IBaseResourceManager
     {
         //public Dictionary<string, GMDL.Texture> GLtextures = new Dictionary<string, GMDL.Texture>();
         public Dictionary<string, Material> GLmaterials = new();
@@ -34,7 +34,7 @@ namespace MVCore
         public Dictionary<string, GLVao> GLVaos = new();
         public Dictionary<string, GLInstancedMeshVao> GLPrimitiveMeshVaos = new();
 
-        public List<GMDL.Light> GLlights = new();
+        public List<Light> GLlights = new();
         public List<Camera> GLCameras = new();
         public Dictionary<string, Font> FontMap = new();
         //public Dictionary<string, int> GLShaders = new Dictionary<string, int>();
@@ -64,7 +64,7 @@ namespace MVCore
 
         //public int[] shader_programs;
         //Extra manager
-        public textureManager texMgr = new();
+        public TextureManager texMgr = new();
         public FontManager fontMgr = new();
         public TextManager txtMgr = new();
 
@@ -81,19 +81,19 @@ namespace MVCore
             initialized = false;
 
             //Add defaults
-            addDefaultTextures();
-            addDefaultMaterials();
-            addDefaultPrimitives();
-            addDefaultLights();
-            addDefaultFonts();
-            addDefaultTexts();
-            addDefaultCameras();
-            compileMainShaders();
+            AddDefaultTextures();
+            AddDefaultMaterials();
+            AddDefaultPrimitives();
+            AddDefaultLights();
+            AddDefaultFonts();
+            AddDefaultTexts();
+            AddDefaultCameras();
+            CompileMainShaders();
 
             initialized = true;
         }
 
-        public void compileMainShaders()
+        public void CompileMainShaders()
         {
 
             //Populate shader list
@@ -119,15 +119,15 @@ namespace MVCore
 
             //TODO BRING CHECK BACK
             //while (!FileUtils.IsFileReady(log_file)) { };
-            StreamWriter sr = new StreamWriter(log_file, false);
+            StreamWriter sr = new(log_file, false);
 
             GLSLHelper.GLSLShaderConfig shader_conf;
 
             //Geometry Shader
             //Compile Object Shaders
-            GLSLShaderText geometry_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText geometry_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
-            GLSLShaderText geometry_shader_gs = new GLSLShaderText(ShaderType.GeometryShader);
+            GLSLShaderText geometry_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText geometry_shader_fs = new(ShaderType.FragmentShader);
+            GLSLShaderText geometry_shader_gs = new(ShaderType.GeometryShader);
             geometry_shader_vs.addStringFromFile("Shaders/Simple_VSEmpty.glsl");
             geometry_shader_fs.addStringFromFile("Shaders/Simple_FSEmpty.glsl");
             geometry_shader_gs.addStringFromFile("Shaders/Simple_GS.glsl");
@@ -139,8 +139,8 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
             
             //Compile Object Shaders
-            GLSLShaderText gizmo_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText gizmo_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            GLSLShaderText gizmo_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText gizmo_shader_fs = new(ShaderType.FragmentShader);
             gizmo_shader_vs.addStringFromFile("Shaders/Gizmo_VS.glsl");
             gizmo_shader_fs.addStringFromFile("Shaders/Gizmo_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(gizmo_shader_vs, gizmo_shader_fs, null, null, null,
@@ -163,8 +163,8 @@ namespace MVCore
             //Compile Default Shaders
 
             //BoundBox Shader
-            GLSLShaderText bbox_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText bbox_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            GLSLShaderText bbox_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText bbox_shader_fs = new(ShaderType.FragmentShader);
             bbox_shader_vs.addStringFromFile("Shaders/Bound_VS.glsl");
             bbox_shader_fs.addStringFromFile("Shaders/Bound_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(bbox_shader_vs, bbox_shader_fs, null, null, null,
@@ -174,8 +174,8 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
 
             //Texture Mixing Shader
-            GLSLShaderText texture_mixing_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText texture_mixing_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            GLSLShaderText texture_mixing_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText texture_mixing_shader_fs = new(ShaderType.FragmentShader);
             texture_mixing_shader_vs.addStringFromFile("Shaders/texture_mixer_VS.glsl");
             texture_mixing_shader_fs.addStringFromFile("Shaders/texture_mixer_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(texture_mixing_shader_vs, texture_mixing_shader_fs, null, null, null,
@@ -186,9 +186,9 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
 
             //GBuffer Shaders
-            
-            var gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            var gbuffer_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+
+            GLSLShaderText gbuffer_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText gbuffer_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gbuffer_shader_fs.addStringFromFile("Shaders/Gbuffer_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
@@ -200,8 +200,8 @@ namespace MVCore
             //Light Pass Shaders
 
             //UNLIT
-            GLSLShaderText lpass_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText lpass_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            GLSLShaderText lpass_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText lpass_shader_fs = new(ShaderType.FragmentShader);
             lpass_shader_vs.addStringFromFile("Shaders/light_pass_VS.glsl");
             lpass_shader_fs.addStringFromFile("Shaders/light_pass_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(lpass_shader_vs, lpass_shader_fs, null, null, null,
@@ -211,8 +211,8 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
 
             //LIT
-            lpass_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            lpass_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            lpass_shader_vs = new(ShaderType.VertexShader);
+            lpass_shader_fs = new(ShaderType.FragmentShader);
             lpass_shader_vs.addStringFromFile("Shaders/light_pass_VS.glsl");
             lpass_shader_fs.addString("#define _D_LIGHTING");
             lpass_shader_fs.addStringFromFile("Shaders/light_pass_FS.glsl");
@@ -224,8 +224,8 @@ namespace MVCore
 
 
             //GAUSSIAN HORIZONTAL BLUR SHADER
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText gaussian_blur_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText gaussian_blur_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gaussian_blur_shader_fs.addStringFromFile("Shaders/gaussian_horizontalBlur_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gaussian_blur_shader_fs, null, null, null,
@@ -235,8 +235,8 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
 
             //GAUSSIAN VERTICAL BLUR SHADER
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            gaussian_blur_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            gaussian_blur_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gaussian_blur_shader_fs.addStringFromFile("Shaders/gaussian_verticalBlur_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gaussian_blur_shader_fs, null, null, null,
@@ -247,8 +247,8 @@ namespace MVCore
 
 
             //BRIGHTNESS EXTRACTION SHADER
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            gbuffer_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            gbuffer_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gbuffer_shader_fs.addStringFromFile("Shaders/brightness_extract_shader_fs.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
@@ -259,8 +259,8 @@ namespace MVCore
 
 
             //ADDITIVE BLEND
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            gbuffer_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            gbuffer_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gbuffer_shader_fs.addStringFromFile("Shaders/additive_blend_fs.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
@@ -270,8 +270,8 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
 
             //FXAA
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            gbuffer_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            gbuffer_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gbuffer_shader_fs.addStringFromFile("Shaders/fxaa_shader_fs.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
@@ -281,8 +281,8 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
 
             //TONE MAPPING + GAMMA CORRECTION
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            gbuffer_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            gbuffer_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gbuffer_shader_fs.addStringFromFile("Shaders/tone_mapping_fs.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
@@ -292,8 +292,8 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
 
             //INV TONE MAPPING + GAMMA CORRECTION
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            gbuffer_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            gbuffer_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gbuffer_shader_fs.addStringFromFile("Shaders/inv_tone_mapping_fs.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
@@ -304,8 +304,8 @@ namespace MVCore
 
 
             //BWOIT SHADER
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            gbuffer_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            gbuffer_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             gbuffer_shader_fs.addStringFromFile("Shaders/bwoit_shader_fs.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
@@ -316,8 +316,8 @@ namespace MVCore
 
 
             //Text Shaders
-            GLSLShaderText text_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText text_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            GLSLShaderText text_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText text_shader_fs = new(ShaderType.FragmentShader);
             text_shader_vs.addStringFromFile("Shaders/Text_VS.glsl");
             text_shader_fs.addStringFromFile("Shaders/Text_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(text_shader_vs, text_shader_fs, null, null, null,
@@ -333,8 +333,8 @@ namespace MVCore
             //FILTERS - EFFECTS
 
             //Pass Shader
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText passthrough_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText passthrough_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             passthrough_shader_fs.addStringFromFile("Shaders/PassThrough_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, passthrough_shader_fs, null, null, null,
@@ -344,8 +344,8 @@ namespace MVCore
             sr.WriteLine(shader_conf.log);
 
             //Red Shader
-            gbuffer_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
-            GLSLShaderText red_shader_fs = new GLSLShaderText(ShaderType.FragmentShader);
+            gbuffer_shader_vs = new(ShaderType.VertexShader);
+            GLSLShaderText red_shader_fs = new(ShaderType.FragmentShader);
             gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
             red_shader_fs.addStringFromFile("Shaders/RedFill.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, red_shader_fs, null, null, null,
@@ -366,15 +366,15 @@ namespace MVCore
 
         }
 
-        private void addDefaultCameras()
+        private void AddDefaultCameras()
         {
-            Camera cam = new Camera(90, -1, 0, true)
+            Camera cam = new(90, -1, 0, true)
             {
                 isActive = false
             };
             GLCameras.Add(cam);
 
-            cam = new Camera(90, -1, 0, false)
+            cam = new(90, -1, 0, false)
             {
                 isActive = false
             };
@@ -384,49 +384,49 @@ namespace MVCore
             RenderState.activeCam = GLCameras[0];
         }
 
-        private void addDefaultTextures()
+        private void AddDefaultTextures()
         {
             string execpath = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
 
             //Add Default textures
             //White tex
             string texpath = "default.dds";
-            Texture tex = new Texture();
-            tex.textureInit((byte[]) CallBacks.getResource("default.dds"), texpath); //Manually load data
+            Texture tex = new();
+            tex.textureInit((byte[]) Callbacks.getResource("default.dds"), texpath); //Manually load data
 
-            texMgr.addTexture(tex);
+            texMgr.AddTexture(tex);
 
             //Transparent Mask
             texpath = "default_mask.dds";
-            tex = new Texture();
-            tex.textureInit((byte[]) CallBacks.getResource("default_mask.dds"), texpath);
-            texMgr.addTexture(tex);
+            tex = new();
+            tex.textureInit((byte[]) Callbacks.getResource("default_mask.dds"), texpath);
+            texMgr.AddTexture(tex);
         }
 
-        private void addDefaultLights()
+        private void AddDefaultLights()
         {
             //Add one and only light for now
-            Light light = new Light
+            Light light = new()
             {
                 name = "Default Light",
                 _intensity = 200,
                 _falloff = ATTENUATION_TYPE.QUADRATIC
             };
             
-            light._localPosition.vec = new Vector3(100.0f, 100.0f, 100.0f);
+            light.localPosition = new Vector3(100.0f, 100.0f, 100.0f);
             GLlights.Add(light);
         }
 
-        private void addDefaultMaterials()
+        private void AddDefaultMaterials()
         {
             //Cross Material
             Material mat;
 
-            mat = new Material();
+            mat = new();
             mat.Name = "crossMat";
             mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
             mat.add_flag(TkMaterialFlags.UberFlagEnum._F21_VERTEXCOLOUR);
-            TkMaterialUniform uf = new TkMaterialUniform
+            TkMaterialUniform uf = new()
             {
                 Name = "gMaterialColourVec4",
                 Values = new libMBIN.NMS.Vector4f(1.0f, 1.0f,1.0f,1.0f)
@@ -449,13 +449,15 @@ namespace MVCore
             GLmaterials["jointMat"] = mat;
 
             //Light Material
-            mat = new Material();
-            mat.Name = "lightMat";
+            mat = new()
+            {
+                Name = "lightMat"
+            };
             mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
 
-            uf = new TkMaterialUniform();
+            uf = new();
             uf.Name = "gMaterialColourVec4";
-            uf.Values = new libMBIN.NMS.Vector4f();
+            uf.Values = new();
             uf.Values.x = 1.0f;
             uf.Values.y = 1.0f;
             uf.Values.z = 0.0f;
@@ -465,13 +467,13 @@ namespace MVCore
             GLmaterials["lightMat"] = mat;
 
             //Collision Material
-            mat = new Material();
+            mat = new();
             mat.Name = "collisionMat";
             mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
 
-            uf = new TkMaterialUniform();
+            uf = new();
             uf.Name = "gMaterialColourVec4";
-            uf.Values = new libMBIN.NMS.Vector4f();
+            uf.Values = new();
             uf.Values.x = 0.8f;
             uf.Values.y = 0.8f;
             uf.Values.z = 0.2f;
@@ -482,74 +484,74 @@ namespace MVCore
 
         }
 
-        private void addDefaultFonts()
+        private void AddDefaultFonts()
         {
             Font f;
             //Droid Sans
-            f = new Font(CallBacks.getResource("droid.fnt"),
-                         CallBacks.getBitMapResource("droid.png"), 1);
+            f = new Font(Callbacks.getResource("droid.fnt"),
+                         Callbacks.getBitMapResource("droid.png"), 1);
             fontMgr.addFont(f);
             
             //Segoe
-            f = new Font(CallBacks.getResource("segoe.fnt"),
-                         CallBacks.getBitMapResource("segoe.png"), 1);
+            f = new Font(Callbacks.getResource("segoe.fnt"),
+                         Callbacks.getBitMapResource("segoe.png"), 1);
             fontMgr.addFont(f);
         }
 
         //fontMgr.addFont("droid.fnt");
         
-        private void addDefaultTexts()
+        private void AddDefaultTexts()
         {
             Font f = fontMgr.getFont("Segoe UI");
             //Font f = fontMgr.getFont("Arial");
             //Font f = fontMgr.getFont("Droid Sans Mono");
 
-            Vector3 default_color = new Vector3(1.0f, 1.0f, 0.5f);
+            Vector3 default_color = new(1.0f, 1.0f, 0.5f);
             float lineHeight = 15.0f;
             int pos_x = 10;
             int pos_y = 90;
-            GLText t = new GLText(f, new Vector2(pos_x, pos_y), lineHeight, default_color,
+            GLText t = new(f, new Vector2(pos_x, pos_y), lineHeight, default_color,
                 string.Format("FPS: {0:000.0}", RenderStats.fpsCount));
             txtMgr.addText(t, TextManager.Semantic.FPS);
             
-            t = new GLText(f, new Vector2(pos_x, pos_y - lineHeight), lineHeight, default_color,
+            t = new(f, new Vector2(pos_x, pos_y - lineHeight), lineHeight, default_color,
                 string.Format("OccludedNum: {0:0000}", RenderStats.occludedNum));
             txtMgr.addText(t, TextManager.Semantic.OCCLUDED_COUNT);
 
-            t = new GLText(f, new Vector2(pos_x, pos_y - 2 * lineHeight), lineHeight, default_color,
+            t = new(f, new Vector2(pos_x, pos_y - 2 * lineHeight), lineHeight, default_color,
                 string.Format("Total Vertices: {0:D1}", RenderStats.vertNum));
             txtMgr.addText(t, TextManager.Semantic.VERT_COUNT);
             
-            t = new GLText(f, new Vector2(pos_x, pos_y - 3 * lineHeight), lineHeight, default_color,
+            t = new(f, new Vector2(pos_x, pos_y - 3 * lineHeight), lineHeight, default_color,
                 string.Format("Total Triangles: {0:D1}", RenderStats.trisNum));
             txtMgr.addText(t, TextManager.Semantic.TRIS_COUNT);
 
-            t = new GLText(f, new Vector2(pos_x, pos_y - 4 * lineHeight), lineHeight, default_color,
+            t = new(f, new Vector2(pos_x, pos_y - 4 * lineHeight), lineHeight, default_color,
                 string.Format("Textures: {0:D1}", RenderStats.texturesNum));
             txtMgr.addText(t, TextManager.Semantic.TEXTURE_COUNT);
 
-            t = new GLText(f, new Vector2(pos_x, pos_y - 5 * lineHeight), lineHeight, default_color,
+            t = new(f, new Vector2(pos_x, pos_y - 5 * lineHeight), lineHeight, default_color,
                 string.Format("Controller: {0} ", RenderState.activeGamepad?.getName()));
             txtMgr.addText(t, TextManager.Semantic.CTRL_ID);
         
         }
 
-        public void addMaterial(Material mat)
+        public void AddMaterial(Material mat)
         {
             GLmaterials[mat.name_key] = mat;
             //Assign material to shaders
         }
 
-        private void generateGizmoParts()
+        private void GenerateGizmoParts()
         {
             //Translation Gizmo
-            GMDL.Primitives.Arrow translation_x_axis = new GMDL.Primitives.Arrow(0.015f, 0.25f, new Vector3(1.0f, 0.0f, 0.0f), false, 20);
+            Primitives.Arrow translation_x_axis = new(0.015f, 0.25f, new Vector3(1.0f, 0.0f, 0.0f), false, 20);
             //Move arrowhead up in place
             Matrix4 t = Matrix4.CreateRotationZ(MathUtils.radians(90));
             translation_x_axis.applyTransform(t);
 
-            GMDL.Primitives.Arrow translation_y_axis = new GMDL.Primitives.Arrow(0.015f, 0.25f, new Vector3(0.0f, 1.0f, 0.0f), false, 20);
-            GMDL.Primitives.Arrow translation_z_axis = new GMDL.Primitives.Arrow(0.015f, 0.25f, new Vector3(0.0f, 0.0f, 1.0f), false, 20);
+            Primitives.Arrow translation_y_axis = new(0.015f, 0.25f, new Vector3(0.0f, 1.0f, 0.0f), false, 20);
+            Primitives.Arrow translation_z_axis = new(0.015f, 0.25f, new Vector3(0.0f, 0.0f, 1.0f), false, 20);
             t = Matrix4.CreateRotationX(MathUtils.radians(90));
             translation_z_axis.applyTransform(t);
 
@@ -568,7 +570,7 @@ namespace MVCore
             for (int i = 0; i < 3; i++)
             {
                 string name = "";
-                GMDL.Primitives.Primitive arr = null;
+                Primitives.Primitive arr = null;
                 switch (i)
                 {
                     case 0:
@@ -585,9 +587,9 @@ namespace MVCore
                         break;
                 }
 
-                GLPrimitiveMeshVaos[name] = new GLInstancedMeshVao();
+                GLPrimitiveMeshVaos[name] = new();
                 GLPrimitiveMeshVaos[name].type = TYPES.GIZMOPART;
-                GLPrimitiveMeshVaos[name].metaData = new MeshMetaData();
+                GLPrimitiveMeshVaos[name].metaData = new();
                 GLPrimitiveMeshVaos[name].metaData.batchcount = arr.geom.indicesCount;
                 GLPrimitiveMeshVaos[name].metaData.indicesLength = DrawElementsType.UnsignedInt;
                 GLPrimitiveMeshVaos[name].vao = GLPrimitiveVaos[name];
@@ -597,28 +599,28 @@ namespace MVCore
 
         }
 
-        public void addDefaultPrimitives()
+        public void AddDefaultPrimitives()
         {
             //Setup Primitive Vaos
 
             //Default quad
-            GMDL.Primitives.Quad q = new GMDL.Primitives.Quad(1.0f, 1.0f);
+            Primitives.Quad q = new(1.0f, 1.0f);
             GLPrimitiveVaos["default_quad"] = q.getVAO();
-            GLPrimitiveMeshVaos["default_quad"] = new GLInstancedMeshVao();
+            GLPrimitiveMeshVaos["default_quad"] = new();
             GLPrimitiveMeshVaos["default_quad"].vao = GLPrimitiveVaos["default_quad"];
             
             //Default render quad
-            q = new GMDL.Primitives.Quad();
+            q = new Primitives.Quad();
             GLPrimitiveVaos["default_renderquad"] = q.getVAO();
-            GLPrimitiveMeshVaos["default_renderquad"] = new GLInstancedMeshVao();
+            GLPrimitiveMeshVaos["default_renderquad"] = new();
             GLPrimitiveMeshVaos["default_renderquad"].vao = GLPrimitiveVaos["default_renderquad"];
 
             //Default cross
-            GMDL.Primitives.Cross c = new GMDL.Primitives.Cross(0.1f, true);
-            GLPrimitiveMeshVaos["default_cross"] = new GLInstancedMeshVao();
+            Primitives.Cross c = new(0.1f, true);
+            GLPrimitiveMeshVaos["default_cross"] = new();
             GLPrimitiveVaos["default_cross"] = c.getVAO();
             GLPrimitiveMeshVaos["default_cross"].type = TYPES.GIZMO;
-            GLPrimitiveMeshVaos["default_cross"].metaData = new MeshMetaData();
+            GLPrimitiveMeshVaos["default_cross"].metaData = new();
             GLPrimitiveMeshVaos["default_cross"].metaData.batchcount = c.geom.indicesCount;
             GLPrimitiveMeshVaos["default_cross"].metaData.AABBMIN = new Vector3(-0.1f);
             GLPrimitiveMeshVaos["default_cross"].metaData.AABBMAX = new Vector3(0.1f);
@@ -627,37 +629,37 @@ namespace MVCore
             GLPrimitiveMeshVaos["default_cross"].material = GLmaterials["crossMat"];
 
             //Default cube
-            GMDL.Primitives.Box bx = new GMDL.Primitives.Box(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true);
+            Primitives.Box bx = new(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true);
             GLPrimitiveVaos["default_box"] = bx.getVAO();
-            GLPrimitiveMeshVaos["default_box"] = new GLInstancedMeshVao();
+            GLPrimitiveMeshVaos["default_box"] = new();
             GLPrimitiveMeshVaos["default_box"].vao = GLPrimitiveVaos["default_box"];
 
             //Default sphere
-            GMDL.Primitives.Sphere sph = new GMDL.Primitives.Sphere(new Vector3(0.0f, 0.0f, 0.0f), 100.0f);
+            Primitives.Sphere sph = new(new Vector3(0.0f, 0.0f, 0.0f), 100.0f);
             GLPrimitiveVaos["default_sphere"] = sph.getVAO();
-            GLPrimitiveMeshVaos["default_sphere"] = new GLInstancedMeshVao();
+            GLPrimitiveMeshVaos["default_sphere"] = new();
             GLPrimitiveMeshVaos["default_sphere"].vao = GLPrimitiveVaos["default_sphere"];
 
             //Light Sphere Mesh
-            GMDL.Primitives.Sphere lsph = new GMDL.Primitives.Sphere(new Vector3(0.0f, 0.0f, 0.0f), 1.0f);
+            Primitives.Sphere lsph = new(new Vector3(0.0f, 0.0f, 0.0f), 1.0f);
             GLPrimitiveVaos["default_light_sphere"] = lsph.getVAO();
             GLPrimitiveMeshVaos["default_light_sphere"] = new GLInstancedLightMeshVao();
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData = new MeshMetaData();
+            GLPrimitiveMeshVaos["default_light_sphere"].metaData = new();
             GLPrimitiveMeshVaos["default_light_sphere"].metaData.batchstart_graphics = 0;
             GLPrimitiveMeshVaos["default_light_sphere"].metaData.vertrstart_graphics = 0;
             GLPrimitiveMeshVaos["default_light_sphere"].metaData.vertrend_graphics = 11 * 11 - 1;
             GLPrimitiveMeshVaos["default_light_sphere"].metaData.batchcount = 10 * 10 * 6;
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.AABBMIN = new Vector3(-0.1f);
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.AABBMAX = new Vector3(0.1f);
+            GLPrimitiveMeshVaos["default_light_sphere"].metaData.AABBMIN = new(-0.1f);
+            GLPrimitiveMeshVaos["default_light_sphere"].metaData.AABBMAX = new(0.1f);
             GLPrimitiveMeshVaos["default_light_sphere"].metaData.indicesLength = DrawElementsType.UnsignedInt;
             GLPrimitiveMeshVaos["default_light_sphere"].type = TYPES.LIGHTVOLUME;
             GLPrimitiveMeshVaos["default_light_sphere"].vao = GLPrimitiveVaos["default_light_sphere"];
             GLPrimitiveMeshVaos["default_light_sphere"].material = GLmaterials["lightMat"];
             
-            generateGizmoParts();
+            GenerateGizmoParts();
         }
 
-        public bool shaderExistsForMaterial(Material mat)
+        public bool ShaderExistsForMaterial(Material mat)
         {
             Dictionary<int, GLSLShaderConfig> shaderDict;
             
@@ -688,7 +690,7 @@ namespace MVCore
         public void Cleanup()
         {
             //Cleanup global texture manager
-            texMgr.cleanup();
+            texMgr.Cleanup();
             fontMgr.cleanup();
             txtMgr.cleanup();
             //procTextureLayerSelections.Clear();

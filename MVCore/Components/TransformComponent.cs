@@ -2,18 +2,25 @@
 using OpenTK.Mathematics;
 using libMBIN.NMS.Toolkit;
 
-namespace MVCore.GMDL.Components
+namespace MVCore
 {
     //TODO: Make sure that every entity (previous model) uses this component by default
 
     public class TransformData : TkTransformData
     {
         //Raw values 
-        public Vector4 Translation
+        public Vector3 localTranslation
         {
             get
             {
-                return new Vector4(TransX, TransY, TransZ, 1.0f);
+                return new(TransX, TransY, TransZ);
+            }
+
+            set
+            {
+                TransX = value.X;
+                TransY = value.Y;
+                TransZ = value.Z;
             }
         }
 
@@ -23,13 +30,18 @@ namespace MVCore.GMDL.Components
             {
                 return new Vector4(1.0f) * WorldTransformMat;
             }
+
         }
 
-        public Vector4 Scale
+        public Vector3 Scale
         {
-            get
+            get => new(ScaleX, ScaleY, ScaleZ);
+
+            set
             {
-                return new Vector4(ScaleX, ScaleY, ScaleZ, 1.0f);
+                ScaleX = value.X;
+                ScaleY = value.Y;
+                ScaleZ = value.Z;
             }
         }
 
@@ -44,35 +56,52 @@ namespace MVCore.GMDL.Components
         private float OldScaleY;
         private float OldScaleZ;
 
-
-        public Quaternion rotation = new(); //TODO: Make property
-        public Vector3 scale = new();
-
+        public Quaternion localRotation = new(); //TODO: Make property
+        public Vector3 localScale = new(1.0f);
+        
         public Matrix4 LocalTransformMat = Matrix4.Identity;
         public Matrix4 WorldTransformMat = Matrix4.Identity;
+        
         public Matrix4 inverseTransform = Matrix4.Identity;
+
+        private TransformData parent = null;
 
         public TransformData() : base() {
 
-
+        }
+        public void SetParentData(TransformData data)
+        {
+            parent = data;
         }
 
+        public void ClearParentData()
+        {
+            parent = null;
+        }
+
+        internal Matrix4 CalculateWorldTransformMatrix()
+        {
+            if (parent != null)
+                return LocalTransformMat * parent.WorldTransformMat;
+            else
+                return LocalTransformMat;
+        }
     }
 
     public class TransformComponent : Component {
 
         public TransformData Data;
         
-        public TransformComponent(): base()
+        public TransformComponent(TransformData data): base()
         {
-            
+            Data = data;
         }
 
         public override Component Clone()
         {
-            TransformComponent n = new TransformComponent();
+            //Use the same Data reference to the clone as well (not sure if this is correct)
+            TransformComponent n = new TransformComponent(Data);
             
-            //TODO actually copy the component data to the new object
             return n;
         }
         

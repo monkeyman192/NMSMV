@@ -8,7 +8,7 @@ using MVCore.Utils;
 using MVCore.Common;
 using OpenTK.Graphics.OpenGL4;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public enum ATTENUATION_TYPE
     {
@@ -38,8 +38,8 @@ namespace MVCore.GMDL
         public GLInstancedLightMeshVao VolumeMeshVao;
 
         //Exposed Light Properties
-        public MVector3 _color;
-        public MVector3 _direction;
+        public Vector3 Color;
+        public Vector3 Direction;
         public float _fov = 360.0f;
         public float _intensity = 1.0f;
         public ATTENUATION_TYPE _falloff;
@@ -55,21 +55,7 @@ namespace MVCore.GMDL
         public float radius;
 
         //Properties
-        public MVector3 Color
-        {
-            get
-            {
-                return _color;
-            }
-            set
-            {
-                
-                _color = value;
-                //TODO: Check if this is called and make sure to properly add the
-                //property changed method
-            }
-        }
-
+        
         public float FOV
         {
             get
@@ -132,8 +118,8 @@ namespace MVCore.GMDL
         public Light()
         {
             type = TYPES.LIGHT;
-            _color = new MVector3(1.0f, 1.0f, 1.0f);
-            _direction = new MVector3(0.0f, 0.0f, -1.0f);
+            Color = new Vector3(1.0f, 1.0f, 1.0f);
+            Direction = new Vector3(0.0f, 0.0f, -1.0f);
             _fov = 360;
             _intensity = 1.0f;
             _falloff = ATTENUATION_TYPE.CONSTANT;
@@ -146,11 +132,11 @@ namespace MVCore.GMDL
             meshVao.metaData = new MeshMetaData();
             meshVao.metaData.batchcount = 2;
             meshVao.material = Common.RenderState.activeResMgr.GLmaterials["lightMat"];
-            instanceId = GLMeshBufferManager.addInstance(ref meshVao, this); // Add instance
+            instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this); // Add instance
 
             //Register volume meshvao
             VolumeMeshVao = RenderState.activeResMgr.GLPrimitiveMeshVaos["default_light_sphere"] as GLInstancedLightMeshVao;
-            VolumeinstanceId = RenderState.activeResMgr.lightBufferMgr.addInstance(ref VolumeMeshVao, this);
+            VolumeinstanceId = RenderState.activeResMgr.lightBufferMgr.AddInstance(ref VolumeMeshVao, this);
             
             //Init projection Matrix
             lightProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(MathUtils.radians(90), 1.0f, 1.0f, 300f);
@@ -163,9 +149,7 @@ namespace MVCore.GMDL
             }
 
             //Catch changes to MVector from the UI
-            Color = new MVector3(1.0f);
-            Color.PropertyChanged += catchPropertyChanged;
-            localPosition.PropertyChanged += catchPropertyChanged;
+            Color = new Vector3(1.0f);
         }
 
         private void catchPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -187,9 +171,9 @@ namespace MVCore.GMDL
         protected Light(Light input) : base(input)
         {
             Color = input.Color;
+            Direction = input.Direction;
             _intensity = input._intensity;
             _falloff = input._falloff;
-            _direction = input._direction;
             _fov = input._fov;
             _lightType = input._lightType;
             _strct = input._strct;
@@ -201,11 +185,11 @@ namespace MVCore.GMDL
             meshVao.metaData = new MeshMetaData();
             meshVao.metaData.batchcount = 2;
             meshVao.material = RenderState.activeResMgr.GLmaterials["lightMat"];
-            instanceId = GLMeshBufferManager.addInstance(ref meshVao, this); //Add instance
+            instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this); //Add instance
 
             //Register volume meshvao
             VolumeMeshVao = RenderState.activeResMgr.GLPrimitiveMeshVaos["default_light_sphere"] as GLInstancedLightMeshVao;
-            VolumeinstanceId = RenderState.activeResMgr.lightBufferMgr.addInstance(ref VolumeMeshVao, this);
+            VolumeinstanceId = RenderState.activeResMgr.lightBufferMgr.AddInstance(ref VolumeMeshVao, this);
 
             //Copy Matrices
             lightProjectionMatrix = input.lightProjectionMatrix;
@@ -233,9 +217,9 @@ namespace MVCore.GMDL
                 Matrix4 scaleMat = Matrix4.Identity;
                 Matrix4 tMat = Matrix4.CreateTranslation(worldPosition);
                 Matrix4 sMat = Matrix4.CreateScale(radius);
-                VolumeinstanceId = RenderState.activeResMgr.lightBufferMgr.addInstance(ref VolumeMeshVao, this, sMat * tMat); //Add instance
+                VolumeinstanceId = RenderState.activeResMgr.lightBufferMgr.AddInstance(ref VolumeMeshVao, this, sMat * tMat); //Add instance
                 
-                if (RenderState.renderViewSettings.RenderLights)
+                if (RenderState.settings.viewSettings.ViewLights)
                 {
                     //End Point
                     Vector4 ep;
@@ -251,8 +235,8 @@ namespace MVCore.GMDL
                         _lightType = LIGHT_TYPE.SPOT;
                     }
 
-                    ep = ep * _localRotation;
-                    _direction.vec = ep.Xyz; //Set spotlight direction
+                    ep = ep * localRotation;
+                    Direction = ep.Xyz; //Set spotlight direction
                     update_struct();
 
                     //Update Vertex Buffer based on the new data
@@ -278,7 +262,7 @@ namespace MVCore.GMDL
                     GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)0, (IntPtr)arraysize, verts);
 
                     //Uplod worldMat to the meshVao
-                    instanceId = GLMeshBufferManager.addInstance(meshVao, this, Matrix4.Identity, Matrix4.Identity, Matrix4.Identity); //Add instance
+                    instanceId = GLMeshBufferManager.AddInstance(meshVao, this, Matrix4.Identity, Matrix4.Identity, Matrix4.Identity); //Add instance
                     
                 }
             }
@@ -297,19 +281,19 @@ namespace MVCore.GMDL
             if (Math.Abs(FOV - 360.0f) <= 1e-4)
             {
                 ep = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
-                ep = ep * _localRotation;
+                ep = ep * localRotation;
                 _lightType = LIGHT_TYPE.POINT;
             }
             else
             {
                 ep = new Vector4(0.0f, 0.0f, -1.0f, 0.0f);
-                ep = ep * _localRotation;
+                ep = ep * localRotation;
                 _lightType = LIGHT_TYPE.SPOT;
             }
 
             ep.Normalize();
 
-            _direction.vec = ep.Xyz; //Set spotlight direction
+            Direction = ep.Xyz; //Set spotlight direction
             update_struct();
 
             //Assume that this is a point light for now
@@ -372,9 +356,9 @@ namespace MVCore.GMDL
         {
             _strct.position = (new Vector4(worldPosition, 1.0f) * RenderState.rotMat).Xyz;
             _strct.isRenderable = renderable ? 1.0f : 0.0f;
-            _strct.color = Color.Vec;
+            _strct.color = Color;
             _strct.intensity = _intensity; //Assume LED lamp
-            _strct.direction = _direction.vec;
+            _strct.direction = Direction;
             _strct.fov = (float) Math.Cos(MathUtils.radians(_fov));
             _strct.falloff = (int) _falloff;
             _strct.type = (_lightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f;

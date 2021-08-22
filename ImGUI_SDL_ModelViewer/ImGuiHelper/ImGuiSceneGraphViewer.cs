@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using ImGuiNET;
-using MVCore.GMDL;
+using MVCore;
 
 
 namespace ImGuiHelper

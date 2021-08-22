@@ -4,9 +4,7 @@ using System.Text;
 using OpenTK;
 using MVCore.Common;
 
-
-
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class Locator : Model
     {
@@ -17,12 +15,12 @@ namespace MVCore.GMDL
             //Set type
             type = TYPES.LOCATOR;
             //Set BBOX
-            AABBMIN = new MVector3(-0.1f, -0.1f, -0.1f);
-            AABBMAX = new MVector3(0.1f, 0.1f, 0.1f);
+            AABBMIN = new(-0.1f, -0.1f, -0.1f);
+            AABBMAX = new(0.1f, 0.1f, 0.1f);
 
             //Assemble geometry in the constructor
             meshVao = RenderState.activeResMgr.GLPrimitiveMeshVaos["default_cross"];
-            instanceId = GLMeshBufferManager.addInstance(ref meshVao, this);
+            instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
         }
 
         public void copyFrom(Locator input)
@@ -36,7 +34,7 @@ namespace MVCore.GMDL
             this.copyFrom(input);
         }
 
-        public override GMDL.Model Clone()
+        public override Model Clone()
         {
             Locator new_s = new Locator();
             new_s.copyFrom(this);
@@ -67,12 +65,12 @@ namespace MVCore.GMDL
             }
 
             bool fr_status = Common.RenderState.activeCam.frustum_occlude(meshVao, worldMat * RenderState.rotMat);
-            bool occluded_status = !fr_status && Common.RenderState.settings.rendering.UseFrustumCulling;
+            bool occluded_status = !fr_status && Common.RenderState.settings.renderSettings.UseFrustumCulling;
 
             //Recalculations && Data uploads
             if (!occluded_status)
             {
-                instanceId = GLMeshBufferManager.addInstance(ref meshVao, this);
+                instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
             }
 
             base.updateMeshInfo();

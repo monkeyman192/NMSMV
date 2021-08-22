@@ -5,7 +5,7 @@ using System.Windows.Input;
 using libMBIN.NMS.Toolkit;
 using MVCore.Utils;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class AnimPoseComponent : Component
     {

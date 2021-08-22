@@ -48,12 +48,9 @@ namespace MVCore.Common
         //USE SETTINGS CLASS
         //public static RenderSettings renderSettings = new RenderSettings();
 
-        //renderViewSettings
-        public static RenderViewSettings renderViewSettings = new RenderViewSettings();
-
         //App Settings
         public static Settings settings = new Settings();
-
+        
         //Keep the main camera global
         public static Camera activeCam;
         //Active ResourceManager
@@ -81,49 +78,72 @@ namespace MVCore.Common
 
     }
 
-    public class RenderViewSettings: INotifyPropertyChanged
+    public enum ViewSettingsEnum
     {
-        //Properties
+        ViewInfo = 1,
+        ViewLights = 2,
+        ViewLightVolumes = 4,
+        ViewJoints = 8,
+        ViewLocators = 16,
+        ViewCollisions = 32,
+        ViewBoundHulls = 64,
+        ViewGizmos = 128,
+        EmulateActions = 256
+    }
+
+    public struct ViewSettings
+    {
+        public bool ViewInfo;
+        public bool ViewLights;
+        public bool ViewLightVolumes;
+        public bool ViewJoints;
+        public bool ViewLocators;
+        public bool ViewCollisions;
+        public bool ViewBoundHulls;
+        public bool ViewGizmos;
+        public bool EmulateActions;
+        public int SettingsMask;
         
-        public bool RenderInfo { get; set; } = true;
-
-        public bool RenderLights { get; set; } = true;
-
-        public bool RenderLightVolumes { get; set; } = true;
-
-        public bool RenderJoints { get; set; } = true;
-
-        public bool RenderLocators { get; set; } = true;
-
-        public bool RenderCollisions { get; set; } = false;
-
-        public bool RenderBoundHulls { get; set; } = false;
-
-        public bool RenderGizmos { get; set; } = false;
-
-        public bool EmulateActions { get; set; } = false;
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void NotifyPropertyChanged(String info)
+        
+        //Use the settings mask when serializing the struct to the settings file
+        public ViewSettings(int settings_mask)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
+            SettingsMask = settings_mask;
+            ViewInfo = (settings_mask & (int) ViewSettingsEnum.ViewInfo) == 0 ? false : true;
+            ViewLights = (settings_mask & (int)ViewSettingsEnum.ViewLights) == 0 ? false : true;
+            ViewLightVolumes = (settings_mask & (int)ViewSettingsEnum.ViewLightVolumes) == 0 ? false : true;
+            ViewJoints = (settings_mask & (int)ViewSettingsEnum.ViewJoints) == 0 ? false : true;
+            ViewLocators = (settings_mask & (int)ViewSettingsEnum.ViewLocators) == 0 ? false : true;
+            ViewCollisions = (settings_mask & (int)ViewSettingsEnum.ViewCollisions) == 0 ? false : true;
+            ViewBoundHulls = (settings_mask & (int)ViewSettingsEnum.ViewBoundHulls) == 0 ? false : true;
+            ViewGizmos = (settings_mask & (int)ViewSettingsEnum.ViewGizmos) == 0 ? false : true;
+            EmulateActions = (settings_mask & (int)ViewSettingsEnum.EmulateActions) == 0 ? false : true;
         }
 
     }
 
-    public class RenderSettings: INotifyPropertyChanged
+
+    public class RenderSettings
     {
         public int FPS = 60;
         public bool UseVSync = false;
         public float HDRExposure = 0.005f;
+        
         //Set Full rendermode by default
         [JsonIgnore]
-        public PolygonMode RENDERMODE = PolygonMode.Fill;
+        public PolygonMode RENDERMODE 
+        {
+            get {
+                if (RenderWireFrame)
+                    return PolygonMode.Line;
+                return PolygonMode.Fill;
+            }
+        }
+
         [JsonIgnore]
         public Color clearColor = System.Drawing.Color.FromArgb(255, 33, 33, 33);
-        public float _useTextures = 1.0f;
-        public float _useLighting = 1.0f;
+        public bool UseTextures = true;
+        public bool UseLighting = true;
 
         //Test Settings
 #if (DEBUG)
@@ -134,78 +154,22 @@ namespace MVCore.Common
         [JsonIgnore]
         public float testOpt3 = 0.0f;
 #endif
-
+        
         //Properties
-
-        public bool UseFXAA { get; set; } = true;
-
-        public bool UseBLOOM { get; set; } = true;
-
-        //Add properties
-        [JsonIgnore]
-        public bool UseTextures
-        {
-            get
-            {
-                return (_useTextures > 0.0f);
-            }
-
-            set
-            {
-                if (value)
-                    _useTextures = 1.0f;
-                else
-                    _useTextures = 0.0f;
-                NotifyPropertyChanged("UseTextures");
-            }
-        }
+        public bool UseFXAA = true;
+        public bool UseBLOOM = true;
 
         [JsonIgnore]
-        public bool UseLighting
-        {
-            get
-            {
-                return (_useLighting > 0.0f);
-            }
-
-            set
-            {
-                if (value)
-                    _useLighting = 1.0f;
-                else
-                    _useLighting = 0.0f;
-                NotifyPropertyChanged("UseLighting");
-            }
-        }
+        public bool UseFrustumCulling = true;
 
         [JsonIgnore]
-        public bool UseFrustumCulling { get; set; } = true;
+        public bool LODFiltering = true;
 
         [JsonIgnore]
-        public bool LODFiltering { get; set; } = true;
+        public bool RenderWireFrame = false;
 
         [JsonIgnore]
-        public bool ToggleWireframe
-        {
-            get => (RENDERMODE == PolygonMode.Line);
-            set
-            {
-                if (value)
-                    RENDERMODE = PolygonMode.Line;
-                else
-                    RENDERMODE = PolygonMode.Fill;
-            }
-        }
-
-        [JsonIgnore]
-        public bool ToggleAnimations { get; set; } = true;
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void NotifyPropertyChanged(String info)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
-        }
+        public bool ToggleAnimations = true;
 
     }
 
@@ -213,8 +177,9 @@ namespace MVCore.Common
     public class Settings : INotifyPropertyChanged
     {
         //Public Settings
-        public RenderSettings rendering = new RenderSettings();
-
+        public RenderSettings renderSettings = new RenderSettings();
+        public ViewSettings viewSettings = new ViewSettings(31);
+        
         //Private Settings
         private int forceProcGen;
         private string gamedir;
@@ -234,7 +199,6 @@ namespace MVCore.Common
                 NotifyPropertyChanged("GameDir");
             }
         }
-
 
         public string UnpackDir
         {
@@ -341,30 +305,32 @@ namespace MVCore.Common
     }
 
     //Delegates - Function Types for Callbacks
-    public delegate void UpdateStatusCallBack(string msg);
-    public delegate void OpenAnimCallBack(string filepath, Model animScene);
-    public delegate void OpenPoseCallBack(string filepath, Model animScene);
+    public delegate void UpdateStatusCallback(string msg);
+    public delegate void OpenAnimCallback(string filepath, Model animScene);
+    public delegate void OpenPoseCallback(string filepath, Model animScene);
     public delegate void ShowInfoMsg(string msg, string caption);
     public delegate void ShowErrorMsg(string msg, string caption);
-    public delegate void LogCallBack(string msg, LogVerbosityLevel level);
-    public delegate void SendRequestCallBack(ref ThreadRequest req);
-    public delegate byte[] GetResourceCallBack(string resourceName);
-    public delegate Bitmap GetBitMapResourceCallBack(string resourceName);
-    public delegate string GetTextResourceCallBack(string resourceName);
-    public delegate object GetResourceWithTypeCallBack(string resourceName, out string resourceType);
+    public delegate void LogCallback(string msg, LogVerbosityLevel level);
+    public delegate void AssertCallback(bool status, string msg);
+    public delegate void SendRequestCallback(ref ThreadRequest req);
+    public delegate byte[] GetResourceCallback(string resourceName);
+    public delegate Bitmap GetBitMapResourceCallback(string resourceName);
+    public delegate string GetTextResourceCallback(string resourceName);
+    public delegate object GetResourceWithTypeCallback(string resourceName, out string resourceType);
 
-    public static class CallBacks
+    public static class Callbacks
     {
-        public static UpdateStatusCallBack updateStatus = null;
+        public static UpdateStatusCallback updateStatus = null;
         public static ShowInfoMsg showInfo = null;
         public static ShowErrorMsg showError = null;
-        public static OpenAnimCallBack openAnim = null;
-        public static OpenPoseCallBack openPose = null;
-        public static LogCallBack Log = null;
-        public static SendRequestCallBack issueRequestToGLControl = null;
-        public static GetResourceCallBack getResource = null;
-        public static GetBitMapResourceCallBack getBitMapResource = null;
-        public static GetTextResourceCallBack getTextResource = null;
-        public static GetResourceWithTypeCallBack getResourceWithType = null;
+        public static OpenAnimCallback openAnim = null;
+        public static OpenPoseCallback openPose = null;
+        public static LogCallback Log = null;
+        public static AssertCallback Assert = null;
+        public static SendRequestCallback issueRequestToGLControl = null;
+        public static GetResourceCallback getResource = null;
+        public static GetBitMapResourceCallback getBitMapResource = null;
+        public static GetTextResourceCallback getTextResource = null;
+        public static GetResourceWithTypeCallback getResourceWithType = null;
     }
 }

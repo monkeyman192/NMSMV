@@ -13,7 +13,7 @@ using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
 
-namespace MVCore.Engine
+namespace MVCore
 {
     public class FBO
     {

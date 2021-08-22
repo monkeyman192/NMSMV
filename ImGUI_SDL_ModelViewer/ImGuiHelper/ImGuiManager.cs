@@ -2,7 +2,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 using System;
-using MVCore.GMDL;
+using MVCore;
 
 namespace ImGuiHelper
 {

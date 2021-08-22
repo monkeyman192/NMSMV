@@ -5,7 +5,7 @@ using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
-namespace MVCore.Engine
+namespace MVCore
 {
     public class IVector3
     {
@@ -20,7 +20,6 @@ namespace MVCore.Engine
             z = zz;
         }
     }
-
 
     public class Octree
     {
@@ -59,8 +58,8 @@ namespace MVCore.Engine
             if (m.type == TYPES.MODEL || m.type == TYPES.REFERENCE)
             {
                 //Transform coordinates
-                IVector3 mincoords = transform_coords(m.AABBMIN.Vec, max_width);
-                IVector3 maxcoords = transform_coords(m.AABBMAX.Vec, max_width);
+                IVector3 mincoords = transform_coords(m.AABBMIN, max_width);
+                IVector3 maxcoords = transform_coords(m.AABBMAX, max_width);
 
                 if (checkIfFits(maxcoords) == 0 && checkIfFits(mincoords) == 0)
                 {

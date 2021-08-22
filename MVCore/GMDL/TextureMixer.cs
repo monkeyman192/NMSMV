@@ -9,7 +9,7 @@ using MVCore.Utils;
 using libMBIN.NMS.Toolkit;
 using System.Diagnostics;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public static class TextureMixer
     {
@@ -45,7 +45,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public static void combineTextures(string path, Dictionary<string, Dictionary<string, Vector4>> pal_input, ref textureManager texMgr)
+        public static void combineTextures(string path, Dictionary<string, Dictionary<string, Vector4>> pal_input, ref TextureManager texMgr)
         {
             clear();
             palette = pal_input;
@@ -68,7 +68,7 @@ namespace MVCore.GMDL
 
             if (!fbo_status)
             {
-                CallBacks.Log("Unable to mix textures, probably 0x0 textures...\n", LogVerbosityLevel.ERROR);
+                Callbacks.Log("Unable to mix textures, probably 0x0 textures...\n", LogVerbosityLevel.ERROR);
                 return;
             }
 
@@ -84,18 +84,18 @@ namespace MVCore.GMDL
             revertFrameBuffer(fbo, fbo_tex);
 
             //Add the new procedural textures to the textureManager
-            texMgr.addTexture(diffTex);
-            texMgr.addTexture(maskTex);
-            texMgr.addTexture(normalTex);
+            texMgr.AddTexture(diffTex);
+            texMgr.AddTexture(maskTex);
+            texMgr.AddTexture(normalTex);
         }
 
         //Generate procedural textures
-        private static void prepareTextures(textureManager texMgr, string path)
+        private static void prepareTextures(TextureManager texMgr, string path)
         {
             //At this point, at least one sampler exists, so for now I assume that the first sampler
             //is always the diffuse sampler and I can initiate the mixing process
             Console.WriteLine("Procedural Texture Detected: " + path);
-            CallBacks.Log(string.Format("Parsing Procedural Texture"), LogVerbosityLevel.INFO);
+            Callbacks.Log(string.Format("Parsing Procedural Texture"), LogVerbosityLevel.INFO);
 
             TkProceduralTextureList template = NMSUtils.LoadNMSTemplate(path, ref Common.RenderState.activeResMgr) as TkProceduralTextureList;
 
@@ -103,17 +103,17 @@ namespace MVCore.GMDL
             for (int i = 0; i < 8; i++) texList.Add(null);
             ModelProcGen.parse_procTexture(ref texList, template, ref Common.RenderState.activeResMgr);
 
-            CallBacks.Log("Proc Texture Selection", LogVerbosityLevel.INFO);
+            Callbacks.Log("Proc Texture Selection", LogVerbosityLevel.INFO);
             for (int i = 0; i < 8; i++)
             {
                 if (texList[i] != null)
                 {
                     string partNameDiff = texList[i].Diffuse;
-                    CallBacks.Log(partNameDiff, LogVerbosityLevel.INFO);
+                    Callbacks.Log(partNameDiff, LogVerbosityLevel.INFO);
                 }
             }
 
-            CallBacks.Log("Procedural Material. Trying to generate procTextures...", LogVerbosityLevel.INFO);
+            Callbacks.Log("Procedural Material. Trying to generate procTextures...", LogVerbosityLevel.INFO);
 
             for (int i = 0; i < 8; i++)
             {
@@ -157,7 +157,7 @@ namespace MVCore.GMDL
                     //Add White
                     baseLayersUsed[i] = 0.0f;
                 }
-                else if (!texMgr.hasTexture(partNameDiff))
+                else if (!texMgr.HasTexture(partNameDiff))
                 {
                     //Configure the Diffuse Texture
                     try
@@ -166,7 +166,7 @@ namespace MVCore.GMDL
                         tex.palOpt = palOpt;
                         tex.procColor = palColor;
                         //Store to master texture manager
-                        Common.RenderState.activeResMgr.texMgr.addTexture(tex);
+                        Common.RenderState.activeResMgr.texMgr.AddTexture(tex);
 
                         //Save Texture to material
                         difftextures[i] = tex;
@@ -177,14 +177,14 @@ namespace MVCore.GMDL
                     {
                         //Texture Not Found Continue
                         Console.WriteLine("Diffuse Texture " + partNameDiff + " Not Found, Appending White Tex");
-                        CallBacks.Log(string.Format("Diffuse Texture {0} Not Found", partNameDiff), LogVerbosityLevel.WARNING);
+                        Callbacks.Log(string.Format("Diffuse Texture {0} Not Found", partNameDiff), LogVerbosityLevel.WARNING);
                         baseLayersUsed[i] = 0.0f;
                     }
                 }
                 else
                 //Load texture from dict
                 {
-                    Texture tex = texMgr.getTexture(partNameDiff);
+                    Texture tex = texMgr.GetTexture(partNameDiff);
                     //Save Texture to material
                     difftextures[i] = tex;
                     baseLayersUsed[i] = 1.0f;
@@ -196,14 +196,14 @@ namespace MVCore.GMDL
                     //Skip
                     alphaLayersUsed[i] = 0.0f;
                 }
-                else if (!texMgr.hasTexture(partNameMask))
+                else if (!texMgr.HasTexture(partNameMask))
                 {
                     //Configure Mask
                     try
                     {
                         Texture texmask = new Texture(partNameMask);
                         //Store to master texture manager
-                        Common.RenderState.activeResMgr.texMgr.addTexture(texmask);
+                        Common.RenderState.activeResMgr.texMgr.AddTexture(texmask);
                         //Store Texture to material
                         masktextures[i] = texmask;
                         alphaLayersUsed[i] = 0.0f;
@@ -212,14 +212,14 @@ namespace MVCore.GMDL
                     {
                         //Mask Texture not found
                         Console.WriteLine("Mask Texture " + partNameMask + " Not Found");
-                        CallBacks.Log(string.Format("Mask Texture {0} Not Found", partNameMask), LogVerbosityLevel.WARNING);
+                        Callbacks.Log(string.Format("Mask Texture {0} Not Found", partNameMask), LogVerbosityLevel.WARNING);
                         alphaLayersUsed[i] = 0.0f;
                     }
                 }
                 else
                 //Load texture from dict
                 {
-                    Texture tex = texMgr.getTexture(partNameMask);
+                    Texture tex = texMgr.GetTexture(partNameMask);
                     //Store Texture to material
                     masktextures[i] = tex;
                     alphaLayersUsed[i] = 1.0f;
@@ -232,26 +232,26 @@ namespace MVCore.GMDL
                     //Skip
 
                 }
-                else if (!texMgr.hasTexture(partNameNormal))
+                else if (!texMgr.HasTexture(partNameNormal))
                 {
                     try
                     {
                         Texture texnormal = new Texture(partNameNormal);
                         //Store to master texture manager
-                        Common.RenderState.activeResMgr.texMgr.addTexture(texnormal);
+                        Common.RenderState.activeResMgr.texMgr.AddTexture(texnormal);
                         //Store Texture to material
                         normaltextures[i] = texnormal;
                     }
                     catch (System.IO.FileNotFoundException)
                     {
                         //Normal Texture not found
-                        CallBacks.Log(string.Format("Normal Texture {0} Not Found", partNameNormal), LogVerbosityLevel.WARNING);
+                        Callbacks.Log(string.Format("Normal Texture {0} Not Found", partNameNormal), LogVerbosityLevel.WARNING);
                     }
                 }
                 else
                 //Load texture from dict
                 {
-                    Texture tex = texMgr.getTexture(partNameNormal);
+                    Texture tex = texMgr.GetTexture(partNameNormal);
                     //Store Texture to material
                     normaltextures[i] = tex;
                 }
@@ -321,8 +321,8 @@ namespace MVCore.GMDL
             Texture tex;
             int loc;
 
-            Texture dMask = Common.RenderState.activeResMgr.texMgr.getTexture("default_mask.dds");
-            Texture dDiff = Common.RenderState.activeResMgr.texMgr.getTexture("default.dds");
+            Texture dMask = Common.RenderState.activeResMgr.texMgr.GetTexture("default_mask.dds");
+            Texture dDiff = Common.RenderState.activeResMgr.texMgr.GetTexture("default.dds");
 
             //USE PROGRAM
             int pass_program = Common.RenderState.activeResMgr.GLShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].program_id;
@@ -442,8 +442,8 @@ namespace MVCore.GMDL
             Texture tex;
             int loc;
 
-            Texture dMask = Common.RenderState.activeResMgr.texMgr.getTexture("default_mask.dds");
-            Texture dDiff = Common.RenderState.activeResMgr.texMgr.getTexture("default.dds");
+            Texture dMask = Common.RenderState.activeResMgr.texMgr.GetTexture("default_mask.dds");
+            Texture dDiff = Common.RenderState.activeResMgr.texMgr.GetTexture("default.dds");
 
             //USE PROGRAM
             int pass_program = Common.RenderState.activeResMgr.GLShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].program_id;
@@ -563,8 +563,8 @@ namespace MVCore.GMDL
             Texture tex;
             int loc;
 
-            Texture dMask = Common.RenderState.activeResMgr.texMgr.getTexture("default_mask.dds");
-            Texture dDiff = Common.RenderState.activeResMgr.texMgr.getTexture("default.dds");
+            Texture dMask = Common.RenderState.activeResMgr.texMgr.GetTexture("default_mask.dds");
+            Texture dDiff = Common.RenderState.activeResMgr.texMgr.GetTexture("default.dds");
 
             //USE PROGRAM
             int pass_program = Common.RenderState.activeResMgr.GLShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].program_id;

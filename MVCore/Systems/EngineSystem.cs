@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using MVCore.Common;
 
-namespace MVCore.Engine.Systems
+namespace MVCore.Systems
 {
     public enum EngineSystemEnum
     {
-        UNITIALIZED,
+        NULL,
+        TRANSFORMATION_SYSTEM,
         RENDERING_SYSTEM,
         ANIMATION_SYSTEM,
         ACTION_SYSTEM,
@@ -18,32 +19,21 @@ namespace MVCore.Engine.Systems
     {
         private Engine engineRef = null;
         private string systemName = "";
-        private EngineSystemEnum systemType = EngineSystemEnum.UNITIALIZED;
+        private EngineSystemEnum systemType = EngineSystemEnum.NULL;
 
         //Methods
 
         public EngineSystem(EngineSystemEnum type)
         {
             systemType = type;
-            switch (type)
-            {
-                case EngineSystemEnum.RENDERING_SYSTEM:
-                    systemName = "RENDERING_SYSTEM";
-                    break;
-                case EngineSystemEnum.ACTION_SYSTEM:
-                    systemName = "ACTION_SYSTEM";
-                    break;
-                case EngineSystemEnum.ANIMATION_SYSTEM:
-                    systemName = "ANIMATION_SYSTEM";
-                    break;
-            }
+            systemName = type.ToString();
         }
 
         public void Log(string msg, LogVerbosityLevel lvl)
         {
-            CallBacks.Log(string.Format("*{0} : {1}", systemName, msg), lvl);
+            Callbacks.Log(string.Format("*{0} : {1}", systemName, msg), lvl);
         }
-
+        
         public EngineSystemEnum GetSystemType()
         {
             return systemType;

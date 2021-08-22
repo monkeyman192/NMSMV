@@ -5,7 +5,7 @@ using System.Text;
 using libMBIN.NMS.GameComponents;
 using libMBIN.NMS;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public abstract class Trigger
     {

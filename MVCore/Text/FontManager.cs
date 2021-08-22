@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 using OpenTK.Audio.OpenAL;
 using OpenTK;
 using MVCore.GMDL;
-using MVCore.GMDL.Primitives;
+using MVCore.Primitives;
 using libMBIN.NMS.Toolkit;
 using Microsoft.SqlServer.Server;
 using System.Linq;

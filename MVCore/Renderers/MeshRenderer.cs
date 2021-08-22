@@ -8,7 +8,7 @@ using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
 
-namespace MVCore.Engine
+namespace MVCore
 {
     public static class MeshRenderer
     {
@@ -16,7 +16,7 @@ namespace MVCore.Engine
         {
             for (int i = 0; i > mesh.instance_count; i++)
             {
-                if (GLMeshBufferManager.getInstanceOccludedStatus(mesh, i))
+                if (GLMeshBufferManager.GetInstanceOccludedStatus(mesh, i))
                     continue;
                 renderBbox(mesh.instanceRefs[i]);
             }
@@ -28,8 +28,8 @@ namespace MVCore.Engine
             //tr_AABB[0] = new Vector4(metaData.AABBMIN, 1.0f) * worldMat;
             //tr_AABB[1] = new Vector4(metaData.AABBMAX, 1.0f) * worldMat;
 
-            tr_AABB[0] = new Vector4(m.AABBMIN.Vec, 1.0f);
-            tr_AABB[1] = new Vector4(m.AABBMAX.Vec, 1.0f);
+            tr_AABB[0] = new Vector4(m.AABBMIN, 1.0f);
+            tr_AABB[1] = new Vector4(m.AABBMAX, 1.0f);
 
             //tr_AABB[0] = new Vector4(metaData.AABBMIN, 0.0f);
             //tr_AABB[1] = new Vector4(metaData.AABBMAX, 0.0f);

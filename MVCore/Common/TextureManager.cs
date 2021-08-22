@@ -5,63 +5,61 @@ using MVCore.Common;
 
 namespace MVCore
 {
-    public class textureManager : baseResourceManager
+    public class TextureManager : IBaseResourceManager
     {
-        public Dictionary<string, GMDL.Texture> GLtextures = new Dictionary<string, GMDL.Texture>();
-        private textureManager masterTexManager;
+        public Dictionary<string, Texture> GLtextures = new();
+        private TextureManager masterTexManager;
 
-        public textureManager()
+        public TextureManager()
         {
 
         }
 
-        public void cleanup()
+        public void Cleanup()
         {
-            deleteTextures();
-            removeTextures();
+            DeleteTextures();
+            RemoveTextures();
         }
 
-        public void deleteTextures()
+        public void DeleteTextures()
         {
-            foreach (GMDL.Texture p in GLtextures.Values)
+            foreach (Texture p in GLtextures.Values)
                 p.Dispose();
         }
 
-        public void removeTextures()
+        public void RemoveTextures()
         {
             //Warning does not free the textures. Use wisely
             GLtextures.Clear();
         }
 
-        public bool hasTexture(string name)
+        public bool HasTexture(string name)
         {
             //Search on the masterTextureManager first
-            if (masterTexManager != null && masterTexManager.hasTexture(name))
+            if (masterTexManager != null && masterTexManager.HasTexture(name))
                 return true;
             else
                 return GLtextures.ContainsKey(name);
         }
 
-        public void addTexture(GMDL.Texture t)
+        public void AddTexture(Texture t)
         {
             GLtextures[t.name] = t;
         }
 
-        public GMDL.Texture getTexture(string name)
+        public Texture GetTexture(string name)
         {
             //Fetches the textures from the masterTexture Manager if it exists
-            if (masterTexManager != null && masterTexManager.hasTexture(name))
-                return masterTexManager.getTexture(name);
+            if (masterTexManager != null && masterTexManager.HasTexture(name))
+                return masterTexManager.GetTexture(name);
             else
                 return GLtextures[name];
         }
 
-        public void setMasterTexManager(textureManager mtMgr)
+        public void SetMasterTexManager(TextureManager mtMgr)
         {
             masterTexManager = mtMgr;
         }
-
-
 
     }
 }

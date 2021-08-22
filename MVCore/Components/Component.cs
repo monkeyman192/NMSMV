@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MVCore.GMDL
-{
+namespace MVCore
+{   
     public abstract class Component : IDisposable
     {
         public abstract Component Clone();

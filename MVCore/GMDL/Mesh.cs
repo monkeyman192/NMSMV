@@ -11,7 +11,7 @@ using MVCore.Utils;
 using libMBIN.NMS.Toolkit;
 using System.Linq;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
 
     public class GLVao : IDisposable
@@ -257,7 +257,7 @@ namespace MVCore.GMDL
             float radius = 0.5f * (metaData.AABBMIN - metaData.AABBMAX).Length;
             Vector4 bsh_center = new Vector4(metaData.AABBMIN + 0.5f * (metaData.AABBMAX - metaData.AABBMIN), 1.0f);
 
-            Matrix4 t_mat = GLMeshBufferManager.getInstanceWorldMat(this, instance_id);
+            Matrix4 t_mat = GLMeshBufferManager.GetInstanceWorldMat(this, instance_id);
             bsh_center = bsh_center * t_mat;
 
             //Create Sphere vbo
@@ -507,7 +507,7 @@ namespace MVCore.GMDL
             new_m.copyFrom(this);
 
             new_m.meshVao = this.meshVao;
-            new_m.instanceId = GLMeshBufferManager.addInstance(ref new_m.meshVao, new_m);
+            new_m.instanceId = GLMeshBufferManager.AddInstance(ref new_m.meshVao, new_m);
 
             //Clone children
             foreach (Model child in children)
@@ -544,7 +544,7 @@ namespace MVCore.GMDL
                 Console.WriteLine("test");
 #endif
 
-            if (!active || !renderable || (parentScene.activeLOD != LodLevel) && RenderState.settings.rendering.LODFiltering)
+            if (!active || !renderable || (parentScene.activeLOD != LodLevel) && RenderState.settings.renderSettings.LODFiltering)
             {
                 base.updateMeshInfo(true);
                 RenderStats.occludedNum += 1;
@@ -552,7 +552,7 @@ namespace MVCore.GMDL
             }
 
             bool fr_status = Common.RenderState.activeCam.frustum_occlude(meshVao, worldMat * RenderState.rotMat);
-            bool occluded_status = !fr_status && Common.RenderState.settings.rendering.UseFrustumCulling;
+            bool occluded_status = !fr_status && Common.RenderState.settings.renderSettings.UseFrustumCulling;
 
             //Recalculations && Data uploads
             if (!occluded_status)
@@ -572,10 +572,10 @@ namespace MVCore.GMDL
                 }
                 */
 
-                instanceId = GLMeshBufferManager.addInstance(ref meshVao, this);
+                instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
 
                 //Upload commonperMeshUniforms
-                GLMeshBufferManager.setInstanceUniform4(meshVao, instanceId,
+                GLMeshBufferManager.SetInstanceUniform4(meshVao, instanceId,
                     "gUserDataVec4", CommonPerMeshUniforms["gUserDataVec4"].Vec.Vec);
 
                 if (Skinned)

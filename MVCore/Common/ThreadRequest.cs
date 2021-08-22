@@ -53,7 +53,7 @@ namespace MVCore
         {
             type = THREAD_REQUEST_TYPE.NULL;
             owner = THREAD_REQUEST_OWNER.NULL;
-            status = THREAD_REQUEST_STATUS.ACTIVE;
+            status = THREAD_REQUEST_STATUS.NULL;
             arguments = new List<object>();
             response = 0;
         }

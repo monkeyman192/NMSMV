@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using MVCore;
-using MVCore.GMDL;
-using MVCore.GMDL.Primitives;
+using MVCore.Primitives;
 using OpenTK;
 using OpenTK.Mathematics;
 
@@ -94,8 +93,8 @@ public abstract class Gizmo
 		{
 			foreach (GizmoPart g in gizmoParts)
             {
-				GLMeshBufferManager.addInstance(ref g.meshVao, reference);
-				GLMeshBufferManager.setInstanceSelectedStatus(g.meshVao, g.meshVao.instance_count - 1, g.active);
+				GLMeshBufferManager.AddInstance(ref g.meshVao, reference);
+				GLMeshBufferManager.SetInstanceSelectedStatus(g.meshVao, g.meshVao.instance_count - 1, g.active);
 			}
 				
 		}

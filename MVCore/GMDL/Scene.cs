@@ -5,12 +5,12 @@ using OpenTK;
 using OpenTK.Mathematics;
 using MVCore.Utils;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class Scene : Locator
     {
         public GeomObject gobject; //Keep GeomObject reference
-        public textureManager texMgr;
+        public TextureManager texMgr;
 
         //Keep reference of all the animation Joints of the scene and the skinmatrices
         public float[] skinMats; //Final Matrices
@@ -20,7 +20,7 @@ namespace MVCore.GMDL
         public Scene()
         {
             type = TYPES.MODEL;
-            texMgr = new textureManager();
+            texMgr = new TextureManager();
             //Init Animation Stuff
             skinMats = new float[256 * 16];
             jointDict = new Dictionary<string, Joint>();
@@ -53,7 +53,7 @@ namespace MVCore.GMDL
                     //j.localPosition = tr;
 
                     j.localRotation = Matrix4.CreateFromQuaternion(q) * j.__localRotation;
-                    j.localScale.vec = sc;
+                    j.localScale = sc;
 
                     //j.localPoseMatrix = kp.Value;
                 }
@@ -67,9 +67,9 @@ namespace MVCore.GMDL
         {
             foreach (Joint j in jointDict.Values)
             {
-                j._localScale.Vec = j.BindMat.ExtractScale();
-                j._localRotation = Matrix4.CreateFromQuaternion(j.BindMat.ExtractRotation());
-                j._localPosition.Vec = j.BindMat.ExtractTranslation();
+                j.localScale = j.BindMat.ExtractScale();
+                j.localRotation = Matrix4.CreateFromQuaternion(j.BindMat.ExtractRotation());
+                j.localPosition = j.BindMat.ExtractTranslation();
                 j._localPoseMatrix = Matrix4.Identity;
             }
         }
@@ -99,7 +99,7 @@ namespace MVCore.GMDL
             new_s.copyFrom(this);
 
             new_s.meshVao = this.meshVao;
-            new_s.instanceId = GLMeshBufferManager.addInstance(ref new_s.meshVao, this);
+            new_s.instanceId = GLMeshBufferManager.AddInstance(ref new_s.meshVao, this);
 
             //Clone children
             foreach (Model child in children)

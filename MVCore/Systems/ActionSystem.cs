@@ -8,13 +8,13 @@ using MathNet.Numerics;
 using MVCore.Common;
 using MVCore.GMDL;
 
-namespace MVCore.Engine.Systems
+namespace MVCore.Systems
 {
     public class ActionSystem : EngineSystem
     {
         public List<Model> ActionScenes = new List<Model>();
         public Dictionary<Model, string> ActionSceneStateMap = new Dictionary<Model, string>();
-        public Dictionary<Model, List<GMDL.Action>> ActionsExecutedInState = new Dictionary<Model, List<GMDL.Action>>();
+        public Dictionary<Model, List<Action>> ActionsExecutedInState = new Dictionary<Model, List<Action>>();
         public Dictionary<Model, string> PrevActionSceneStateMap = new Dictionary<Model, string>();
         public Engine engine;
         private float timeInterval = 1000.0f / 60.0f;
@@ -56,7 +56,7 @@ namespace MVCore.Engine.Systems
                     if (trigger_active)
                     {
                         //Execute actions
-                        foreach (GMDL.Action a in at.Actions)
+                        foreach (Action a in at.Actions)
                         {
                             if (!ActionsExecutedInState[m].Contains(a))
                                 ExecuteAction(m, a);
@@ -127,7 +127,7 @@ namespace MVCore.Engine.Systems
             return false;
         }
 
-        private void ExecuteAction(Model m, GMDL.Action action)
+        private void ExecuteAction(Model m, Action action)
         {
             
             if (action is NodeActivationAction)
@@ -154,7 +154,7 @@ namespace MVCore.Engine.Systems
             //Change State
             PrevActionSceneStateMap[m] = ActionSceneStateMap[m];
             ActionSceneStateMap[m] = action.State;
-            ActionsExecutedInState[m] = new List<GMDL.Action>(); //Reset executed actions 
+            ActionsExecutedInState[m] = new List<Action>(); //Reset executed actions 
         }
 
         private void ExecutePlayAnimAction(Model m, PlayAnimAction action)
@@ -164,7 +164,7 @@ namespace MVCore.Engine.Systems
             ActionsExecutedInState[m].Add(action);
         }
 
-        private void ExecuteNodeActivationAction(Model m, GMDL.NodeActivationAction action)
+        private void ExecuteNodeActivationAction(Model m, NodeActivationAction action)
         {
             Model target = null;
 
@@ -204,7 +204,7 @@ namespace MVCore.Engine.Systems
                 ActionScenes.Add(scn);
                 ActionSceneStateMap[scn] = "BOOT"; //Add Default State
                 PrevActionSceneStateMap[scn] = "NONE"; //Add Default State
-                ActionsExecutedInState[scn] = new List<GMDL.Action>();
+                ActionsExecutedInState[scn] = new List<Action>();
             }
         }
     }

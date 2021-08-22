@@ -13,6 +13,7 @@ namespace ImGuiHelper
     {
         private bool show_gamedir_folder_select = false;
         private bool show_unpackdir_folder_select = false;
+        private bool show_save_confirm_dialog = false;
         private string current_file_path = "";
         private FilePicker activePicker;
 
@@ -62,12 +63,17 @@ namespace ImGuiHelper
             //Render Settings
             ImGui.BeginGroup();
             ImGui.TextColored(ImGuiManager.DarkBlue, "Rendering Settings");
-            ImGui.SliderFloat("HDR Exposure", ref RenderState.settings.rendering.HDRExposure, 0.001f, 0.5f);
-            ImGui.InputInt("FPS", ref RenderState.settings.rendering.FPS);
-            ImGui.Checkbox("Vsync", ref RenderState.settings.rendering.UseVSync);
+            ImGui.SliderFloat("HDR Exposure", ref RenderState.settings.renderSettings.HDRExposure, 0.001f, 0.5f);
+            ImGui.InputInt("FPS", ref RenderState.settings.renderSettings.FPS);
+            ImGui.Checkbox("Vsync", ref RenderState.settings.renderSettings.UseVSync);
             ImGui.EndGroup();
 
-            
+            if (ImGui.Button("Save Settings"))
+            {
+                Settings.saveToDisk(RenderState.settings);
+                show_save_confirm_dialog = true;
+            }
+
 
             ImGui.EndChild();
 
@@ -83,6 +89,12 @@ namespace ImGuiHelper
             {
                 ImGui.OpenPopup("Select Unpacked File Directory");
                 show_unpackdir_folder_select = false;
+            }
+
+            if (show_save_confirm_dialog)
+            {
+                ImGui.OpenPopup("Info");
+                show_save_confirm_dialog = false;
             }
 
 
@@ -105,6 +117,12 @@ namespace ImGuiHelper
                     RenderState.settings.GameDir = activePicker.SelectedFile;
                     FilePicker.RemoveFilePicker(this);
                 }
+                ImGui.EndPopup();
+            }
+
+            if (ImGui.BeginPopupModal("Info"))
+            {
+                ImGui.Text("Settings Saved Successfully!");
                 ImGui.EndPopup();
             }
 

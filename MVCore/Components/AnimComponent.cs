@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using libMBIN.NMS.Toolkit;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class AnimComponent : Component
     {
@@ -50,7 +50,7 @@ namespace MVCore.GMDL
         {
             foreach (AnimData ad in Animations)
             {
-                Assimp.Animation anim = ad.assimpExport(ref scn);
+                Assimp.Animation anim = ad.AssimpExport(ref scn);
                 scn.Animations.Add(anim);
             }
         }

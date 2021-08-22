@@ -31,6 +31,14 @@ namespace MVCore
             return req_queue.Count;
         }
 
+        public ThreadRequest Peek()
+        {
+            lock (req_queue)
+            {
+                return req_queue.Peek();
+            }
+        }
+
         public ThreadRequest Fetch()
         {
             lock (req_queue)

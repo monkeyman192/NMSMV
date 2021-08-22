@@ -92,7 +92,7 @@ namespace Model_Viewer
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    CallBacks.Log("Missing Options for Palette " + f.Name, LogVerbosityLevel.WARNING);
+                    Callbacks.Log("Missing Options for Palette " + f.Name, LogVerbosityLevel.WARNING);
                     //Choose the first color in all cases that the palette files have not been properly imported
                     newPal[f.Name]["Primary"] = new Vector4(palette[0], 1.0f);
                     newPal[f.Name]["Alternative1"] = new Vector4(palette[0], 1.0f);
@@ -116,7 +116,7 @@ namespace Model_Viewer
                  template = NMSUtils.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN",
                     ref RenderState.activeResMgr) as GcPaletteList;
             } catch (Exception) {
-                CallBacks.Log("Using Default Palettes", LogVerbosityLevel.WARNING);
+                Callbacks.Log("Using Default Palettes", LogVerbosityLevel.WARNING);
                 return createPalette();
             }
             
@@ -126,7 +126,7 @@ namespace Model_Viewer
             for (int i = 0; i < template.Palettes.Length; i++)
             {
                 string pal_name = ((TkPaletteTexture.PaletteEnum) i).ToString();
-                CallBacks.Log(string.Format("Palette {0} NumColors {1}", pal_name, template.Palettes[i].NumColours),
+                Callbacks.Log(string.Format("Palette {0} NumColors {1}", pal_name, template.Palettes[i].NumColours),
                     LogVerbosityLevel.INFO);
                 newPal[pal_name] = new Dictionary<string, Vector4>();
 

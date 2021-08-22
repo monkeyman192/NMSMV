@@ -5,7 +5,7 @@ using libMBIN.NMS.Toolkit;
 using MVCore.Utils;
 using GLSLHelper;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class Material : TkMaterialData, IDisposable
     {
@@ -13,7 +13,7 @@ namespace MVCore.GMDL
         public bool proc = false;
         public float[] material_flags = new float[64];
         public string name_key = "";
-        public textureManager texMgr;
+        public TextureManager texMgr;
         public int shaderHash = int.MaxValue;
         public GLSLShaderConfig shader;
 
@@ -139,7 +139,7 @@ namespace MVCore.GMDL
                 material_flags[i] = 0.0f;
         }
 
-        public static Material Parse(string path, textureManager input_texMgr)
+        public static Material Parse(string path, TextureManager input_texMgr)
         {
             //Load template
             //Try to use libMBIN to load the Material files
@@ -201,14 +201,14 @@ namespace MVCore.GMDL
                     {
                         string new_name = pre_ext_name + "MASKS.DDS";
                         PSamplers["mpCustomPerMaterial.gMasksMap"].PMap = new_name;
-                        PSamplers["mpCustomPerMaterial.gMasksMap"].tex = PSamplers["mpCustomPerMaterial.gMasksMap"].texMgr.getTexture(new_name);
+                        PSamplers["mpCustomPerMaterial.gMasksMap"].tex = PSamplers["mpCustomPerMaterial.gMasksMap"].texMgr.GetTexture(new_name);
                     }
 
                     if (PSamplers.ContainsKey("mpCustomPerMaterial.gNormalMap"))
                     {
                         string new_name = pre_ext_name + "NORMAL.DDS";
                         PSamplers["mpCustomPerMaterial.gNormalMap"].PMap = new_name;
-                        PSamplers["mpCustomPerMaterial.gNormalMap"].tex = PSamplers["mpCustomPerMaterial.gNormalMap"].texMgr.getTexture(new_name);
+                        PSamplers["mpCustomPerMaterial.gNormalMap"].tex = PSamplers["mpCustomPerMaterial.gNormalMap"].texMgr.GetTexture(new_name);
                     }
                     break;
                 }
@@ -224,7 +224,7 @@ namespace MVCore.GMDL
 
             shaderHash = GLShaderHelper.calculateShaderHash(includes);
 
-            if (!Common.RenderState.activeResMgr.shaderExistsForMaterial(this))
+            if (!Common.RenderState.activeResMgr.ShaderExistsForMaterial(this))
             {
                 try
                 {
@@ -239,7 +239,7 @@ namespace MVCore.GMDL
 
                 } catch (Exception e)
                 {
-                    Common.CallBacks.Log("Error during material shader compilation: " + e.Message, Common.LogVerbosityLevel.ERROR);
+                    Common.Callbacks.Log("Error during material shader compilation: " + e.Message, Common.LogVerbosityLevel.ERROR);
                 }
             }
                 
@@ -278,9 +278,9 @@ namespace MVCore.GMDL
             return true;
         }
 
-        public GMDL.Material Clone()
+        public Material Clone()
         {
-            GMDL.Material newmat = new GMDL.Material();
+            Material newmat = new();
             //Remix textures
             return newmat;
         }

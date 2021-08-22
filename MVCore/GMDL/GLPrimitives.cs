@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using MVCore.Utils;
 
-namespace MVCore.GMDL.Primitives
+namespace MVCore.Primitives
 {
     public class Primitive
     {
@@ -16,7 +16,7 @@ namespace MVCore.GMDL.Primitives
         internal float[] colors;
         internal int[] indices;
 
-        internal GMDL.GeomObject geom;
+        internal GeomObject geom;
         
         public void applyTransform(Matrix4 transform)
         {
@@ -37,9 +37,9 @@ namespace MVCore.GMDL.Primitives
 
         }
 
-        public virtual GMDL.GeomObject getGeom()
+        public virtual GeomObject getGeom()
         {
-            GMDL.GeomObject geom = new GMDL.GeomObject();
+            GeomObject geom = new GeomObject();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 3;
@@ -51,7 +51,7 @@ namespace MVCore.GMDL.Primitives
             
             //Set Buffer Offsets
             geom.offsets = new int[7];
-            geom.bufInfo = new List<GMDL.bufInfo>();
+            geom.bufInfo = new();
             
             for (int i = 0; i< 7; i++)
             {
@@ -62,8 +62,8 @@ namespace MVCore.GMDL.Primitives
             geom.mesh_descr = "vn";
             geom.offsets[0] = 0;
             geom.offsets[2] = 0;
-            geom.bufInfo[0] = new GMDL.bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new GMDL.bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
+            geom.bufInfo[0] = new(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            geom.bufInfo[2] = new(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
 
 
             //Set Buffers
@@ -75,7 +75,7 @@ namespace MVCore.GMDL.Primitives
             return geom;
         }
 
-        public GMDL.GLVao getVAO()
+        public GLVao getVAO()
         {
             return geom?.generateVAO();
         }
@@ -391,9 +391,9 @@ namespace MVCore.GMDL.Primitives
                 geom = getGeom();
         }
 
-        public new GMDL.GeomObject getGeom()
+        public new GeomObject getGeom()
         {
-            GMDL.GeomObject geom = new GMDL.GeomObject();
+            GeomObject geom = new GeomObject();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
@@ -405,7 +405,7 @@ namespace MVCore.GMDL.Primitives
 
             //Set Buffer Offsets
             geom.offsets = new int[7];
-            geom.bufInfo = new List<GMDL.bufInfo>();
+            geom.bufInfo = new List<bufInfo>();
 
             for (int i = 0; i < 7; i++)
             {
@@ -417,9 +417,9 @@ namespace MVCore.GMDL.Primitives
             geom.offsets[0] = 0;
             geom.offsets[2] = 0;
             geom.offsets[4] = 0;
-            geom.bufInfo[0] = new GMDL.bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new GMDL.bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
-            geom.bufInfo[4] = new GMDL.bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
+            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
+            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
 
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
@@ -545,9 +545,9 @@ namespace MVCore.GMDL.Primitives
             return p;
         }
 
-        public new GMDL.GeomObject getGeom()
+        public new GeomObject getGeom()
         {
-            GMDL.GeomObject geom = new GMDL.GeomObject();
+            GeomObject geom = new GeomObject();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
@@ -559,7 +559,7 @@ namespace MVCore.GMDL.Primitives
 
             //Set Buffer Offsets
             geom.offsets = new int[7];
-            geom.bufInfo = new List<GMDL.bufInfo>();
+            geom.bufInfo = new List<bufInfo>();
 
             for (int i = 0; i < 7; i++)
             {
@@ -571,9 +571,9 @@ namespace MVCore.GMDL.Primitives
             geom.offsets[0] = 0;
             geom.offsets[2] = 0;
             geom.offsets[4] = 0;
-            geom.bufInfo[0] = new GMDL.bufInfo(0, VertexAttribPointerType.Float, 3, 12, 0, "vPosition", false);
-            geom.bufInfo[2] = new GMDL.bufInfo(2, VertexAttribPointerType.Float, 3, 12, geom.vertCount * 12, "nPosition", false);
-            geom.bufInfo[4] = new GMDL.bufInfo(4, VertexAttribPointerType.Float, 3, 12, 2 * geom.vertCount * 12, "bPosition", false);
+            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 12, 0, "vPosition", false);
+            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 12, geom.vertCount * 12, "nPosition", false);
+            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 12, 2 * geom.vertCount * 12, "bPosition", false);
 
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
@@ -619,9 +619,9 @@ namespace MVCore.GMDL.Primitives
         }
 
 
-        public new GMDL.GeomObject getGeom()
+        public new GeomObject getGeom()
         {
-            GMDL.GeomObject geom = new GMDL.GeomObject();
+            GeomObject geom = new GeomObject();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
@@ -633,7 +633,7 @@ namespace MVCore.GMDL.Primitives
 
             //Set Buffer Offsets
             geom.offsets = new int[7];
-            geom.bufInfo = new List<GMDL.bufInfo>();
+            geom.bufInfo = new();
 
             for (int i = 0; i < 7; i++)
             {
@@ -645,9 +645,9 @@ namespace MVCore.GMDL.Primitives
             geom.offsets[0] = 0;
             geom.offsets[2] = 0;
             geom.offsets[4] = 0;
-            geom.bufInfo[0] = new GMDL.bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new GMDL.bufInfo(2, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "nPosition", false);
-            geom.bufInfo[4] = new GMDL.bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
+            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "nPosition", false);
+            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
 
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
@@ -737,9 +737,9 @@ namespace MVCore.GMDL.Primitives
                 geom = getGeom();
         }
 
-        public new GMDL.GeomObject getGeom()
+        public new GeomObject getGeom()
         {
-            GMDL.GeomObject geom = new GMDL.GeomObject();
+            GeomObject geom = new GeomObject();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
@@ -751,7 +751,7 @@ namespace MVCore.GMDL.Primitives
 
             //Set Buffer Offsets
             geom.offsets = new int[7];
-            geom.bufInfo = new List<GMDL.bufInfo>();
+            geom.bufInfo = new();
 
             for (int i = 0; i < 7; i++)
             {
@@ -763,9 +763,9 @@ namespace MVCore.GMDL.Primitives
             geom.offsets[0] = 0;
             geom.offsets[2] = 0;
             geom.offsets[4] = 0;
-            geom.bufInfo[0] = new GMDL.bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new GMDL.bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
-            geom.bufInfo[4] = new GMDL.bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
+            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
+            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
 
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
@@ -965,9 +965,9 @@ namespace MVCore.GMDL.Primitives
             geom = getGeom();
         }
 
-        public new GMDL.GeomObject getGeom()
+        public new GeomObject getGeom()
         {
-            GMDL.GeomObject geom = new GMDL.GeomObject();
+            GeomObject geom = new GeomObject();
 
             //Set main Geometry Info
             geom.vertCount = 6;
@@ -979,7 +979,7 @@ namespace MVCore.GMDL.Primitives
 
             //Set Buffer Offsets
             geom.offsets = new int[7];
-            geom.bufInfo = new List<GMDL.bufInfo>();
+            geom.bufInfo = new List<bufInfo>();
 
             for (int i = 0; i < 7; i++)
             {
@@ -991,9 +991,9 @@ namespace MVCore.GMDL.Primitives
             geom.offsets[0] = 0;
             geom.offsets[2] = 0;
             geom.offsets[4] = 0;
-            geom.bufInfo[0] = new GMDL.bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new GMDL.bufInfo(2, VertexAttribPointerType.Float, 3, 0, 72, "nPosition", false);
-            geom.bufInfo[4] = new GMDL.bufInfo(4, VertexAttribPointerType.Float, 3, 0, 72, "bPosition", false);
+            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 72, "nPosition", false);
+            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, 72, "bPosition", false);
 
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
@@ -1045,9 +1045,9 @@ namespace MVCore.GMDL.Primitives
             geom = getGeom();
         }
 
-        public new GMDL.GeomObject getGeom()
+        public new GeomObject getGeom()
         {
-            GMDL.GeomObject geom = new GMDL.GeomObject();
+            GeomObject geom = new();
 
             //Set main Geometry Info
             geom.vertCount = 2;
@@ -1059,7 +1059,7 @@ namespace MVCore.GMDL.Primitives
 
             //Set Buffer Offsets
             geom.offsets = new int[7];
-            geom.bufInfo = new List<GMDL.bufInfo>();
+            geom.bufInfo = new List<bufInfo>();
 
             for (int i = 0; i < 7; i++)
             {
@@ -1070,8 +1070,8 @@ namespace MVCore.GMDL.Primitives
             geom.mesh_descr = "vn";
             geom.offsets[0] = 0;
             geom.offsets[2] = 0;
-            geom.bufInfo[0] = new GMDL.bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new GMDL.bufInfo(2, VertexAttribPointerType.Float, 3, 0, 24, "nPosition", false);
+            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 24, "nPosition", false);
 
 
             //Set Buffers

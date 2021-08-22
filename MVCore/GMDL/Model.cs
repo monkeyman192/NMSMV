@@ -9,7 +9,7 @@ using MVCore.Utils;
 using System.Linq;
 using System.Windows.Input;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public abstract class Model : IDisposable, INotifyPropertyChanged
     {
@@ -41,10 +41,11 @@ namespace MVCore.GMDL
         public Vector3 __localRotationAngles; //Original Position
         public Vector3 __localScale; //Original Scale
         public Matrix4 __localRotation; //Original Rotation
-        public MVector3 _localPosition;
-        public MVector3 _localScale;
-        public MVector3 _localRotationAngles;
-        public Matrix4 _localRotation;
+        public Vector3 localPosition;
+        public Matrix4 localRotation;
+        public Vector3 localScale;
+
+        public Vector3 _localRotationAngles;
         public Matrix4 _localPoseMatrix;
 
         public Model parent;
@@ -65,8 +66,8 @@ namespace MVCore.GMDL
         //Bounding Volume
         public Vector3 __AABBMIN; //Base Values
         public Vector3 __AABBMAX; //Base Values
-        public MVector3 _AABBMIN;
-        public MVector3 _AABBMAX;
+        public Vector3 _AABBMIN;
+        public Vector3 _AABBMAX;
 
         //Disposable Stuff
         public bool disposed = false;
@@ -81,45 +82,20 @@ namespace MVCore.GMDL
 
 
         //Properties
-        public MVector3 localPosition
-        {
-            get { return _localPosition; }
-            set { 
-                _localPosition = value; 
-                update(); 
-                NotifyPropertyChanged("localPosition"); 
-            }
-        }
-
-        public Matrix4 localRotation
-        {
-            get { return _localRotation; }
-            set { 
-                _localRotation = value; 
-                update(); 
-                NotifyPropertyChanged("localRotation"); 
-            }
-        }
-
-        public MVector3 localScale
-        {
-            get { return _localScale; }
-            set { _localScale = value; update(); NotifyPropertyChanged("localScale"); }
-        }
-
-        public MVector3 localRotationAngles
+        
+        public Vector3 localRotationAngles
         {
             get { return _localRotationAngles; }
             set { _localRotationAngles = value; update(); NotifyPropertyChanged("localRotationAngles"); }
         }
 
-        public MVector3 AABBMIN
+        public Vector3 AABBMIN
         {
             get { return _AABBMIN; }
             set { _AABBMIN = value; update(); NotifyPropertyChanged("AABBMIN"); }
         }
 
-        public MVector3 AABBMAX
+        public Vector3 AABBMAX
         {
             get { return _AABBMAX; }
             set { _AABBMAX = value; update(); NotifyPropertyChanged("AABBMAX"); }
@@ -214,8 +190,8 @@ namespace MVCore.GMDL
         public virtual void recalculateAABB()
         {
             //Revert back to the original values
-            _AABBMIN.vec = __AABBMIN;
-            _AABBMAX.vec = __AABBMAX;
+            _AABBMIN = __AABBMIN;
+            _AABBMAX = __AABBMAX;
 
             //Generate all 8 points from the AABB
             List<Vector4> vecs = new List<Vector4>
@@ -236,27 +212,27 @@ namespace MVCore.GMDL
                 vecs[i] = vecs[i] * worldMat;
 
             //Init vectors to max
-            _AABBMIN.vec = new Vector3(float.MaxValue);
-            _AABBMAX.vec = new Vector3(float.MinValue);
+            _AABBMIN = new Vector3(float.MaxValue);
+            _AABBMAX = new Vector3(float.MinValue);
 
             //Align values
             for (int i = 0; i < 8; i++)
             {
-                _AABBMIN.vec.X = Math.Min(_AABBMIN.X, vecs[i].X);
-                _AABBMIN.vec.Y = Math.Min(_AABBMIN.Y, vecs[i].Y);
-                _AABBMIN.vec.Z = Math.Min(_AABBMIN.Z, vecs[i].Z);
+                _AABBMIN.X = Math.Min(_AABBMIN.X, vecs[i].X);
+                _AABBMIN.Y = Math.Min(_AABBMIN.Y, vecs[i].Y);
+                _AABBMIN.Z = Math.Min(_AABBMIN.Z, vecs[i].Z);
 
-                _AABBMAX.vec.X = Math.Max(_AABBMAX.X, vecs[i].X);
-                _AABBMAX.vec.Y = Math.Max(_AABBMAX.Y, vecs[i].Y);
-                _AABBMAX.vec.Z = Math.Max(_AABBMAX.Z, vecs[i].Z);
+                _AABBMAX.X = Math.Max(_AABBMAX.X, vecs[i].X);
+                _AABBMAX.Y = Math.Max(_AABBMAX.Y, vecs[i].Y);
+                _AABBMAX.Z = Math.Max(_AABBMAX.Z, vecs[i].Z);
             }
         }
 
         public bool intersects(Vector3 ray_start, Vector3 ray, ref float distance)
         {
             //Calculate bound box center
-            float radius = 0.5f * (AABBMIN - AABBMAX).Vec.Length;
-            Vector3 bsh_center = AABBMIN.Vec + 0.5f * (AABBMAX - AABBMIN).Vec;
+            float radius = 0.5f * (AABBMIN - AABBMAX).Length;
+            Vector3 bsh_center = AABBMIN + 0.5f * (AABBMAX - AABBMIN);
 
             //Move sphere to object's root position
             bsh_center = (new Vector4(bsh_center, 1.0f)).Xyz;
@@ -317,11 +293,11 @@ namespace MVCore.GMDL
 
             //Create scaling matrix
             Matrix4 scale = Matrix4.Identity;
-            scale[0, 0] = _localScale.X;
-            scale[1, 1] = _localScale.Y;
-            scale[2, 2] = _localScale.Z;
+            scale[0, 0] = localScale.X;
+            scale[1, 1] = localScale.Y;
+            scale[2, 2] = localScale.Z;
 
-            localMat = _localPoseMatrix * scale * _localRotation * Matrix4.CreateTranslation(_localPosition.Vec);
+            localMat = _localPoseMatrix * scale * localRotation * Matrix4.CreateTranslation(localPosition);
             
 
             //Finally Update world Transformation Matrix
@@ -340,10 +316,10 @@ namespace MVCore.GMDL
                 worldPosition = (Vector4.TransformRow(new Vector4(0.0f, 0.0f, 0.0f, 1.0f), this.worldMat)).Xyz;
             }
             else
-                worldPosition = localPosition.Vec;
+                worldPosition = localPosition;
 
             //Trigger the position update of all children nodes
-            foreach (GMDL.Model child in children)
+            foreach (Model child in children)
             {
                 child.update();
             }
@@ -385,7 +361,7 @@ namespace MVCore.GMDL
         //TODO: Consider converting all such attributes using properties
         public void updatePosition(Vector3 newPosition)
         {
-            localPosition.vec = newPosition;
+            localPosition = newPosition;
             update();
         }
 
@@ -393,16 +369,16 @@ namespace MVCore.GMDL
         {
             //Get Local Position
             Vector3 rotation;
-            _localPosition = new MVector3(trans[0], trans[1], trans[2]);
-            __localPosition = _localPosition.Vec;
+            localPosition = new Vector3(trans[0], trans[1], trans[2]);
+            __localPosition = localPosition;
 
             //Save raw rotations
             rotation.X = MathUtils.radians(trans[3]);
             rotation.Y = MathUtils.radians(trans[4]);
             rotation.Z = MathUtils.radians(trans[5]);
 
-            _localRotationAngles = new MVector3(trans[3], trans[4], trans[5]);
-            __localRotationAngles = _localRotationAngles.Vec;
+            _localRotationAngles = new Vector3(trans[3], trans[4], trans[5]);
+            __localRotationAngles = _localRotationAngles;
             //IF PARSED SEPARATELY USING THE AXIS ANGLES
             //OpenTK.Quaternion qx = OpenTK.Quaternion.FromAxisAngle(new Vector3(1.0f, 0.0f, 0.0f), rotation.X);
             //OpenTK.Quaternion qy = OpenTK.Quaternion.FromAxisAngle(new Vector3(0.0f, 1.0f, 0.0f), rotation.Y);
@@ -416,12 +392,12 @@ namespace MVCore.GMDL
             Matrix4 rotx = Matrix4.CreateRotationX(rotation.X);
             Matrix4 roty = Matrix4.CreateRotationY(rotation.Y);
             Matrix4 rotz = Matrix4.CreateRotationZ(rotation.Z);
-            _localRotation = rotz * rotx * roty;
-            __localRotation = _localRotation;
-
+            localRotation = rotz * rotx * roty;
+            __localRotation = localRotation;
+            
             //Get Local Scale
-            _localScale = new MVector3(trans[6], trans[7], trans[8]);
-            __localScale = _localScale.Vec;
+            localScale = new Vector3(trans[6], trans[7], trans[8]);
+            __localScale = localScale;
 
             //Set paths
             if (parent != null)
@@ -446,20 +422,13 @@ namespace MVCore.GMDL
             normMat = Matrix4.Identity;
             localMat = Matrix4.Identity;
 
-            _localPosition = new MVector3(0.0f, 0.0f, 0.0f);
-            _localScale = new MVector3(1.0f, 1.0f, 1.0f);
-            _localRotationAngles = new MVector3(0.0f, 0.0f, 0.0f);
-            _localRotation = Matrix4.Identity;
+            localPosition = new Vector3(0.0f, 0.0f, 0.0f);
+            localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            localRotation = Matrix4.Identity;
+            _localRotationAngles = new Vector3(0.0f, 0.0f, 0.0f);
             _localPoseMatrix = Matrix4.Identity;
-            _AABBMAX = new MVector3(1.0f);
-            _AABBMIN = new MVector3(-1.0f);
-
-            //Catch MVector changes so that we can update the object
-            localPosition.PropertyChanged += catchPropertyChanged;
-            localScale.PropertyChanged += catchPropertyChanged;
-            //localRotation.PropertyChanged += catchPropertyChanged; //TODO: add that
-            AABBMIN.PropertyChanged += catchPropertyChanged;
-            AABBMAX.PropertyChanged += catchPropertyChanged;
+            _AABBMAX = new Vector3(1.0f);
+            _AABBMIN = new Vector3(-1.0f);
 
             cIndex = 0;
 
@@ -488,10 +457,10 @@ namespace MVCore.GMDL
             //MESHVAO AND INSTANCE IDS SHOULD BE HANDLED EXPLICITLY
 
             //Clone transformation
-            _localPosition = input._localPosition;
-            _localRotationAngles = input._localRotationAngles;
-            _localRotation = input._localRotation;
-            _localScale = input._localScale;
+            localPosition = input.localPosition;
+            localRotationAngles = input.localRotationAngles;
+            localRotation = input.localRotation;
+            localScale = input.localScale;
             _localPoseMatrix = input._localPoseMatrix;
 
             this.localMat = input.localMat;
@@ -518,9 +487,9 @@ namespace MVCore.GMDL
         public Model(Model input)
         {
             this.copyFrom(input);
-            foreach (GMDL.Model child in input.children)
+            foreach (Model child in input.children)
             {
-                GMDL.Model nChild = child.Clone();
+                Model nChild = child.Clone();
                 nChild.parent = this;
                 this.children.Add(nChild);
             }
@@ -676,8 +645,8 @@ namespace MVCore.GMDL
         private void resetTransform()
         {
             localRotation = __localRotation;
-            localPosition.Vec = __localPosition;
-            localScale.Vec = __localScale;
+            localPosition = __localPosition;
+            localScale = __localScale;
             
             //Save values to underlying SceneNode
             if (nms_template != null)
@@ -717,7 +686,7 @@ namespace MVCore.GMDL
 
                 TkSceneNodeData temp = ExportTemplate(true);
                 temp.WriteToMbin(scnName.ToUpper() + ".SCENE.MBIN");
-                Common.CallBacks.showInfo("Scene successfully exported to " + scnName.ToUpper() + ".MBIN", "Info");
+                Common.Callbacks.showInfo("Scene successfully exported to " + scnName.ToUpper() + ".MBIN", "Info");
             }
         }
 
@@ -740,7 +709,7 @@ namespace MVCore.GMDL
                 TkSceneNodeData temp = ExportTemplate(true);
 
                 temp.WriteToExml(scnName + ".SCENE.EXML");
-                Common.CallBacks.showInfo("Scene successfully exported to " + scnName + ".exml", "Info");
+                Common.Callbacks.showInfo("Scene successfully exported to " + scnName + ".exml", "Info");
             }
         }
 

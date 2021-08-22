@@ -122,7 +122,7 @@ namespace GLSLHelper {
             {
                 Console.WriteLine(GLShaderHelper.NumberLines(actual_shader_source));
                 
-                CallBacks.showError("Failed to compile shader for the model. Contact Dev",
+                Callbacks.showError("Failed to compile shader for the model. Contact Dev",
                     "Shader Compilation Error");
                 GLShaderHelper.throwCompilationError(compilation_log +
                     GLShaderHelper.NumberLines(actual_shader_source) + "\n" + info);
@@ -357,7 +357,7 @@ namespace GLSLHelper {
             req.arguments.Add(shaderText);
 
             //Send request
-            CallBacks.issueRequestToGLControl(ref req);
+            Callbacks.issueRequestToGLControl(ref req);
         }
 
         //GLPreparation
@@ -656,7 +656,7 @@ namespace GLSLHelper {
             sr.Write(log);
             sr.Close();
             Console.WriteLine(log);
-            CallBacks.showError("Shader Compilation Failed. Check Log", "Shader Compilation Error");
+            Callbacks.showError("Shader Compilation Failed. Check Log", "Shader Compilation Error");
         }
     }
 }

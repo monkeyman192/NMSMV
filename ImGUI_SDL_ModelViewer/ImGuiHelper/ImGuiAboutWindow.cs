@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MVCore.GMDL;
+using MVCore;
 using MVCore.Common;
 using ImGuiNET;
 using ImGUI_SDL_ModelViewer;
@@ -17,7 +17,7 @@ namespace ImGuiHelper
         public ImGuiAboutWindow()
         {
             //Load Logo Texture to the GPU
-            byte[] imgData = CallBacks.getResource("ianm32logo_border.png");
+            byte[] imgData = Callbacks.getResource("ianm32logo_border.png");
 
             tex = new Texture();
             tex.textureInit(imgData, "ianm32logo_border.png");

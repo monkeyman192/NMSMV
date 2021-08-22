@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using MVCore.GMDL.Primitives;
-using MVCore.GMDL;
-using OpenTK;
+using MVCore.Primitives;
+using MVCore;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
@@ -47,7 +46,7 @@ namespace MVCore.Text
             meshVao.material = new Material(); //TODO use a material from the font
 
             //Add instance
-            GLMeshBufferManager.addInstance(meshVao, null,
+            GLMeshBufferManager.AddInstance(meshVao, null,
                 Matrix4.Identity, Matrix4.Identity, Matrix4.Identity);
         }
 
@@ -185,9 +184,9 @@ namespace MVCore.Text
             System.Buffer.BlockCopy(uvs, 0, geom.vbuffer, 4 * verts.Length, 4 * uvs.Length); //UVs
         }
 
-        public override GMDL.GeomObject getGeom()
+        public override GeomObject getGeom()
         {
-            GMDL.GeomObject geom = new GMDL.GeomObject();
+            GeomObject geom = new GeomObject();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 3;
@@ -201,7 +200,7 @@ namespace MVCore.Text
 
             //Set Buffer Offsets
             geom.offsets = new int[7];
-            geom.bufInfo = new List<GMDL.bufInfo>();
+            geom.bufInfo = new();
 
             for (int i = 0; i < 7; i++)
             {

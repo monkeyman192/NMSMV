@@ -1,13 +1,13 @@
 ﻿using System;
 using libMBIN.NMS.Toolkit;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class PhysicsData : TkPhysicsData
     {
         public PhysicsData() : base()
         {
-
+            
         }
 
         public PhysicsData(TkPhysicsData pd)

@@ -8,29 +8,26 @@ using OpenTK.Graphics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common.Input;
 using OpenTK.Graphics.OpenGL4;
+using MVCore;
+using MVCore.Systems;
 using MVCore.Common;
-using MVCore.GMDL;
 using System.Timers;
 using MVCore.Input;
 using GLSLHelper;
-using MVCore.Text;
 using MVCore.Utils;
 using Model_Viewer;
-using MVCore.Engine.Systems;
 using libMBIN.NMS.Toolkit;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Desktop;
 
-
-namespace MVCore.Engine
+namespace MVCore
 {
     public enum EngineRenderingState
     {
-        ACTIVE=0x0,
-        REQUEST_HANDLING,
+        EXIT = 0x0,
         UNINITIALIZED,
         PAUSED,
-        EXIT
+        ACTIVE
     }
 
     public class Engine
@@ -45,21 +42,20 @@ namespace MVCore.Engine
         private NativeWindow windowHandler;
 
         //Rendering 
-        
         public EngineRenderingState rt_State;
 
         //Input
         public BaseGamepadHandler gpHandler;
-        private System.Timers.Timer inputPollTimer;
-
+        
         //Keyboard State
         private KeyboardState kbState;
+        private MouseState mouseState;
 
         //Camera Stuff
         public System.Timers.Timer cameraMovementTimer;
         public CameraPos targetCameraPos;
         //public int movement_speed = 1;
-
+        
         //Use public variables for now because getters/setters are so not worth it for our purpose
         public float light_angle_y = 0.0f;
         public float light_angle_x = 0.0f;
@@ -67,7 +63,6 @@ namespace MVCore.Engine
         public float light_intensity = 1.0f;
         public float scale = 1.0f;
 
-        
         //Palette
         Dictionary<string, Dictionary<string, Vector4>> palette;
 
@@ -87,17 +82,12 @@ namespace MVCore.Engine
 
             renderSys = new RenderingSystem(); //Init renderManager of the engine
 
-            //Input Polling Timer
-            inputPollTimer = new System.Timers.Timer();
-            inputPollTimer.Elapsed += new ElapsedEventHandler(input_poller);
-            inputPollTimer.Interval = 1;
-
             //Camera Movement Timer
             cameraMovementTimer = new System.Timers.Timer();
             cameraMovementTimer.Elapsed += new ElapsedEventHandler(camera_timer);
             cameraMovementTimer.Interval = 20;
             //cameraMovementTimer.Start(); Start in the main function
-
+            
             //Systems Init
             actionSys = new ActionSystem();
             animationSys = new AnimationSystem();
@@ -108,15 +98,19 @@ namespace MVCore.Engine
             rt_State = EngineRenderingState.UNINITIALIZED;
         }
 
+        ~Engine()
+        {
+            Log("Goodbye!", LogVerbosityLevel.INFO);
+        }
+
         private void Log(string msg, LogVerbosityLevel lvl)
         {
-            CallBacks.Log("* ENGINE : " + msg, lvl);
+            Callbacks.Log("* ENGINE : " + msg, lvl);
         }
 
         public void init(int width, int height)
         {
             //Start Timers
-            inputPollTimer.Start();
             cameraMovementTimer.Start();
 
             //Init Gizmos
@@ -143,6 +137,7 @@ namespace MVCore.Engine
                 ThreadRequest req = reqHandler.Fetch();
                 THREAD_REQUEST_STATUS req_status = THREAD_REQUEST_STATUS.FINISHED;
                 Log("Handling Request " + req.type, LogVerbosityLevel.HIDEBUG);
+
                 lock (req)
                 {
                     switch (req.type)
@@ -152,23 +147,19 @@ namespace MVCore.Engine
                                 req_status = THREAD_REQUEST_STATUS.ACTIVE;
                             else
                                 req_status = THREAD_REQUEST_STATUS.FINISHED;
-                            //At this point the renderer is up and running
+                                //At this point the renderer is up and running
                             break;
                         case THREAD_REQUEST_TYPE.INIT_RESOURCE_MANAGER:
                             resMgr.Init();
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.NEW_SCENE_REQUEST:
-                            inputPollTimer.Stop();
                             rt_addRootScene((string)req.arguments[0]);
-                            inputPollTimer.Start();
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
 #if DEBUG               
                         case THREAD_REQUEST_TYPE.NEW_TEST_SCENE_REQUEST:
-                            inputPollTimer.Stop();
                             rt_addTestScene((int)req.arguments[0]);
-                            inputPollTimer.Start();
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
 #endif
@@ -196,7 +187,7 @@ namespace MVCore.Engine
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.GL_COMPILE_ALL_SHADERS_REQUEST:
-                            resMgr.compileMainShaders();
+                            resMgr.CompileMainShaders();
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.MOUSEPOSITION_INFO_REQUEST:
@@ -222,7 +213,6 @@ namespace MVCore.Engine
                             break;
                         case THREAD_REQUEST_TYPE.TERMINATE_REQUEST:
                             rt_State = EngineRenderingState.EXIT;
-                            inputPollTimer.Stop();
                             resMgr.Cleanup(); //Free Resources
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
@@ -234,8 +224,8 @@ namespace MVCore.Engine
                             rt_State = EngineRenderingState.ACTIVE;
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.NULL:
-                            req_status = THREAD_REQUEST_STATUS.ACTIVE;
+                        case THREAD_REQUEST_TYPE.NULL: //Is this ever used?
+                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                     }
                 }
@@ -280,8 +270,8 @@ namespace MVCore.Engine
 
 
             //Stop animation if on
-            bool animToggleStatus = RenderState.settings.rendering.ToggleAnimations;
-            RenderState.settings.rendering.ToggleAnimations = false;
+            bool animToggleStatus = RenderState.settings.renderSettings.ToggleAnimations;
+            RenderState.settings.renderSettings.ToggleAnimations = false;
 
             //Setup new object
             Scene scene = new();
@@ -292,52 +282,52 @@ namespace MVCore.Engine
             Light l = new()
             {
                 Name = "Light 1",
-                Color = new MVector3(1.0f, 1.0f, 1.0f),
+                Color = new Vector3(1.0f, 1.0f, 1.0f),
                 IsRenderable = true,
                 Intensity = 100.0f,
                 Attenuation = "QUADRATIC"
             };
-            l._localPosition.vec = new Vector3(0.2f, 0.2f, -2.0f);
+            l.localPosition = new Vector3(0.2f, 0.2f, -2.0f);
 
-            Common.RenderState.activeResMgr.GLlights.Add(l);
+            RenderState.activeResMgr.GLlights.Add(l);
             scene.children.Add(l);
 
             Light l1 = new()
             {
                 Name = "Light 2",
-                Color = new MVector3(1.0f, 1.0f, 1.0f),
+                Color = new Vector3(1.0f, 1.0f, 1.0f),
                 IsRenderable = true,
                 Intensity = 100.0f,
                 Attenuation = "QUADRATIC"
             };
 
-            l._localPosition.vec = new Vector3(0.2f, -0.2f, -2.0f);
-            Common.RenderState.activeResMgr.GLlights.Add(l1);
+            l.localPosition = new Vector3(0.2f, -0.2f, -2.0f);
+            RenderState.activeResMgr.GLlights.Add(l1);
             scene.children.Add(l1);
 
             Light l2 = new()
             {
                 Name = "Light 3",
-                Color = new MVector3(1.0f, 1.0f, 1.0f),
+                Color = new Vector3(1.0f, 1.0f, 1.0f),
                 IsRenderable = true,
                 Intensity = 100.0f,
                 Attenuation = "QUADRATIC"
             };
             
-            l2._localPosition.vec = new Vector3(-0.2f, 0.2f, -2.0f);
+            l2.localPosition = new Vector3(-0.2f, 0.2f, -2.0f);
             Common.RenderState.activeResMgr.GLlights.Add(l2);
             scene.children.Add(l2);
 
             Light l3 = new()
             {
                 Name = "Light 4",
-                Color = new MVector3(1.0f, 1.0f, 1.0f),
+                Color = new Vector3(1.0f, 1.0f, 1.0f),
                 IsRenderable = true,
                 Intensity = 100.0f,
                 Attenuation = "QUADRATIC"
             };
 
-            l3._localPosition.vec = new Vector3(-0.2f, -0.2f, -2.0f);
+            l3.localPosition = new Vector3(-0.2f, -0.2f, -2.0f);
             Common.RenderState.activeResMgr.GLlights.Add(l2);
             scene.children.Add(l3);
 
@@ -359,21 +349,21 @@ namespace MVCore.Engine
 
             sphere.meshVao = new GLInstancedMeshVao(sphere_metadata);
             sphere.meshVao.type = TYPES.MESH;
-            sphere.meshVao.vao = (new GMDL.Primitives.Sphere(new Vector3(), 2.0f, 40)).getVAO();
+            sphere.meshVao.vao = (new Primitives.Sphere(new Vector3(), 2.0f, 40)).getVAO();
 
 
             //Sphere Material
-            Material mat = new Material();
+            Material mat = new();
             mat.Name = "default_scn";
             
-            Uniform uf = new Uniform();
+            Uniform uf = new();
             uf.Name = "gMaterialColourVec4";
             uf.Values = new(1.0f,0.0f,0.0f,1.0f);
             mat.Uniforms.Add(uf);
 
-            uf = new Uniform();
+            uf = new();
             uf.Name = "gMaterialParamsVec4";
-            uf.Values = new libMBIN.NMS.Vector4f();
+            uf.Values = new();
             uf.Values.x = 0.15f; //Roughness
             uf.Values.y = 0.0f;
             uf.Values.z = 0.2f; //Metallic
@@ -383,7 +373,7 @@ namespace MVCore.Engine
             mat.init();
             resMgr.GLmaterials["test_mat1"] = mat;
             sphere.meshVao.material = mat;
-            sphere.instanceId = GLMeshBufferManager.addInstance(ref sphere.meshVao, sphere); //Add instance
+            sphere.instanceId = GLMeshBufferManager.AddInstance(ref sphere.meshVao, sphere); //Add instance
             
             scene.children.Add(sphere);
 
@@ -413,7 +403,7 @@ namespace MVCore.Engine
             RenderState.activeGizmo = new TranslationGizmo();
 
             //Restart anim worker if it was active
-            RenderState.settings.rendering.ToggleAnimations = animToggleStatus;
+            RenderState.settings.renderSettings.ToggleAnimations = animToggleStatus;
 
         }
 
@@ -464,8 +454,8 @@ namespace MVCore.Engine
             RenderStats.ClearStats();
 
             //Stop animation if on
-            bool animToggleStatus = RenderState.settings.rendering.ToggleAnimations;
-            RenderState.settings.rendering.ToggleAnimations = false;
+            bool animToggleStatus = RenderState.settings.renderSettings.ToggleAnimations;
+            RenderState.settings.renderSettings.ToggleAnimations = false;
             
             //Setup new object
             Model root = GEOMMBIN.LoadObjects(filename);
@@ -493,41 +483,10 @@ namespace MVCore.Engine
             RenderState.activeGizmo = new TranslationGizmo();
 
             //Restart anim worker if it was active
-            RenderState.settings.rendering.ToggleAnimations = animToggleStatus;
+            RenderState.settings.renderSettings.ToggleAnimations = animToggleStatus;
         
         }
-
         
-        private void input_poller(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            //Console.WriteLine(gpHandler.getAxsState(0, 0).ToString() + " " +  gpHandler.getAxsState(0, 1).ToString());
-            //gpHandler.reportButtons();
-            //gamepadController(); //Move camera according to input
-
-            //Move Camera
-            keyboardController();
-            //gamepadController();
-
-            bool focused = false;
-
-
-            //TODO: Toggle the focus in the GLControl side
-            /*
-            Invoke((MethodInvoker)delegate
-            {
-                focused = Focused;
-            });
-            */
-
-            if (focused)
-            {
-                
-                //gpHandler?.updateState();
-            }
-
-
-        }
-
         public void sendRequest(ref ThreadRequest r)
         {
             reqHandler.sendRequest(ref r);
@@ -544,15 +503,10 @@ namespace MVCore.Engine
         }
 
 
-        
-
         public void updateActiveCam(Vector3 pos, Vector3 rot)
         {
             RenderState.activeCam.Position = pos;
-
-
-
-
+            
             //RenderState.activeCam.pitch = rot.X; //Radians rotation on X axis
             //RenderState.activeCam.yaw = rot.Y; //Radians rotation on Y axis
             //RenderState.activeCam.roll = rot.Z; //Radians rotation on Z axis
@@ -561,7 +515,6 @@ namespace MVCore.Engine
 #endregion
 
         
-
         public void updateLightPosition(int light_id)
         {
             Light light = resMgr.GLlights[light_id];
@@ -606,7 +559,13 @@ namespace MVCore.Engine
             return state ? 1 : 0;
         }
 
-        private void keyboardController()
+        public void UpdateInput()
+        {
+            keyboardController();
+            //gpController();
+        }
+
+        public void keyboardController()
         {
             //Camera Movement
             float step = 0.002f;
@@ -617,29 +576,26 @@ namespace MVCore.Engine
             z = keyDownStateToInt(Keys.R) - keyDownStateToInt(Keys.F);
 
             //Camera rotation is done exclusively using the mouse
-
+            
             //rotx = 50 * step * (kbHandler.getKeyStatus(OpenTK.Input.Key.E) - kbHandler.getKeyStatus(OpenTK.Input.Key.Q));
             //float roty = (kbHandler.getKeyStatus(Key.C) - kbHandler.getKeyStatus(Key.Z));
 
             RenderState.rotAngles.Y += 100 * step * (keyDownStateToInt(Keys.E) - keyDownStateToInt(Keys.Q));
             RenderState.rotAngles.Y %= 360;
-
+            
             //Move Camera
             targetCameraPos.PosImpulse.X = x;
             targetCameraPos.PosImpulse.Y = y;
             targetCameraPos.PosImpulse.Z = z;
         }
 
-
-        public void CaptureInput(bool status)
+        public void mouseController()
         {
-            if (status && !inputPollTimer.Enabled)
-                inputPollTimer.Start();
-            else if (!status)
-                inputPollTimer.Stop();
+            
         }
 
-#endregion
+
+        #endregion
 
 
 

@@ -5,7 +5,7 @@ using MVCore.GMDL;
 using OpenTK;
 using OpenTK.Mathematics;
 
-namespace MVCore.Engine.Systems
+namespace MVCore.Systems
 {
     public class AnimationSystem :EngineSystem
     {
@@ -49,7 +49,7 @@ namespace MVCore.Engine.Systems
                     if (ad.IsPlaying)
                     {
                         if (!ad.loaded)
-                            ad.loadData();
+                            ad.LoadData();
                         
                         found_first_active_anim = true;
                         //Load updated local joint transforms
@@ -65,7 +65,7 @@ namespace MVCore.Engine.Systems
                             Vector3 s = new Vector3();
                             Quaternion q = new Quaternion();
 
-                            ad.getCurrentTransform(ref p, ref s, ref q, node.Node);
+                            ad.GetCurrentTransform(ref p, ref s, ref q, node.Node);
 
                             jt.RotationQueue.Add(q);
                             jt.PositionQueue.Add(p);
@@ -75,7 +75,7 @@ namespace MVCore.Engine.Systems
                         }
 
                         //Once the current frame data is fetched, progress to the next frame
-                        ad.update(dt);
+                        ad.Update(dt);
                     } 
                 }
 
@@ -126,8 +126,8 @@ namespace MVCore.Engine.Systems
                     }
                     
                     jt.localRotation = Matrix4.CreateFromQuaternion(q);
-                    jt.localPosition.Vec = p;
-                    jt.localScale.Vec = s;
+                    jt.localPosition = p;
+                    jt.localScale = s;
                 }
             }
         }

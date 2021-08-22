@@ -5,9 +5,8 @@ using MVCore.Utils;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
-    
     public enum BufferPropertyType
     {
         BOOL,
@@ -25,13 +24,13 @@ namespace MVCore.GMDL
     {
         
         //Overload with transform overrides
-        public void clearInstances(GLInstancedMeshVao mesh)
+        public static void ClearInstances(GLInstancedMeshVao mesh)
         {
             mesh.instanceRefs.Clear();
             mesh.instance_count = 0;
         }
 
-        public void removeInstance(GLInstancedMeshVao mesh, Model m)
+        public static void RemoveInstance(GLInstancedMeshVao mesh, Model m)
         {
             int id = mesh.instanceRefs.IndexOf(m);
             //TODO: Make all the memory shit to push the instances backwards
@@ -39,7 +38,7 @@ namespace MVCore.GMDL
 
         //Setters
 
-        public void setPropertyVal(float[] buffer, int offset, bool val)
+        public static void SetPropertyVal(float[] buffer, int offset, bool val)
         {
             unsafe
             {
@@ -47,7 +46,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public void setPropertyVal(float[] buffer, int offset, int val)
+        public static void SetPropertyVal(float[] buffer, int offset, int val)
         {
             unsafe
             {
@@ -55,7 +54,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public void setPropertyVal(float[] buffer, int offset, float val)
+        public static void SetPropertyVal(float[] buffer, int offset, float val)
         {
             unsafe
             {
@@ -63,7 +62,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public void setPropertyVal(float[] buffer, int offset, Vector3 val)
+        public static void SetPropertyVal(float[] buffer, int offset, Vector3 val)
         {
             unsafe
             {
@@ -73,7 +72,7 @@ namespace MVCore.GMDL
             }
         }
 
-        public void setPropertyVal(float[] buffer, int offset, Vector4 val)
+        public static void SetPropertyVal(float[] buffer, int offset, Vector4 val)
         {
             unsafe
             {
@@ -84,49 +83,44 @@ namespace MVCore.GMDL
             }
         }
 
-        public void setPropertyVal(float[] buffer, int offset, Matrix4 val)
+        public static void SetPropertyVal(float[] buffer, int offset, Matrix4 val)
         {
-            setPropertyVal(buffer, offset, val.Row0);
-            setPropertyVal(buffer, offset + 4, val.Row1);
-            setPropertyVal(buffer, offset + 8, val.Row2);
-            setPropertyVal(buffer, offset + 12, val.Row3);
+            SetPropertyVal(buffer, offset, val.Row0);
+            SetPropertyVal(buffer, offset + 4, val.Row1);
+            SetPropertyVal(buffer, offset + 8, val.Row2);
+            SetPropertyVal(buffer, offset + 12, val.Row3);
         }
 
         //Getters
 
-        public object getPropertyVal(BufferPropertyType prop, float[] buffer, int offset)
+        public static object GetPropertyVal(BufferPropertyType prop, float[] buffer, int offset)
         {
-            switch (prop)
+            return prop switch
             {
-                case BufferPropertyType.BOOL:
-                    return getPropertyBool(buffer, offset);
-                case BufferPropertyType.FLOAT:
-                    return getPropertyFloat(buffer, offset);
-                case BufferPropertyType.INT:
-                    return getPropertyInt(buffer, offset);
-                case BufferPropertyType.VEC3:
-                    return getPropertyVec3(buffer, offset);
-                case BufferPropertyType.VEC4:
-                    return getPropertyVec4(buffer, offset);
-                case BufferPropertyType.MAT4:
-                    return getPropertyMat4(buffer, offset);
-                default:
-                    throw new Exception("Unimplemented property type");
-            }
+                BufferPropertyType.BOOL => GetPropertyBool(buffer, offset),
+                BufferPropertyType.FLOAT => GetPropertyFloat(buffer, offset),
+                BufferPropertyType.INT => GetPropertyInt(buffer, offset),
+                BufferPropertyType.VEC3 => GetPropertyVec3(buffer, offset),
+                BufferPropertyType.VEC4 => GetPropertyVec4(buffer, offset),
+                BufferPropertyType.MAT4 => GetPropertyMat4(buffer, offset),
+                BufferPropertyType.VEC2 => throw new Exception("Not Implemented"),
+                BufferPropertyType.MAT3 => throw new Exception("Not Implemented"),
+                _ => throw new Exception("Unimplemented property type"),
+            };
         }
 
-        private bool getPropertyBool(float[] buffer, int offset)
+        private static bool GetPropertyBool(float[] buffer, int offset)
         {
             bool v;
             unsafe
             {
-                v = buffer[offset] > 0.0f ? true : false;
+                v = buffer[offset] > 0.0f;
             }
             return v;
         }
 
 
-        private float getPropertyFloat(float[] buffer, int offset)
+        private static float GetPropertyFloat(float[] buffer, int offset)
         {
             float v;
             unsafe
@@ -136,7 +130,7 @@ namespace MVCore.GMDL
             return v;
         }
 
-        private int getPropertyInt(float[] buffer, int offset)
+        private static int GetPropertyInt(float[] buffer, int offset)
         {
             int v;
             unsafe
@@ -147,7 +141,7 @@ namespace MVCore.GMDL
         }
 
         
-        private Vector4 getPropertyVec4(float[] buffer, int offset)
+        private static Vector4 GetPropertyVec4(float[] buffer, int offset)
         {
             float x, y, z, w;
             unsafe
@@ -157,11 +151,11 @@ namespace MVCore.GMDL
                 z = buffer[offset + 2];
                 w = buffer[offset + 3];
             }
-            return new Vector4(x, y, z, w);
+            return new(x, y, z, w);
         }
 
 
-        private Vector3 getPropertyVec3(float[] buffer, int offset)
+        private static Vector3 GetPropertyVec3(float[] buffer, int offset)
         {
             float x, y, z;
             unsafe
@@ -170,17 +164,17 @@ namespace MVCore.GMDL
                 y = buffer[offset + 1];
                 z = buffer[offset + 2];
             }
-            return new Vector3(x, y, z);
+            return new(x, y, z);
         }
 
-        private Matrix4 getPropertyMat4(float[] buffer, int offset)
+        private static Matrix4 GetPropertyMat4(float[] buffer, int offset)
         {
-            Vector4 r1 = getPropertyVec4(buffer, offset + 0);
-            Vector4 r2 = getPropertyVec4(buffer, offset + 4);
-            Vector4 r3 = getPropertyVec4(buffer, offset + 8);
-            Vector4 r4 = getPropertyVec4(buffer, offset + 12);
+            Vector4 r1 = GetPropertyVec4(buffer, offset + 0);
+            Vector4 r2 = GetPropertyVec4(buffer, offset + 4);
+            Vector4 r3 = GetPropertyVec4(buffer, offset + 8);
+            Vector4 r4 = GetPropertyVec4(buffer, offset + 12);
 
-            return new Matrix4(r1, r2, r3, r4);
+            return new(r1, r2, r3, r4);
         }
 
     }

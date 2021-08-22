@@ -9,7 +9,7 @@ using MVCore.Common;
 using System.Drawing;
 using System.Drawing.Imaging;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class Texture : IDisposable
     {

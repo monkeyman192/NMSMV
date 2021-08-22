@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using libMBIN.NMS.Toolkit;
 
-namespace MVCore.GMDL
+namespace MVCore
 {
     public class LODModelComponent : Component
     {
