@@ -44,10 +44,6 @@ namespace MVCore.Common
         //Keep the view rotation Angles (in degrees)
         public static Vector3 rotAngles = new Vector3(0.0f);
 
-        //RenderSettings
-        //USE SETTINGS CLASS
-        //public static RenderSettings renderSettings = new RenderSettings();
-
         //App Settings
         public static Settings settings = new Settings();
         

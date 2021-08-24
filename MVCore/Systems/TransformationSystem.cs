@@ -5,19 +5,21 @@ using MVCore;
 
 namespace MVCore.Systems
 {
-    class TransformationSystem : EngineSystem
+    public class TransformationSystem : EngineSystem
     {
         private List<TransformData> data;
         private Dictionary<long, TransformController> EntityControllerMap;
-        private Dictionary<long, TransformData> EntityDataMap;
+        private Dictionary<long, TransformComponent> EntityDataMap;
         private List<Entity> DynamicEntities; //Entities to update on update
-
+        
         //Properties
-        public static double updateInterval = 1.0 / 60; //Default interval to 60hz
+        public static double updateInterval = 1.0 / 60; //Default Update interval of 60hz
 
         public TransformationSystem (): base(EngineSystemEnum.TRANSFORMATION_SYSTEM)
         {
-
+            EntityControllerMap = new();
+            EntityDataMap = new();
+            DynamicEntities = new();
         }
 
         public void SetInterval(double interval)
@@ -33,20 +35,21 @@ namespace MVCore.Systems
                 return;
             }
 
-            if (!e.HasComponent<TransformComponent>())
+            if (e.HasComponent<TransformComponent>())
             {
-                Log(string.Format("Entity {0} does not have a transform component", e.ID), Common.LogVerbosityLevel.INFO);
+                Log(string.Format("Entity {0} already has a transform component", e.ID), Common.LogVerbosityLevel.INFO);
                 return;
             }
 
-            TransformComponent tc = e.GetComponent<TransformComponent>() as TransformComponent;
+            TransformData td = new TransformData();
+            TransformComponent tc = new TransformComponent(td);
+            
+            //Add component to entity
+            e.AddComponent<TransformComponent>(tc);
 
             //Insert to Maps
-            EntityDataMap[e.ID] = new TransformData();
+            EntityDataMap[e.ID] = tc;
             
-            //Bind data to Component
-            tc.Data = EntityDataMap[e.ID];
-
             if (createController)
                 EntityControllerMap[e.ID] = new TransformController(tc);
                 
@@ -61,14 +64,18 @@ namespace MVCore.Systems
             }
         }
 
-        TransformData GetEntityData(Entity e)
+        public void AddDynamicEntity(Entity e)
         {
-            if (EntityDataMap.ContainsKey(e.ID))
-                return EntityDataMap[e.ID];
-            return null;
+            if (EntityDataMap.ContainsKey(e.ID) && !DynamicEntities.Contains(e))
+                DynamicEntities.Add(e);
         }
 
-        TransformController GetEntityTransformController(Entity e)
+        public void RemoveDynamicEntity(Entity e)
+        {
+            DynamicEntities.Remove(e);
+        }
+
+        public TransformController GetEntityTransformController(Entity e)
         {
             if (EntityControllerMap.ContainsKey(e.ID))
                 return EntityControllerMap[e.ID];

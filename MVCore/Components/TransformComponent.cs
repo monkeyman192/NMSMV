@@ -56,7 +56,7 @@ namespace MVCore
         private float OldScaleY;
         private float OldScaleZ;
 
-        public Quaternion localRotation = new(); //TODO: Make property
+        public Quaternion localRotation = Quaternion.Identity; //TODO: Make property
         public Vector3 localScale = new(1.0f);
         
         public Matrix4 LocalTransformMat = Matrix4.Identity;
@@ -78,7 +78,7 @@ namespace MVCore
         {
             parent = null;
         }
-
+        
         internal Matrix4 CalculateWorldTransformMatrix()
         {
             if (parent != null)

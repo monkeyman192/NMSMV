@@ -35,6 +35,8 @@ namespace MVCore
         public ResourceManager resMgr;
 
         //Init Systems
+        public EntityRegistrySystem registrySys;
+        public TransformationSystem transformSys;
         public ActionSystem actionSys;
         public AnimationSystem animationSys;
         public RenderingSystem renderSys;//TODO: Try to make it private. Noone should have a reason to access it
@@ -50,9 +52,9 @@ namespace MVCore
         //Keyboard State
         private KeyboardState kbState;
         private MouseState mouseState;
-
+        private Vector2 mouseClickedPos;
+        
         //Camera Stuff
-        public System.Timers.Timer cameraMovementTimer;
         public CameraPos targetCameraPos;
         //public int movement_speed = 1;
         
@@ -71,6 +73,7 @@ namespace MVCore
             //Store Window handler
             windowHandler = win;
             kbState = win.KeyboardState;
+            mouseState = win.MouseState;
 
             //gpHandler = new PS4GamePadHandler(0); //TODO: Add support for PS4 controller
             reqHandler = new RequestHandler();
@@ -80,20 +83,19 @@ namespace MVCore
             //Assign new palette to GLControl
             palette = Palettes.createPalettefromBasePalettes();
 
-            renderSys = new RenderingSystem(); //Init renderManager of the engine
-
-            //Camera Movement Timer
-            cameraMovementTimer = new System.Timers.Timer();
-            cameraMovementTimer.Elapsed += new ElapsedEventHandler(camera_timer);
-            cameraMovementTimer.Interval = 20;
-            //cameraMovementTimer.Start(); Start in the main function
-            
             //Systems Init
+            renderSys = new RenderingSystem(); //Init renderManager of the engine
+            registrySys = new EntityRegistrySystem();
             actionSys = new ActionSystem();
             animationSys = new AnimationSystem();
+            transformSys = new TransformationSystem();
+            
+            renderSys.SetEngine(this);
+            registrySys.SetEngine(this);
             actionSys.SetEngine(this);
             animationSys.SetEngine(this);
-
+            transformSys.SetEngine(this);
+            
             //Set Start Status
             rt_State = EngineRenderingState.UNINITIALIZED;
         }
@@ -110,9 +112,6 @@ namespace MVCore
 
         public void init(int width, int height)
         {
-            //Start Timers
-            cameraMovementTimer.Start();
-
             //Init Gizmos
             //gizTranslate = new TranslationGizmo();
             //activeGizmo = gizTranslate;
@@ -122,10 +121,41 @@ namespace MVCore
                 throw new Exception("Resource Manager not initialized");
                 //resMgr.Init();
             }
+
+            //Add Camera
+            Camera cam = new(90, -1, 0, true)
+            {
+                isActive = false
+            };
             
+            //Register Camer to Entity Registry
+            registrySys.RegisterEntity(cam);
+            //Add TransfomComponent to Transformation System
+            transformSys.RegisterEntity(cam, true);
+            transformSys.AddDynamicEntity(cam);
+            
+            //Set global reference to cam
+            RenderState.activeCam = cam;
+
+
+            //TESTING Add sample future states for the camera
+            
+            /*
+            TransformController tcontroller = transformSys.GetEntityTransformController(cam);
+            Vector3 sample_pos = new Vector3();
+            Quaternion sample_rot = new();
+            Vector3 sample_scale = new Vector3(1.0f);
+            for (int i=0; i< 500; i++)
+            {
+                tcontroller.AddFutureState(sample_pos, sample_rot, sample_scale);
+                sample_pos.X -= 0.5f;
+            }
+            */
+
             //Initialize the render manager
             renderSys.init(resMgr, width, height);
             rt_State = EngineRenderingState.ACTIVE;
+
             Log("Initialized", LogVerbosityLevel.INFO);
         }
 
@@ -492,29 +522,6 @@ namespace MVCore
             reqHandler.sendRequest(ref r);
         }
 
-#region Camera Update Functions
-
-        private void camera_timer(object sender, ElapsedEventArgs e)
-        {
-            //Update Target for camera
-            RenderState.activeCam?.updateTarget(targetCameraPos,
-                (float)cameraMovementTimer.Interval);
-            targetCameraPos.Reset();
-        }
-
-
-        public void updateActiveCam(Vector3 pos, Vector3 rot)
-        {
-            RenderState.activeCam.Position = pos;
-            
-            //RenderState.activeCam.pitch = rot.X; //Radians rotation on X axis
-            //RenderState.activeCam.yaw = rot.Y; //Radians rotation on Y axis
-            //RenderState.activeCam.roll = rot.Z; //Radians rotation on Z axis
-        }
-
-#endregion
-
-        
         public void updateLightPosition(int light_id)
         {
             Light light = resMgr.GLlights[light_id];
@@ -562,6 +569,7 @@ namespace MVCore
         public void UpdateInput()
         {
             keyboardController();
+            mouseController();
             //gpController();
         }
 
@@ -589,8 +597,25 @@ namespace MVCore
             targetCameraPos.PosImpulse.Z = z;
         }
 
+        //Mouse Methods
+
+        private int mouseDownStateToInt(MouseButton k)
+        {
+            bool state = mouseState.IsButtonDown(k);
+            return state ? 1 : 0;
+        }
+
         public void mouseController()
         {
+            if (mouseState.WasButtonDown(MouseButton.Left))
+            {
+                float deltax = Math.Min(Math.Max(mouseState.Delta.X, -10), 10);
+                float deltay = Math.Min(Math.Max(mouseState.Delta.Y, -10), 10);
+
+                //Console.WriteLine("Mouse Delta {0} {1}", deltax, deltay);
+                
+                targetCameraPos.Rotation.Xy += new Vector2(deltax, deltay);
+            }
             
         }
 

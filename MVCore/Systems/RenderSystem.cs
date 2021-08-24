@@ -1269,6 +1269,7 @@ namespace MVCore.Systems
             }
         }
 
+        /*
         private void render_cameras()
         {
             int active_program = resMgr.GLShaders[GLSLHelper.SHADER_TYPE.BBOX_SHADER].program_id;
@@ -1276,6 +1277,7 @@ namespace MVCore.Systems
             GL.UseProgram(active_program);
             int loc;
             //Send object world Matrix to all shaders
+
 
             foreach (Camera cam in resMgr.GLCameras)
             {
@@ -1295,10 +1297,11 @@ namespace MVCore.Systems
 
                 //Render all inactive cameras
                 if (!cam.isActive) cam.render();
-
+            
             }
 
         }
+        */
 
         private void render_quad(string[] uniforms, float[] uniform_values, string[] sampler_names, TextureTarget[] sampler_targets, int[] texture_ids, GLSLHelper.GLSLShaderConfig shaderConf)
         {

@@ -35,19 +35,18 @@ namespace MVCore
         public Dictionary<string, GLInstancedMeshVao> GLPrimitiveMeshVaos = new();
 
         public List<Light> GLlights = new();
-        public List<Camera> GLCameras = new();
         public Dictionary<string, Font> FontMap = new();
         //public Dictionary<string, int> GLShaders = new Dictionary<string, int>();
-        public Dictionary<GLSLHelper.SHADER_TYPE, GLSLHelper.GLSLShaderConfig> GLShaders = new(); //Generic Shaders
+        public Dictionary<SHADER_TYPE, GLSLShaderConfig> GLShaders = new(); //Generic Shaders
 
         public Dictionary<int, GLSLShaderConfig> GLDeferredShaderMap = new();
         public Dictionary<int, GLSLShaderConfig> GLForwardShaderMapTransparent = new();
         public Dictionary<int, GLSLShaderConfig> GLDeferredShaderMapDecal = new();
         public Dictionary<int, GLSLShaderConfig> GLDefaultShaderMap = new();
 
-        public List<GLSLHelper.GLSLShaderConfig> activeGLDeferredShaders = new();
-        public List<GLSLHelper.GLSLShaderConfig> activeGLForwardTransparentShaders = new();
-        public List<GLSLHelper.GLSLShaderConfig> activeGLDeferredDecalShaders = new();
+        public List<GLSLShaderConfig> activeGLDeferredShaders = new();
+        public List<GLSLShaderConfig> activeGLForwardTransparentShaders = new();
+        public List<GLSLShaderConfig> activeGLDeferredDecalShaders = new();
 
         public Dictionary<int, List<GLInstancedMeshVao>> opaqueMeshShaderMap = new();
         public Dictionary<int, List<GLInstancedMeshVao>> defaultMeshShaderMap = new();
@@ -87,7 +86,6 @@ namespace MVCore
             AddDefaultLights();
             AddDefaultFonts();
             AddDefaultTexts();
-            AddDefaultCameras();
             CompileMainShaders();
 
             initialized = true;
@@ -364,24 +362,6 @@ namespace MVCore
             sr.Close();
 
 
-        }
-
-        private void AddDefaultCameras()
-        {
-            Camera cam = new(90, -1, 0, true)
-            {
-                isActive = false
-            };
-            GLCameras.Add(cam);
-
-            cam = new(90, -1, 0, false)
-            {
-                isActive = false
-            };
-            GLCameras.Add(cam);
-
-            //Set as active camera the first one by default
-            RenderState.activeCam = GLCameras[0];
         }
 
         private void AddDefaultTextures()
@@ -744,8 +724,7 @@ namespace MVCore
             //TODO: Make Camera Disposable
             //foreach (GMDL.Camera p in GLCameras)
             //    p.Dispose();
-            GLCameras.Clear();
-        
+            
         }
     }
 

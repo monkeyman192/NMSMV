@@ -9,20 +9,25 @@ namespace MVCore
     public class TransformController
     {
         //Previous
-        private Vector3 PrevPosition;
-        private Quaternion PrevRotation;
-        private Vector3 PrevScale;
+        public Vector3 PrevPosition;
+        public Quaternion PrevRotation;
+        public Vector3 PrevScale;
         
         //Next
-        private Vector3 NextPosition;
-        private Quaternion NextRotation;
-        private Vector3 NextScale;
+        public Vector3 NextPosition;
+        public Quaternion NextRotation;
+        public Vector3 NextScale;
+
+        //LastQueued
+        public Vector3 LastPosition;
+        public Quaternion LastRotation;
+        public Vector3 LastScale;
 
         //Current
-        private Vector3 Position;
-        private Quaternion Rotation;
-        private Vector3 Scale;
-        private Matrix4 State;
+        public Vector3 Position;
+        public Quaternion Rotation;
+        public Vector3 Scale;
+        public Matrix4 State;
 
         private Queue<Vector3> FutureTranslation = new();
         private Queue<Quaternion> FutureRotation = new();
@@ -35,10 +40,26 @@ namespace MVCore
         public TransformController(TransformComponent act)
         {
             actor = act;
+            //Init States
+            PrevPosition = act.Data.localTranslation;
+            PrevRotation = act.Data.localRotation;
+            PrevScale = act.Data.localScale;
+
+            NextPosition = act.Data.localTranslation;
+            NextRotation = act.Data.localRotation;
+            NextScale = act.Data.localScale;
+
+            LastPosition = act.Data.localTranslation;
+            LastRotation = act.Data.localRotation;
+            LastScale = act.Data.localScale;
         }
 
         public void AddFutureState(Vector3 dp, Quaternion dr, Vector3 ds)
         {
+            LastPosition = dp;
+            LastRotation = dr;
+            LastScale = ds;
+
             FutureTranslation.Enqueue(dp);
             FutureRotation.Enqueue(dr);
             FutureScale.Enqueue(ds);
@@ -54,15 +75,30 @@ namespace MVCore
             
             if (Time > TransformationSystem.updateInterval)
             {
-                NextPosition = FutureTranslation.Dequeue();
-                NextRotation = FutureRotation.Dequeue();
-                NextScale = FutureScale.Dequeue();
+                PrevPosition = NextPosition;
+                PrevRotation = NextRotation;
+                PrevScale = NextScale;
                 
+                if (FutureTranslation.Count > 5)
+                {
+                    FutureTranslation.Dequeue();
+                    FutureRotation.Dequeue();
+                    FutureScale.Dequeue();
+                } 
+                
+                if (FutureTranslation.Count > 0)
+                {
+                    NextPosition = FutureTranslation.Dequeue();
+                    NextRotation = FutureRotation.Dequeue();
+                    NextScale = FutureScale.Dequeue();
+                } 
+
                 Time %= TransformationSystem.updateInterval;
             }
 
-            InterpolationCoeff = (TransformationSystem.updateInterval - Time) / 
+            InterpolationCoeff = 1.0 - (TransformationSystem.updateInterval - Time) / 
                                   TransformationSystem.updateInterval;
+            
             CalculateState(); //Recalculate state
             ApplyStateToActor(); //Update Actor Data
         }
@@ -74,10 +110,14 @@ namespace MVCore
             Rotation = Quaternion.Slerp(PrevRotation, NextRotation, (float) InterpolationCoeff);
             Scale = Vector3.Lerp(PrevScale, NextScale, (float) InterpolationCoeff);
 
+            //Callbacks.Log(string.Format("Interpolated Position {0} {1} {2}",
+            //                    Position.X, Position.Y, Position.Z, Time),
+            //                    LogVerbosityLevel.INFO);
+
             State = Matrix4.CreateScale(Scale) * 
                     Matrix4.CreateFromQuaternion(Rotation) * 
                     Matrix4.CreateTranslation(Position);
-
+        
         }
 
         private void ApplyStateToActor()

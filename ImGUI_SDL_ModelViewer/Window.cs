@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
@@ -96,7 +97,7 @@ namespace ImGUI_SDL_ModelViewer
 
             //Pass rendering settings to the Window
             RenderFrequency = RenderState.settings.renderSettings.FPS;
-            UpdateFrequency = RenderFrequency * 2;
+            UpdateFrequency = 60;
 
             //Initialize Engine backend
             engine = new Engine(this);
@@ -187,10 +188,13 @@ namespace ImGUI_SDL_ModelViewer
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-            //Console.WriteLine("Updating Frame");
-
+            
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
+                //Capture Keyboard Presses
+                if (isSceneViewActive)
+                    engine.UpdateInput();
+                
                 frameUpdate(e.Time);
                 engine.handleRequests(); //Handle engine requests
                 handleRequests(); //Handle window requests
@@ -202,11 +206,12 @@ namespace ImGUI_SDL_ModelViewer
         {
             base.OnRenderFrame(e);
             
-            //Capture Keyboard Presses
-            if (isSceneViewActive)
-                engine.UpdateInput();
-            
             _controller.Update(this, (float) e.Time);
+            
+            //Per Frame System Updates
+            engine.transformSys.Update(e.Time);
+
+            Camera.UpdateCameraDirectionalVectors(ref engine, RenderState.activeCam);
 
             //Console.WriteLine("Rendering Frame");
             GL.ClearColor(new Color4(5, 5, 5, 255));
@@ -261,10 +266,16 @@ namespace ImGUI_SDL_ModelViewer
                 req.arguments.Add(mouseState.Position);
                 engine.sendRequest(ref req);
             }
-
+            
+            //Calculate new Camera State
+            Camera.CalculateNextCameraState(ref engine, RenderState.activeCam, engine.targetCameraPos);
+            
+            RenderState.activeCam.aspect = (float)SceneViewSize.X / SceneViewSize.Y;
+            RenderState.activeCam.updateViewMatrix();
+            
             //Set time to the renderManager
             engine.renderSys.progressTime(dt);
-
+            
             //Reset Stats
             RenderStats.occludedNum = 0;
 
@@ -310,7 +321,7 @@ namespace ImGUI_SDL_ModelViewer
 
             //Camera & Light Positions
             //Update common transforms
-            RenderState.activeResMgr.GLCameras[0].aspect = (float) SceneViewSize.X / SceneViewSize.Y;
+            
 
             //Apply extra viewport rotation
             Matrix4 Rotx = Matrix4.CreateRotationX(MathUtils.radians(RenderState.rotAngles.X));
@@ -319,9 +330,7 @@ namespace ImGUI_SDL_ModelViewer
             RenderState.rotMat = Rotz * Rotx * Roty;
             //RenderState.rotMat = Matrix4.Identity;
 
-            RenderState.activeResMgr.GLCameras[0].Move(dt);
-            RenderState.activeResMgr.GLCameras[0].updateViewMatrix();
-            RenderState.activeResMgr.GLCameras[1].updateViewMatrix();
+            
 
             //Update Text Counters
             RenderState.activeResMgr.txtMgr.getText(TextManager.Semantic.FPS).update(string.Format("FPS: {0:000.0}",

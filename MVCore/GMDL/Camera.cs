@@ -25,32 +25,21 @@ namespace MVCore
         }
     }
 
-    public class Camera
+    public class Camera : Entity
     {
         //Base Coordinate System
         public Vector3 BaseRight = new(1.0f, 0.0f, 0.0f);
         public Vector3 BaseFront = new(0.0f, 0.0f, -1.0f);
         public Vector3 BaseUp = new(0.0f, 1.0f, 0.0f);
 
-        //Prev Vectors
-        public Quaternion PrevDirection = new(new(0.0f, (float)Math.PI / 2.0f, 0.0f));
-        public Vector3 PrevPosition = new(0.0f, 0.0f, 0.0f);
-        
-        //Target Vectors
-        public Quaternion TargetDirection = new(new(0.0f, (float)Math.PI / 2.0f, 0.0f));
-        public Vector3 TargetPosition = new(0.0f, 0.0f, 0.0f);
-
         //Current Vectors
-        public Vector3 Right = new(1.0f, 0.0f, 0.0f);
-        public Vector3 Front = new(0.0f, 0.0f, -1.0f);
-        public Vector3 Up = new(0.0f, 1.0f, 0.0f);
+        public Vector3 Right;
+        public Vector3 Front;
+        public Vector3 Up;
         public Quaternion Direction = new(new(0.0f, (float)Math.PI / 2.0f, 0.0f));
         public Vector3 Position = new(0.0f, 0.0f, 0.0f);
 
         //Movement Time
-        private float t_pos_move = 100.0f;
-        private float t_rot_move = 100.0f;
-        private float t_start = 0.0f;
         
         public float Speed = 1.0f; //Speed in Units/Sec
         public float SpeedPower = 1.0f; //Coefficient to which speed is raised
@@ -78,7 +67,7 @@ namespace MVCore
         //Rendering Stuff
         public GLMeshVao vao;
         public int program;
-
+        
         public Camera(int angle, int program, int mode, bool cull)
         {
             //Set fov on init
@@ -86,14 +75,19 @@ namespace MVCore
             vao = new GLMeshVao();
             vao.vao = (new Primitives.Box(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true)).getVAO();
             this.program = program;
-            this.type = mode;
-            this.culling = cull;
+            type = mode;
+            culling = cull;
 
             //calcCameraOrientation(ref Front, ref Right, ref Up, 0, 0);
-            
+
+            //Set Orientation to the basis
+            Right = BaseRight;
+            Up = BaseUp;
+            Front = BaseFront;
+
             //Initialize the viewmat
             this.updateViewMatrix();
-        
+
         }
         
         public void updateViewMatrix()
@@ -131,6 +125,69 @@ namespace MVCore
             updateFrustumPlanes();
         }
 
+        public static void UpdateCameraDirectionalVectors(ref Engine engine, Camera cam)
+        {
+            //Update Camera Vectors
+            TransformController t_controller = engine.transformSys.GetEntityTransformController(cam);
+
+            //Apply Current Position to the Camera
+            cam.Position = t_controller.Position;
+            
+            cam.Front = (MathUtils.conjugate(t_controller.Rotation) *
+                        (new Quaternion(cam.BaseFront, 0.0f)) *
+                        t_controller.Rotation).Xyz.Normalized();
+            cam.Right = Vector3.Cross(cam.Front, cam.BaseUp).Normalized();
+            cam.Up = Vector3.Cross(cam.Right, cam.Front).Normalized();
+        }
+
+        public static void CalculateNextCameraState(ref Engine engine, Camera cam, CameraPos target)
+        {
+            TransformComponent tc = cam.GetComponent<TransformComponent>() as TransformComponent;
+            TransformController t_controller = engine.transformSys.GetEntityTransformController(cam);
+
+            //Calculate actual camera speed
+            float actual_speed = cam.Sensitivity * (float) Math.Pow(cam.Speed, cam.SpeedPower);
+
+            Quaternion rx = Quaternion.FromAxisAngle(cam.Up, MathUtils.radians(-target.Rotation.X));
+            //Quaternion rx = Quaternion.FromAxisAngle(cam.Up, MathUtils.radians(-2.0f));
+            Quaternion ry = Quaternion.FromAxisAngle(cam.Right, MathUtils.radians(-target.Rotation.Y)); //Looks OK
+
+            //Console.WriteLine("Mouse Displacement {0} {1}",
+            //                target.Rotation.X, target.Rotation.Y);
+
+            //Console.WriteLine(string.Format("Camera Rotation {0} {1} {2} {3}",
+            //                    rx.X, rx.Y, rx.Z, rx.W),
+            //                    Common.LogVerbosityLevel.INFO);
+
+            //Move Camera based on the impulse
+
+            //Calculate Next State 
+            Vector3 currentPosition = t_controller.LastPosition;
+            Quaternion currentRotation = t_controller.LastRotation;
+            Vector3 currentScale = new Vector3(1.0f);
+
+            //Console.WriteLine("Cam Front {0} {1} {2}", 
+            //                cam.Front.X, cam.Front.Y, cam.Front.Z);
+            
+            Vector3 offset = new();
+            offset += actual_speed * target.PosImpulse.X * cam.Right;
+            offset += actual_speed * target.PosImpulse.Y * cam.Front;
+            offset += actual_speed * target.PosImpulse.Z * cam.Up;
+
+            currentPosition += offset;
+            currentRotation = rx * ry;
+
+            //Common.Callbacks.Log(string.Format("Camera Position {0} {1} {2}",
+            //                    currentPosition.X, currentPosition.Y, currentPosition.Z), Common.LogVerbosityLevel.INFO);
+            //Common.Callbacks.Log(string.Format("Final Camera Rotation {0} {1} {2} {3}",
+            //                    currentRotation.X, currentRotation.Y, currentRotation.Z, currentRotation.W), 
+            //                    Common.LogVerbosityLevel.INFO);
+            
+            t_controller.AddFutureState(currentPosition, currentRotation, currentScale);
+
+        }
+
+        /*
         public void updateTarget(CameraPos target, float interval)
         {
             //Interval is the update interval of the movement defined in the control camera timer
@@ -148,7 +205,6 @@ namespace MVCore
 
             float actual_speed = (float) Math.Pow(Speed, SpeedPower);
             
-
             float step = 0.00001f;
             Vector3 offset = new();
             offset += step * actual_speed * target.PosImpulse.X * Right;
@@ -160,16 +216,15 @@ namespace MVCore
 
             //Calculate Time for movement
             
-            /*
-            Console.WriteLine("TargetPos {0} {1} {2}",
-                TargetPosition.X, TargetPosition.Y, TargetPosition.Z);
-            Console.WriteLine("PrevPos {0} {1} {2}",
-                PrevPosition.X, PrevPosition.Y, PrevPosition.Z);
-            Console.WriteLine("TargetRotation {0} {1} {2} {3}",
-                TargetDirection.X, TargetDirection.Y, TargetDirection.Z, TargetDirection.W);
-            Console.WriteLine("PrevRotation {0} {1} {2} {3}",
-                PrevDirection.X, PrevDirection.Y, PrevDirection.Z, PrevDirection.W);
-            */
+            //Console.WriteLine("TargetPos {0} {1} {2}",
+            //    TargetPosition.X, TargetPosition.Y, TargetPosition.Z);
+            //Console.WriteLine("PrevPos {0} {1} {2}",
+            //    PrevPosition.X, PrevPosition.Y, PrevPosition.Z);
+            //Console.WriteLine("TargetRotation {0} {1} {2} {3}",
+            //    TargetDirection.X, TargetDirection.Y, TargetDirection.Z, TargetDirection.W);
+            //Console.WriteLine("PrevRotation {0} {1} {2} {3}",
+            //    PrevDirection.X, PrevDirection.Y, PrevDirection.Z, PrevDirection.W);
+            
 
             float eff_speed = interval * actual_speed / 1000.0f;
             t_pos_move = (TargetPosition - PrevPosition).Length / eff_speed;
@@ -180,9 +235,13 @@ namespace MVCore
 
         }
 
+        */
+
+        /*
         public void Move(double dt)
         {
-             //calculate interpolation coeff
+            
+            //calculate interpolation coeff
             t_start += (float) dt;
             float pos_lerp_coeff, rot_lerp_coeff;
 
@@ -191,6 +250,7 @@ namespace MVCore
             
             rot_lerp_coeff = t_start / (float)Math.Max(t_rot_move, 1e-4);
             rot_lerp_coeff = MathUtils.clamp(rot_lerp_coeff, 0.0f, 1.0f);
+            
             
             //Interpolate Quaternions/Vectors
             Direction = PrevDirection * (1.0f - rot_lerp_coeff) +
@@ -204,6 +264,7 @@ namespace MVCore
             Right = Vector3.Cross(Front, BaseUp).Normalized();
             Up = Vector3.Cross(Right, Front).Normalized();
         }
+        */
 
         public void updateFrustumPlanes()
         {
