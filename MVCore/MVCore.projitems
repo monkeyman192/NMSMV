@@ -23,6 +23,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\AnimPoseComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\Component.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\LODModelComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Systems\EntityRegistrySystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\TransformationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\TransformController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\PhysicsComponent.cs" />
