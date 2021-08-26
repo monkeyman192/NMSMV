@@ -16,12 +16,12 @@ namespace MVCore
     public struct CameraPos
     {
         public Vector3 PosImpulse;
-        public Vector3 Rotation;
+        public Vector2 Rotation;
 
         public void Reset()
         {
             PosImpulse = new Vector3(0.0f);
-            Rotation = new Vector3(0.0f);
+            Rotation = new Vector2(0.0f);
         }
     }
 
@@ -36,19 +36,18 @@ namespace MVCore
         public Vector3 Right;
         public Vector3 Front;
         public Vector3 Up;
-        private float pitch = 0.0f;
-        private float yaw = 0.0f;
+        public float yaw = MathUtils.radians(-90.0f);
+        public float pitch = 0.0f;
         public Vector3 Position = new(0.0f, 0.0f, 0.0f);
-        public Vector3 Direction = new Vector3(0.0f, 0.0f, -1.0f);
         //Movement Time
         
         public float Speed = 1.0f; //Speed in Units/Sec
-        public float SpeedPower = 1.0f; //Coefficient to which speed is raised
-        public float Sensitivity = 0.001f;
+        public static float SpeedScale = 0.001f;
+        public float Sensitivity = 0.2f;
         public bool isActive = false;
         //Projection variables Set defaults
-        public float fov = 90.0f; //Angle in degrees
-        public float zNear = 0.05f;
+        public float fov = 45.0f; //Angle in degrees
+        public float zNear = 0.02f;
         public float zFar = 15000.0f;
         public float aspect = 1.0f;
         
@@ -93,8 +92,8 @@ namespace MVCore
         
         public void updateViewMatrix()
         {
-            lookMat = Matrix4.LookAt(Position, Position + Direction, Up);
-            float fov_rad = MVCore.Utils.MathUtils.radians(fov);
+            lookMat = Matrix4.LookAt(Position, Position + Front, BaseUp);
+            float fov_rad = MathUtils.radians(fov);
             
             if (type == 0) {
                 //projMat = Matrix4.CreatePerspectiveFieldOfView(fov, aspect, zNear, zFar);
@@ -130,28 +129,22 @@ namespace MVCore
         {
             //Update Camera Vectors
             TransformComponent tc = cam.GetComponent<TransformComponent>() as TransformComponent;
-            
 
             //Apply Current Position to the Camera
             cam.Position = tc.Data.localTranslation;
-            /*
-            cam.Front = (MathUtils.conjugate(t_controller.Rotation) *
-                        (new Quaternion(cam.BaseFront, 0.0f)) *
-                        t_controller.Rotation).Xyz.Normalized();
-            cam.Right = Vector3.Cross(cam.Front, cam.BaseUp).Normalized();
-            cam.Up = Vector3.Cross(cam.Right, cam.Front).Normalized();
-            */
-
-            //Calculate with euler angles
-
-            cam.Front.X = (float) Math.Cos(tc.Data.RotX) * (float) Math.Cos(tc.Data.RotY);
-            cam.Front.Y = (float) Math.Sin(tc.Data.RotY);
-            cam.Front.Z = (float) Math.Sin(tc.Data.RotX) * (float) Math.Cos(tc.Data.RotY);
-
+            
+            cam.Front.X = (float) Math.Cos(cam.yaw) * (float) Math.Cos(cam.pitch);
+            cam.Front.Y = (float) Math.Sin(cam.pitch);
+            cam.Front.Z = (float) Math.Sin(cam.yaw) * (float) Math.Cos(cam.pitch);
             cam.Front.Normalize();
-            cam.Up = Camera.BaseUp;
+
+            cam.Up.X = (float) Math.Cos(cam.yaw) * (float)Math.Cos(cam.pitch + Math.PI / 2.0f);
+            cam.Up.Y = (float) Math.Sin(cam.pitch + Math.PI / 2.0f);
+            cam.Up.Z = (float) Math.Sin(cam.yaw) * (float)Math.Cos(cam.pitch + Math.PI / 2.0f);
+            cam.Up.Normalize();
 
             cam.Right = Vector3.Cross(cam.Front, cam.Up).Normalized();
+            //cam.Up = Vector3.Cross(cam.Right, cam.Front);
             
         }
 
@@ -161,11 +154,9 @@ namespace MVCore
             TransformController t_controller = engine.transformSys.GetEntityTransformController(cam);
 
             //Calculate actual camera speed
-            float actual_speed = cam.Sensitivity * (float) Math.Pow(cam.Speed, cam.SpeedPower);
-
-            Quaternion rx = Quaternion.FromAxisAngle(cam.Up, MathUtils.radians(-target.Rotation.X));
-            //Quaternion rx = Quaternion.FromAxisAngle(cam.Up, MathUtils.radians(-2.0f));
-            Quaternion ry = Quaternion.FromAxisAngle(cam.Right, MathUtils.radians(-target.Rotation.Y)); //Looks OK
+            cam.yaw += -cam.Sensitivity * MathUtils.radians(target.Rotation.X);
+            cam.pitch += cam.Sensitivity * MathUtils.radians(target.Rotation.Y);
+            cam.pitch = MathUtils.clamp(cam.pitch, -89.0f, 89.0f);
 
             //Console.WriteLine("Mouse Displacement {0} {1}",
             //                target.Rotation.X, target.Rotation.Y);
@@ -181,23 +172,19 @@ namespace MVCore
             Quaternion currentRotation = t_controller.LastRotation;
             Vector3 currentScale = new Vector3(1.0f);
 
-            //Console.WriteLine("Cam Front {0} {1} {2}", 
-            //                cam.Front.X, cam.Front.Y, cam.Front.Z);
+            Console.WriteLine("Cam Front {0} {1} {2}", 
+                            cam.Front.X, cam.Front.Y, cam.Front.Z);
             
             Vector3 offset = new();
-            offset += actual_speed * (float) dt * target.PosImpulse.X * cam.Right;
-            offset += actual_speed * (float) dt * target.PosImpulse.Y * cam.Front;
-            offset += actual_speed * (float) dt * target.PosImpulse.Z * cam.Up;
+            offset += Camera.SpeedScale * cam.Speed * target.PosImpulse.X * cam.Right;
+            offset += Camera.SpeedScale * cam.Speed * target.PosImpulse.Y * cam.Front;
+            offset += Camera.SpeedScale * cam.Speed * target.PosImpulse.Z * cam.Up;
 
             currentPosition += offset;
-            currentRotation *= rx * ry;
+            //There is no need to update rotation for the camera. Pitch/Yaw is all we need
+            //Quaternion rall = Quaternion.FromEulerAngles(cam.pitch, cam.yaw, 0.0f);
+            //currentRotation = rall;
 
-            //Common.Callbacks.Log(string.Format("Camera Position {0} {1} {2}",
-            //                    currentPosition.X, currentPosition.Y, currentPosition.Z), Common.LogVerbosityLevel.INFO);
-            //Common.Callbacks.Log(string.Format("Final Camera Rotation {0} {1} {2} {3}",
-            //                    currentRotation.X, currentRotation.Y, currentRotation.Z, currentRotation.W), 
-            //                    Common.LogVerbosityLevel.INFO);
-            
             t_controller.AddFutureState(currentPosition, currentRotation, currentScale);
 
         }

@@ -56,8 +56,9 @@ namespace MVCore
         
         //Camera Stuff
         public CameraPos targetCameraPos;
+        public Vector2 prevMousePos;
         //public int movement_speed = 1;
-        
+
         //Use public variables for now because getters/setters are so not worth it for our purpose
         public float light_angle_y = 0.0f;
         public float light_angle_x = 0.0f;
@@ -74,6 +75,8 @@ namespace MVCore
             windowHandler = win;
             kbState = win.KeyboardState;
             mouseState = win.MouseState;
+
+            prevMousePos = mouseState.Position;
 
             //gpHandler = new PS4GamePadHandler(0); //TODO: Add support for PS4 controller
             reqHandler = new RequestHandler();
@@ -137,9 +140,10 @@ namespace MVCore
             //Set global reference to cam
             RenderState.activeCam = cam;
 
+            TransformController tcontroller = transformSys.GetEntityTransformController(cam);
+            tcontroller.AddFutureState(new Vector3(), Quaternion.FromEulerAngles(0.0f, -3.14f/2.0f, 0.0f), new Vector3(1.0f));
 
             //TESTING Add sample future states for the camera
-            
             /*
             TransformController tcontroller = transformSys.GetEntityTransformController(cam);
             Vector3 sample_pos = new Vector3();
@@ -566,14 +570,21 @@ namespace MVCore
             return state ? 1 : 0;
         }
 
-        public void UpdateInput()
+        public void UpdateInput(double dt, bool capture_input)
         {
-            keyboardController();
-            mouseController();
-            //gpController();
+            //Reset Inputs
+            targetCameraPos.Reset();
+            
+            if (capture_input)
+            {
+                keyboardController(dt);
+                mouseController(dt);
+                //gpController();
+            } 
+
         }
 
-        public void keyboardController()
+        public void keyboardController(double dt)
         {
             //Camera Movement
             float step = 0.002f;
@@ -605,18 +616,19 @@ namespace MVCore
             return state ? 1 : 0;
         }
 
-        public void mouseController()
+        public void mouseController(double dt)
         {
+            //targetCameraPos.Rotation.Xy += new Vector2(0.55f, 0);
             if (mouseState.WasButtonDown(MouseButton.Left))
             {
-                float deltax = Math.Min(Math.Max(mouseState.Delta.X, -10), 10);
-                float deltay = Math.Min(Math.Max(mouseState.Delta.Y, -10), 10);
-
-                //Console.WriteLine("Mouse Delta {0} {1}", deltax, deltay);
+                Vector2 deltaVec = mouseState.Position - prevMousePos;
                 
-                targetCameraPos.Rotation.Xy += new Vector2(deltax, deltay);
+                //Console.WriteLine("Mouse Delta {0} {1}", deltax, deltay);
+                targetCameraPos.Rotation = deltaVec;
             }
-            
+
+            prevMousePos = mouseState.Position;
+
         }
 
 

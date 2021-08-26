@@ -192,8 +192,7 @@ namespace ImGUI_SDL_ModelViewer
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
                 //Capture Keyboard Presses
-                if (isSceneViewActive)
-                    engine.UpdateInput();
+                engine.UpdateInput(e.Time, isSceneViewActive);
                 
                 frameUpdate(e.Time);
                 engine.handleRequests(); //Handle engine requests
@@ -722,9 +721,9 @@ namespace ImGUI_SDL_ModelViewer
                         //Camera Settings
                         ImGui.BeginGroup();
                         ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Settings");
-                        ImGui.SliderFloat("FOV", ref RenderState.activeCam.fov, 90.0f, 100.0f);
-                        ImGui.SliderFloat("MovementSpeed", ref RenderState.activeCam.Speed, 1.0f, 20.0f);
-                        ImGui.SliderFloat("MovementPower", ref RenderState.activeCam.SpeedPower, 1.0f, 10.0f);
+                        ImGui.SliderFloat("FOV", ref RenderState.activeCam.fov, 15.0f, 100.0f);
+                        ImGui.SliderFloat("Sensitivity", ref RenderState.activeCam.Sensitivity, 0.1f, 10.0f);
+                        ImGui.InputFloat("MovementSpeed", ref RenderState.activeCam.Speed, 1.0f, 500000.0f);
                         ImGui.SliderFloat("zNear", ref RenderState.activeCam.zNear, 0.01f, 1.0f);
                         ImGui.SliderFloat("zFar", ref RenderState.activeCam.zFar, 101.0f, 30000.0f);
 

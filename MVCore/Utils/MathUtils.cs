@@ -326,7 +326,7 @@ namespace MVCore.Utils
 
         public static float clamp(float val, float min, float max)
         {
-            return (float)Math.Min(Math.Max((double) min, (double) val), (double)max);
+            return (float) Math.Min(Math.Max(min, val), (double) max);
         }
 
         public static double clamp(double val, double min, double max)
