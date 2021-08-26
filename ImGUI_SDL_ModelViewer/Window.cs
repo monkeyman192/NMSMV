@@ -268,7 +268,7 @@ namespace ImGUI_SDL_ModelViewer
             }
             
             //Calculate new Camera State
-            Camera.CalculateNextCameraState(ref engine, RenderState.activeCam, engine.targetCameraPos);
+            Camera.CalculateNextCameraState(ref engine, RenderState.activeCam, engine.targetCameraPos, dt);
             
             RenderState.activeCam.aspect = (float)SceneViewSize.X / SceneViewSize.Y;
             RenderState.activeCam.updateViewMatrix();

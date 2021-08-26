@@ -28,17 +28,18 @@ namespace MVCore
     public class Camera : Entity
     {
         //Base Coordinate System
-        public Vector3 BaseRight = new(1.0f, 0.0f, 0.0f);
-        public Vector3 BaseFront = new(0.0f, 0.0f, -1.0f);
-        public Vector3 BaseUp = new(0.0f, 1.0f, 0.0f);
+        public static Vector3 BaseRight = new(1.0f, 0.0f, 0.0f);
+        public static Vector3 BaseFront = new(0.0f, 0.0f, -1.0f);
+        public static Vector3 BaseUp = new(0.0f, 1.0f, 0.0f);
 
         //Current Vectors
         public Vector3 Right;
         public Vector3 Front;
         public Vector3 Up;
-        public Quaternion Direction = new(new(0.0f, (float)Math.PI / 2.0f, 0.0f));
+        private float pitch = 0.0f;
+        private float yaw = 0.0f;
         public Vector3 Position = new(0.0f, 0.0f, 0.0f);
-
+        public Vector3 Direction = new Vector3(0.0f, 0.0f, -1.0f);
         //Movement Time
         
         public float Speed = 1.0f; //Speed in Units/Sec
@@ -92,7 +93,7 @@ namespace MVCore
         
         public void updateViewMatrix()
         {
-            lookMat = Matrix4.LookAt(Position, Position + Front, Up);
+            lookMat = Matrix4.LookAt(Position, Position + Direction, Up);
             float fov_rad = MVCore.Utils.MathUtils.radians(fov);
             
             if (type == 0) {
@@ -128,19 +129,33 @@ namespace MVCore
         public static void UpdateCameraDirectionalVectors(ref Engine engine, Camera cam)
         {
             //Update Camera Vectors
-            TransformController t_controller = engine.transformSys.GetEntityTransformController(cam);
+            TransformComponent tc = cam.GetComponent<TransformComponent>() as TransformComponent;
+            
 
             //Apply Current Position to the Camera
-            cam.Position = t_controller.Position;
-            
+            cam.Position = tc.Data.localTranslation;
+            /*
             cam.Front = (MathUtils.conjugate(t_controller.Rotation) *
                         (new Quaternion(cam.BaseFront, 0.0f)) *
                         t_controller.Rotation).Xyz.Normalized();
             cam.Right = Vector3.Cross(cam.Front, cam.BaseUp).Normalized();
             cam.Up = Vector3.Cross(cam.Right, cam.Front).Normalized();
+            */
+
+            //Calculate with euler angles
+
+            cam.Front.X = (float) Math.Cos(tc.Data.RotX) * (float) Math.Cos(tc.Data.RotY);
+            cam.Front.Y = (float) Math.Sin(tc.Data.RotY);
+            cam.Front.Z = (float) Math.Sin(tc.Data.RotX) * (float) Math.Cos(tc.Data.RotY);
+
+            cam.Front.Normalize();
+            cam.Up = Camera.BaseUp;
+
+            cam.Right = Vector3.Cross(cam.Front, cam.Up).Normalized();
+            
         }
 
-        public static void CalculateNextCameraState(ref Engine engine, Camera cam, CameraPos target)
+        public static void CalculateNextCameraState(ref Engine engine, Camera cam, CameraPos target, double dt)
         {
             TransformComponent tc = cam.GetComponent<TransformComponent>() as TransformComponent;
             TransformController t_controller = engine.transformSys.GetEntityTransformController(cam);
@@ -170,12 +185,12 @@ namespace MVCore
             //                cam.Front.X, cam.Front.Y, cam.Front.Z);
             
             Vector3 offset = new();
-            offset += actual_speed * target.PosImpulse.X * cam.Right;
-            offset += actual_speed * target.PosImpulse.Y * cam.Front;
-            offset += actual_speed * target.PosImpulse.Z * cam.Up;
+            offset += actual_speed * (float) dt * target.PosImpulse.X * cam.Right;
+            offset += actual_speed * (float) dt * target.PosImpulse.Y * cam.Front;
+            offset += actual_speed * (float) dt * target.PosImpulse.Z * cam.Up;
 
             currentPosition += offset;
-            currentRotation = rx * ry;
+            currentRotation *= rx * ry;
 
             //Common.Callbacks.Log(string.Format("Camera Position {0} {1} {2}",
             //                    currentPosition.X, currentPosition.Y, currentPosition.Z), Common.LogVerbosityLevel.INFO);

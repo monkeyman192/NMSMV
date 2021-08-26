@@ -24,6 +24,23 @@ namespace MVCore
             }
         }
 
+        public Quaternion localRotation
+        {
+            get
+            {
+                return Quaternion.FromEulerAngles(RotX, RotY, RotZ);
+            }
+
+            set
+            {
+                Vector3 res;
+                Quaternion.ToEulerAngles(value, out res);
+                RotX = res.X;
+                RotY = res.Y;
+                RotZ = res.Z;
+            }
+        }
+
         public Vector4 WorldPosition
         {
             get
@@ -33,7 +50,7 @@ namespace MVCore
 
         }
 
-        public Vector3 Scale
+        public Vector3 localScale
         {
             get => new(ScaleX, ScaleY, ScaleZ);
 
@@ -56,9 +73,6 @@ namespace MVCore
         private float OldScaleY;
         private float OldScaleZ;
 
-        public Quaternion localRotation = Quaternion.Identity; //TODO: Make property
-        public Vector3 localScale = new(1.0f);
-        
         public Matrix4 LocalTransformMat = Matrix4.Identity;
         public Matrix4 WorldTransformMat = Matrix4.Identity;
         
