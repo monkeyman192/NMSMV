@@ -117,7 +117,6 @@ namespace MVCore
             State = Matrix4.CreateScale(Scale) * 
                     Matrix4.CreateFromQuaternion(Rotation) * 
                     Matrix4.CreateTranslation(Position);
-        
         }
 
         private void ApplyStateToActor()

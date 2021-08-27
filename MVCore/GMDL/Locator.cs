@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using OpenTK;
+using OpenTK.Mathematics;
 using MVCore.Common;
+using MVCore.Systems;
 
 namespace MVCore
 {
@@ -13,11 +14,8 @@ namespace MVCore
         public Locator()
         {
             //Set type
-            type = TYPES.LOCATOR;
-            //Set BBOX
-            AABBMIN = new(-0.1f, -0.1f, -0.1f);
-            AABBMAX = new(0.1f, 0.1f, 0.1f);
-
+            Type = TYPES.LOCATOR;
+            
             //Assemble geometry in the constructor
             meshVao = RenderState.activeResMgr.GLPrimitiveMeshVaos["default_cross"];
             instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
@@ -38,13 +36,13 @@ namespace MVCore
         {
             Locator new_s = new Locator();
             new_s.copyFrom(this);
-
+            
             //Clone children
-            foreach (Model child in children)
+            foreach (Model child in Children)
             {
                 Model new_child = child.Clone();
                 new_child.parent = new_s;
-                new_s.children.Add(new_child);
+                new_s.Children.Add(new_child);
             }
 
             return new_s;
@@ -64,8 +62,10 @@ namespace MVCore
                 return;
             }
 
-            bool fr_status = Common.RenderState.activeCam.frustum_occlude(meshVao, worldMat * RenderState.rotMat);
-            bool occluded_status = !fr_status && Common.RenderState.settings.renderSettings.UseFrustumCulling;
+
+            Matrix4 worldMat = TransformationSystem.GetEntityWorldMat(this);
+            bool fr_status = RenderState.activeCam.frustum_occlude(meshVao, worldMat * RenderState.rotMat);
+            bool occluded_status = !fr_status && RenderState.settings.renderSettings.UseFrustumCulling;
 
             //Recalculations && Data uploads
             if (!occluded_status)

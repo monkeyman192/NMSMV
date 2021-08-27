@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 using Path = System.IO.Path;
 using MVCore.Common;
 using System.Windows;
+using System.Reflection;
+using libMBIN.NMS;
 
 namespace MVCore.Utils
 {
@@ -211,19 +213,19 @@ namespace MVCore.Utils
         }
 
         //Animation frame data collection methods
-        public static Quaternion fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
+        public static OpenTK.Mathematics.Quaternion fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
         {
             //Load Frames
             //Console.WriteLine("Setting Frame Index {0}", frameIndex);
             TkAnimNodeFrameData frame = animMeta.AnimFrameData[frameCounter];
             TkAnimNodeFrameData stillframe = animMeta.StillFrameData;
 
-            Quaternion q;
+            OpenTK.Mathematics.Quaternion q;
             //Check if there is a rotation for that node
             if (node.RotIndex < frame.Rotations.Count)
             {
                 int rotindex = node.RotIndex;
-                q = new Quaternion(frame.Rotations[rotindex].x,
+                q = new OpenTK.Mathematics.Quaternion(frame.Rotations[rotindex].x,
                                 frame.Rotations[rotindex].y,
                                 frame.Rotations[rotindex].z,
                                 frame.Rotations[rotindex].w);
@@ -231,7 +233,7 @@ namespace MVCore.Utils
             else //Load stillframedata
             {
                 int rotindex = node.RotIndex - frame.Rotations.Count;
-                q = new Quaternion(stillframe.Rotations[rotindex].x,
+                q = new OpenTK.Mathematics.Quaternion(stillframe.Rotations[rotindex].x,
                                 stillframe.Rotations[rotindex].y,
                                 stillframe.Rotations[rotindex].z,
                                 stillframe.Rotations[rotindex].w);
@@ -240,7 +242,8 @@ namespace MVCore.Utils
             return q;
         }
 
-        public static void fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter, ref Quaternion q)
+        public static void fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, 
+            int frameCounter, ref OpenTK.Mathematics.Quaternion q)
         {
             //Load Frames
             //Console.WriteLine("Setting Frame Index {0}", frameIndex);
@@ -608,6 +611,38 @@ namespace MVCore.Utils
 
             Callbacks.Log("Unable to locate Steam Installation...", LogVerbosityLevel.INFO);
             return null;
+        }
+
+        private static FieldInfo getField<T>(T item, string fieldName)
+        {
+            return item.GetType().GetField(fieldName);
+        }
+
+        private static object getFieldValue(object item, FieldInfo temp)
+        {
+            return temp.GetValue(item);
+        }
+
+        public static string parseNMSTemplateAttrib(List<TkSceneNodeAttributeData> temp, string attrib)
+        {
+
+            foreach (TkSceneNodeAttributeData elem in temp)
+            {
+                //Get Name field
+                FieldInfo nameField = getField(elem, "Name");
+                FieldInfo valueField = getField(elem, "Value");
+
+                NMSString0x10 iitem = getFieldValue(elem, nameField) as NMSString0x10;
+                if (iitem.Value == attrib)
+                {
+                    //Fetch and return the value
+                    NMSString0x100 ival = getFieldValue(elem, valueField) as NMSString0x100;
+                    return ival.Value;
+
+                }
+            }
+
+            return "";
         }
 
     }

@@ -12,7 +12,7 @@ namespace MVCore.GMDL
 
         public Reference()
         {
-            type = TYPES.REFERENCE;
+            Type = TYPES.REFERENCE;
         }
 
         public Reference(Reference input)

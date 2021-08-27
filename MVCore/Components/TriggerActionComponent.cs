@@ -168,8 +168,10 @@ namespace MVCore
         }
     }
 
-    public class NodeActivationAction:Action
+    public class NodeActivationAction: Action
     {
+        public SceneGraphNode Target = null;
+        
         public NodeActivationAction()
         {
 
@@ -203,6 +205,16 @@ namespace MVCore
             {
                 return ((GcNodeActivationAction) _template).UseMasterModel;
             }
+        }
+
+        public void SetTarget(SceneGraphNode e)
+        {
+            Target = e;
+        }
+
+        public void ClearTargeT()
+        {
+            Target = null;
         }
 
     }
@@ -285,7 +297,10 @@ namespace MVCore
             foreach (NMSTemplate t in at.Action)
             {
                 if (t is GcNodeActivationAction)
-                    Actions.Add(new NodeActivationAction(t));
+                {
+                    NodeActivationAction nAA = new(t);
+                    Actions.Add(nAA);
+                }   
                 else if (t is GcGoToStateAction)
                     Actions.Add(new GoToStateAction(t));
                 else if (t is GcPlayAnimAction)
@@ -384,6 +399,11 @@ namespace MVCore
         {
             //TODO: Make sure to properly populate the new object
             return new TriggerActionComponent();
+        }
+
+        public override void CopyFrom(Component c)
+        {
+            throw new NotImplementedException();
         }
 
         //Exposed Properties

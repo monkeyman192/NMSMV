@@ -6,6 +6,7 @@ using System.Text;
 //using System.Windows.Media.Animation;
 using libMBIN.NMS.Toolkit;
 using MVCore.Utils;
+using MVCore.Systems;
 using OpenTK;
 using OpenTK.Mathematics;
 
@@ -348,9 +349,9 @@ namespace MVCore
             Vector3 s = next_s * LERP_coeff + prev_s * (1.0f - LERP_coeff);
 
             //Convert transforms
-            m.localRotation = Matrix4.CreateFromQuaternion(q);
-            m.localPosition = p;
-            m.localScale = s;
+            TransformationSystem.SetEntityRotation(m, q);
+            TransformationSystem.SetEntityLocation(m, p);
+            TransformationSystem.SetEntityScale(m, s);
         }
 
         public void GetCurrentTransform(ref Vector3 p, ref Vector3 s, ref Quaternion q, string node)

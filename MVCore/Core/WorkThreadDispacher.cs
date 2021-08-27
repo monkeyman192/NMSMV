@@ -48,7 +48,7 @@ namespace MVCore
             Thread t = null;
             switch (tr.type)
             {
-                case THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST:
+                case THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES:
                     string filepath = (string) tr.arguments[0];
                     string gameDir = (string) tr.arguments[1];
                     ResourceManager resMgr = (ResourceManager) tr.arguments[2];

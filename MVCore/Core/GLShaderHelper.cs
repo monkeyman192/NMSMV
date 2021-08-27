@@ -352,7 +352,7 @@ namespace GLSLHelper {
         {
             Console.WriteLine("Sending Shader Modification Request");
             ThreadRequest req = new ThreadRequest();
-            req.type = THREAD_REQUEST_TYPE.GL_MODIFY_SHADER_REQUEST;
+            req.type = THREAD_REQUEST_TYPE.ENGINE_MODIFY_SHADER;
             req.arguments.Add(config);
             req.arguments.Add(shaderText);
 

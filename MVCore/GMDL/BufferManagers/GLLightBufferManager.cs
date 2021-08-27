@@ -1,9 +1,11 @@
 ﻿using System;
 using OpenTK;
 using OpenTK.Mathematics;
+using MVCore.Systems;
 using MVCore.Utils;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+
 
 namespace MVCore
 {
@@ -68,13 +70,13 @@ namespace MVCore
 
                 //Uplod worldMat to the meshVao
 
-                SetInstanceWorldMat(ref mesh, instance_id, l.worldMat);
+                SetInstanceWorldMat(ref mesh, instance_id, TransformationSystem.GetEntityWorldMat(l));
                 SetInstanceColor(ref mesh, instance_id, l.Color);
                 SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
                 SetInstanceDirection(ref mesh, instance_id, l.Direction);
-                SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l._fov)));
-                SetInstanceFallOff(ref mesh, instance_id, (int) l._falloff);
-                SetInstanceType(ref mesh, instance_id, (l._lightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
+                SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
+                SetInstanceFallOff(ref mesh, instance_id, (int) l.Falloff);
+                SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
                 
                 mesh.instanceRefs.Add(l); //Keep reference
                 mesh.instance_count++;
@@ -104,9 +106,9 @@ namespace MVCore
                 SetInstanceColor(ref mesh, instance_id, l.Color);
                 SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
                 SetInstanceDirection(ref mesh, instance_id, l.Direction);
-                SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l._fov)));
-                SetInstanceFallOff(ref mesh, instance_id, (int)l._falloff);
-                SetInstanceType(ref mesh, instance_id, (l._lightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
+                SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
+                SetInstanceFallOff(ref mesh, instance_id, (int)l.Falloff);
+                SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
 
                 mesh.instanceRefs.Add(l); //Keep reference
                 mesh.instance_count++;

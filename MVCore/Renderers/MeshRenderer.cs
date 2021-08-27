@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using GLSLHelper;
 using MVCore.GMDL;
+using MVCore.Systems;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
@@ -24,12 +25,17 @@ namespace MVCore
 
         public static void renderBbox(Model m)
         {
+            MeshComponent mc = m.GetComponent<MeshComponent>() as MeshComponent;
+            
+            if (mc == null)
+                return;
+
             Vector4[] tr_AABB = new Vector4[2];
             //tr_AABB[0] = new Vector4(metaData.AABBMIN, 1.0f) * worldMat;
             //tr_AABB[1] = new Vector4(metaData.AABBMAX, 1.0f) * worldMat;
 
-            tr_AABB[0] = new Vector4(m.AABBMIN, 1.0f);
-            tr_AABB[1] = new Vector4(m.AABBMAX, 1.0f);
+            tr_AABB[0] = new Vector4(mc.AABBMIN, 1.0f);
+            tr_AABB[1] = new Vector4(mc.AABBMAX, 1.0f);
 
             //tr_AABB[0] = new Vector4(metaData.AABBMIN, 0.0f);
             //tr_AABB[1] = new Vector4(metaData.AABBMAX, 0.0f);
@@ -270,9 +276,11 @@ namespace MVCore
             GL.BindVertexArray(mesh.bHullVao.vao_id);
 
             GL.DrawElementsBaseVertex(PrimitiveType.Points, mesh.metaData.batchcount,
-                        mesh.metaData.indicesLength, IntPtr.Zero, -mesh.metaData.vertrstart_physics);
+                        mesh.metaData.indicesLength, 
+                        IntPtr.Zero, -mesh.metaData.vertrstart_physics);
             GL.DrawElementsBaseVertex(PrimitiveType.Triangles, mesh.metaData.batchcount,
-                        mesh.metaData.indicesLength, IntPtr.Zero, -mesh.metaData.vertrstart_physics);
+                        mesh.metaData.indicesLength, 
+                        IntPtr.Zero, -mesh.metaData.vertrstart_physics);
             GL.BindVertexArray(0);
         }
 

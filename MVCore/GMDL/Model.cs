@@ -6,12 +6,13 @@ using OpenTK.Mathematics;
 using libMBIN.NMS.Toolkit;
 using System.Collections.ObjectModel;
 using MVCore.Utils;
+using MVCore.Systems;
 using System.Linq;
 using System.Windows.Input;
 
 namespace MVCore
 {
-    public abstract class Model : IDisposable, INotifyPropertyChanged
+    public abstract class Model : Entity, IDisposable, INotifyPropertyChanged
     {
         public bool renderable; //Used to toggle visibility from the UI
         public bool active; //Used internally
@@ -19,11 +20,6 @@ namespace MVCore
         public bool debuggable;
         public int selected;
         //public GLSLHelper.GLSLShaderConfig[] shader_programs;
-        public int ID;
-        public TYPES type;
-        public string name;
-        public ulong nameHash;
-        public List<Model> children = new List<Model>();
         public Dictionary<string, Dictionary<string, Vector3>> palette;
         public bool procFlag; //This is used to define procgen usage
         public TkSceneNodeData nms_template;
@@ -31,27 +27,6 @@ namespace MVCore
         public int instanceId = -1;
         public int VolumeinstanceId = -1;
         
-        //Transformation Parameters
-        public Vector3 worldPosition;
-        public Matrix4 worldMat;
-        public Matrix4 normMat;
-        public Matrix4 localMat;
-
-        public Vector3 __localPosition; //Original Position
-        public Vector3 __localRotationAngles; //Original Position
-        public Vector3 __localScale; //Original Scale
-        public Matrix4 __localRotation; //Original Rotation
-        public Vector3 localPosition;
-        public Matrix4 localRotation;
-        public Vector3 localScale;
-
-        public Vector3 _localRotationAngles;
-        public Matrix4 _localPoseMatrix;
-
-        public Model parent;
-        public int cIndex = 0;
-        //public bool updated = true; //Making it public just for the Joints
-
         //Components
         public Scene parentScene;
         public List<Component> _components = new List<Component>();
@@ -62,12 +37,6 @@ namespace MVCore
         //LOD
         public float[] _LODDistances = new float[5];
         public int _LODNum = 1; //Default value of 1 LOD per model
-
-        //Bounding Volume
-        public Vector3 __AABBMIN; //Base Values
-        public Vector3 __AABBMAX; //Base Values
-        public Vector3 _AABBMIN;
-        public Vector3 _AABBMAX;
 
         //Disposable Stuff
         public bool disposed = false;
@@ -82,29 +51,6 @@ namespace MVCore
 
 
         //Properties
-        
-        public Vector3 localRotationAngles
-        {
-            get { return _localRotationAngles; }
-            set { _localRotationAngles = value; update(); NotifyPropertyChanged("localRotationAngles"); }
-        }
-
-        public Vector3 AABBMIN
-        {
-            get { return _AABBMIN; }
-            set { _AABBMIN = value; update(); NotifyPropertyChanged("AABBMIN"); }
-        }
-
-        public Vector3 AABBMAX
-        {
-            get { return _AABBMAX; }
-            set { _AABBMAX = value; update(); NotifyPropertyChanged("AABBMAX"); }
-        }
-
-        public int LODNumber
-        {
-            get { return _LODNum; }
-        }
         public List<float> LODDistances
         {
             get
@@ -119,74 +65,15 @@ namespace MVCore
             }
         }
 
-        public void updateRotationFromAngles(float x, float y, float z)
-        {
-
-        }
-
-        public virtual Assimp.Node assimpExport(ref Assimp.Scene scn, ref Dictionary<int, int> meshImportStatus)
-        {
-
-            //Default shit
-            //Create assimp node
-            Assimp.Node node = new Assimp.Node(Name);
-            node.Transform = MathUtils.convertMatrix(localMat);
-
-            //Handle animations maybe?
-            int animComponentId = hasComponent(typeof(AnimComponent));
-            if (animComponentId > -1)
-            {
-                AnimComponent cmp = (AnimComponent)_components[animComponentId];
-                cmp.assimpExport(ref scn);
-
-            }
-
-            foreach (Model child in children)
-            {
-                Assimp.Node c = child.assimpExport(ref scn, ref meshImportStatus);
-                node.Children.Add(c);
-            }
-
-
-            return node;
-        }
-
-        public string Name
-        {
-            get { return name; }
-            set { name = value; }
-        }
-        public string Type
-        {
-            get { return type.ToString(); }
-        }
-
-        public virtual bool IsRenderable
-        {
-            get
-            {
-                return renderable;
-            }
-            set
-            {
-                renderable = value;
-                foreach (var child in Children)
-                    child.IsRenderable = value;
-                //meshVao?.setInstanceOccludedStatus(instanceId, !renderable);
-                NotifyPropertyChanged("IsRenderable"); //Make sure to update the UI because of the subsequent changes
-            }
-        }
-
-        public List<Component> Components
-        {
-            get
-            {
-                return _components;
-            }
-        }
-
+        
 
         //Methods
+        public virtual void recalculateAABB()
+        {
+
+        }
+
+        /*
         public virtual void recalculateAABB()
         {
             //Revert back to the original values
@@ -209,7 +96,7 @@ namespace MVCore
 
             //Transform all Vectors using the worldMat
             for (int i = 0; i < 8; i++)
-                vecs[i] = vecs[i] * worldMat;
+                vecs[i] = vecs[i] * TransformationSystem.GetEntityWorldMat(this);
 
             //Init vectors to max
             _AABBMIN = new Vector3(float.MaxValue);
@@ -227,7 +114,9 @@ namespace MVCore
                 _AABBMAX.Z = Math.Max(_AABBMAX.Z, vecs[i].Z);
             }
         }
+        */
 
+        /*
         public bool intersects(Vector3 ray_start, Vector3 ray, ref float distance)
         {
             //Calculate bound box center
@@ -266,23 +155,25 @@ namespace MVCore
             return false;
         }
 
+        */
+
         public abstract Model Clone();
 
         public virtual void updateLODDistances()
         {
-            foreach (Model s in children)
+            foreach (Entity s in Children)
                 s.updateLODDistances();
         }
 
         public virtual void setupSkinMatrixArrays()
         {
-            foreach (Model s in children)
+            foreach (Entity s in Children)
                 s.setupSkinMatrixArrays();
         }
 
         public virtual void updateMeshInfo(bool lod_filter = false)
         {
-            foreach (Model child in children)
+            foreach (Entity child in Children)
             {
                 child.updateMeshInfo(lod_filter);
             }
@@ -290,118 +181,35 @@ namespace MVCore
 
         public virtual void update()
         {
-
-            //Create scaling matrix
-            Matrix4 scale = Matrix4.Identity;
-            scale[0, 0] = localScale.X;
-            scale[1, 1] = localScale.Y;
-            scale[2, 2] = localScale.Z;
-
-            localMat = _localPoseMatrix * scale * localRotation * Matrix4.CreateTranslation(localPosition);
-            
-
-            //Finally Update world Transformation Matrix
-            if (parent != null)
-            {
-                worldMat = localMat * parent.worldMat;
-            }
-
-            else
-                worldMat = localMat;
-
-            //Update worldPosition
-            if (parent != null)
-            {
-                //Add Translation as well
-                worldPosition = (Vector4.TransformRow(new Vector4(0.0f, 0.0f, 0.0f, 1.0f), this.worldMat)).Xyz;
-            }
-            else
-                worldPosition = localPosition;
-
-            //Trigger the position update of all children nodes
-            foreach (Model child in children)
-            {
-                child.update();
-            }
-
+            //All transform updates should happen from the transformation system
         }
-
 
         public void AddChild(Model m)
         {
-            children.Add(m);
+            Children.Add(m);
             m.parent = this;
         }
 
-        public void findNode(string name, ref Model m)
-        {
-            if (Name == name)
-            {
-                m = this;
-                return;
-            }
-                
-            foreach (Model child in children)
-            {
-                child.findNode(name, ref m);
-            }
-        }
-
-
-        //Properties for Data Binding
-        public ObservableCollection<Model> Children
-        {
-            get
-            {
-                return new ObservableCollection<Model>(children.OrderBy(i => i.Name));
-            }
-        }
-
-
         //TODO: Consider converting all such attributes using properties
-        public void updatePosition(Vector3 newPosition)
-        {
-            localPosition = newPosition;
-            update();
-        }
-
+        
         public void init(float[] trans)
         {
-            //Get Local Position
-            Vector3 rotation;
-            localPosition = new Vector3(trans[0], trans[1], trans[2]);
-            __localPosition = localPosition;
+            TransformData td = (GetComponent<TransformComponent>() as TransformComponent).Data;
 
-            //Save raw rotations
-            rotation.X = MathUtils.radians(trans[3]);
-            rotation.Y = MathUtils.radians(trans[4]);
-            rotation.Z = MathUtils.radians(trans[5]);
+            td.TransX = trans[0];
+            td.TransY = trans[1];
+            td.TransZ = trans[2];
+            td.RotX = trans[3];
+            td.RotY = trans[4];
+            td.RotZ = trans[5];
+            td.ScaleX = trans[6];
+            td.ScaleY = trans[7];
+            td.ScaleZ = trans[8];
 
-            _localRotationAngles = new Vector3(trans[3], trans[4], trans[5]);
-            __localRotationAngles = _localRotationAngles;
-            //IF PARSED SEPARATELY USING THE AXIS ANGLES
-            //OpenTK.Quaternion qx = OpenTK.Quaternion.FromAxisAngle(new Vector3(1.0f, 0.0f, 0.0f), rotation.X);
-            //OpenTK.Quaternion qy = OpenTK.Quaternion.FromAxisAngle(new Vector3(0.0f, 1.0f, 0.0f), rotation.Y);
-            //OpenTK.Quaternion qz = OpenTK.Quaternion.FromAxisAngle(new Vector3(0.0f, 0.0f, 1.0f), rotation.Z);
 
-            //OpenTK.Quaternion q = qy * qz * qx; //ALWAYS YZX
-            //OpenTK.Quaternion q = qx * qz * qy; //ALWAYS YZX
-            //OpenTK.Quaternion q_euler = OpenTK.Quaternion.FromEulerAngles(MathUtils.radians(trans[3]),
-            //                                            MathUtils.radians(trans[4]), MathUtils.radians(trans[5]));
+            //Set Original positions
+            td.StoreAsOldTransform();
 
-            Matrix4 rotx = Matrix4.CreateRotationX(rotation.X);
-            Matrix4 roty = Matrix4.CreateRotationY(rotation.Y);
-            Matrix4 rotz = Matrix4.CreateRotationZ(rotation.Z);
-            localRotation = rotz * rotx * roty;
-            __localRotation = localRotation;
-            
-            //Get Local Scale
-            localScale = new Vector3(trans[6], trans[7], trans[8]);
-            __localScale = localScale;
-
-            //Set paths
-            if (parent != null)
-                this.cIndex = this.parent.children.Count;
         }
 
         //Default Constructor
@@ -412,27 +220,18 @@ namespace MVCore
             debuggable = false;
             occluded = false;
             selected = 0;
-            ID = -1;
-            name = "";
+            //TODO: DIRTYFIX, When model will be completely replaced by the Entity class
+            //and objects will be registered by the entity registration system, this should be removed
+            ID = Common.RenderState.itemCounter;
+            Common.RenderState.itemCounter++;
             procFlag = false;    //This is used to define procgen usage
 
-            //Transformation Parameters
-            worldPosition = new Vector3(0.0f, 0.0f, 0.0f);
-            worldMat = Matrix4.Identity;
-            normMat = Matrix4.Identity;
-            localMat = Matrix4.Identity;
-
-            localPosition = new Vector3(0.0f, 0.0f, 0.0f);
-            localScale = new Vector3(1.0f, 1.0f, 1.0f);
-            localRotation = Matrix4.Identity;
-            _localRotationAngles = new Vector3(0.0f, 0.0f, 0.0f);
-            _localPoseMatrix = Matrix4.Identity;
-            _AABBMAX = new Vector3(1.0f);
-            _AABBMIN = new Vector3(-1.0f);
-
-            cIndex = 0;
 
             //Component Init
+
+            //Add TransformComponent
+            TransformationSystem.AddTransformComponentToEntity(this);
+            
             _components = new List<Component>();
             animComponentID = -1;
             animPoseComponentID = -1;
@@ -447,56 +246,38 @@ namespace MVCore
 
         public virtual void copyFrom(Model input)
         {
-            this.renderable = input.renderable; //Override Renderability
-            this.debuggable = input.debuggable;
-            this.selected = 0;
-            this.type = input.type;
-            this.name = input.name;
-            this.ID = input.ID;
-            this.cIndex = input.cIndex;
+            CopyFrom(input);
+            
+            renderable = input.renderable; //Override Renderability
+            debuggable = input.debuggable;
+            selected = 0;
             //MESHVAO AND INSTANCE IDS SHOULD BE HANDLED EXPLICITLY
 
-            //Clone transformation
-            localPosition = input.localPosition;
-            localRotationAngles = input.localRotationAngles;
-            localRotation = input.localRotation;
-            localScale = input.localScale;
-            _localPoseMatrix = input._localPoseMatrix;
-
-            this.localMat = input.localMat;
-            this.worldMat = input.worldMat;
-            this.normMat = input.normMat;
-
             //Clone LOD Info
-            this._LODNum = input._LODNum;
+            _LODNum = input._LODNum;
             for (int i = 0; i < 5; i++)
                 this._LODDistances[i] = input._LODDistances[i];
 
             //Component Stuff
-            this.animComponentID = input.animComponentID;
-            this.animPoseComponentID = input.animPoseComponentID;
+            animComponentID = input.animComponentID;
+            animPoseComponentID = input.animPoseComponentID;
 
-            //Clone components
-            for (int i = 0; i < input.Components.Count; i++)
-            {
-                this.Components.Add(input.Components[i].Clone());
-            }
         }
 
         //Copy Constructor
         public Model(Model input)
         {
             this.copyFrom(input);
-            foreach (Model child in input.children)
+            foreach (Entity child in input.Children)
             {
-                Model nChild = child.Clone();
-                nChild.parent = this;
-                this.children.Add(nChild);
+                Entity nChild = child.Clone();
+                nChild.Parent = this;
+                Children.Add(nChild);
             }
         }
 
         //NMSTEmplate Export
-
+        
         public virtual TkSceneNodeData ExportTemplate(bool keepRenderable)
         {
             //Copy main info
@@ -508,10 +289,10 @@ namespace MVCore
             cpy.Name = nms_template.Name;
             cpy.NameHash = nms_template.NameHash;
 
-            if (children.Count > 0)
+            if (Children.Count > 0)
                 cpy.Children = new List<TkSceneNodeData>();
 
-            foreach (Model child in children)
+            foreach (Entity child in Children)
             {
                 if (!child.renderable && keepRenderable)
                     continue;
@@ -644,22 +425,21 @@ namespace MVCore
 
         private void resetTransform()
         {
-            localRotation = __localRotation;
-            localPosition = __localPosition;
-            localScale = __localScale;
+            TransformData td = TransformationSystem.GetEntityTransformData(this);
+            td.ResetTransform();
             
             //Save values to underlying SceneNode
             if (nms_template != null)
             {
-                nms_template.Transform.ScaleX = localScale.X;
-                nms_template.Transform.ScaleY = localScale.Y;
-                nms_template.Transform.ScaleZ = localScale.Z;
-                nms_template.Transform.TransX = localPosition.X;
-                nms_template.Transform.TransY = localPosition.Y;
-                nms_template.Transform.TransZ = localPosition.Z;
+                nms_template.Transform.ScaleX = td.ScaleX;
+                nms_template.Transform.ScaleY = td.ScaleY;
+                nms_template.Transform.ScaleZ = td.ScaleZ;
+                nms_template.Transform.TransX = td.TransX;
+                nms_template.Transform.TransY = td.TransY;
+                nms_template.Transform.TransZ = td.TransZ;
                 //Convert rotation from matrix to angles
                 //Vector3 q_euler = quaternionToEuler(oldrotation);
-                Matrix4 tempMat = localRotation;
+                Matrix4 tempMat = Matrix4.CreateFromQuaternion(td.localRotation);
                 tempMat.Transpose();
                 Vector3 q_euler = MathUtils.matrixToEuler(tempMat, "ZXY");
 
@@ -813,7 +593,7 @@ namespace MVCore
             // If this finalizer runs, someone somewhere failed to
             // call Dispose, which means we've failed to leave
             // a monitor!
-            System.Diagnostics.Debug.Fail("Undisposed lock. Object Type " + type);
+            System.Diagnostics.Debug.Fail("Undisposed lock. Object Type " + Type.ToString());
         }
 #endif
 

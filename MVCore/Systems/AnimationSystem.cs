@@ -7,11 +7,10 @@ using OpenTK.Mathematics;
 
 namespace MVCore.Systems
 {
-    public class AnimationSystem :EngineSystem
+    public class AnimationSystem : EngineSystem
     {
-        public List<Model> AnimScenes = new List<Model>();
-        public Dictionary<Model, List<AnimData>> AnimQueues = new Dictionary<Model, List<AnimData>>();
-        public Engine engine;
+        public List<Entity> AnimScenes = new();
+        public Dictionary<Entity, List<AnimData>> AnimQueues = new();
         private float timeInterval = 20.0f;
         private float time = 0.0f;
 
@@ -124,17 +123,17 @@ namespace MVCore.Systems
                         p += blendFactor * jt.PositionQueue[i];
                         s += blendFactor * jt.ScaleQueue[i];
                     }
-                    
-                    jt.localRotation = Matrix4.CreateFromQuaternion(q);
-                    jt.localPosition = p;
-                    jt.localScale = s;
+
+                    TransformationSystem.SetEntityLocation(jt, p);
+                    TransformationSystem.SetEntityRotation(jt, q);
+                    TransformationSystem.SetEntityScale(jt, s);
                 }
             }
         }
 
-        public void StartAnimation(Model anim_model, string Anim)
+        public void StartAnimation(Entity anim_model, string Anim)
         {
-            AnimComponent ac = anim_model.Components[anim_model.animComponentID] as AnimComponent;
+            AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             AnimData ad = ac.getAnimation(Anim);
 
             if (ad != null)
@@ -146,16 +145,16 @@ namespace MVCore.Systems
 
         public void StopActiveAnimations(Model anim_model)
         {
-            AnimComponent ac = anim_model.Components[anim_model.animComponentID] as AnimComponent;
+            AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             List<AnimData> ad_list = ac.getActiveAnimations();
           
             foreach (AnimData ad in ad_list)
                 ad.IsPlaying = false;
         }
 
-        public void StopActiveLoopAnimations(Model anim_model)
+        public void StopActiveLoopAnimations(Entity anim_model)
         {
-            AnimComponent ac = anim_model.Components[anim_model.animComponentID] as AnimComponent;
+            AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             List<AnimData> ad_list = ac.getActiveAnimations();
 
             foreach (AnimData ad in ad_list)
@@ -166,9 +165,9 @@ namespace MVCore.Systems
                 
         }
 
-        public int queryAnimationFrame(Model anim_model, string Anim)
+        public int queryAnimationFrame(Entity anim_model, string Anim)
         {
-            AnimComponent ac = anim_model.Components[anim_model.animComponentID] as AnimComponent;
+            AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             AnimData ad = ac.getAnimation(Anim);
 
             if (ad != null)
@@ -178,9 +177,9 @@ namespace MVCore.Systems
             return -1;
         }
 
-        public int queryAnimationFrameCount(Model anim_model, string Anim)
+        public int queryAnimationFrameCount(Entity anim_model, string Anim)
         {
-            AnimComponent ac = anim_model.Components[anim_model.animComponentID] as AnimComponent;
+            AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             AnimData ad = ac.getAnimation(Anim);
 
             if (ad != null)
@@ -190,7 +189,7 @@ namespace MVCore.Systems
             return -1;
         }
 
-        public void Add(Model m)
+        public void Add(Entity m)
         {
             AnimScenes.Add(m);
         }

@@ -39,6 +39,7 @@ namespace MVCore
         public TransformationSystem transformSys;
         public ActionSystem actionSys;
         public AnimationSystem animationSys;
+        public SceneManagementSystem sceneManagementSys;
         public RenderingSystem renderSys;//TODO: Try to make it private. Noone should have a reason to access it
         private RequestHandler reqHandler;
         private NativeWindow windowHandler;
@@ -92,12 +93,14 @@ namespace MVCore
             actionSys = new ActionSystem();
             animationSys = new AnimationSystem();
             transformSys = new TransformationSystem();
-            
+            sceneManagementSys = new SceneManagementSystem();
+
             renderSys.SetEngine(this);
             registrySys.SetEngine(this);
             actionSys.SetEngine(this);
             animationSys.SetEngine(this);
             transformSys.SetEngine(this);
+            sceneManagementSys.SetEngine(this);
             
             //Set Start Status
             rt_State = EngineRenderingState.UNINITIALIZED;
@@ -133,32 +136,30 @@ namespace MVCore
             
             //Register Camer to Entity Registry
             registrySys.RegisterEntity(cam);
-            //Add TransfomComponent to Transformation System
+
+            
+            //Add Necessary Components to Camera
+            TransformationSystem.AddTransformComponentToEntity(cam);
+            
+            //Register Camera to Transformation System
             transformSys.RegisterEntity(cam, true);
+            //Add Camera to Dynamic Objects 
             transformSys.AddDynamicEntity(cam);
             
             //Set global reference to cam
             RenderState.activeCam = cam;
 
+            //Set Camera Initial State
             TransformController tcontroller = transformSys.GetEntityTransformController(cam);
             tcontroller.AddFutureState(new Vector3(), Quaternion.FromEulerAngles(0.0f, -3.14f/2.0f, 0.0f), new Vector3(1.0f));
 
-            //TESTING Add sample future states for the camera
-            /*
-            TransformController tcontroller = transformSys.GetEntityTransformController(cam);
-            Vector3 sample_pos = new Vector3();
-            Quaternion sample_rot = new();
-            Vector3 sample_scale = new Vector3(1.0f);
-            for (int i=0; i< 500; i++)
-            {
-                tcontroller.AddFutureState(sample_pos, sample_rot, sample_scale);
-                sample_pos.X -= 0.5f;
-            }
-            */
 
             //Initialize the render manager
             renderSys.init(resMgr, width, height);
             rt_State = EngineRenderingState.ACTIVE;
+
+            
+
 
             Log("Initialized", LogVerbosityLevel.INFO);
         }
@@ -166,7 +167,7 @@ namespace MVCore
         public void handleRequests()
         {
             //Log(string.Format(" {0} Open Requests ", reqHandler.getOpenRequestNum()), LogVerbosityLevel.HIDEBUG);
-            if (reqHandler.hasOpenRequests())
+            if (reqHandler.HasOpenRequests())
             {
                 ThreadRequest req = reqHandler.Fetch();
                 THREAD_REQUEST_STATUS req_status = THREAD_REQUEST_STATUS.FINISHED;
@@ -176,28 +177,28 @@ namespace MVCore
                 {
                     switch (req.type)
                     {
-                        case THREAD_REQUEST_TYPE.QUERY_GLCONTROL_STATUS_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_QUERY_GLCONTROL_STATUS:
                             if (rt_State == EngineRenderingState.UNINITIALIZED)
                                 req_status = THREAD_REQUEST_STATUS.ACTIVE;
                             else
                                 req_status = THREAD_REQUEST_STATUS.FINISHED;
                                 //At this point the renderer is up and running
                             break;
-                        case THREAD_REQUEST_TYPE.INIT_RESOURCE_MANAGER:
+                        case THREAD_REQUEST_TYPE.ENGINE_INIT_RESOURCE_MANAGER:
                             resMgr.Init();
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.NEW_SCENE_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_OPEN_NEW_SCENE:
                             rt_addRootScene((string)req.arguments[0]);
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
 #if DEBUG               
-                        case THREAD_REQUEST_TYPE.NEW_TEST_SCENE_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_OPEN_TEST_SCENE:
                             rt_addTestScene((int)req.arguments[0]);
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
 #endif
-                        case THREAD_REQUEST_TYPE.CHANGE_MODEL_PARENT_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_CHANGE_MODEL_PARENT:
                             throw new Exception("Not Implemented");
                             /*
                             Model source = (Model) req.arguments[0];
@@ -215,51 +216,54 @@ namespace MVCore
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             */
                             break;
-                        case THREAD_REQUEST_TYPE.UPDATE_SCENE_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_UPDATE_SCENE:
                             Scene req_scn = (Scene)req.arguments[0];
                             req_scn.update();
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.GL_COMPILE_ALL_SHADERS_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_COMPILE_ALL_SHADERS:
                             resMgr.CompileMainShaders();
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.MOUSEPOSITION_INFO_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_MOUSEPOSITION_INFO:
                             Vector4[] t = (Vector4[])req.arguments[2];
                             renderSys.getMousePosInfo((int)req.arguments[0], (int)req.arguments[1],
                                 ref t);
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.GL_RESIZE_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_RESIZE_VIEWPORT:
                             rt_ResizeViewport((int)req.arguments[0], (int)req.arguments[1]);
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.GL_MODIFY_SHADER_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_MODIFY_SHADER:
                             GLShaderHelper.modifyShader((GLSLShaderConfig)req.arguments[0],
                                          (GLSLShaderText)req.arguments[1]);
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.GIZMO_PICKING_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_GIZMO_PICKING:
                             //TODO: Send the nessessary arguments to the render manager and mark the active gizmoparts
                             Gizmo g = (Gizmo)req.arguments[0];
                             renderSys.gizmoPick(ref g, (Vector2)req.arguments[1]);
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.TERMINATE_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER:
                             rt_State = EngineRenderingState.EXIT;
                             resMgr.Cleanup(); //Free Resources
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.GL_PAUSE_RENDER_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_PAUSE_RENDER:
                             rt_State = EngineRenderingState.PAUSED;
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
-                        case THREAD_REQUEST_TYPE.GL_RESUME_RENDER_REQUEST:
+                        case THREAD_REQUEST_TYPE.ENGINE_RESUME_RENDER:
                             rt_State = EngineRenderingState.ACTIVE;
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.NULL: //Is this ever used?
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
+                            break;
+                        default:
+                            Log(string.Format("Not supported Request {0}", req.type), LogVerbosityLevel.HIDEBUG);
                             break;
                     }
                 }
@@ -309,8 +313,7 @@ namespace MVCore
 
             //Setup new object
             Scene scene = new();
-            scene.name = "DEFAULT SCENE";
-
+            scene.Name = "DEFAULT SCENE";
 
             //Add Lights
             Light l = new()
@@ -319,12 +322,12 @@ namespace MVCore
                 Color = new Vector3(1.0f, 1.0f, 1.0f),
                 IsRenderable = true,
                 Intensity = 100.0f,
-                Attenuation = "QUADRATIC"
+                Falloff = ATTENUATION_TYPE.QUADRATIC
             };
-            l.localPosition = new Vector3(0.2f, 0.2f, -2.0f);
 
+            TransformationSystem.SetEntityLocation(l, new Vector3(0.2f, 0.2f, -2.0f));
             RenderState.activeResMgr.GLlights.Add(l);
-            scene.children.Add(l);
+            scene.Children.Add(l);
 
             Light l1 = new()
             {
@@ -332,12 +335,13 @@ namespace MVCore
                 Color = new Vector3(1.0f, 1.0f, 1.0f),
                 IsRenderable = true,
                 Intensity = 100.0f,
-                Attenuation = "QUADRATIC"
+                Falloff = ATTENUATION_TYPE.QUADRATIC
             };
 
-            l.localPosition = new Vector3(0.2f, -0.2f, -2.0f);
+            TransformationSystem.SetEntityLocation(l1, new Vector3(0.2f, -0.2f, -2.0f));
+
             RenderState.activeResMgr.GLlights.Add(l1);
-            scene.children.Add(l1);
+            scene.Children.Add(l1);
 
             Light l2 = new()
             {
@@ -345,12 +349,12 @@ namespace MVCore
                 Color = new Vector3(1.0f, 1.0f, 1.0f),
                 IsRenderable = true,
                 Intensity = 100.0f,
-                Attenuation = "QUADRATIC"
+                Falloff = ATTENUATION_TYPE.QUADRATIC
             };
-            
-            l2.localPosition = new Vector3(-0.2f, 0.2f, -2.0f);
-            Common.RenderState.activeResMgr.GLlights.Add(l2);
-            scene.children.Add(l2);
+
+            TransformationSystem.SetEntityLocation(l2, new Vector3(-0.2f, 0.2f, -2.0f));
+            RenderState.activeResMgr.GLlights.Add(l2);
+            scene.Children.Add(l2);
 
             Light l3 = new()
             {
@@ -358,12 +362,12 @@ namespace MVCore
                 Color = new Vector3(1.0f, 1.0f, 1.0f),
                 IsRenderable = true,
                 Intensity = 100.0f,
-                Attenuation = "QUADRATIC"
+                Falloff = ATTENUATION_TYPE.QUADRATIC
             };
 
-            l3.localPosition = new Vector3(-0.2f, -0.2f, -2.0f);
-            Common.RenderState.activeResMgr.GLlights.Add(l2);
-            scene.children.Add(l3);
+            TransformationSystem.SetEntityLocation(l3, new Vector3(-0.2f, -0.2f, -2.0f));
+            RenderState.activeResMgr.GLlights.Add(l3);
+            scene.Children.Add(l3);
 
             //Generate a Sphere and center it in the scene
             Mesh sphere = new();
@@ -409,10 +413,10 @@ namespace MVCore
             sphere.meshVao.material = mat;
             sphere.instanceId = GLMeshBufferManager.AddInstance(ref sphere.meshVao, sphere); //Add instance
             
-            scene.children.Add(sphere);
+            scene.Children.Add(sphere);
 
             //Explicitly add default light to the rootObject
-            scene.children.Add(resMgr.GLlights[0]);
+            scene.Children.Add(resMgr.GLlights[0]);
 
             scene.updateLODDistances();
             scene.update(); //Refresh all transforms
@@ -458,11 +462,6 @@ namespace MVCore
 
 #endif
 
-
-
-
-
-
         private void rt_addRootScene(string filename)
         {
             //Once the new scene has been loaded, 
@@ -480,6 +479,7 @@ namespace MVCore
             ModelProcGen.procDecisions.Clear();
             
             RenderState.rootObject = null;
+            RenderState.itemCounter = 0;
             RenderState.activeModel = null;
             //Clear Gizmos
             RenderState.activeGizmo = null;
@@ -495,7 +495,7 @@ namespace MVCore
             Model root = GEOMMBIN.LoadObjects(filename);
 
             //Explicitly add default light to the rootObject
-            root.children.Add(resMgr.GLlights[0]);
+            root.Children.Add(resMgr.GLlights[0]);
 
             root.updateLODDistances();
             root.update(); //Refresh all transforms
@@ -512,7 +512,6 @@ namespace MVCore
             RenderState.rootObject = root;
             //RenderState.activeModel = root; //Set the new scene as the new activeModel
             
-
             //Reinitialize gizmos
             RenderState.activeGizmo = new TranslationGizmo();
 
@@ -521,22 +520,11 @@ namespace MVCore
         
         }
         
-        public void sendRequest(ref ThreadRequest r)
+        public void SendRequest(ref ThreadRequest r)
         {
-            reqHandler.sendRequest(ref r);
+            reqHandler.AddRequest(ref r);
         }
 
-        public void updateLightPosition(int light_id)
-        {
-            Light light = resMgr.GLlights[light_id];
-            light.updatePosition(new Vector3((float)(light_distance * Math.Cos(MathUtils.radians(light_angle_x)) *
-                                                            Math.Sin(MathUtils.radians(light_angle_y))),
-                                                (float)(light_distance * Math.Sin(MathUtils.radians(light_angle_x))),
-                                                (float)(light_distance * Math.Cos(MathUtils.radians(light_angle_x)) *
-                                                            Math.Cos(MathUtils.radians(light_angle_y)))));
-        }
-
-       
 
 #region INPUT_HANDLERS
 
@@ -606,6 +594,8 @@ namespace MVCore
             targetCameraPos.PosImpulse.X = x;
             targetCameraPos.PosImpulse.Y = y;
             targetCameraPos.PosImpulse.Z = z;
+
+            //Console.WriteLine("{0} {1} {2}", x, y, z);
         }
 
         //Mouse Methods
@@ -633,9 +623,5 @@ namespace MVCore
 
 
         #endregion
-
-
-
-
     }
 }

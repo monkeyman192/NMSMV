@@ -9,28 +9,8 @@ namespace ImGuiHelper
     
     class ImGuiSceneGraphViewer
     {
-        internal class SceneGraphNode
-        {
-            public Model refModel = null;
-            public bool isSelected = false;
-            public bool isOpen = false;
-            public List<SceneGraphNode> Children = new();
-            
-            public SceneGraphNode()
-            {
-                                
-            }
-
-            public void RemoveChild(SceneGraphNode m)
-            {
-                if (Children.Contains(m))
-                    Children.Remove(m);
-            }
-
-        }
-        
         private SceneGraphNode _root = null;
-        private Dictionary<int, SceneGraphNode> ModelMap = new();
+        private Dictionary<long, SceneGraphNode> ModelMap = new();
         private SceneGraphNode _selected = null;
         private SceneGraphNode _clicked = null;
 
@@ -44,15 +24,15 @@ namespace ImGuiHelper
         
         private void AddModelToMap(SceneGraphNode n)
         {
-            if (!ModelMap.ContainsKey(n.refModel.ID))
-                ModelMap[n.refModel.ID] = n;
+            if (!ModelMap.ContainsKey(n.RefEntity.ID))
+                ModelMap[n.RefEntity.ID] = n;
         }
-
-        public SceneGraphNode Traverse_Init(Model m)
+        
+        public SceneGraphNode Traverse_Init(Entity m)
         {
             SceneGraphNode n = new SceneGraphNode();
-            n.refModel = m;
-            foreach (Model child in m.Children)
+            n.RefEntity = m;
+            foreach (Entity child in m.Children)
                 AddChild(n, Traverse_Init(child));
             
             AddModelToMap(n);
@@ -67,7 +47,7 @@ namespace ImGuiHelper
             _clicked = null;
         }
 
-        public void Init(Model root)
+        public void Init(Entity root)
         {
             Clear();
             
@@ -105,31 +85,30 @@ namespace ImGuiHelper
                 base_flags |= ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.Leaf;
 
             if (_clicked != null && n == _clicked)
-
             {
                 base_flags |= ImGuiTreeNodeFlags.Selected;
                 _selected = n;
             }
 
-            bool node_open = ImGui.TreeNodeEx(n.refModel.name, base_flags);
-            n.isOpen = node_open;
+            bool node_open = ImGui.TreeNodeEx(n.RefEntity.Name, base_flags);
+            
+            n.IsOpen = node_open;
             
             if (ImGui.IsItemClicked())
             {
                 _clicked = n;
-                ImGuiManager.SetObjectReference(n.refModel);
+                ImGuiManager.SetObjectReference(n.RefEntity);
             }
 
-            if (n.isOpen)
+            if (n.IsOpen)
             {
                 if (n.Children.Count > 0)
                 {
                     foreach (SceneGraphNode nc in n.Children)
                         DrawNode(nc);
+                    ImGui.TreePop();
                 }
-                ImGui.TreePop();
             }
-
 
         }
         

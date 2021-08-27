@@ -7,6 +7,7 @@ namespace MVCore
     public abstract class Component : IDisposable
     {
         public abstract Component Clone();
+        public abstract void CopyFrom(Component c);
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls

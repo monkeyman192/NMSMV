@@ -28,16 +28,18 @@ namespace MVCore
         {
             get
             {
-                return Quaternion.FromEulerAngles(RotX, RotY, RotZ);
+                return Quaternion.FromEulerAngles(Utils.MathUtils.radians(RotX),
+                                                  Utils.MathUtils.radians(RotY),
+                                                  Utils.MathUtils.radians(RotZ));
             }
 
             set
             {
                 Vector3 res;
                 Quaternion.ToEulerAngles(value, out res);
-                RotX = res.X;
-                RotY = res.Y;
-                RotZ = res.Z;
+                RotX = Utils.MathUtils.degrees(res.X);
+                RotY = Utils.MathUtils.degrees(res.Y);
+                RotZ = Utils.MathUtils.degrees(res.Z);
             }
         }
 
@@ -99,6 +101,32 @@ namespace MVCore
                 return LocalTransformMat * parent.WorldTransformMat;
             else
                 return LocalTransformMat;
+        }
+
+        public void StoreAsOldTransform()
+        {
+            OldTransX = TransX;
+            OldTransY = TransY;
+            OldTransZ = TransZ;
+            OldRotX = RotX;
+            OldRotY = RotY;
+            OldRotZ = RotZ;
+            OldScaleX = ScaleX;
+            OldScaleY = ScaleY;
+            OldScaleZ = ScaleZ;
+        }
+
+        public void ResetTransform()
+        {
+            TransX = OldTransX;
+            TransY = OldTransY;
+            TransZ = OldTransZ;
+            RotX = OldRotX;
+            RotY = OldRotY;
+            RotZ = OldRotZ;
+            ScaleX = OldScaleX;
+            ScaleY = OldScaleY;
+            ScaleZ = OldScaleZ;
         }
     }
 

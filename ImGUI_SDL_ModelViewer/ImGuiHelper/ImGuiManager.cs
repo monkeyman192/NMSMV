@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 using System;
 using MVCore;
+using ImGUI_SDL_ModelViewer;
 
 namespace ImGuiHelper
 {
@@ -22,6 +23,7 @@ namespace ImGuiHelper
         static private bool show_test_components = false;
         static private string libMbinOnlineVersion = null;
         static private string libMbinLocalVersion = null;
+        static private Window windowRef = null;
 
         //ImguiPalette Colors
         //Blue
@@ -32,6 +34,11 @@ namespace ImGuiHelper
         {
             ImGuiIOPtr io = ImGui.GetIO();
             io.ConfigFlags |= ImGuiConfigFlags.DockingEnable; //Enable Docking
+        }
+
+        public static void SetWindowRef(Window win)
+        {
+            windowRef = win;
         }
 
         public static void ShowSettingsWindow()
@@ -71,7 +78,7 @@ namespace ImGuiHelper
             ObjectViewer?.Draw();
         }
 
-        public static void SetObjectReference(Model m)
+        public static void SetObjectReference(Entity m)
         {
             ObjectViewer.SetModel(m);
         }
@@ -83,12 +90,12 @@ namespace ImGuiHelper
             SceneGraphViewer?.Draw();
         }
 
-        public static void PopulateSceneGraph(Model m)
+        public static void PopulateSceneGraph(Entity m)
         {
             SceneGraphViewer.Init(m);
         }
 
-        public static void ClearSceneGraph(Model m)
+        public static void ClearSceneGraph()
         {
             SceneGraphViewer.Clear();
         }
@@ -126,7 +133,7 @@ namespace ImGuiHelper
                 ImGui.OpenPopup("show-settings");
                 show_settings_window = false;
             }
-
+            
             var isOpen = true;
             if (ImGui.BeginPopupModal("open-file", ref isOpen, ImGuiWindowFlags.NoTitleBar))
             {
@@ -144,9 +151,16 @@ namespace ImGuiHelper
             {
                 if (PakBrowser.isFinished())
                 {
+                    string filename = PakBrowser.SelectedItem;
                     PakBrowser.Clear();
                     ImGui.CloseCurrentPopup();
-                    //Issue File Open Request
+                    
+                    //Issue File Open Request to the Window
+                    ThreadRequest req = new ThreadRequest();
+                    req.type = THREAD_REQUEST_TYPE.WINDOW_OPEN_FILE;
+                    req.arguments.Add(filename);
+                    
+                    windowRef.SendRequest(ref req);
                 }
                 else
                 {

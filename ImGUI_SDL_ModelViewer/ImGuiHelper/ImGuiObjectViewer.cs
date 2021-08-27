@@ -6,14 +6,14 @@ namespace ImGuiHelper
 {
     class ImGuiObjectViewer
     {
-        private Model _model;
+        private Entity _model;
 
         public ImGuiObjectViewer(){
 
 
         }
 
-        public void SetModel(Model m)
+        public void SetModel(Entity m)
         {
             if (m == null)
                 return;
@@ -29,16 +29,16 @@ namespace ImGuiHelper
 
             if (_model != null)
             {
-                switch (_model.type)
+                switch (_model.Type)
                 {
-                    case MVCore.TYPES.MODEL:
-                    case MVCore.TYPES.LOCATOR:
+                    case TYPES.MODEL:
+                    case TYPES.LOCATOR:
                         DrawLocator();
                         break;
-                    case MVCore.TYPES.MESH:
+                    case TYPES.MESH:
                         DrawMesh();
                         break;
-                    case MVCore.TYPES.LIGHT:
+                    case TYPES.LIGHT:
                         DrawLight();
                         break;
                     default:
@@ -61,13 +61,14 @@ namespace ImGuiHelper
             ImGui.Text("LOD");
 
             ImGui.NextColumn();
-            ImGui.Text(_model.name);
+            ImGui.Text(_model.Name);
             ImGui.Text(_model.ID.ToString());
-            ImGui.Text(_model.Type);
-            ImGui.Text(_model.LODNumber.ToString());
+            ImGui.Text(_model.Type.ToString());
+            //ImGui.Text(_model.LODNumber.ToString());
 
             ImGui.Columns(1);
             //TODO LOD Distances
+
 
         }
 

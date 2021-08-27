@@ -13,7 +13,8 @@ namespace MVCore.Systems
         ANIMATION_SYSTEM,
         ACTION_SYSTEM,
         PHYSICS_SYSTEM,
-        REGISTRY_SYSTEM
+        REGISTRY_SYSTEM,
+        SCENE_MANAGEMENT_SYSTEM
     }
 
     public abstract class EngineSystem

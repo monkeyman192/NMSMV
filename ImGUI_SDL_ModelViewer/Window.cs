@@ -35,10 +35,10 @@ namespace ImGUI_SDL_ModelViewer
 
         //Scene Stuff
         //public Model rootObject;
-        public Model activeModel; //Active Model Reference
-        public Queue<Model> modelUpdateQueue = new();
+        public Entity activeModel; //Active Model Reference
+        public Queue<Entity> modelUpdateQueue = new();
         public List<Tuple<AnimComponent, AnimData>> activeAnimScenes = new();
-
+        
         //Engine
         private Engine engine;
 
@@ -86,6 +86,8 @@ namespace ImGUI_SDL_ModelViewer
             
             _controller = new ImGuiController(ClientSize.X, ClientSize.Y);
 
+            ImGuiManager.SetWindowRef(this);
+
             //OVERRIDE SETTINGS
             //FileUtils.dirpath = "I:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\PCBANKS";
 
@@ -102,23 +104,24 @@ namespace ImGUI_SDL_ModelViewer
             //Initialize Engine backend
             engine = new Engine(this);
             engine.init(Size.X, Size.Y); //Initialize Engine
+            RenderState.engineRef = engine; //Set reference to engine
             
             //Populate GLControl
             Scene scene = new Scene()
             {
-                name = "DEFAULT SCENE"
+                Name = "DEFAULT SCENE"
             };
 
             Locator test1 = new()
             {
-                name = "Test Locator 1"
+                Name = "Test Locator 1"
             };
             
             scene.AddChild(test1);
 
             Locator test2 = new()
             {
-                name = "Test Locator 2"
+                Name = "Test Locator 2"
             };
 
             scene.AddChild(test2);
@@ -168,8 +171,8 @@ namespace ImGUI_SDL_ModelViewer
             rq.arguments.Add("NMSmanifest");
             rq.arguments.Add(Path.Combine(RenderState.settings.GameDir, "PCBANKS"));
             rq.arguments.Add(RenderState.activeResMgr);
-            rq.type = THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST;
-            requestHandler.sendRequest(ref rq); 
+            rq.type = THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES;
+            requestHandler.AddRequest(ref rq); 
             workDispatcher.sendRequest(ref rq); //Generate worker
             
             //Basic Initialization of ImGui
@@ -188,15 +191,14 @@ namespace ImGUI_SDL_ModelViewer
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
+            engine.handleRequests(); //Handle engine requests
+            handleRequests(); //Handle window requests
             
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
                 //Capture Keyboard Presses
                 engine.UpdateInput(e.Time, isSceneViewActive);
-                
                 frameUpdate(e.Time);
-                engine.handleRequests(); //Handle engine requests
-                handleRequests(); //Handle window requests
             }
                 
         }
@@ -210,7 +212,7 @@ namespace ImGUI_SDL_ModelViewer
             //Per Frame System Updates
             engine.transformSys.Update(e.Time);
 
-            Camera.UpdateCameraDirectionalVectors(ref engine, RenderState.activeCam);
+            Camera.UpdateCameraDirectionalVectors(RenderState.activeCam);
 
             //Console.WriteLine("Rendering Frame");
             GL.ClearColor(new Color4(5, 5, 5, 255));
@@ -258,16 +260,16 @@ namespace ImGUI_SDL_ModelViewer
             {
                 ThreadRequest req = new()
                 {
-                    type = THREAD_REQUEST_TYPE.GIZMO_PICKING_REQUEST
+                    type = THREAD_REQUEST_TYPE.ENGINE_GIZMO_PICKING
                 };
                 req.arguments.Clear();
                 req.arguments.Add(activeGizmo);
                 req.arguments.Add(mouseState.Position);
-                engine.sendRequest(ref req);
+                engine.SendRequest(ref req);
             }
             
             //Calculate new Camera State
-            Camera.CalculateNextCameraState(ref engine, RenderState.activeCam, engine.targetCameraPos, dt);
+            Camera.CalculateNextCameraState(RenderState.activeCam, engine.targetCameraPos, dt);
             
             RenderState.activeCam.aspect = (float)SceneViewSize.X / SceneViewSize.Y;
             RenderState.activeCam.updateViewMatrix();
@@ -279,11 +281,12 @@ namespace ImGUI_SDL_ModelViewer
             RenderStats.occludedNum = 0;
 
             //Update moving queue
-            while (modelUpdateQueue.Count > 0)
-            {
-                Model m = modelUpdateQueue.Dequeue();
-                m.update();
-            }
+            //TODO: Let the transformation system do that
+            //while (modelUpdateQueue.Count > 0)
+            //{
+            //    Entity m = modelUpdateQueue.Dequeue();
+            //    m.update();
+            //}
 
             //rootObject?.update(); //Update Distances from camera
             RenderState.rootObject?.updateLODDistances(); //Update Distances from camera
@@ -346,22 +349,19 @@ namespace ImGUI_SDL_ModelViewer
             
         private void OpenFile(string filename, bool testScene, int testSceneID)
         {
-            Console.WriteLine("Importing " + filename);
+            Log("Importing " + filename, LogVerbosityLevel.INFO);
             ThreadRequest req;
-
+            
             //Pause renderer
             req = new()
             {
-                type = THREAD_REQUEST_TYPE.GL_PAUSE_RENDER_REQUEST
+                type = THREAD_REQUEST_TYPE.ENGINE_PAUSE_RENDER
             };
             req.arguments.Clear();
 
             //Send request to engine
-            engine.sendRequest(ref req);
-            
-            //Ask window to wait for the request to Finish
-            //For now the engine and the window belong to the same thread so this
-            //does not make any difference
+            engine.SendRequest(ref req);
+
             waitForRequest(ref req);
 
             RenderState.rootObject?.Dispose();
@@ -370,12 +370,11 @@ namespace ImGUI_SDL_ModelViewer
                 addTestScene(testSceneID);
             else
                 addScene(filename);
-
-            //Populate 
-            RenderState.rootObject.ID = 0; //TODO: Assign IDs through a registry system
-            Util.setStatus("Creating Treeview...");
             
-            //Cache the treeview and pass it to ImGUI
+            //Populate 
+            Util.setStatus("Creating SceneGraph...");
+
+            ImGuiManager.PopulateSceneGraph(RenderState.rootObject);
 
             //Add to UI
             Util.setStatus("Ready");
@@ -383,10 +382,10 @@ namespace ImGUI_SDL_ModelViewer
             //Generate Request for resuming rendering
             ThreadRequest req2 = new()
             {
-                type = THREAD_REQUEST_TYPE.GL_RESUME_RENDER_REQUEST
+                type = THREAD_REQUEST_TYPE.ENGINE_RESUME_RENDER
             };
 
-            engine.sendRequest(ref req2);
+            engine.SendRequest(ref req2);
         
         }
 
@@ -395,9 +394,14 @@ namespace ImGUI_SDL_ModelViewer
             Callbacks.Log("* WINDOW : " + msg, lvl);
         }
 
+        public void SendRequest(ref ThreadRequest r)
+        {
+            requestHandler.AddRequest(ref r);
+        }
+
         public void handleRequests()
         {
-            if (requestHandler.hasOpenRequests())
+            if (requestHandler.HasOpenRequests())
             {
                 ThreadRequest req = requestHandler.Peek();
                 Log("Peeking Request " + req.type, LogVerbosityLevel.HIDEBUG);
@@ -407,8 +411,13 @@ namespace ImGUI_SDL_ModelViewer
                 {
                     switch (req.type)
                     {
-                        case THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST:
+                        case THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES:
                             workDispatcher.sendRequest(ref req);
+                            break;
+                        case THREAD_REQUEST_TYPE.WINDOW_OPEN_FILE:
+                            string filename = req.arguments[0] as string;
+                            OpenFile(filename, false, 0);
+                            req.status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         default:
                             break; 
@@ -420,10 +429,10 @@ namespace ImGUI_SDL_ModelViewer
                 //Finalize finished requests
                 switch (req.type)
                 {
-                    case THREAD_REQUEST_TYPE.LOAD_NMS_ARCHIVES_REQUEST:
+                    case THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES:
                         open_file_enabled = true;
                         break;
-                    case THREAD_REQUEST_TYPE.TERMINATE_REQUEST:
+                    case THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER:
                         Close();
                         break;
                 }
@@ -437,13 +446,11 @@ namespace ImGUI_SDL_ModelViewer
         {
             while (true)
             {
-                int a = 0;
+                engine.handleRequests(); //Force engine to handle requests
                 lock (req)
                 {
                     if (req.status == THREAD_REQUEST_STATUS.FINISHED)
                         return;
-                    else
-                        a++; // Do some dummy stuff
                 }
             }
         }
@@ -457,11 +464,11 @@ namespace ImGUI_SDL_ModelViewer
             //Generate Request for rendering thread
             ThreadRequest req1 = new()
             {
-                type = THREAD_REQUEST_TYPE.NEW_TEST_SCENE_REQUEST
+                type = THREAD_REQUEST_TYPE.ENGINE_OPEN_TEST_SCENE
             };
             req1.arguments.Add(sceneID);
 
-            engine.sendRequest(ref req1);
+            engine.SendRequest(ref req1);
 
             //Wait for requests to finish before return
             waitForRequest(ref req1);
@@ -481,36 +488,43 @@ namespace ImGUI_SDL_ModelViewer
             //Generate Request for rendering thread
             ThreadRequest req1 = new()
             {
-                type = THREAD_REQUEST_TYPE.NEW_SCENE_REQUEST
+                type = THREAD_REQUEST_TYPE.ENGINE_OPEN_NEW_SCENE
             };
             req1.arguments.Clear();
             req1.arguments.Add(filename);
 
-            engine.sendRequest(ref req1);
-
+            engine.SendRequest(ref req1);
+            
             //Wait for requests to finish before return
             waitForRequest(ref req1);
-
+            
             //find Animation Capable nodes
             activeModel = null; //TODO: Fix that with the gizmos
             findAnimScenes(RenderState.rootObject); //Repopulate animScenes
             findActionScenes(RenderState.rootObject); //Re-populate actionSystem
         }
         
-        public void findAnimScenes(Model node)
+        public void findAnimScenes(Entity node)
         {
-            if (node.animComponentID >= 0)
+            if (node.HasComponent<AnimComponent>())
+            {
                 engine.animationSys.Add(node);
-            foreach (Model child in node.children)
+            }
+
+            foreach (Entity child in node.Children)
                 findAnimScenes(child);
         }
 
-        public void findActionScenes(Model node)
+        public void findActionScenes(Entity node)
         {
-            if (node.actionComponentID >= 0)
-                engine.actionSys.Add(node);
-
-            foreach (Model child in node.children)
+            if (node.HasComponent<TriggerActionComponent>())
+            {
+                //Find SceneGraphNode
+                SceneGraphNode n = engine.sceneManagementSys.FindEntitySceneGraphNode(node);
+                engine.actionSys.Add(n);
+            }
+            
+            foreach (Model child in node.Children)
                 findActionScenes(child);
         }
 
@@ -576,13 +590,13 @@ namespace ImGUI_SDL_ModelViewer
                     {
                         //Stop the renderer
                         ThreadRequest req = new ThreadRequest();
-                        req.type = THREAD_REQUEST_TYPE.TERMINATE_REQUEST;
-                        engine.sendRequest(ref req);
+                        req.type = THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER;
+                        engine.SendRequest(ref req);
 
                         //Send event to close the window
                         ThreadRequest req1 = new ThreadRequest();
-                        req1.type = THREAD_REQUEST_TYPE.TERMINATE_REQUEST;
-                        requestHandler.sendRequest(ref req1);
+                        req1.type = THREAD_REQUEST_TYPE.WINDOW_CLOSE;
+                        requestHandler.AddRequest(ref req1);
                         
                     }
 
@@ -727,28 +741,22 @@ namespace ImGUI_SDL_ModelViewer
                         ImGui.SliderFloat("zNear", ref RenderState.activeCam.zNear, 0.01f, 1.0f);
                         ImGui.SliderFloat("zFar", ref RenderState.activeCam.zFar, 101.0f, 30000.0f);
 
-                        /*
-                        ImGui.SliderFloat("lightDistance", ????, 0.0f, 20.0f);
-                        ImGui.SliderFloat("lightIntensity", ????, 0.0f, 20.0f);
-                        */
-
                         if (ImGui.Button("Reset Camera"))
                         {
                             RenderState.activeCam.Position = new Vector3(0.0f);
-
                         }
-
+                        
                         ImGui.SameLine();
 
                         if (ImGui.Button("Reset Scene Rotation"))
                         {
-                            //TODO
-
+                            //TODO :Maybe enclose all settings in a function
+                            RenderState.activeCam.pitch = 0.0f;
+                            RenderState.activeCam.yaw = -90.0f;
                         }
 
                         ImGui.EndGroup();
-
-
+                        
                         ImGui.Separator();
                         ImGui.BeginGroup();
                         ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Controls");

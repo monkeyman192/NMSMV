@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using OpenTK;
 using OpenTK.Mathematics;
+using MVCore.Systems;
 using MVCore.Utils;
 using MVCore.Common;
 using OpenTK.Graphics.OpenGL4;
@@ -29,9 +30,6 @@ namespace MVCore
        
     public class Light : Model
     {
-        //Underlying struct
-        public GLLight _strct;
-
         //Light Mesh
         public GLInstancedMeshVao meshVao;
         //Light Volume Mesh
@@ -40,10 +38,10 @@ namespace MVCore
         //Exposed Light Properties
         public Vector3 Color;
         public Vector3 Direction;
-        public float _fov = 360.0f;
-        public float _intensity = 1.0f;
-        public ATTENUATION_TYPE _falloff;
-        public LIGHT_TYPE _lightType;
+        public float FOV = 360.0f;
+        public float Intensity = 1.0f;
+        public ATTENUATION_TYPE Falloff;
+        public LIGHT_TYPE LightType;
         
         public bool updated = false; //Used to prevent unecessary uploads to the UBO
 
@@ -56,74 +54,15 @@ namespace MVCore
 
         //Properties
         
-        public float FOV
-        {
-            get
-            {
-                return _fov;
-            }
-
-            set
-            {
-                _fov = value;
-                _strct.fov = MathUtils.radians(_fov);
-            }
-        }
-
-        public float Intensity
-        {
-            get
-            {
-                return _intensity;
-            }
-
-            set
-            {
-                _intensity = value;
-                _strct.intensity = value;
-            }
-        }
-
-        public string Attenuation
-        {
-            get
-            {
-                return _falloff.ToString();
-            }
-
-            set
-            {
-                bool parse_status = Enum.TryParse<ATTENUATION_TYPE>(value, out _falloff);
-                if (!parse_status)
-                    throw new Exception("Unsupported attenuation type");
-                _strct.falloff = (int) _falloff;
-            }
-        }
-
-        public override bool IsRenderable
-        {
-            get
-            {
-                return renderable;
-            }
-
-            set
-            {
-                _strct.isRenderable = value ? 1.0f : 0.0f;
-                base.IsRenderable = value;
-            }
-        }
-
-        
         public Light()
         {
-            type = TYPES.LIGHT;
+            Type = TYPES.LIGHT;
             Color = new Vector3(1.0f, 1.0f, 1.0f);
             Direction = new Vector3(0.0f, 0.0f, -1.0f);
-            _fov = 360;
-            _intensity = 1.0f;
-            _falloff = ATTENUATION_TYPE.CONSTANT;
-            _lightType = LIGHT_TYPE.POINT;
+            FOV = 360;
+            Intensity = 1.0f;
+            Falloff = ATTENUATION_TYPE.CONSTANT;
+            LightType = LIGHT_TYPE.POINT;
 
             //Initialize new MeshVao
             meshVao = new GLInstancedMeshVao();
@@ -152,32 +91,15 @@ namespace MVCore
             Color = new Vector3(1.0f);
         }
 
-        private void catchPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            update();
-            
-            //Save Color to struct
-            _strct.color.X = Color.X;
-            _strct.color.Y = Color.Y;
-            _strct.color.Z = Color.Z;
-
-            //Save Position to struct
-            _strct.position.X = worldPosition.X;
-            _strct.position.Y = worldPosition.Y;
-            _strct.position.Z = worldPosition.Z;
-
-        }
-
         protected Light(Light input) : base(input)
         {
             Color = input.Color;
             Direction = input.Direction;
-            _intensity = input._intensity;
-            _falloff = input._falloff;
-            _fov = input._fov;
-            _lightType = input._lightType;
-            _strct = input._strct;
-
+            Intensity = input.Intensity;
+            Falloff = input.Falloff;
+            FOV = input.FOV;
+            LightType = input.LightType;
+            
             //Initialize new MeshVao
             meshVao = new GLInstancedMeshVao();
             meshVao.type = TYPES.LIGHT;
@@ -197,7 +119,6 @@ namespace MVCore
             for (int i = 0; i < 6; i++)
                 lightSpaceMatrices[i] = input.lightSpaceMatrices[i];
 
-            update_struct();
             RenderState.activeResMgr.GLlights.Add(this);
         }
 
@@ -205,7 +126,6 @@ namespace MVCore
         {
             if (lod_filter)
             {
-                _strct.isRenderable = 0.0f; //Force not renderable
                 base.updateMeshInfo();
                 RenderStats.occludedNum += 1;
                 return;
@@ -213,9 +133,10 @@ namespace MVCore
             
             if (renderable)
             {
+                Vector4 worldPosition = TransformationSystem.GetEntityWorldPosition(this);
                 //Generate matrices for the volume mesh
                 Matrix4 scaleMat = Matrix4.Identity;
-                Matrix4 tMat = Matrix4.CreateTranslation(worldPosition);
+                Matrix4 tMat = Matrix4.CreateTranslation(worldPosition.Xyz);
                 Matrix4 sMat = Matrix4.CreateScale(radius);
                 VolumeinstanceId = RenderState.activeResMgr.lightBufferMgr.AddInstance(ref VolumeMeshVao, this, sMat * tMat); //Add instance
                 
@@ -227,18 +148,17 @@ namespace MVCore
                     if (Math.Abs(FOV - 360.0f) <= 1e-4)
                     {
                         ep = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
-                        _lightType = LIGHT_TYPE.POINT;
+                        LightType = LIGHT_TYPE.POINT;
                     }
                     else
                     {
                         ep = new Vector4(0.0f, 0.0f, -1.0f, 0.0f);
-                        _lightType = LIGHT_TYPE.SPOT;
+                        LightType = LIGHT_TYPE.SPOT;
                     }
 
-                    ep = ep * localRotation;
+                    ep = ep * Matrix4.CreateFromQuaternion(TransformationSystem.GetEntityLocalRotation(this));
                     Direction = ep.Xyz; //Set spotlight direction
-                    update_struct();
-
+                
                     //Update Vertex Buffer based on the new data
                     float[] verts = new float[6];
                     int arraysize = 6 * sizeof(float);
@@ -275,6 +195,9 @@ namespace MVCore
         {
             base.update();
 
+            Matrix4 localRotation = Matrix4.CreateFromQuaternion(TransformationSystem.GetEntityLocalRotation(this));
+            Vector3 worldPosition = TransformationSystem.GetEntityWorldPosition(this).Xyz;
+
             //End Point
             Vector4 ep;
             //Lights with 360 FOV are points
@@ -282,20 +205,19 @@ namespace MVCore
             {
                 ep = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
                 ep = ep * localRotation;
-                _lightType = LIGHT_TYPE.POINT;
+                LightType = LIGHT_TYPE.POINT;
             }
             else
             {
                 ep = new Vector4(0.0f, 0.0f, -1.0f, 0.0f);
                 ep = ep * localRotation;
-                _lightType = LIGHT_TYPE.SPOT;
+                LightType = LIGHT_TYPE.SPOT;
             }
 
             ep.Normalize();
 
             Direction = ep.Xyz; //Set spotlight direction
-            update_struct();
-
+            
             //Assume that this is a point light for now
             //Right
             lightSpaceMatrices[0] = Matrix4.LookAt(worldPosition,
@@ -324,21 +246,21 @@ namespace MVCore
 
             //Calculate Light radius
             float lm_per_watt = 683; //Assume LED lamp
-            float eff_intensity = _intensity / lm_per_watt;
+            float eff_intensity = Intensity / lm_per_watt;
             float cutoff = 0.95f;
             
-            switch (_falloff)
+            switch (Falloff)
             {
                 case ATTENUATION_TYPE.QUADRATIC:
                     {
                         //radius = (float) Math.Sqrt(_intensity * (1.0f - cutoff) / cutoff);
-                        radius = (float) 3.3f * (float) Math.Pow(_intensity, 0.35f);
+                        radius = (float) 3.3f * (float) Math.Pow(Intensity, 0.35f);
                         //3.30\cdot x^{ 0.33}\ 
                         break;
                     }
                 case ATTENUATION_TYPE.LINEAR:
                     {
-                        radius = _intensity * (1.0f - cutoff) / cutoff;
+                        radius = Intensity * (1.0f - cutoff) / cutoff;
                         break;
                     }
                 case ATTENUATION_TYPE.CONSTANT:
@@ -349,20 +271,6 @@ namespace MVCore
                     
             }
             
-
-        }
-
-        public void update_struct()
-        {
-            _strct.position = (new Vector4(worldPosition, 1.0f) * RenderState.rotMat).Xyz;
-            _strct.isRenderable = renderable ? 1.0f : 0.0f;
-            _strct.color = Color;
-            _strct.intensity = _intensity; //Assume LED lamp
-            _strct.direction = Direction;
-            _strct.fov = (float) Math.Cos(MathUtils.radians(_fov));
-            _strct.falloff = (int) _falloff;
-            _strct.type = (_lightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f;
-            _strct.radius = radius;
         }
 
         public override Model Clone()

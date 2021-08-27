@@ -2,6 +2,7 @@
 using OpenTK;
 using OpenTK.Mathematics;
 using MVCore.Utils;
+using MVCore.Systems;
 
 namespace MVCore
 {
@@ -61,7 +62,7 @@ namespace MVCore
             {
                 //Uplod worldMat to the meshVao
 
-                Matrix4 actualWorldMat = m.worldMat;
+                Matrix4 actualWorldMat = TransformationSystem.GetEntityWorldMat(m);
                 Matrix4 actualWorldMatInv = (actualWorldMat).Inverted();
                 SetInstanceWorldMat(mesh, instance_id, actualWorldMat);
                 SetInstanceWorldMatInv(mesh, instance_id, actualWorldMatInv);

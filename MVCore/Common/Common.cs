@@ -46,13 +46,18 @@ namespace MVCore.Common
 
         //App Settings
         public static Settings settings = new Settings();
-        
+
+        //Engine Reference
+        public static Engine engineRef;
+
         //Keep the main camera global
         public static Camera activeCam;
         //Active ResourceManager
         public static ResourceManager activeResMgr;
         //RootObject
         public static Model rootObject;
+        //Item Counter
+        public static int itemCounter = 0;
         //ActiveModel
         public static Model activeModel;
         //ActiveGizmo

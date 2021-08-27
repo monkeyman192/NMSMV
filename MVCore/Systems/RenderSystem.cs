@@ -312,7 +312,6 @@ namespace MVCore.Systems
             globalMeshList.Add(resMgr.GLPrimitiveMeshVaos["default_translation_gizmo_y_axis"]);
             globalMeshList.Add(resMgr.GLPrimitiveMeshVaos["default_translation_gizmo_z_axis"]);
 
-
             //Add default light mesh
             process_model(resMgr.GLlights[0].meshVao);
             
@@ -388,7 +387,7 @@ namespace MVCore.Systems
 
         private void process_models(Model root)
         {
-            switch (root.type)
+            switch (root.Type)
             {
                 case TYPES.LOCATOR:
                     process_model(((Locator) root).meshVao);
@@ -570,25 +569,26 @@ namespace MVCore.Systems
                 */
                 
                 //Position : Offset 0
-                unsafe { 
-                    cpfu.lights[offset + 0] = l._strct.position.X;
-                    cpfu.lights[offset + 1] = l._strct.position.Y;
-                    cpfu.lights[offset + 2] = l._strct.position.Z;
-                    cpfu.lights[offset + 3] = l._strct.isRenderable;
+                unsafe {
+                    Vector4 localPosition = TransformationSystem.GetEntityWorldPosition(l);
+                    cpfu.lights[offset + 0] = localPosition.X;
+                    cpfu.lights[offset + 1] = localPosition.Y;
+                    cpfu.lights[offset + 2] = localPosition.Z;
+                    cpfu.lights[offset + 3] = l.IsRenderable ? 1.0f : 0.0f;
                     //Color : Offset 16(4)
-                    cpfu.lights[offset + 4] = l._strct.color.X;
-                    cpfu.lights[offset + 5] = l._strct.color.Y;
-                    cpfu.lights[offset + 6] = l._strct.color.Z;
-                    cpfu.lights[offset + 7] = l._strct.intensity;
+                    cpfu.lights[offset + 4] = l.Color.X;
+                    cpfu.lights[offset + 5] = l.Color.Y;
+                    cpfu.lights[offset + 6] = l.Color.Z;
+                    cpfu.lights[offset + 7] = l.Intensity;
                     //Direction: Offset 32(8)
-                    cpfu.lights[offset + 8] = l._strct.direction.X;
-                    cpfu.lights[offset + 9] = l._strct.direction.Y;
-                    cpfu.lights[offset + 10] = l._strct.direction.Z;
-                    cpfu.lights[offset + 11] = l._strct.fov;
+                    cpfu.lights[offset + 8] = l.Direction.X;
+                    cpfu.lights[offset + 9] = l.Direction.Y;
+                    cpfu.lights[offset + 10] = l.Direction.Z;
+                    cpfu.lights[offset + 11] = l.FOV;
                     //Falloff: Offset 48(12)
-                    cpfu.lights[offset + 12] = l._strct.falloff;
+                    cpfu.lights[offset + 12] = (float) l.Falloff;
                     //Type: Offset 52(13)
-                    cpfu.lights[offset + 13] = l._strct.type;
+                    cpfu.lights[offset + 13] = (float) l.Type;
                 }
 
             }
@@ -680,8 +680,8 @@ namespace MVCore.Systems
             resMgr.GLlights.Sort(
                 delegate (Light l1, Light l2)
                 {
-                    float d1 = (l1.worldPosition - RenderState.activeCam.Position).Length;
-                    float d2 = (l2.worldPosition - RenderState.activeCam.Position).Length;
+                    float d1 = (TransformationSystem.GetEntityWorldPosition(l1).Xyz - RenderState.activeCam.Position).Length;
+                    float d2 = (TransformationSystem.GetEntityWorldPosition(l2).Xyz - RenderState.activeCam.Position).Length;
 
                     return d1.CompareTo(d2);
                 }

@@ -4,6 +4,7 @@ using System.Text;
 using OpenTK;
 using OpenTK.Mathematics;
 using MVCore.Utils;
+using MVCore.Systems;
 
 namespace MVCore
 {
@@ -19,7 +20,7 @@ namespace MVCore
         
         public Scene()
         {
-            type = TYPES.MODEL;
+            Type = TYPES.MODEL;
             texMgr = new TextureManager();
             //Init Animation Stuff
             skinMats = new float[256 * 16];
@@ -27,7 +28,7 @@ namespace MVCore
         }
 
 
-        public void resetPoses()
+        /*public void resetPoses()
         {
             foreach (Joint j in jointDict.Values)
                 j.localPoseMatrix = Matrix4.Identity;
@@ -52,27 +53,16 @@ namespace MVCore
                     //j.localRotation = Matrix4.CreateFromQuaternion(q);
                     //j.localPosition = tr;
 
-                    j.localRotation = Matrix4.CreateFromQuaternion(q) * j.__localRotation;
-                    j.localScale = sc;
-
+                    //TODO this is probably bullshit
+                    TransformationSystem.SetEntityRotation(j, q);
+                    TransformationSystem.SetEntityScale(j, sc);
                     //j.localPoseMatrix = kp.Value;
                 }
             }
 
             update();
         }
-
-        //TODO Add button in the UI to toggle that shit
-        private void resetAnimation()
-        {
-            foreach (Joint j in jointDict.Values)
-            {
-                j.localScale = j.BindMat.ExtractScale();
-                j.localRotation = Matrix4.CreateFromQuaternion(j.BindMat.ExtractRotation());
-                j.localPosition = j.BindMat.ExtractTranslation();
-                j._localPoseMatrix = Matrix4.Identity;
-            }
-        }
+        */
 
         public override Assimp.Node assimpExport(ref Assimp.Scene scn, ref Dictionary<int, int> meshImportStatus)
         {
@@ -121,7 +111,7 @@ namespace MVCore
 
         public void setupJointDict(Model m)
         {
-            if (m.type == TYPES.JOINT)
+            if (m.Type == TYPES.JOINT)
                 jointDict[m.Name] = (Joint)m;
 
             foreach (Model c in m.children)
@@ -133,7 +123,7 @@ namespace MVCore
             //TODO: Cache the distance elsewhere
 
             //Set Current LOD Level
-            double distance = (worldPosition - Common.RenderState.activeCam.Position).Length;
+            double distance = (TransformationSystem.GetEntityWorldPosition(this).Xyz - Common.RenderState.activeCam.Position).Length;
 
             //Find active LOD
             activeLOD = _LODNum - 1;
@@ -155,7 +145,7 @@ namespace MVCore
             //Update Skin Matrices
             foreach (Joint j in jointDict.Values)
             {
-                Matrix4 jointSkinMat = j.invBMat * j.worldMat;
+                Matrix4 jointSkinMat = j.invBMat * TransformationSystem.GetEntityWorldMat(j);
                 MathUtils.insertMatToArray16(skinMats, j.jointIndex * 16, jointSkinMat);
             }
 

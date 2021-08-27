@@ -7,11 +7,17 @@ namespace MVCore
 {
     public class Entity
     {
+        //Public
         public long ID; //unique entity identifier
+        public string Name = "";
+        public ulong NameHash;
+        public TYPES Type;
+        public Entity Parent = null;
+        public List<Entity> Children = new();
+
+        //Private
         private Dictionary<Type, Component> _componentMap = new();
         
-        private Entity Parent = null;
-        private List<Entity> Children = new();
         
         public Entity()
         {
@@ -46,10 +52,14 @@ namespace MVCore
 
         }
 
-        
         public bool HasComponent<T>()
         {
             return _componentMap.ContainsKey(typeof(T));
+        }
+
+        public bool HasComponent(Type t)
+        {
+            return _componentMap.ContainsKey(t);
         }
 
         public Component GetComponent<T>()
@@ -61,11 +71,15 @@ namespace MVCore
 
         public void AddComponent<T>(Component comp)
         {
-            if (HasComponent<T>())
-                return;
-            _componentMap[typeof(T)] = comp;
+            AddComponent(typeof(T), comp);
         }
 
+        public void AddComponent(Type t, Component comp)
+        {
+            if (HasComponent(t))
+                return;
+            _componentMap[t] = comp;
+        }
 
         public void RemoveComponent<T>()
         {
@@ -73,5 +87,31 @@ namespace MVCore
             if (HasComponent<T>())
                 _componentMap.Remove(typeof(T));
         }
+
+
+        public Entity Clone()
+        {
+            Entity n = new Entity();
+            n.CopyFrom(this);
+            
+            return n;
+        }
+
+        public void CopyFrom(Entity e)
+        {
+            //Copy data from e
+            Type = e.Type;
+            Name = e.Name;
+            ID = e.ID;
+
+            //Clone components
+            
+            foreach (KeyValuePair<Type, Component> kp in _componentMap)
+            {
+                Component c = kp.Value.Clone();
+                AddComponent(c.GetType(), c);
+            }
+        }
+
     }
 }

@@ -56,6 +56,14 @@ namespace ImGuiHelper
             DialogFinished = false;
         }
 
+        public string SelectedItem
+        {
+            get
+            {
+                return selected_item;
+            }
+        }
+
         public bool isFinished()
         {
             return DialogFinished;

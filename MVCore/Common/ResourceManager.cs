@@ -7,6 +7,7 @@ using MVCore.Common;
 using MVCore.GMDL;
 using MVCore.Text;
 using MVCore.Utils;
+using MVCore.Systems;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
@@ -388,12 +389,12 @@ namespace MVCore
             //Add one and only light for now
             Light light = new()
             {
-                name = "Default Light",
-                _intensity = 200,
-                _falloff = ATTENUATION_TYPE.QUADRATIC
+                Name = "Default Light",
+                Intensity = 200,
+                Falloff = ATTENUATION_TYPE.QUADRATIC
             };
-            
-            light.localPosition = new Vector3(100.0f, 100.0f, 100.0f);
+
+            TransformationSystem.SetEntityLocation(light, new Vector3(100.0f, 100.0f, 100.0f));
             GLlights.Add(light);
         }
 
@@ -713,8 +714,8 @@ namespace MVCore
             GLDefaultShaderMap.Clear();
 
             //Cleanup archives
-            NMSUtils.unloadNMSArchives(this);
-
+            //NMSUtils.unloadNMSArchives(this);
+            
             //Cleanup Lights
             foreach (Light p in GLlights)
                 p.Dispose();

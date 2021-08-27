@@ -7,13 +7,13 @@ using OpenTK.Graphics.OpenGL4;
 using GLSLHelper;
 using System.IO;
 using MVCore.Common;
+using MVCore.Systems;
 using MVCore.Utils;
 using libMBIN.NMS.Toolkit;
 using System.Linq;
 
 namespace MVCore
 {
-
     public class GLVao : IDisposable
     {
         //VAO ID
@@ -81,9 +81,8 @@ namespace MVCore
         #endregion
     }
 
-
     public class MeshMetaData
-    {
+    {   
         //Mesh Properties
         public int vertrstart_physics;
         public int vertrend_physics;
@@ -457,8 +456,10 @@ namespace MVCore
         //Constructor
         public Mesh() : base()
         {
-            type = TYPES.MESH;
+            Type = TYPES.MESH;
             metaData = new MeshMetaData();
+
+
 
             //Init MeshModel Uniforms
             foreach (string un in supportedCommonPerMeshUniforms)
@@ -510,11 +511,11 @@ namespace MVCore
             new_m.instanceId = GLMeshBufferManager.AddInstance(ref new_m.meshVao, new_m);
 
             //Clone children
-            foreach (Model child in children)
+            foreach (Entity child in Children)
             {
-                Model new_child = child.Clone();
-                new_child.parent = new_m;
-                new_m.children.Add(new_child);
+                Entity new_child = child.Clone();
+                new_child.Parent = new_m;
+                new_m.Children.Add(new_child);
             }
 
             return new_m;
@@ -551,6 +552,7 @@ namespace MVCore
                 return;
             }
 
+            Matrix4 worldMat = TransformationSystem.GetEntityWorldMat(this);
             bool fr_status = Common.RenderState.activeCam.frustum_occlude(meshVao, worldMat * RenderState.rotMat);
             bool occluded_status = !fr_status && Common.RenderState.settings.renderSettings.UseFrustumCulling;
 
@@ -599,7 +601,7 @@ namespace MVCore
         {
             Assimp.Mesh amesh = new Assimp.Mesh();
             Assimp.Node node;
-            amesh.Name = name;
+            amesh.Name = Name;
 
             int meshHash = meshVao.GetHashCode();
 
@@ -657,7 +659,7 @@ namespace MVCore
                         Assimp.Bone b = new Assimp.Bone();
                         if (relJoint != null)
                         {
-                            b.Name = relJoint.name;
+                            b.Name = relJoint.Name;
                             b.OffsetMatrix = MathUtils.convertMatrix(relJoint.invBMat);
                         }
 
@@ -839,9 +841,9 @@ namespace MVCore
                     f2 = ibr.ReadUInt16();
                     f3 = ibr.ReadUInt16();
 
-                    if (!start && this.type != TYPES.COLLISION)
+                    if (!start && Type != TYPES.COLLISION)
                     { fstart = f1; start = true; }
-                    else if (!start && this.type == TYPES.COLLISION)
+                    else if (!start && Type == TYPES.COLLISION)
                     {
                         fstart = 0; start = true;
                     }
@@ -874,17 +876,17 @@ namespace MVCore
         public void writeGeomToStream(StreamWriter s, ref uint index)
         {
             int vertcount = metaData.vertrend_graphics - metaData.vertrstart_graphics + 1;
-            MemoryStream vms = new MemoryStream(gobject.meshDataDict[metaData.Hash].vs_buffer);
-            MemoryStream ims = new MemoryStream(gobject.meshDataDict[metaData.Hash].is_buffer);
-            BinaryReader vbr = new BinaryReader(vms);
-            BinaryReader ibr = new BinaryReader(ims);
+            MemoryStream vms = new(gobject.meshDataDict[metaData.Hash].vs_buffer);
+            MemoryStream ims = new(gobject.meshDataDict[metaData.Hash].is_buffer);
+            BinaryReader vbr = new(vms);
+            BinaryReader ibr = new(ims);
             //Start Writing
             //Object name
-            s.WriteLine("o " + name);
+            s.WriteLine("o " + Name);
             //Get Verts
 
             //Preset Matrices for faster export
-            Matrix4 wMat = this.worldMat;
+            Matrix4 wMat = TransformationSystem.GetEntityWorldMat(this);
             Matrix4 nMat = Matrix4.Invert(Matrix4.Transpose(wMat));
 
             vbr.BaseStream.Seek(0, SeekOrigin.Begin);
@@ -919,7 +921,7 @@ namespace MVCore
                 }
 
 
-                v = Vector4.TransformRow(v, this.worldMat);
+                v = Vector4.TransformRow(v, TransformationSystem.GetEntityWorldMat(this));
 
                 //s.WriteLine("v " + Half.decompress(v1).ToString() + " "+ Half.decompress(v2).ToString() + " " + Half.decompress(v3).ToString());
                 s.WriteLine("v " + v.X.ToString() + " " + v.Y.ToString() + " " + v.Z.ToString());
@@ -1030,9 +1032,9 @@ namespace MVCore
                 f2 = ibr.ReadUInt16();
                 f3 = ibr.ReadUInt16();
 
-                if (!start && this.type != TYPES.COLLISION)
+                if (!start && Type != TYPES.COLLISION)
                 { fstart = f1; start = true; }
-                else if (!start && this.type == TYPES.COLLISION)
+                else if (!start && Type == TYPES.COLLISION)
                 {
                     fstart = 0; start = true;
                 }

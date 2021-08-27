@@ -4,6 +4,7 @@ using System.Text;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
+using MVCore.Systems;
 
 namespace MVCore
 {
@@ -28,15 +29,10 @@ namespace MVCore
         public GLInstancedMeshVao meshVao;
 
         //Props
-        public Matrix4 localPoseMatrix
-        {
-            get { return _localPoseMatrix; }
-            set { _localPoseMatrix = value; }
-        }
-
+        
         public Joint()
         {
-            type = TYPES.JOINT;
+            Type = TYPES.JOINT;
         }
 
         protected Joint(Joint input) : base(input)
@@ -52,30 +48,33 @@ namespace MVCore
             meshVao.type = TYPES.JOINT;
             meshVao.metaData = new MeshMetaData();
             //TODO: Find a place to keep references from the joint GLMeshVAOs
-            meshVao.vao = new Primitives.LineSegment(children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
+            meshVao.vao = new Primitives.LineSegment(Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
             meshVao.material = Common.RenderState.activeResMgr.GLmaterials["jointMat"];
         }
 
         public override void updateMeshInfo(bool lod_filter=false)
         {
             //We do not apply frustum occlusion on joint objects
-            if (renderable && (children.Count > 0))
+            if (renderable && (Children.Count > 0))
             {
                 //Update Vertex Buffer based on the new positions
-                float[] verts = new float[2 * children.Count * 3];
-                int arraysize = 2 * children.Count * 3 * sizeof(float);
+                float[] verts = new float[2 * Children.Count * 3];
+                int arraysize = 2 * Children.Count * 3 * sizeof(float);
 
-                for (int i = 0; i < children.Count; i++)
+                Vector3 worldPosition = TransformationSystem.GetEntityWorldPosition(this).Xyz;
+
+                for (int i = 0; i < Children.Count; i++)
                 {
+                    Vector3 childWorldPosition = TransformationSystem.GetEntityWorldPosition(Children[i]).Xyz;
                     verts[i * 6 + 0] = worldPosition.X;
                     verts[i * 6 + 1] = worldPosition.Y;
                     verts[i * 6 + 2] = worldPosition.Z;
-                    verts[i * 6 + 3] = children[i].worldPosition.X;
-                    verts[i * 6 + 4] = children[i].worldPosition.Y;
-                    verts[i * 6 + 5] = children[i].worldPosition.Z;
+                    verts[i * 6 + 3] = childWorldPosition.X;
+                    verts[i * 6 + 4] = childWorldPosition.Y;
+                    verts[i * 6 + 5] = childWorldPosition.Z;
                 }
 
-                meshVao.metaData.batchcount = 2 * children.Count;
+                meshVao.metaData.batchcount = 2 * Children.Count;
 
                 GL.BindVertexArray(meshVao.vao.vao_id);
                 GL.BindBuffer(BufferTarget.ArrayBuffer, meshVao.vao.vertex_buffer_object);
@@ -103,15 +102,15 @@ namespace MVCore
             j.meshVao.type = TYPES.JOINT;
             j.meshVao.metaData = new MeshMetaData();
             //TODO: Find a place to keep references from the Joint GLMeshVAOs
-            j.meshVao.vao = new Primitives.LineSegment(this.children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
+            j.meshVao.vao = new Primitives.LineSegment(Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
             j.meshVao.material = Common.RenderState.activeResMgr.GLmaterials["jointMat"];
             
             //Clone children
-            foreach (Model child in children)
+            foreach (Entity child in Children)
             {
-                Model new_child = child.Clone();
-                new_child.parent = j;
-                j.children.Add(new_child);
+                Entity new_child = child.Clone();
+                new_child.Parent = j;
+                j.Children.Add(new_child);
             }
 
             return j;

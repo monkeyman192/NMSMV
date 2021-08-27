@@ -22,16 +22,6 @@ namespace MVCore
             }
         }
 
-        public ICommand ApplyPose
-        {
-            get { return new ApplyPoseCommand(); }
-        }
-
-        public ICommand ResetPose
-        {
-            get { return new ResetPoseCommand(); }
-        }
-
         //Default Constructor
         public AnimPoseComponent()
         {
@@ -56,47 +46,14 @@ namespace MVCore
             return new AnimPoseComponent();
         }
 
-        //ICommands
-
-        private class ApplyPoseCommand : ICommand
+        public override void CopyFrom(Component c)
         {
-            event EventHandler ICommand.CanExecuteChanged
-            {
-                add { }
-                remove { }
-            }
+            if (c is not AnimPoseComponent)
+                return;
+            
+            //TODO: Copy stuff
 
-            bool ICommand.CanExecute(object parameter)
-            {
-                return true;
-            }
-
-            void ICommand.Execute(object parameter)
-            {
-                AnimPoseComponent apc = parameter as AnimPoseComponent;
-                apc.ref_object.parentScene.applyPoses(apc.ref_object.loadPose());
-            }
+            
         }
-
-        private class ResetPoseCommand : ICommand
-        {
-            event EventHandler ICommand.CanExecuteChanged
-            {
-                add { }
-                remove { }
-            }
-
-            bool ICommand.CanExecute(object parameter)
-            {
-                return true;
-            }
-
-            void ICommand.Execute(object parameter)
-            {
-                AnimPoseComponent apc = parameter as AnimPoseComponent;
-                apc.ref_object.parentScene.resetPoses();
-            }
-        }
-
     }
 }

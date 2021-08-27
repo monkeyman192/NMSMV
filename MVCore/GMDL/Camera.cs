@@ -125,14 +125,17 @@ namespace MVCore
             updateFrustumPlanes();
         }
 
-        public static void UpdateCameraDirectionalVectors(ref Engine engine, Camera cam)
+        public static void UpdateCameraDirectionalVectors(Camera cam)
         {
             //Update Camera Vectors
             TransformComponent tc = cam.GetComponent<TransformComponent>() as TransformComponent;
 
             //Apply Current Position to the Camera
             cam.Position = tc.Data.localTranslation;
-            
+
+            //Console.WriteLine(string.Format("Camera Position {0} {1} {2}",
+            //                    cam.Position.X, cam.Position.Y, cam.Position.Z));
+
             cam.Front.X = (float) Math.Cos(cam.yaw) * (float) Math.Cos(cam.pitch);
             cam.Front.Y = (float) Math.Sin(cam.pitch);
             cam.Front.Z = (float) Math.Sin(cam.yaw) * (float) Math.Cos(cam.pitch);
@@ -142,16 +145,15 @@ namespace MVCore
             cam.Up.Y = (float) Math.Sin(cam.pitch + Math.PI / 2.0f);
             cam.Up.Z = (float) Math.Sin(cam.yaw) * (float)Math.Cos(cam.pitch + Math.PI / 2.0f);
             cam.Up.Normalize();
-
+            
             cam.Right = Vector3.Cross(cam.Front, cam.Up).Normalized();
             //cam.Up = Vector3.Cross(cam.Right, cam.Front);
-            
         }
 
-        public static void CalculateNextCameraState(ref Engine engine, Camera cam, CameraPos target, double dt)
+        public static void CalculateNextCameraState(Camera cam, CameraPos target, double dt)
         {
             TransformComponent tc = cam.GetComponent<TransformComponent>() as TransformComponent;
-            TransformController t_controller = engine.transformSys.GetEntityTransformController(cam);
+            TransformController t_controller = Common.RenderState.engineRef.transformSys.GetEntityTransformController(cam);
 
             //Calculate actual camera speed
             cam.yaw += -cam.Sensitivity * MathUtils.radians(target.Rotation.X);
@@ -172,14 +174,15 @@ namespace MVCore
             Quaternion currentRotation = t_controller.LastRotation;
             Vector3 currentScale = new Vector3(1.0f);
 
-            Console.WriteLine("Cam Front {0} {1} {2}", 
-                            cam.Front.X, cam.Front.Y, cam.Front.Z);
-            
             Vector3 offset = new();
-            offset += Camera.SpeedScale * cam.Speed * target.PosImpulse.X * cam.Right;
-            offset += Camera.SpeedScale * cam.Speed * target.PosImpulse.Y * cam.Front;
-            offset += Camera.SpeedScale * cam.Speed * target.PosImpulse.Z * cam.Up;
+            offset += SpeedScale * cam.Speed * target.PosImpulse.X * cam.Right;
+            offset += SpeedScale * cam.Speed * target.PosImpulse.Y * cam.Front;
+            offset += SpeedScale * cam.Speed * target.PosImpulse.Z * cam.Up;
 
+
+            //Console.WriteLine(string.Format("Camera offset {0} {1} {2}",
+            //                    offset.X, offset.Y, offset.Z));
+             
             currentPosition += offset;
             //There is no need to update rotation for the camera. Pitch/Yaw is all we need
             //Quaternion rall = Quaternion.FromEulerAngles(cam.pitch, cam.yaw, 0.0f);

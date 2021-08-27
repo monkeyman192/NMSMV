@@ -131,30 +131,30 @@ namespace MVCore
             foreach (Model child in root.children)
             {
                 //Identify Descriptors
-                if (child.name.StartsWith("_"))
+                if (child.Name.StartsWith("_"))
                 {
                     for (int i = 0; i < descriptors.Count; i++)
                     {
-                        if (child.name.Contains(descriptors[i]))
+                        if (child.Name.Contains(descriptors[i]))
                         {
                             child.procFlag = true;
-                            Debug.WriteLine("Setting Flag on " + child.name);
+                            Debug.WriteLine("Setting Flag on " + child.Name);
                             //iterate into Descriptor children
                             get_procgen_parts_phase1(ref descriptors, child);
                         }
                     }
                 }
                 //DO FLAG JOINTS
-                else if (child.type == TYPES.JOINT)
+                else if (child.Type == TYPES.JOINT)
                     continue;
                 //Standard part, Endpoint as well
                 else
                 {
                     //Add part to partlist if not Joint, Light or Collision
-                    if (child.type != TYPES.JOINT & child.type != TYPES.LIGHT & child.type != TYPES.COLLISION)
+                    if (child.Type != TYPES.JOINT & child.Type != TYPES.LIGHT & child.Type != TYPES.COLLISION)
                     {
                         child.procFlag = true;
-                        Debug.WriteLine("Setting Flag on " + child.name);
+                        Debug.WriteLine("Setting Flag on " + child.Name);
                         //Cover the case where endpoints have children as well
                         get_procgen_parts_phase1(ref descriptors, child);
                     }
@@ -167,7 +167,7 @@ namespace MVCore
             foreach (Model child in root.children)
             {
                 if (!child.procFlag)
-                    dellist.Add(child.name);
+                    dellist.Add(child.Name);
                 else
                     get_procgen_parts_phase2(ref dellist, child);
             }   
@@ -220,7 +220,7 @@ namespace MVCore
         {
             foreach (Model child in coll)
             {
-                if (child.name == name)
+                if (child.Name == name)
                 {
                     return child;
                 }

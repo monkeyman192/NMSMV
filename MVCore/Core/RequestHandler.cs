@@ -13,7 +13,7 @@ namespace MVCore
             req_queue = new Queue<ThreadRequest>();
         }
 
-        public virtual void sendRequest(ref ThreadRequest req)
+        public virtual void AddRequest(ref ThreadRequest req)
         {
             lock (req_queue)
             {
@@ -21,12 +21,12 @@ namespace MVCore
             }
         }
 
-        public bool hasOpenRequests()
+        public bool HasOpenRequests()
         {
             return req_queue.Count > 0;
         }
 
-        public int getOpenRequestNum()
+        public int GetOpenRequestNum()
         {
             return req_queue.Count;
         }

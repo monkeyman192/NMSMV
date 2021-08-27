@@ -12,11 +12,10 @@ namespace MVCore.Systems
 {
     public class ActionSystem : EngineSystem
     {
-        public List<Model> ActionScenes = new List<Model>();
-        public Dictionary<Model, string> ActionSceneStateMap = new Dictionary<Model, string>();
-        public Dictionary<Model, List<Action>> ActionsExecutedInState = new Dictionary<Model, List<Action>>();
-        public Dictionary<Model, string> PrevActionSceneStateMap = new Dictionary<Model, string>();
-        public Engine engine;
+        public List<SceneGraphNode> ActionSceneNodes = new();
+        public Dictionary<long, string> ActionSceneStateMap = new();
+        public Dictionary<long, List<Action>> ActionsExecutedInState = new();
+        public Dictionary<long, string> PrevActionSceneStateMap = new();
         private float timeInterval = 1000.0f / 60.0f;
         private float time = 0.0f;
 
@@ -28,7 +27,7 @@ namespace MVCore.Systems
         public override void CleanUp()
         {
             ActionSceneStateMap.Clear();
-            ActionScenes.Clear();
+            ActionSceneNodes.Clear();
         }
 
         public override void Update(float dt)
@@ -40,10 +39,10 @@ namespace MVCore.Systems
             else
                 time = 0.0f;
             
-            foreach (Model m in ActionScenes)
+            foreach (SceneGraphNode m in ActionSceneNodes)
             {
-                TriggerActionComponent tac = (TriggerActionComponent) m.Components[m.actionComponentID];
-                ActionTriggerState activeState = tac.StateMap[ActionSceneStateMap[m]];
+                TriggerActionComponent tac = m.RefEntity.GetComponent<TriggerActionComponent>() as TriggerActionComponent;
+                ActionTriggerState activeState = tac.StateMap[ActionSceneStateMap[m.RefEntity.ID]];
                 
                 //Apply Actions of state
                 Console.WriteLine("Current State {0}", activeState.StateID);
@@ -58,7 +57,7 @@ namespace MVCore.Systems
                         //Execute actions
                         foreach (Action a in at.Actions)
                         {
-                            if (!ActionsExecutedInState[m].Contains(a))
+                            if (!ActionsExecutedInState[m.RefEntity.ID].Contains(a))
                                 ExecuteAction(m, a);
                         }
                     }   
@@ -66,7 +65,7 @@ namespace MVCore.Systems
             }
         }
         
-        private bool TestTrigger(Model m, Trigger t)
+        private bool TestTrigger(SceneGraphNode m, Trigger t)
         {
             if (t is null)
             {
@@ -87,10 +86,10 @@ namespace MVCore.Systems
             return false;
         }
 
-        private bool TestAnimFrameEventTrigger(Model m, AnimFrameEventTrigger t)
+        private bool TestAnimFrameEventTrigger(SceneGraphNode m, AnimFrameEventTrigger t)
         {
             int target_frame = 0;
-            int anim_frameCount = engine.animationSys.queryAnimationFrameCount(m, t.Anim);
+            int anim_frameCount = RenderState.engineRef.animationSys.queryAnimationFrameCount(m.RefEntity, t.Anim);
             
             if (t.StartFromEnd)
             {
@@ -99,7 +98,7 @@ namespace MVCore.Systems
             else
                 target_frame = t.FrameStart;
 
-            int active_frame = engine.animationSys.queryAnimationFrame(m, t.Anim);
+            int active_frame = RenderState.engineRef.animationSys.queryAnimationFrame(m.RefEntity, t.Anim);
 
             if (active_frame >= target_frame)
                 return true;
@@ -107,10 +106,11 @@ namespace MVCore.Systems
             return false;
         }
 
-        private bool TestPlayerNearbyEventTrigger(Model m, PlayerNearbyEventTrigger t)
+        private bool TestPlayerNearbyEventTrigger(SceneGraphNode m, PlayerNearbyEventTrigger t)
         {
             //Check the distance of the activeCamera from the model
-            float distanceFromCam = (RenderState.activeCam.Position - m.worldPosition).Length;
+            float distanceFromCam = (RenderState.activeCam.Position - 
+                                    TransformationSystem.GetEntityWorldPosition(m.RefEntity).Xyz).Length;
 
             //TODO: Check all the inverse shit and the rest trigger parameters
 
@@ -127,68 +127,73 @@ namespace MVCore.Systems
             return false;
         }
 
-        private void ExecuteAction(Model m, Action action)
+        private void ExecuteAction(SceneGraphNode m, Action action)
         {
-            
-            if (action is NodeActivationAction)
+            switch (action.GetType().Name)
             {
-                ExecuteNodeActivationAction(m, action as NodeActivationAction);
-            
-            } 
-            else if (action is GoToStateAction)
-            {
-                ExecuteGoToStateAction(m, action as GoToStateAction);
-            }
-            else if (action is PlayAnimAction)
-            {
-                ExecutePlayAnimAction(m, action as PlayAnimAction);
-            }
-            else
-            {
-                //Console.WriteLine("unimplemented Action execution");
+                case nameof(NodeActivationAction):
+                    ExecuteNodeActivationAction(m, action as NodeActivationAction);
+                    break;
+                case nameof(GoToStateAction):
+                    ExecuteGoToStateAction(m, action as GoToStateAction);
+                    break;
+                case nameof(PlayAnimAction):
+                    ExecutePlayAnimAction(m, action as PlayAnimAction);
+                    break;
+                default:
+                    //Console.WriteLine("unimplemented Action execution");
+                    break;
             }
         }
 
-        private void ExecuteGoToStateAction(Model m, GoToStateAction action)
+        private void ExecuteGoToStateAction(SceneGraphNode m, GoToStateAction action)
         {
             //Change State
-            PrevActionSceneStateMap[m] = ActionSceneStateMap[m];
-            ActionSceneStateMap[m] = action.State;
-            ActionsExecutedInState[m] = new List<Action>(); //Reset executed actions 
+            PrevActionSceneStateMap[m.RefEntity.ID] = ActionSceneStateMap[m.RefEntity.ID];
+            ActionSceneStateMap[m.RefEntity.ID] = action.State;
+            ActionsExecutedInState[m.RefEntity.ID] = new List<Action>(); //Reset executed actions 
         }
 
-        private void ExecutePlayAnimAction(Model m, PlayAnimAction action)
+        private void ExecutePlayAnimAction(SceneGraphNode m, PlayAnimAction action)
         {
-            engine.animationSys.StopActiveLoopAnimations(m); //Not sure if this is correct
-            engine.animationSys.StartAnimation(m, action.Anim);
-            ActionsExecutedInState[m].Add(action);
+            RenderState.engineRef.animationSys.StopActiveLoopAnimations(m.RefEntity); //Not sure if this is correct
+            RenderState.engineRef.animationSys.StartAnimation(m.RefEntity, action.Anim);
+            ActionsExecutedInState[m.RefEntity.ID].Add(action);
         }
 
-        private void ExecuteNodeActivationAction(Model m, NodeActivationAction action)
+        private void ExecuteNodeActivationAction(SceneGraphNode m, NodeActivationAction action)
         {
-            Model target = null;
-
-            if (action.UseMasterModel)
-                m.parentScene.findNode(action.Name, ref target);
-            else
-                m.findNode(action.Name, ref target);
-
-            if (target == null)
+            
+            if (action.Target == null)
             {
-                Console.WriteLine("Node Not found");
+                //Find action target
+                if (action.UseMasterModel)
+                {
+                    //Find Parent Scene
+                    m.Parent.findNodeByName(action.Name, ref action.Target);
+                }
+                else
+                {
+                    m.findNodeByName(action.Name, ref action.Target);
+                }
             }
-
+            
+            if (action.Target == null)
+            {
+                Log("Node Not Found", LogVerbosityLevel.ERROR);
+                return;
+            }
 
             switch (action.NodeActiveState)
             {
                 case "Activate":
-                    target.IsRenderable = true;
+                    action.Target.IsRenderable = true;
                     break;
                 case "Deactivate":
-                    target.IsRenderable = false;
+                    action.Target.IsRenderable = false;
                     break;
                 case "Toggle":
-                    target.IsRenderable = !target.IsRenderable;
+                    action.Target.IsRenderable = !action.Target.IsRenderable;
                     break;
                 default:
                     Console.WriteLine("Not implemented");
@@ -197,14 +202,14 @@ namespace MVCore.Systems
 
         }
 
-        public void Add(Model scn)
+        public void Add(SceneGraphNode scn)
         {
-            if (scn.actionComponentID >= 0)
+            if (scn.RefEntity.HasComponent<TriggerActionComponent>())
             {
-                ActionScenes.Add(scn);
-                ActionSceneStateMap[scn] = "BOOT"; //Add Default State
-                PrevActionSceneStateMap[scn] = "NONE"; //Add Default State
-                ActionsExecutedInState[scn] = new List<Action>();
+                ActionSceneNodes.Add(scn);
+                ActionSceneStateMap[scn.RefEntity.ID] = "BOOT"; //Add Default State
+                PrevActionSceneStateMap[scn.RefEntity.ID] = "NONE"; //Add Default State
+                ActionsExecutedInState[scn.RefEntity.ID] = new();
             }
         }
     }

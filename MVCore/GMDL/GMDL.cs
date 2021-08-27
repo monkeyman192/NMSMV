@@ -52,7 +52,7 @@ namespace MVCore
         public GLInstancedMeshVao meshVao;
         public gizmo()
         {
-            type = TYPES.GIZMO;
+            Type = TYPES.GIZMO;
             
             //Assemble geometry in the constructor
             meshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshVaos["default_translation_gizmo"];
@@ -118,11 +118,11 @@ namespace MVCore
             new_m.instanceId = GLMeshBufferManager.AddInstance(ref new_m.meshVao, new_m);
             
             //Clone children
-            foreach (Model child in children)
+            foreach (Entity child in Children)
             {
-                Model new_child = child.Clone();
-                new_child.parent = new_m;
-                new_m.children.Add(new_child);
+                Entity new_child = child.Clone();
+                new_child.Parent = new_m;
+                new_m.Children.Add(new_child);
             }
 
             return new_m;

@@ -20,160 +20,61 @@ namespace MVCore
             Mass = pd.Mass;
         }
 
-        //Properties
-
-        public float PMass
-        {
-            get { return Mass; }
-            set { Mass = value; }
-        }
-
-        public float PGravity
-        {
-            get { return Gravity; }
-            set { Gravity = value; }
-        }
-
-        public float PAngularDamping
-        {
-            get { return AngularDamping; }
-            set { AngularDamping = value; }
-        }
-
-        public float PFriction
-        {
-            get { return Friction; }
-            set { Friction = value; }
-        }
-
-        public float PRollingFriction
-        {
-            get { return RollingFriction; }
-            set { RollingFriction = value; }
-        }
-
-        public float PLinearDamping
-        {
-            get { return LinearDamping; }
-            set { LinearDamping = value; }
-        }
-
     }
+
+    
 
     
     public class PhysicsComponent : Component
     {
-        private TkPhysicsComponentData _template;
-        public PhysicsData data;
+        public TkPhysicsComponentData Template;
+        public PhysicsData Data;
 
         //Default Constructor
         public PhysicsComponent()
         {
-            _template = new TkPhysicsComponentData();
-            data = new PhysicsData();
+            Template = new TkPhysicsComponentData();
+            Data = new PhysicsData();
         }
-
+        
         public PhysicsComponent(PhysicsComponent pc)
         {
-            _template = new TkPhysicsComponentData()
+            Template = new TkPhysicsComponentData()
             {
-                AllowTeleporter = pc._template.AllowTeleporter,
-                BlockTeleporter = pc._template.BlockTeleporter,
-                Data = pc._template.Data,
-                SpinOnCreate = pc._template.SpinOnCreate,
-                DisableGravity = pc._template.DisableGravity,
-                InvisibleForInteraction = pc._template.InvisibleForInteraction,
-                CameraInvisible = pc._template.CameraInvisible,
-                NoPlayerCollide = pc._template.NoPlayerCollide,
-                NoVehicleCollide = pc._template.NoVehicleCollide,
-                IgnoreModelOwner = pc._template.IgnoreModelOwner,
-                Floor = pc._template.Floor,
-                Climbable = pc._template.Climbable,
-                TriggerVolume = pc._template.TriggerVolume,
-                SurfaceProperties = pc._template.SurfaceProperties,
-                VolumeTriggerType = pc._template.VolumeTriggerType,
-                RagdollData = pc._template.RagdollData
+                AllowTeleporter = pc.Template.AllowTeleporter,
+                BlockTeleporter = pc.Template.BlockTeleporter,
+                Data = pc.Template.Data,
+                SpinOnCreate = pc.Template.SpinOnCreate,
+                DisableGravity = pc.Template.DisableGravity,
+                InvisibleForInteraction = pc.Template.InvisibleForInteraction,
+                CameraInvisible = pc.Template.CameraInvisible,
+                NoPlayerCollide = pc.Template.NoPlayerCollide,
+                NoVehicleCollide = pc.Template.NoVehicleCollide,
+                IgnoreModelOwner = pc.Template.IgnoreModelOwner,
+                Floor = pc.Template.Floor,
+                Climbable = pc.Template.Climbable,
+                TriggerVolume = pc.Template.TriggerVolume,
+                SurfaceProperties = pc.Template.SurfaceProperties,
+                VolumeTriggerType = pc.Template.VolumeTriggerType,
+                RagdollData = pc.Template.RagdollData
             };
-            data = new PhysicsData(pc.data);
+            Data = new PhysicsData(pc.Data);
         }
 
         public PhysicsComponent(TkPhysicsComponentData pcd)
         {
-            _template = pcd;
-            data = new PhysicsData(pcd.Data);
+            Template = pcd;
+            Data = new PhysicsData(pcd.Data);
         }
-
+        
         public override Component Clone()
         {
             return new PhysicsComponent(this);
         }
 
-        //Exposed Properties
-        public PhysicsData Data
+        public override void CopyFrom(Component c)
         {
-            get { return data; }
+            throw new NotImplementedException();
         }
-
-        public bool Climbable
-        {
-            get { return _template.Climbable; }
-        }
-
-        public bool Floor
-        {
-            get { return _template.Floor; }
-        }
-
-        public bool IgnoreModelOwner
-        {
-            get { return _template.IgnoreModelOwner; }
-        }
-
-        public bool TriggerVolume
-        {
-            get { return _template.TriggerVolume; }
-        }
-
-        public bool NoVehicleCollide
-        {
-            get { return _template.NoVehicleCollide; }
-        }
-
-        public bool NoPlayerCollide
-        {
-            get { return _template.NoPlayerCollide; }
-        }
-
-        public bool CameraInvisible
-        {
-            get { return _template.CameraInvisible; }
-        }
-
-        public bool InvisibleForInteraction
-        {
-            get { return _template.InvisibleForInteraction; }
-        }
-
-        public bool AllowTeleporter
-        {
-            get { return _template.AllowTeleporter; }
-        }
-
-        public bool BlockTeleporter
-        {
-            get { return _template.BlockTeleporter; }
-        }
-
-        public bool DisableGravity
-        {
-            get { return _template.DisableGravity; }
-        }
-
-        public float SpinOnCreate
-        {
-            get { return _template.SpinOnCreate; }
-        }
-
-        
     }
 }

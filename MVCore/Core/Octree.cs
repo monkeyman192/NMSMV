@@ -4,6 +4,7 @@ using MVCore.GMDL;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
+using MVCore.Systems;
 
 namespace MVCore
 {
@@ -53,27 +54,28 @@ namespace MVCore
 
 
         //Methods
-        public void insert(Model m)
+        public void insert(Entity m)
         {
-            if (m.type == TYPES.MODEL || m.type == TYPES.REFERENCE)
-            {
-                //Transform coordinates
-                IVector3 mincoords = transform_coords(m.AABBMIN, max_width);
-                IVector3 maxcoords = transform_coords(m.AABBMAX, max_width);
+            MeshComponent mc = m.GetComponent<MeshComponent>() as MeshComponent;
+            if (mc == null)
+                return;
 
-                if (checkIfFits(maxcoords) == 0 && checkIfFits(mincoords) == 0)
-                {
-                    root.insert(m, mincoords, maxcoords);
-                }
-                else
-                {
-                    //The octree should be expanded
-                    Console.WriteLine("WARNING THE CURRENT OCTREE DOES NOT FIT THE OBJECT");
-                }
+            //Transform coordinates
+            IVector3 mincoords = transform_coords(mc.AABBMIN, max_width);
+            IVector3 maxcoords = transform_coords(mc.AABBMAX, max_width);
+
+            if (checkIfFits(maxcoords) == 0 && checkIfFits(mincoords) == 0)
+            {
+                root.insert(m, mincoords, maxcoords);
+            }
+            else
+            {
+                //The octree should be expanded
+                Console.WriteLine("WARNING THE CURRENT OCTREE DOES NOT FIT THE OBJECT");
             }
             
             //Look for other scenes
-            foreach (Model child in m.children)
+            foreach (Entity child in m.Children)
                 insert(child);
         }
 
@@ -144,7 +146,7 @@ namespace MVCore
     public class OctNode
     {
         public List<OctNode> children = new List<OctNode>(8);
-        public List<Model> objects = new List<Model>();
+        public List<Entity> objects = new();
         public static int maxObjects = 8;
         public static int maxDepth = 3;
         public static ulong maxWidth;
@@ -206,7 +208,7 @@ namespace MVCore
         }
 
         //Insert object to the node
-        public void insert(Model m, IVector3 t_coords_min, IVector3 t_coords_max)
+        public void insert(Entity m, IVector3 t_coords_min, IVector3 t_coords_max)
         {
             if (depth == maxDepth)
             {
