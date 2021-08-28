@@ -18,7 +18,7 @@ namespace MVCore
     public class ModelProcGen
     {
         //static Random randgen = new Random();
-        public static Dictionary<string, string> procDecisions = new Dictionary<string, string>();
+        public static Dictionary<string, string> procDecisions = new();
 
         public static void addToStr(ref List<string> parts, string entry)
         {
@@ -71,7 +71,7 @@ namespace MVCore
                             }
 
                             //Parse exml now
-                            XmlDocument descrXml = new XmlDocument();
+                            XmlDocument descrXml = new();
                             descrXml.Load(exmlPath);
                             XmlElement newRoot = (XmlElement)descrXml.ChildNodes[2].ChildNodes[0];
                             //Parse Descriptors from this object
@@ -216,9 +216,9 @@ namespace MVCore
             }
         }
 
-        public static Entity collectPart(List<Entity> coll, string name)
+        public static SceneGraphNode collectPart(List<SceneGraphNode> coll, string name)
         {
-            foreach (Entity child in coll)
+            foreach (SceneGraphNode child in coll)
             {
                 if (child.Name == name)
                 {
@@ -227,7 +227,7 @@ namespace MVCore
                 else
                 {
 
-                    Entity ret = collectPart(child.Children, name);
+                    SceneGraphNode ret = collectPart(child.Children, name);
                     if (ret != null)
                         return ret;
                     else
@@ -243,15 +243,15 @@ namespace MVCore
 
     class opt_dict_val
     {
-        public List<string> opts = new List<string>();
-        public List<XmlElement> nodes = new List<XmlElement>();
+        public List<string> opts = new();
+        public List<XmlElement> nodes = new();
     }
 
     class Selector
     {
         public string split = "_";
-        public List<string> opts = new List<string>();
-        public Dictionary<string, List<Selector>> subs = new Dictionary<string, List<Selector>>();
+        public List<string> opts = new();
+        public Dictionary<string, List<Selector>> subs = new();
         public bool endpoint = false;
         public string name;
 
@@ -262,7 +262,7 @@ namespace MVCore
 
         public List<string> get_subnames(string key)
         {
-            List<string> l = new List<string>();
+            List<string> l = new();
             Debug.WriteLine(this.subs[key]);
             if (this.subs.Keys.Contains(key))
                 throw new ApplicationException("Malakia Key");

@@ -9,6 +9,14 @@
     <Import_RootNamespace>MVCore</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Components\CollisionComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Components\JointComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Components\LightComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Components\ReferenceComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Components\SceneComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedLightMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLVao.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\MeshMetaData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Export\AssimpExporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\MeshComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Engine.cs" />
@@ -34,15 +42,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\TransformComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\TriggerActionComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLLightBufferManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Entity.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Joint.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Light.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Locator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Material.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Mesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Core\Entity.cs" />
+    <Compile Include="..\MVCore\GMDL\MeshMaterial.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Model.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Reference.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\TextureMixer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\DDSImage.cs" />
@@ -55,7 +58,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utils\FileUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\GamepadHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Gbuffer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Gizmo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLPrimitives.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\GLShaderHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GMDL.cs" />

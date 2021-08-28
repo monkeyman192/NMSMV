@@ -12,48 +12,18 @@ namespace MVCore
         public string Name = "";
         public ulong NameHash;
         public TYPES Type;
-        public Entity Parent = null;
-        public List<Entity> Children = new();
+        
 
         //Private
-        private Dictionary<Type, Component> _componentMap = new();
-        
-        
+        private readonly Dictionary<Type, Component> _componentMap = new();
+
+        //Disposable Stuff
+        public bool disposed = false;
+        public Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
+
+
         public Entity()
         {
-
-        }
-
-        public void AddChild(Entity e)
-        {
-            e.SetParent(this);
-        }
-
-        public void SetParent(Entity e)
-        {
-            Parent = e;
-            Parent.Children.Add(this);
-
-            //Connect TransformComponents if both have
-            if (e.HasComponent<TransformComponent>() && HasComponent<TransformComponent>())
-            {
-                TransformComponent tc = GetComponent<TransformComponent>() as TransformComponent;
-                TransformComponent parent_tc = GetComponent<TransformComponent>() as TransformComponent;
-                tc.Data.SetParentData(parent_tc.Data);
-            }
-        }
-
-        public void DettachFromParent()
-        {
-            Common.Callbacks.Assert(Parent != null, "Parent Entity should not be null");
-            Parent.Children.Remove(this);
-
-            if (HasComponent<TransformComponent>())
-            {
-                TransformComponent tc = GetComponent<TransformComponent>() as TransformComponent;
-                tc.Data.ClearParentData();
-            }
-
 
         }
 
@@ -96,7 +66,7 @@ namespace MVCore
 
         public Entity Clone()
         {
-            Entity n = new Entity();
+            Entity n = new();
             n.CopyFrom(this);
             
             return n;
@@ -120,7 +90,34 @@ namespace MVCore
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            Dispose(true);
+#if DEBUG
+            GC.SuppressFinalize(this);
+#endif
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+            {
+                handle.Dispose();
+            }
+
+            //Free unmanaged resources
+            disposed = true;
+        }
+
+#if DEBUG
+        ~Entity()
+        {
+            // If this finalizer runs, someone somewhere failed to
+            // call Dispose, which means we've failed to leave
+            // a monitor!
+            System.Diagnostics.Debug.Fail("Undisposed lock. Object Type " + Type.ToString());
+        }
+#endif
     }
 }

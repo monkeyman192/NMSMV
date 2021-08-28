@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using GLSLHelper;
-using MVCore.GMDL;
 using MVCore.Systems;
 using OpenTK;
 using OpenTK.Mathematics;
@@ -13,7 +12,7 @@ namespace MVCore
 {
     public static class MeshRenderer
     {
-        public static void renderBBoxes(GLInstancedMeshVao mesh, int pass)
+        public static void renderBBoxes(GLInstancedMesh mesh, int pass)
         {
             for (int i = 0; i > mesh.instance_count; i++)
             {
@@ -23,7 +22,7 @@ namespace MVCore
             }
         }
 
-        public static void renderBbox(Model m)
+        public static void renderBbox(SceneGraphNode m)
         {
             MeshComponent mc = m.GetComponent<MeshComponent>() as MeshComponent;
             
@@ -34,8 +33,8 @@ namespace MVCore
             //tr_AABB[0] = new Vector4(metaData.AABBMIN, 1.0f) * worldMat;
             //tr_AABB[1] = new Vector4(metaData.AABBMAX, 1.0f) * worldMat;
 
-            tr_AABB[0] = new Vector4(mc.AABBMIN, 1.0f);
-            tr_AABB[1] = new Vector4(mc.AABBMAX, 1.0f);
+            tr_AABB[0] = new Vector4(mc.MetaData.AABBMIN, 1.0f);
+            tr_AABB[1] = new Vector4(mc.MetaData.AABBMAX, 1.0f);
 
             //tr_AABB[0] = new Vector4(metaData.AABBMIN, 0.0f);
             //tr_AABB[1] = new Vector4(metaData.AABBMAX, 0.0f);
@@ -105,7 +104,8 @@ namespace MVCore
 
         }
 
-        public static void renderBSphere(GLInstancedMeshVao mesh, GLSLShaderConfig shader)
+        /*
+        public static void renderBSphere(GLInstancedMesh mesh, GLSLShaderConfig shader)
         {
             for (int i = 0; i < mesh.instance_count; i++)
             {
@@ -124,16 +124,17 @@ namespace MVCore
                 bsh_Vao.Dispose();
             }
         }
+        */
 
-        public static void renderMesh(GLInstancedMeshVao mesh)
+        public static void renderMesh(GLInstancedMesh mesh)
         {
             GL.BindVertexArray(mesh.vao.vao_id);
             GL.DrawElementsInstanced(PrimitiveType.Triangles,
-                mesh.metaData.batchcount, mesh.metaData.indicesLength, IntPtr.Zero, mesh.instance_count);
+                mesh.MetaData.BatchCount, mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.instance_count);
             GL.BindVertexArray(0);
         }
 
-        public static void renderLight(GLInstancedMeshVao mesh)
+        public static void renderLight(GLInstancedMesh mesh)
         {
             GL.BindVertexArray(mesh.vao.vao_id);
             GL.PointSize(5.0f);
@@ -142,7 +143,7 @@ namespace MVCore
             GL.BindVertexArray(0);
         }
 
-        public static void renderCollision(GLInstancedMeshVao mesh)
+        public static void renderCollision(GLInstancedMesh mesh)
         {
             //Step 2: Render Elements
             GL.PointSize(8.0f);
@@ -152,20 +153,19 @@ namespace MVCore
             {
                 //Rendering based on the original mesh buffers
                 case COLLISIONTYPES.MESH:
-                    GL.DrawElementsInstancedBaseVertex(PrimitiveType.Points, mesh.metaData.batchcount,
-                        mesh.metaData.indicesLength, IntPtr.Zero, mesh.instance_count, -mesh.metaData.vertrstart_physics);
-                    GL.DrawElementsInstancedBaseVertex(PrimitiveType.Triangles, mesh.metaData.batchcount,
-                        mesh.metaData.indicesLength, IntPtr.Zero, mesh.instance_count, -mesh.metaData.vertrstart_physics);
+                    GL.DrawElementsInstancedBaseVertex(PrimitiveType.Points, mesh.MetaData.BatchCount,
+                        mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.instance_count, -mesh.MetaData.VertrStartPhysics);
+                    GL.DrawElementsInstancedBaseVertex(PrimitiveType.Triangles, mesh.MetaData.BatchCount,
+                        mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.instance_count, -mesh.MetaData.VertrStartPhysics);
                     break;
-
                 //Rendering custom geometry
                 case COLLISIONTYPES.BOX:
                 case COLLISIONTYPES.CYLINDER:
                 case COLLISIONTYPES.CAPSULE:
                 case COLLISIONTYPES.SPHERE:
-                    GL.DrawElementsInstanced(PrimitiveType.Points, mesh.metaData.batchcount,
+                    GL.DrawElementsInstanced(PrimitiveType.Points, mesh.MetaData.BatchCount,
                         DrawElementsType.UnsignedInt, IntPtr.Zero, mesh.instance_count);
-                    GL.DrawElementsInstanced(PrimitiveType.Triangles, mesh.metaData.batchcount,
+                    GL.DrawElementsInstanced(PrimitiveType.Triangles, mesh.MetaData.BatchCount,
                         DrawElementsType.UnsignedInt, IntPtr.Zero, mesh.instance_count);
                     break;
             }
@@ -173,36 +173,38 @@ namespace MVCore
             GL.BindVertexArray(0);
         }
 
-        public static void renderLocator(GLInstancedMeshVao mesh)
+        public static void renderLocator(GLInstancedMesh mesh)
         {
             GL.BindVertexArray(mesh.vao.vao_id);
             GL.DrawElementsInstanced(PrimitiveType.Lines, 6,
-                mesh.metaData.indicesLength, IntPtr.Zero, mesh.instance_count); //Use Instancing
+                mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.instance_count); //Use Instancing
             GL.BindVertexArray(0);
         }
 
-        public static void renderJoint(GLInstancedMeshVao mesh)
+        public static void renderJoint(GLInstancedMesh mesh)
         {
             GL.BindVertexArray(mesh.vao.vao_id);
             GL.PointSize(5.0f);
-            GL.DrawArrays(PrimitiveType.Lines, 0, mesh.metaData.batchcount);
+            GL.DrawArrays(PrimitiveType.Lines, 0, mesh.MetaData.BatchCount);
             GL.DrawArrays(PrimitiveType.Points, 0, 1); //Draw only yourself
             GL.BindVertexArray(0);
         }
 
-        public static void renderMain(GLInstancedMeshVao mesh, GLSLShaderConfig shader)
+        public static void renderMain(GLInstancedMesh mesh, MeshMaterial material)
         {
+            GLSLShaderConfig shader = material.shader;
+            
             //Upload Material Information
-
+            
             //Upload Custom Per Material Uniforms
-            foreach (Uniform un in mesh.material.activeUniforms)
+            foreach (Uniform un in material.activeUniforms)
             {
                 GL.Uniform4(shader.uniformLocations[un.Name], un.vec.vec4);
             }
 
             //BIND TEXTURES
             //Diffuse Texture
-            foreach (Sampler s in mesh.material.PSamplers.Values)
+            foreach (Sampler s in material.PSamplers.Values)
             {
                 if (shader.uniformLocations.ContainsKey(s.Name.Value) && s.Map != "")
                 {
@@ -250,9 +252,10 @@ namespace MVCore
             }
         }
 
-        public static void renderMain(GLInstancedLightMeshVao mesh, GLSLShaderConfig shader)
+        public static void renderMain(GLInstancedLightMesh mesh, MeshMaterial material)
         {
             //Upload Material Information
+            GLSLShaderConfig shader = material.shader;
 
             //LightInstanceTex
             GL.Uniform1(shader.uniformLocations["lightsTex"], 6);
@@ -261,30 +264,26 @@ namespace MVCore
             GL.TexBuffer(TextureBufferTarget.TextureBuffer,
                 SizedInternalFormat.Rgba32f, mesh.instanceLightTexTBO);
 
-            GL.BindVertexArray(mesh.vao.vao_id);
-            GL.DrawElementsInstanced(PrimitiveType.Triangles,
-                mesh.metaData.batchcount, mesh.metaData.indicesLength, IntPtr.Zero, mesh.instance_count);
-            GL.BindVertexArray(0);
-
+            renderMesh(mesh);
         }
 
-        public static void renderBHull(GLInstancedMeshVao mesh, GLSLShaderConfig shader)
+        public static void renderBHull(GLInstancedMesh mesh)
         {
             if (mesh.bHullVao == null) return;
             //I ASSUME THAT EVERYTHING I NEED IS ALREADY UPLODED FROM A PREVIOUS PASS
             GL.PointSize(8.0f);
             GL.BindVertexArray(mesh.bHullVao.vao_id);
 
-            GL.DrawElementsBaseVertex(PrimitiveType.Points, mesh.metaData.batchcount,
-                        mesh.metaData.indicesLength, 
-                        IntPtr.Zero, -mesh.metaData.vertrstart_physics);
-            GL.DrawElementsBaseVertex(PrimitiveType.Triangles, mesh.metaData.batchcount,
-                        mesh.metaData.indicesLength, 
-                        IntPtr.Zero, -mesh.metaData.vertrstart_physics);
+            GL.DrawElementsBaseVertex(PrimitiveType.Points, mesh.MetaData.BatchCount,
+                        mesh.MetaData.IndicesLength, 
+                        IntPtr.Zero, -mesh.MetaData.VertrStartPhysics);
+            GL.DrawElementsBaseVertex(PrimitiveType.Triangles, mesh.MetaData.BatchCount,
+                        mesh.MetaData.IndicesLength, 
+                        IntPtr.Zero, -mesh.MetaData.VertrStartPhysics);
             GL.BindVertexArray(0);
         }
 
-        public static void renderDebug(GLInstancedMeshVao mesh, int pass)
+        public static void renderDebug(MeshComponent mc, int pass)
         {
             GL.UseProgram(pass);
             //Step 1: Upload Uniforms
@@ -296,8 +295,8 @@ namespace MVCore
             for (int i = 0; i < 64; i++)
                 GL.Uniform1(loc + i, 0.0f);
 
-            for (int i = 0; i < mesh.material.Flags.Count; i++)
-                GL.Uniform1(loc + (int) mesh.material.Flags[i].MaterialFlag, 1.0f);
+            for (int i = 0; i < mc.Material.Flags.Count; i++)
+                GL.Uniform1(loc + (int) mc.Material.Flags[i].MaterialFlag, 1.0f);
 
             //Upload joint transform data
             //Multiply matrices before sending them
@@ -309,15 +308,12 @@ namespace MVCore
             */
 
             //Step 2: Render VAO
-            GL.BindVertexArray(mesh.vao.vao_id);
-            GL.DrawElements(PrimitiveType.Triangles, mesh.metaData.batchcount, DrawElementsType.UnsignedShort, (IntPtr)0);
+            GL.BindVertexArray(mc.MeshVao.vao.vao_id);
+            GL.DrawElements(PrimitiveType.Triangles, mc.MetaData.BatchCount, DrawElementsType.UnsignedShort, (IntPtr)0);
             GL.BindVertexArray(0);
         }
 
-
-
-        //Default render method
-        public static bool render(GLInstancedMeshVao mesh, GLSLShaderConfig shader, RENDERPASS pass)
+        public static bool render(GLInstancedMesh mesh, MeshMaterial mat, RENDERPASS pass)
         {
             //Render Object
             switch (pass)
@@ -326,13 +322,13 @@ namespace MVCore
                 case RENDERPASS.DEFERRED:
                 case RENDERPASS.FORWARD:
                 case RENDERPASS.DECAL:
-                    renderMain(mesh, shader);
+                    renderMain(mesh, mat);
                     break;
                 case RENDERPASS.BBOX:
                 case RENDERPASS.BHULL:
                     //renderBbox(shader.program_id, 0);
                     //renderBSphere(shader);
-                    renderBHull(mesh, shader);
+                    renderBHull(mesh);
                     break;
                 //Render Debug
                 case RENDERPASS.DEBUG:
@@ -350,7 +346,11 @@ namespace MVCore
             return true;
         }
 
-
-
+        //Default render method
+        public static bool render(MeshComponent mc, RENDERPASS pass)
+        {
+            return render(mc.MeshVao, mc.Material, pass);
+        }
+    
     }
 }

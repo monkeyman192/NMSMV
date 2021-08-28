@@ -46,7 +46,7 @@ namespace MVCore
         //18-20: padding
 
 
-        public static int AddInstance(ref GLInstancedMeshVao mesh, Model m)
+        public static int AddInstance(ref GLInstancedMesh mesh, SceneGraphNode m)
         {
             int instance_id = mesh.instance_count;
 
@@ -58,7 +58,7 @@ namespace MVCore
                 mesh.dataBuffer = newBuffer;
             }
 
-            if (instance_id < GLInstancedMeshVao.MAX_INSTANCES)
+            if (instance_id < GLInstancedMesh.MAX_INSTANCES)
             {
                 //Uplod worldMat to the meshVao
 
@@ -76,7 +76,7 @@ namespace MVCore
         }
 
         //Overload with transform overrides
-        public static int AddInstance(GLInstancedMeshVao mesh, Model m, Matrix4 worldMat, Matrix4 worldMatInv, Matrix4 normMat)
+        public static int AddInstance(GLInstancedMesh mesh, SceneGraphNode m, Matrix4 worldMat, Matrix4 worldMatInv, Matrix4 normMat)
         {
             int instance_id = mesh.instance_count;
 
@@ -88,7 +88,7 @@ namespace MVCore
                 mesh.dataBuffer = newBuffer;
             }
 
-            if (instance_id < GLInstancedMeshVao.MAX_INSTANCES)
+            if (instance_id < GLInstancedMesh.MAX_INSTANCES)
             {
                 SetInstanceWorldMat(mesh, instance_id, worldMat);
                 SetInstanceWorldMatInv(mesh, instance_id, worldMatInv);
@@ -101,21 +101,20 @@ namespace MVCore
             return instance_id;
         }
 
-        public static void ClearInstances(GLInstancedMeshVao mesh)
+        public static void ClearInstances(GLInstancedMesh mesh)
         {
             mesh.instanceRefs.Clear();
             mesh.instance_count = 0;
         }
 
-        public static void RemoveInstance(GLInstancedMeshVao mesh, Model m)
+        public static void RemoveInstance(GLInstancedMesh mesh, SceneGraphNode m)
         {
             int id = mesh.instanceRefs.IndexOf(m);
-
             //TODO: Make all the memory shit to push the instances backwards
         }
 
 
-        public static void SetInstanceOccludedStatus(GLInstancedMeshVao mesh, int instance_id, bool status)
+        public static void SetInstanceOccludedStatus(GLInstancedMesh mesh, int instance_id, bool status)
         {
             mesh.visible_instances += (status ? -1 : 1);
             unsafe
@@ -124,7 +123,7 @@ namespace MVCore
             }
         }
 
-        public static bool GetInstanceOccludedStatus(GLInstancedMeshVao mesh, int instance_id)
+        public static bool GetInstanceOccludedStatus(GLInstancedMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -132,7 +131,7 @@ namespace MVCore
             }
         }
 
-        public static void SetInstanceLODLevel(GLInstancedMeshVao mesh, int instance_id, int level)
+        public static void SetInstanceLODLevel(GLInstancedMesh mesh, int instance_id, int level)
         {
             unsafe
             {
@@ -140,7 +139,7 @@ namespace MVCore
             }
         }
 
-        public static int GetInstanceLODLevel(GLInstancedMeshVao mesh, int instance_id)
+        public static int GetInstanceLODLevel(GLInstancedMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -148,7 +147,7 @@ namespace MVCore
             }
         }
 
-        public static void SetInstanceSelectedStatus(GLInstancedMeshVao mesh, int instance_id, bool status)
+        public static void SetInstanceSelectedStatus(GLInstancedMesh mesh, int instance_id, bool status)
         {
             unsafe
             {
@@ -156,7 +155,7 @@ namespace MVCore
             }
         }
 
-        public static bool GetInstanceSelectedStatus(GLInstancedMeshVao mesh, int instance_id)
+        public static bool GetInstanceSelectedStatus(GLInstancedMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -164,7 +163,7 @@ namespace MVCore
             }
         }
 
-        public static Matrix4 GetInstanceWorldMat(GLInstancedMeshVao mesh, int instance_id)
+        public static Matrix4 GetInstanceWorldMat(GLInstancedMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -177,7 +176,7 @@ namespace MVCore
 
         }
 
-        public static Matrix4 GetInstanceNormalMat(GLInstancedMeshVao mesh, int instance_id)
+        public static Matrix4 GetInstanceNormalMat(GLInstancedMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -188,7 +187,7 @@ namespace MVCore
             }
         }
 
-        public static Vector3 GetInstanceColor(GLInstancedMeshVao mesh, int instance_id)
+        public static Vector3 GetInstanceColor(GLInstancedMesh mesh, int instance_id)
         {
             float col;
             unsafe
@@ -199,7 +198,7 @@ namespace MVCore
             return new Vector3(col, col, col);
         }
 
-        public static void SetInstanceUniform4(GLInstancedMeshVao mesh, int instance_id, string un_name, Vector4 un)
+        public static void SetInstanceUniform4(GLInstancedMesh mesh, int instance_id, string un_name, Vector4 un)
         {
             unsafe
             {
@@ -221,7 +220,7 @@ namespace MVCore
             }
         }
 
-        public static Vector4 GetInstanceUniform(GLInstancedMeshVao mesh, int instance_id, string un_name)
+        public static Vector4 GetInstanceUniform(GLInstancedMesh mesh, int instance_id, string un_name)
         {
             Vector4 un;
             unsafe
@@ -246,7 +245,7 @@ namespace MVCore
             return un;
         }
 
-        public static void SetInstanceWorldMat(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceWorldMat(GLInstancedMesh mesh, int instance_id, Matrix4 mat)
         {
             unsafe
             {
@@ -258,7 +257,7 @@ namespace MVCore
             }
         }
 
-        public static void SetInstanceWorldMatInv(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceWorldMatInv(GLInstancedMesh mesh, int instance_id, Matrix4 mat)
         {
             unsafe
             {
@@ -270,7 +269,7 @@ namespace MVCore
             }
         }
 
-        public static void SetInstanceNormalMat(GLInstancedMeshVao mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceNormalMat(GLInstancedMesh mesh, int instance_id, Matrix4 mat)
         {
             unsafe
             {

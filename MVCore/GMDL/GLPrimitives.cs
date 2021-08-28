@@ -39,7 +39,7 @@ namespace MVCore.Primitives
 
         public virtual GeomObject getGeom()
         {
-            GeomObject geom = new GeomObject();
+            GeomObject geom = new();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 3;
@@ -82,7 +82,7 @@ namespace MVCore.Primitives
 
         public static Primitive mergePrimitives(Primitive p1, Primitive p2)
         {
-            Primitive p = new Primitive();
+            Primitive p = new();
 
             //Merge vertices
             p.verts = new float[p1.verts.Length + p2.verts.Length];
@@ -198,8 +198,8 @@ namespace MVCore.Primitives
             normals = new float[arraysize];
             indices = new int[2 * indarraysize];
 
-            List<float> vlist = new List<float>();
-            List<int> ilist = new List<int>();
+            List<float> vlist = new();
+            List<int> ilist = new();
 
 
             for (int lat = 0; lat <= latBands; lat++)
@@ -369,8 +369,8 @@ namespace MVCore.Primitives
     {
         public Arrow(float radius, float length, Vector3 color, bool generateGeom=false, int latBands = 10)
         {
-            ArrowHead head = new ArrowHead(radius, 2 * radius, color, false, latBands);
-            Cylinder cyl = new Cylinder(radius/2.0f, length, color, false, latBands);
+            ArrowHead head = new(radius, 2 * radius, color, false, latBands);
+            Cylinder cyl = new(radius/2.0f, length, color, false, latBands);
 
             //Transform Primitives before merging
             //Move arrowhead up in place
@@ -393,7 +393,7 @@ namespace MVCore.Primitives
 
         public new GeomObject getGeom()
         {
-            GeomObject geom = new GeomObject();
+            GeomObject geom = new();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
@@ -438,11 +438,11 @@ namespace MVCore.Primitives
     {
         public SquareCross2D(float size, Vector3 col, bool generateGeom = false)
         {
-            Box b1 = new Box(size, size, size, col, false);
-            Box b2 = new Box(size, size, size, col, false);
-            Box b3 = new Box(size, size, size, col, false);
-            Box b4 = new Box(size, size, size, col, false);
-            Box b5 = new Box(size, size, size, col, false);
+            Box b1 = new(size, size, size, col, false);
+            Box b2 = new(size, size, size, col, false);
+            Box b3 = new(size, size, size, col, false);
+            Box b4 = new(size, size, size, col, false);
+            Box b5 = new(size, size, size, col, false);
 
             Matrix4 t;
             t = Matrix4.CreateTranslation(new Vector3(-size, 0.0f, 0.0f));
@@ -501,14 +501,14 @@ namespace MVCore.Primitives
         }
 
         
-        private Primitive generatePrimitive(Vector3 scale)
+        private static Primitive generatePrimitive(Vector3 scale)
         {
-            Arrow XPosAxis = new Arrow(0.02f, scale.X, new Vector3(10.5f, 0.0f, 0.0f), false, 5);
-            Arrow XNegAxis = new Arrow(0.01f, scale.X, new Vector3(10.5f, 0.1f, 0.1f), false, 5);
-            Arrow YPosAxis = new Arrow(0.02f, scale.Y, new Vector3(0.0f, 10.5f, 0.0f), false, 5);
-            Arrow YNegAxis = new Arrow(0.01f, scale.Y, new Vector3(0.1f, 10.5f, 0.1f), false, 5);
-            Arrow ZPosAxis = new Arrow(0.02f, scale.Z, new Vector3(0.0f, 0.0f, 10.5f), false, 5);
-            Arrow ZNegAxis = new Arrow(0.01f, scale.Z, new Vector3(0.1f, 0.1f, 10.5f), false, 5);
+            Arrow XPosAxis = new(0.02f, scale.X, new Vector3(10.5f, 0.0f, 0.0f), false, 5);
+            Arrow XNegAxis = new(0.01f, scale.X, new Vector3(10.5f, 0.1f, 0.1f), false, 5);
+            Arrow YPosAxis = new(0.02f, scale.Y, new Vector3(0.0f, 10.5f, 0.0f), false, 5);
+            Arrow YNegAxis = new(0.01f, scale.Y, new Vector3(0.1f, 10.5f, 0.1f), false, 5);
+            Arrow ZPosAxis = new(0.02f, scale.Z, new Vector3(0.0f, 0.0f, 10.5f), false, 5);
+            Arrow ZNegAxis = new(0.01f, scale.Z, new Vector3(0.1f, 0.1f, 10.5f), false, 5);
             
             //SquareCross2D c = new SquareCross2D(0.01f, new Vector3(0.0f, 10.5f, 0.0f), false);
 
@@ -547,7 +547,7 @@ namespace MVCore.Primitives
 
         public new GeomObject getGeom()
         {
-            GeomObject geom = new GeomObject();
+            GeomObject geom = new();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
@@ -593,9 +593,9 @@ namespace MVCore.Primitives
     {
         public TranslationGizmo(Vector3 scale, bool generateGeom = false)
         {
-            Arrow XAxis = new Arrow(0.015f, 0.25f, new Vector3(1.0f, 0.0f, 0.0f), false, 20);
-            Arrow YAxis = new Arrow(0.015f, 0.25f, new Vector3(0.0f, 1.0f, 0.0f), false, 20);
-            Arrow ZAxis = new Arrow(0.015f, 0.25f, new Vector3(0.0f, 0.0f, 1.0f), false, 20);
+            Arrow XAxis = new(0.015f, 0.25f, new Vector3(1.0f, 0.0f, 0.0f), false, 20);
+            Arrow YAxis = new(0.015f, 0.25f, new Vector3(0.0f, 1.0f, 0.0f), false, 20);
+            Arrow ZAxis = new(0.015f, 0.25f, new Vector3(0.0f, 0.0f, 1.0f), false, 20);
 
             //Transform Primitives before merging
             //Scale matrix
@@ -621,7 +621,7 @@ namespace MVCore.Primitives
 
         public new GeomObject getGeom()
         {
-            GeomObject geom = new GeomObject();
+            GeomObject geom = new();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
@@ -739,7 +739,7 @@ namespace MVCore.Primitives
 
         public new GeomObject getGeom()
         {
-            GeomObject geom = new GeomObject();
+            GeomObject geom = new();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
@@ -967,7 +967,7 @@ namespace MVCore.Primitives
 
         public new GeomObject getGeom()
         {
-            GeomObject geom = new GeomObject();
+            GeomObject geom = new();
 
             //Set main Geometry Info
             geom.vertCount = 6;

@@ -12,7 +12,6 @@ using libMBIN;
 using libMBIN.NMS.Toolkit;
 using System.Linq;
 using MVCore;
-using MVCore.GMDL;
 using Console = System.Console;
 using MVCore.Utils;
 using libMBIN.NMS.GameComponents;
@@ -75,7 +74,7 @@ namespace MVCore
             //testfs.Write(fs_data, 0, (int) fs.Length);
             //testfs.Close();
 
-            BinaryReader br = new BinaryReader(fs);
+            BinaryReader br = new(fs);
             Console.WriteLine("Parsing Geometry MBIN");
 
             fs.Seek(0x60, SeekOrigin.Begin);
@@ -205,10 +204,10 @@ namespace MVCore
             geom.jointCount = jointCount;
             for (int i = 0; i < jointCount; i++)
             {
-                JointBindingData jdata = new JointBindingData();
+                JointBindingData jdata = new();
                 jdata.Load(fs);
                 //Copy Matrix
-                Array.Copy(jdata.convertMat(), 0, geom.invBMats, 16 * i, 16);
+                Array.Copy(MathUtils.convertMat(jdata.invBindMatrix), 0, geom.invBMats, 16 * i, 16);
                 //Store the struct
                 geom.jointData.Add(jdata);
             }
@@ -271,13 +270,15 @@ namespace MVCore
             fs.Seek(meshMetaData_offset, SeekOrigin.Begin);
             for (int i = 0; i < meshMetaData_counter; i++)
             {
-                geomMeshMetaData mmd = new geomMeshMetaData();
-                mmd.name = StringUtils.read_string(br, 0x80);
-                mmd.hash = br.ReadUInt64();
-                mmd.vs_size = br.ReadUInt32();
-                mmd.vs_abs_offset = br.ReadUInt32();
-                mmd.is_size = br.ReadUInt32();
-                mmd.is_abs_offset = br.ReadUInt32();
+                geomMeshMetaData mmd = new()
+                {
+                    name = StringUtils.read_string(br, 0x80),
+                    hash = br.ReadUInt64(),
+                    vs_size = br.ReadUInt32(),
+                    vs_abs_offset = br.ReadUInt32(),
+                    is_size = br.ReadUInt32(),
+                    is_abs_offset = br.ReadUInt32()
+                };
                 geom.meshMetaDataDict[mmd.hash] = mmd;
                 Console.WriteLine(mmd.name);
             }
@@ -355,7 +356,7 @@ namespace MVCore
             foreach (KeyValuePair<ulong, geomMeshMetaData> pair in geom.meshMetaDataDict)
             {
                 geomMeshMetaData mmd = pair.Value;
-                geomMeshData md = new geomMeshData
+                geomMeshData md = new()
                 {
                     vs_buffer = new byte[mmd.vs_size],
                     is_buffer = new byte[mmd.is_size]
@@ -487,9 +488,9 @@ namespace MVCore
         }
 
         private static TextureManager localTexMgr;
-        private static List<Model> localAnimScenes = new List<Model>();
+        private static readonly List<SceneGraphNode> localAnimScenes = new();
 
-        private static Dictionary<Type, int> SupportedComponents = new Dictionary<Type, int>
+        private static readonly Dictionary<Type, int> SupportedComponents = new()
         {
             {typeof(TkAnimPoseComponentData), 0},
             {typeof(TkAnimationComponentData), 1},
@@ -509,7 +510,7 @@ namespace MVCore
             string sceneName = template.Name;
             Common.Callbacks.Log(string.Format("Trying to load Scene {0}", sceneName), Common.LogVerbosityLevel.INFO);
             string[] split = sceneName.Split('\\');
-            string scnName = split[split.Length - 1];
+            string scnName = split[^1];
             Common.Callbacks.updateStatus("Importing Scene: " + scnName);
             Common.Callbacks.Log(string.Format("Importing Scene: {0}", scnName), Common.LogVerbosityLevel.INFO);
             
@@ -562,7 +563,7 @@ namespace MVCore
                     SceneGraphNode dummy = new()
                     {
                         Name = "DUMMY_SCENE",
-                        template = null,
+                        Template = null,
                         Type = TYPES.MODEL
                     };
                     return dummy;
@@ -578,11 +579,11 @@ namespace MVCore
             }
 
             //Random Generetor for colors
-            Random randgen = new Random();
+            Random randgen = new();
 
             //Parse root scene
             SceneGraphNode root = parseNode(template, gobject, null, null);
-            root.template = template;
+            root.Template = template;
 
             //Save scene path to resourcemanager
             Common.RenderState.activeResMgr.GLScenes[path] = root; //Use input path
@@ -590,36 +591,36 @@ namespace MVCore
             return root;
         }
 
-        private static void ProcessAnimPoseComponent(Model node, TkAnimPoseComponentData component)
+        private static void ProcessAnimPoseComponent(SceneGraphNode node, TkAnimPoseComponentData component)
         {
             //Load PoseFile
-            AnimPoseComponent apc = new AnimPoseComponent(component);
+            AnimPoseComponent apc = new(component);
             apc.ref_object = node; //Set referenced animScene
             node.AddComponent<AnimPoseComponent>(apc);
         }
 
-        private static void ProcessAnimationComponent(Model node, TkAnimationComponentData component)
+        private static void ProcessAnimationComponent(SceneGraphNode node, TkAnimationComponentData component)
         {
-            AnimComponent ac = new AnimComponent(component);
+            AnimComponent ac = new(component);
             node.AddComponent<AnimComponent>(ac);
         }
 
-        private static void ProcessPhysicsComponent(Model node, TkPhysicsComponentData component)
+        private static void ProcessPhysicsComponent(SceneGraphNode node, TkPhysicsComponentData component)
         {
-            PhysicsComponent pc = new PhysicsComponent(component);
+            PhysicsComponent pc = new(component);
             node.AddComponent<PhysicsComponent>(pc);
         }
 
-        private static void ProcessTriggerActionComponent(Model node, GcTriggerActionComponentData component)
+        private static void ProcessTriggerActionComponent(SceneGraphNode node, GcTriggerActionComponentData component)
         {
-            TriggerActionComponent tac = new TriggerActionComponent(component);
+            TriggerActionComponent tac = new(component);
             node.AddComponent<TriggerActionComponent>(tac);
         }
 
         private static void ProcessLODComponent(SceneGraphNode node, TkLODComponentData component)
         {
             //Load all LOD models as children to the node
-            LODModelComponent lodmdlcomp = new LODModelComponent();
+            LODModelComponent lodmdlcomp = new();
             
             for (int i = 0; i < component.LODModel.Count; i++)
             {
@@ -628,14 +629,14 @@ namespace MVCore
                 SceneGraphNode so = LoadObjects(filepath);
                 so.SetParent(node);
                 //Create LOD Resource
-                LODModelResource lodres = new LODModelResource(component.LODModel[i]);
+                LODModelResource lodres = new(component.LODModel[i]);
                 lodmdlcomp.Resources.Add(lodres);
             }
             
             node.AddComponent<LODModelComponent>(lodmdlcomp);
         }
 
-        private static void ProcessComponents(Model node, TkAttachmentData attachment)
+        private static void ProcessComponents(SceneGraphNode node, TkAttachmentData attachment)
         {
             if (attachment == null)
                 return;
@@ -673,52 +674,30 @@ namespace MVCore
                 }   
             
             }
-
-
-            //Setup LOD distances
-            for (int i = 0; i < 5; i++)
-            {
-                if (i < node._LODDistances.Length)
-                    node._LODDistances[i] = attachment.LodDistances[i];
-                else
-                    node._LODDistances[i] = 100000.0f;
-            }
+            
+            //Add default LOD distances
+            for (int i = 0; i < attachment.LodDistances.Length; i++)
+                node.LODDistances.Add(attachment.LodDistances[i]);
         }
 
 
-        private static void findAnimScenes(Model node)
+        private static MeshMaterial parseMaterial(string matname)
         {
-            if (node.Type == TYPES.MODEL)
-            {
-                Scene s = (Scene)node;
-
-                if (s.jointDict.Values.Count > 0)
-                    localAnimScenes.Add(node);
-            }
-                
-
-            foreach (Model child in node.Children)
-                findAnimScenes(child);
-        }
-
-
-        private static Material parseMaterial(string matname)
-        {
-            Material mat;
+            MeshMaterial mat;
 
             Common.Callbacks.Log(string.Format("Trying to load Material {0}", matname), Common.LogVerbosityLevel.INFO);
             string matkey = matname; //Use the entire path
 
 
             //Material mat = MATERIALMBIN.Parse(newXml);
-            mat = Material.Parse(matname, localTexMgr);
+            mat = MeshMaterial.Parse(matname, localTexMgr);
             
             //File probably not found not even in the PAKS, 
             if (mat == null)
             {
                 Common.Callbacks.Log(string.Format("Warning Material Missing!!!"), Common.LogVerbosityLevel.WARNING);
                 //Generate empty material
-                mat = new Material();
+                mat = new MeshMaterial();
             }
             
             //Load default form palette on init
@@ -730,265 +709,7 @@ namespace MVCore
         }
 
 
-        private static Mesh parseMesh(TkSceneNodeData node,
-            GeomObject gobject, Model parent, Scene scene)
-        {
-            TkTransformData transform = node.Transform;
-            List<TkSceneNodeAttributeData> attribs = node.Attributes;
-            List<TkSceneNodeData> children = node.Children;
-
-            //Load Transforms
-            //Get Transformation
-            var transforms = new float[] { transform.TransX,
-                transform.TransY,
-                transform.TransZ,
-                transform.RotX,
-                transform.RotY,
-                transform.RotZ,
-                transform.ScaleX,
-                transform.ScaleY,
-                transform.ScaleZ};
-
-            //XmlElement info = (XmlElement)node.ChildNodes[0];
-            //XmlElement opts = (XmlElement)node.ChildNodes[1];
-            //XmlElement childs = (XmlElement)node.ChildNodes[2];
-
-            ulong nameHash = node.NameHash;
-            string type = node.Type;
-
-            //Fix double underscore names
-            //TODO: CHeck if we need this again (probably affects the procedural descriptors)
-            //if (name.StartsWith("_"))
-            //    name = "_" + name.TrimStart('_');
-
-            //Create model
-            Mesh so = new()
-            {
-                Name = node.Name,
-                NameHash = nameHash,
-                debuggable = true,
-                parentScene = scene,
-                color = new Vector3(Common.RenderState.randgen.Next(255) / 255.0f,
-                                    Common.RenderState.randgen.Next(255) / 255.0f,
-                                    Common.RenderState.randgen.Next(255) / 255.0f),
-                metaData = new MeshMetaData()
-                {
-                    batchstart_physics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTPHYSI")),
-                    vertrstart_physics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTPHYSI")),
-                    vertrend_physics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDPHYSICS")),
-                    batchstart_graphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTGRAPH")),
-                    batchcount = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHCOUNT")),
-                    vertrstart_graphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTGRAPH")),
-                    vertrend_graphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDGRAPHIC")),
-                    firstskinmat = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "FIRSTSKINMAT")),
-                    lastskinmat = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LASTSKINMAT")),
-                    LODLevel = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
-                    boundhullstart = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
-                    boundhullend = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
-                    AABBMIN = new Vector3(MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
-                                          MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINY")),
-                                          MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINZ"))),
-                    AABBMAX = new Vector3(MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
-                                          MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
-                                          MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
-                    Hash = ulong.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "HASH"))
-                },
-            };
-
-            Common.Callbacks.Log(string.Format("Randomized Object Color {0}, {1}, {2}", so.color[0], so.color[1], so.color[2]), Common.LogVerbosityLevel.INFO);
-            Common.Callbacks.Log(string.Format("Batch Physics Start {0} Count {1} Vertex Physics {2} - {3} Vertex Graphics {4} - {5} SkinMats {6}-{7}",
-                so.metaData.batchstart_physics, so.metaData.batchcount, so.metaData.vertrstart_physics,
-                so.metaData.vertrend_physics, so.metaData.vertrstart_graphics, so.metaData.vertrend_graphics,
-                so.metaData.firstskinmat, so.metaData.lastskinmat), Common.LogVerbosityLevel.INFO);
-
-            //For now fetch only one attachment
-            string attachment = NMSUtils.parseNMSTemplateAttrib(node.Attributes, "ATTACHMENT");
-            TkAttachmentData attachment_data = null;
-            if (attachment != "")
-            {
-                attachment_data = NMSUtils.LoadNMSTemplate(attachment, ref Common.RenderState.activeResMgr) as TkAttachmentData;
-            }
-
-            //so.Bbox = gobject.bboxes[iid]; //Use scene parameters
-            //so.setupBSphere();
-            so.Parent = parent;
-            so.nms_template = node;
-            so.gobject = gobject; //Store the gobject for easier access of uniforms
-            so.init(transforms); //Init object transforms
-
-            //Check if the model should be subjected to LOD filtering
-            if (so.Name.Contains("LOD"))
-            {
-                so.hasLOD = true;
-                //Override LOD level using the name
-                try
-                {
-                    so.metaData.LODLevel = (int)Char.GetNumericValue(so.Name[so.Name.IndexOf("LOD") + 3]);
-                }
-                catch (IndexOutOfRangeException)
-                {
-                    Common.Callbacks.Log("Unable to fetch lod level from mesh name", Common.LogVerbosityLevel.WARNING);
-                    so.metaData.LODLevel = 0;
-                }
-            }
-            
-            //Process Attachments
-            ProcessComponents(so, attachment_data);
-            
-            //Search for the vao
-            GLVao vao = gobject.findVao(so.metaData.Hash);
-
-            if (vao == null)
-            {
-                //Generate VAO and Save vao
-                vao = gobject.generateVAO(so);
-                gobject.saveVAO(so.metaData.Hash, vao);
-            }
-
-            //Get Material Name
-            string matname = NMSUtils.parseNMSTemplateAttrib(node.Attributes, "MATERIAL");
-
-            //Search for the material
-            Material mat;
-            if (Common.RenderState.activeResMgr.GLmaterials.ContainsKey(matname))
-                mat = Common.RenderState.activeResMgr.GLmaterials[matname];
-            else
-            {
-                //Parse material
-                mat = parseMaterial(matname);
-                //Save Material to the resource manager
-                Common.RenderState.activeResMgr.AddMaterial(mat);
-            }
-
-            //Search for the meshVao in the gobject
-            GLInstancedMeshVao meshVao = gobject.findGLMeshVao(matname, so.metaData.Hash);
-
-            if (meshVao == null)
-            {
-                //Generate new meshVao
-                meshVao = new GLInstancedMeshVao(so.metaData);
-                meshVao.type = TYPES.MESH;
-                meshVao.vao = vao;
-                meshVao.material = mat; //Set meshVao Material
-
-                //Set indicesLength
-                //Calculate indiceslength per index buffer
-                if (so.metaData.batchcount > 0)
-                {
-                    int indicesLength = (int)gobject.meshMetaDataDict[so.metaData.Hash].is_size / so.metaData.batchcount;
-
-
-                    switch (indicesLength)
-                    {
-                        case 1:
-                            meshVao.metaData.indicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedByte;
-                            break;
-                        case 2:
-                            meshVao.metaData.indicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedShort;
-                            break;
-                        case 4:
-                            meshVao.metaData.indicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedInt;
-                            break;
-                    }
-
-                }
-
-                //Configure boneRemap properly
-                meshVao.BoneRemapIndicesCount = so.metaData.lastskinmat - so.metaData.firstskinmat;
-                meshVao.BoneRemapIndices = new int[meshVao.BoneRemapIndicesCount];
-                for (int i = 0; i < so.metaData.lastskinmat - so.metaData.firstskinmat; i++)
-                    meshVao.BoneRemapIndices[i] = gobject.boneRemap[so.metaData.firstskinmat + i];
-
-                //Set skinned flag
-                if (meshVao.BoneRemapIndicesCount > 0 && so.animComponentID >= 0)
-                    meshVao.skinned = true;
-
-                //Set skinned flag if its set as a metarial flag
-                if (mat.has_flag((TkMaterialFlags.MaterialFlagEnum)TkMaterialFlags.UberFlagEnum._F02_SKINNED))
-                    meshVao.skinned = true;
-
-                //Generate collision mesh vao
-                try
-                {
-                    meshVao.bHullVao = gobject.getCollisionMeshVao(so.metaData); //Missing data
-                }
-                catch (Exception)
-                {
-                    Common.Callbacks.Log("Error while fetching bHull Collision Mesh", Common.LogVerbosityLevel.ERROR);
-                    meshVao.bHullVao = null;
-                }
-
-                //so.setupBSphere(); //Setup Bounding Sphere Mesh
-
-                //Save meshvao to the gobject
-                gobject.saveGLMeshVAO(so.metaData.Hash, matname, meshVao);
-            }
-
-            so.meshVao = meshVao;
-            so.instanceId = GLMeshBufferManager.AddInstance(ref meshVao, so); //Add instance
-
-            Console.WriteLine("Object {0}, Number of skinmatrices required: {1}", so.Name, so.metaData.lastskinmat - so.metaData.firstskinmat);
-
-            
-            return so;
-        }
-
-        private static Scene parseScene(TkSceneNodeData node,
-            GeomObject gobject, Model parent, Scene scene)
-        {
-            Scene so = new Scene();
-            so.Name = node.Name;
-            so.NameHash = node.NameHash;
-
-            TkTransformData transform = node.Transform;
-            List<TkSceneNodeAttributeData> attribs = node.Attributes;
-            List<TkSceneNodeData> children = node.Children;
-
-            //Load Transforms
-            //Get Transformation
-            var transforms = new float[] { transform.TransX,
-                transform.TransY,
-                transform.TransZ,
-                transform.RotX,
-                transform.RotY,
-                transform.RotZ,
-                transform.ScaleX,
-                transform.ScaleY,
-                transform.ScaleZ};
-
-            //Get Transformation
-            so.Parent = parent;
-            so.nms_template = node;
-            so.init(transforms);
-            so.gobject = gobject;
-
-            //Fetch attributes
-            so._LODDistances = new float[5];
-            so._LODNum = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "NUMLODS"));
-
-            //Fetch extra LOD attributes
-            for (int i = 1; i < so._LODNum; i++)
-            {
-                float attr_val = MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LODDIST" + i));
-                so._LODDistances[i - 1] = attr_val;
-            }
-
-            //Setup model texture manager
-            so.texMgr = new TextureManager();
-            so.texMgr.SetMasterTexManager(Common.RenderState.activeResMgr.texMgr);
-            localTexMgr = so.texMgr; //setup local texMgr
-
-            //Handle Children
-            foreach (TkSceneNodeData child in children)
-            {
-                Model part = parseNode(child, gobject, so, so);
-                so.Children.Add(part);
-            }
-
-            return so;
-        }
-
-
+        /*
         private static Locator parseLocator(TkSceneNodeData node,
             GeomObject gobject, Model parent, Scene scene)
         {
@@ -1104,7 +825,7 @@ namespace MVCore
             so.color[2] = Common.RenderState.randgen.Next(255) / 255.0f;
 
 
-            so.meshVao = new GLInstancedMeshVao();
+            so.meshVao = new GLInstancedMesh();
             so.instanceId = GLMeshBufferManager.AddInstance(ref so.meshVao, so); //Add instance
             so.meshVao.type = TYPES.JOINT;
             so.meshVao.metaData = new MeshMetaData();
@@ -1202,7 +923,7 @@ namespace MVCore
                 //Set vao
                 try
                 {
-                    so.meshVao = new GLInstancedMeshVao(so.metaData);
+                    so.meshVao = new GLInstancedMesh(so.metaData);
                     so.instanceId = GLMeshBufferManager.AddInstance(ref so.meshVao, so); //Add instance
                     so.meshVao.vao = gobject.getCollisionMeshVao(so.metaData);
                     //Use indiceslength from the gobject
@@ -1229,7 +950,7 @@ namespace MVCore
                 metaData.vertrstart_graphics = 0;
                 metaData.vertrend_graphics = 22 - 1;
                 so.metaData = metaData;
-                so.meshVao = new GLInstancedMeshVao(so.metaData);
+                so.meshVao = new GLInstancedMesh(so.metaData);
                 so.meshVao.vao = (new Primitives.Cylinder(radius, height, new Vector3(0.0f, 0.0f, 0.0f), true)).getVAO();
                 so.instanceId = GLMeshBufferManager.AddInstance(ref so.meshVao, so); //Add instance
                 so.collisionType = COLLISIONTYPES.CYLINDER;
@@ -1251,7 +972,7 @@ namespace MVCore
                 metaData.vertrend_graphics = 8 - 1;
                 so.metaData = metaData;
 
-                so.meshVao = new GLInstancedMeshVao(so.metaData);
+                so.meshVao = new GLInstancedMesh(so.metaData);
                 so.meshVao.vao = (new Primitives.Box(width, height, depth, new Vector3(1.0f), true)).getVAO();
                 so.instanceId = GLMeshBufferManager.AddInstance(ref so.meshVao, so); //Add instance
                 so.collisionType = COLLISIONTYPES.BOX;
@@ -1270,7 +991,7 @@ namespace MVCore
                 metaData.vertrstart_graphics = 0;
                 metaData.vertrend_graphics = 144 - 1;
                 so.metaData = metaData;
-                so.meshVao = new GLInstancedMeshVao(so.metaData);
+                so.meshVao = new GLInstancedMesh(so.metaData);
                 so.meshVao.vao = (new Primitives.Capsule(new Vector3(), height, radius)).getVAO();
                 so.instanceId = GLMeshBufferManager.AddInstance(ref so.meshVao, so); //Add instance
                 so.collisionType = COLLISIONTYPES.CAPSULE;
@@ -1287,7 +1008,7 @@ namespace MVCore
                 metaData.vertrstart_graphics = 0;
                 metaData.vertrend_graphics = 121 - 1;
                 so.metaData = metaData;
-                so.meshVao = new GLInstancedMeshVao(so.metaData);
+                so.meshVao = new GLInstancedMesh(so.metaData);
                 so.meshVao.vao = (new Primitives.Sphere(new Vector3(), radius)).getVAO();
                 so.instanceId = GLMeshBufferManager.AddInstance(ref so.meshVao, so); //Add instance
                 so.collisionType = COLLISIONTYPES.SPHERE;
@@ -1489,6 +1210,8 @@ namespace MVCore
             return so;
         }
 
+        */
+
         private static SceneGraphNode parseNode(TkSceneNodeData node, 
             GeomObject gobject, SceneGraphNode parent, SceneGraphNode parentScene)
         {
@@ -1505,14 +1228,30 @@ namespace MVCore
                 NameHash = node.NameHash,
                 Type = typeEnum,
                 ID = Common.RenderState.itemCounter++,
-                template = node
+                Template = node
             };
-
-            //Add Transform Component
-            TransformData td = new TransformData(node.Transform);
-            TransformComponent tc = new TransformComponent(td);
-            so.AddComponent<TransformComponent>(tc);
             
+            //Add Transform Component
+            TransformData td = new(node.Transform);
+            TransformComponent tc = new(td);
+            so.AddComponent<TransformComponent>(tc);
+
+            //Set Parent after the transform component has been initialized
+            if (parent != null)
+                so.SetParent(parent);
+            so.ParentScene = parentScene;
+            
+            //For now fetch only one attachment
+            string attachment = NMSUtils.parseNMSTemplateAttrib(node.Attributes, "ATTACHMENT");
+            TkAttachmentData attachment_data = null;
+            if (attachment != "")
+            {
+                attachment_data = NMSUtils.LoadNMSTemplate(attachment, ref Common.RenderState.activeResMgr) as TkAttachmentData;
+            }
+
+            //Process Attachments
+            ProcessComponents(so, attachment_data);
+
             if (typeEnum == TYPES.MESH)
             {
                 Common.Callbacks.Log(string.Format("Parsing Mesh {0}", node.Name), 
@@ -1521,39 +1260,163 @@ namespace MVCore
                 //Add MeshComponent
                 MeshComponent mc = new()
                 {
-                    BatchStartPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTPHYSI")),
-                    VertrStartPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTPHYSI")),
-                    VertrEndPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDPHYSICS")),
-                    BatchStartGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTGRAPH")),
-                    BatchCount = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHCOUNT")),
-                    VertrStartGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTGRAPH")),
-                    VertrEndGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDGRAPHIC")),
-                    FirstSkinMat = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "FIRSTSKINMAT")),
-                    LastSkinMat = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LASTSKINMAT")),
-                    LODLevel = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
-                    BoundHullStart = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
-                    BoundHullEnd = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
-                    AABBMIN = new Vector3(MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
+                    MetaData = new()
+                    {
+                        BatchStartPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTPHYSI")),
+                        VertrStartPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTPHYSI")),
+                        VertrEndPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDPHYSICS")),
+                        BatchStartGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTGRAPH")),
+                        BatchCount = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHCOUNT")),
+                        VertrStartGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTGRAPH")),
+                        VertrEndGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDGRAPHIC")),
+                        FirstSkinMat = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "FIRSTSKINMAT")),
+                        LastSkinMat = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LASTSKINMAT")),
+                        LODLevel = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
+                        BoundHullStart = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
+                        BoundHullEnd = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
+                        AABBMIN = new Vector3(MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
                                           MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINY")),
                                           MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINZ"))),
-                    AABBMAX = new Vector3(MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
+                        AABBMAX = new Vector3(MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
                                           MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
                                           MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
-                    Hash = ulong.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "HASH"))
+                        Hash = ulong.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "HASH"))
+                    }
+    
                 };
 
-                //TODO Process the corresponding mesh if needed
+                //Common.Callbacks.Log(string.Format("Randomized Object Color {0}, {1}, {2}", so.color[0], so.color[1], so.color[2]), Common.LogVerbosityLevel.INFO);
+                Common.Callbacks.Log(string.Format("Batch Physics Start {0} Count {1} Vertex Physics {2} - {3} Vertex Graphics {4} - {5} SkinMats {6}-{7}",
+                    mc.MetaData.BatchStartPhysics, mc.MetaData.BatchCount, mc.MetaData.VertrStartPhysics,
+                    mc.MetaData.VertrEndPhysics, mc.MetaData.VertrStartGraphics, mc.MetaData.VertrEndGraphics,
+                    mc.MetaData.FirstSkinMat, mc.MetaData.LastSkinMat), Common.LogVerbosityLevel.INFO);
 
+                Console.WriteLine("Object {0}, Number of skinmatrices required: {1}", so.Name, 
+                    mc.MetaData.LastSkinMat - mc.MetaData.FirstSkinMat);
+                
+                //TODO Process the corresponding mesh if needed
                 so.AddComponent<MeshComponent>(mc);
 
-                //TODO Process the mesh if Required
+                //Search for the vao
+                GLVao vao = gobject.findVao(mc.MetaData.Hash);
 
+                if (vao == null)
+                {
+                    //Generate VAO and Save vao
+                    vao = gobject.generateVAO(mc.MetaData);
+                    gobject.saveVAO(mc.MetaData.Hash, vao);
+                }
 
+                //Get Material Name
+                string matname = NMSUtils.parseNMSTemplateAttrib(node.Attributes, "MATERIAL");
+
+                //Search for the material
+                MeshMaterial mat;
+                if (Common.RenderState.activeResMgr.GLmaterials.ContainsKey(matname))
+                    mat = Common.RenderState.activeResMgr.GLmaterials[matname];
+                else
+                {
+                    //Parse material
+                    mat = parseMaterial(matname);
+                    //Save Material to the resource manager
+                    Common.RenderState.activeResMgr.AddMaterial(mat);
+                }
+
+                //Search for the meshVao in the gobject
+                GLInstancedMesh meshVao = gobject.findGLMeshVao(matname, mc.MetaData.Hash);
                 
+                if (meshVao == null)
+                {
+                    //Generate new meshVao
+                    meshVao = new GLInstancedMesh(mc.MetaData);
+                    meshVao.type = TYPES.MESH;
+                    meshVao.vao = vao;
+                    mc.Material = mat; //Set meshVao Material
+
+                    //Set indicesLength
+                    //Calculate indiceslength per index buffer
+                    if (mc.MetaData.BatchCount > 0)
+                    {
+                        int indicesLength = (int) gobject.meshMetaDataDict[mc.MetaData.Hash].is_size / mc.MetaData.BatchCount;
+                        
+                        switch (indicesLength)
+                        {
+                            case 1:
+                                meshVao.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedByte;
+                                mc.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedByte;
+                                break;
+                            case 2:
+                                meshVao.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedShort;
+                                mc.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedShort;
+                                break;
+                            case 4:
+                                meshVao.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedInt;
+                                mc.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedInt;
+                                break;
+                        }
+
+                    }
+
+                    //Configure boneRemap properly
+                    meshVao.BoneRemapIndicesCount = mc.MetaData.LastSkinMat - mc.MetaData.FirstSkinMat;
+                    meshVao.BoneRemapIndices = new int[meshVao.BoneRemapIndicesCount];
+                    for (int i = 0; i < mc.MetaData.LastSkinMat - mc.MetaData.FirstSkinMat; i++)
+                        meshVao.BoneRemapIndices[i] = gobject.boneRemap[mc.MetaData.FirstSkinMat + i];
+
+                    //Set skinned flag
+                    if (meshVao.BoneRemapIndicesCount > 0)
+                        meshVao.skinned = true;
+
+                    //Set skinned flag if its set as a metarial flag
+                    if (mat.has_flag((TkMaterialFlags.MaterialFlagEnum)TkMaterialFlags.UberFlagEnum._F02_SKINNED))
+                        meshVao.skinned = true;
+
+                    //Generate collision mesh vao
+                    try
+                    {
+                        meshVao.bHullVao = gobject.getCollisionMeshVao(mc.MetaData); //Missing data
+                    }
+                    catch (Exception)
+                    {
+                        Common.Callbacks.Log("Error while fetching bHull Collision Mesh", Common.LogVerbosityLevel.ERROR);
+                        meshVao.bHullVao = null;
+                    }
+
+                    //so.setupBSphere(); //Setup Bounding Sphere Mesh
+
+                    //Save meshvao to the gobject
+                    gobject.saveGLMeshVAO(mc.MetaData.Hash, matname, meshVao);
+                }
             }
             else if (typeEnum == TYPES.MODEL)
             {
-                throw new Exception("Not Implemented Yet!");
+                //Create MeshComponent
+                MeshComponent mc = new()
+                {
+                    MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
+                    Material = Common.RenderState.activeResMgr.GLmaterials["crossMat"]
+                };
+                
+                so.AddComponent<MeshComponent>(mc);
+
+                //Create SceneComponent
+                SceneComponent sc = new()
+                {
+                    NumLods = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
+                };
+                
+                sc.TexManager.SetMasterTexManager(Common.RenderState.activeResMgr.texMgr);
+                localTexMgr = sc.TexManager;
+
+                so.AddComponent<SceneComponent>(sc);
+
+                //Fetch extra LOD attributes
+                for (int i = 1; i < sc.NumLods; i++)
+                {
+                    float attr_val = MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LODDIST" + i));
+                    sc.LODDistances.Add(attr_val);
+                }
+
             }
             else if (typeEnum == TYPES.LOCATOR)
             {
@@ -1586,14 +1449,12 @@ namespace MVCore
             //Console.WriteLine("Children Count {0}", childs.ChildNodes.Count);
             foreach (TkSceneNodeData child in node.Children)
             {
-                SceneGraphNode part = parseNode(child, gobject, so);
+                SceneGraphNode part = parseNode(child, gobject, so, parentScene);
                 so.Children.Add(part);
             }
 
             //Finally Order children by name
-            so.Children.OrderBy(i => i.Name);
-
-
+            so.Children.Sort((a, b) => string.Compare(a.Name, b.Name));
 
             return so;
         }

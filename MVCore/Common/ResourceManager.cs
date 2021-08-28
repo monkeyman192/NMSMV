@@ -4,7 +4,6 @@ using System.IO;
 using GLSLHelper;
 using libMBIN.NMS.Toolkit;
 using MVCore.Common;
-using MVCore.GMDL;
 using MVCore.Text;
 using MVCore.Utils;
 using MVCore.Systems;
@@ -25,7 +24,7 @@ namespace MVCore
     public class ResourceManager : IBaseResourceManager
     {
         //public Dictionary<string, GMDL.Texture> GLtextures = new Dictionary<string, GMDL.Texture>();
-        public Dictionary<string, Material> GLmaterials = new();
+        public Dictionary<string, MeshMaterial> GLmaterials = new();
         public Dictionary<string, GeomObject> GLgeoms = new();
         public Dictionary<string, SceneGraphNode> GLScenes = new();
         public Dictionary<string, Texture> GLTextures = new();
@@ -33,9 +32,9 @@ namespace MVCore
 
         public Dictionary<string, GLVao> GLPrimitiveVaos = new();
         public Dictionary<string, GLVao> GLVaos = new();
-        public Dictionary<string, GLInstancedMeshVao> GLPrimitiveMeshVaos = new();
+        public Dictionary<string, GLInstancedMesh> GLPrimitiveMeshes = new();
 
-        public List<Light> GLlights = new();
+        public List<SceneGraphNode> GLlights = new();
         public Dictionary<string, Font> FontMap = new();
         //public Dictionary<string, int> GLShaders = new Dictionary<string, int>();
         public Dictionary<SHADER_TYPE, GLSLShaderConfig> GLShaders = new(); //Generic Shaders
@@ -49,10 +48,10 @@ namespace MVCore
         public List<GLSLShaderConfig> activeGLForwardTransparentShaders = new();
         public List<GLSLShaderConfig> activeGLDeferredDecalShaders = new();
 
-        public Dictionary<int, List<GLInstancedMeshVao>> opaqueMeshShaderMap = new();
-        public Dictionary<int, List<GLInstancedMeshVao>> defaultMeshShaderMap = new();
-        public Dictionary<int, List<GLInstancedMeshVao>> transparentMeshShaderMap = new();
-        public Dictionary<int, List<GLInstancedMeshVao>> decalMeshShaderMap = new();
+        public Dictionary<int, List<MeshComponent>> opaqueMeshShaderMap = new();
+        public Dictionary<int, List<MeshComponent>> defaultMeshShaderMap = new();
+        public Dictionary<int, List<MeshComponent>> transparentMeshShaderMap = new();
+        public Dictionary<int, List<MeshComponent>> decalMeshShaderMap = new();
 
         //BufferManagers
         public GLLightBufferManager lightBufferMgr = new();
@@ -393,22 +392,16 @@ namespace MVCore
 
         private void AddDefaultLights()
         {
-            //Add one and only light for now
-            Light light = new()
-            {
-                Name = "Default Light",
-                Intensity = 200,
-                Falloff = ATTENUATION_TYPE.QUADRATIC
-            };
-
+            SceneGraphNode light = SceneGraphNode.CreateLight("Default Light", 200.0f, ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
             TransformationSystem.SetEntityLocation(light, new Vector3(100.0f, 100.0f, 100.0f));
+            
             GLlights.Add(light);
         }
 
         private void AddDefaultMaterials()
         {
             //Cross Material
-            Material mat;
+            MeshMaterial mat;
 
             mat = new();
             mat.Name = "crossMat";
@@ -424,7 +417,7 @@ namespace MVCore
             GLmaterials["crossMat"] = mat;
 
             //Joint Material
-            mat = new Material
+            mat = new MeshMaterial
             {
                 Name = "jointMat"
             };
@@ -524,7 +517,7 @@ namespace MVCore
         
         }
 
-        public void AddMaterial(Material mat)
+        public void AddMaterial(MeshMaterial mat)
         {
             GLmaterials[mat.name_key] = mat;
             //Assign material to shaders
@@ -575,14 +568,19 @@ namespace MVCore
                         break;
                 }
 
-                GLPrimitiveMeshVaos[name] = new();
-                GLPrimitiveMeshVaos[name].type = TYPES.GIZMOPART;
-                GLPrimitiveMeshVaos[name].metaData = new();
-                GLPrimitiveMeshVaos[name].metaData.batchcount = arr.geom.indicesCount;
-                GLPrimitiveMeshVaos[name].metaData.indicesLength = DrawElementsType.UnsignedInt;
-                GLPrimitiveMeshVaos[name].vao = GLPrimitiveVaos[name];
-                GLPrimitiveMeshVaos[name].material = GLmaterials["crossMat"];
-
+                GLPrimitiveMeshes[name] = new()
+                {
+                    type = TYPES.GIZMOPART,
+                    vao = GLPrimitiveVaos[name],
+                    MetaData = new()
+                    {
+                        BatchCount = arr.geom.indicesCount,
+                        IndicesLength = DrawElementsType.UnsignedInt,
+                    }
+                };
+                
+                //TODO: Probably I should generate SceneGraphNodes with Meshcomponents in order to attach materials
+                //GLPrimitiveMeshes[name].material = GLmaterials["crossMat"];
             }
 
         }
@@ -594,60 +592,68 @@ namespace MVCore
             //Default quad
             Primitives.Quad q = new(1.0f, 1.0f);
             GLPrimitiveVaos["default_quad"] = q.getVAO();
-            GLPrimitiveMeshVaos["default_quad"] = new();
-            GLPrimitiveMeshVaos["default_quad"].vao = GLPrimitiveVaos["default_quad"];
+            GLPrimitiveMeshes["default_quad"] = new();
+            GLPrimitiveMeshes["default_quad"].vao = GLPrimitiveVaos["default_quad"];
             
             //Default render quad
             q = new Primitives.Quad();
             GLPrimitiveVaos["default_renderquad"] = q.getVAO();
-            GLPrimitiveMeshVaos["default_renderquad"] = new();
-            GLPrimitiveMeshVaos["default_renderquad"].vao = GLPrimitiveVaos["default_renderquad"];
+            GLPrimitiveMeshes["default_renderquad"] = new();
+            GLPrimitiveMeshes["default_renderquad"].vao = GLPrimitiveVaos["default_renderquad"];
 
             //Default cross
             Primitives.Cross c = new(0.1f, true);
-            GLPrimitiveMeshVaos["default_cross"] = new();
             GLPrimitiveVaos["default_cross"] = c.getVAO();
-            GLPrimitiveMeshVaos["default_cross"].type = TYPES.GIZMO;
-            GLPrimitiveMeshVaos["default_cross"].metaData = new();
-            GLPrimitiveMeshVaos["default_cross"].metaData.batchcount = c.geom.indicesCount;
-            GLPrimitiveMeshVaos["default_cross"].metaData.AABBMIN = new Vector3(-0.1f);
-            GLPrimitiveMeshVaos["default_cross"].metaData.AABBMAX = new Vector3(0.1f);
-            GLPrimitiveMeshVaos["default_cross"].metaData.indicesLength = DrawElementsType.UnsignedInt;
-            GLPrimitiveMeshVaos["default_cross"].vao = GLPrimitiveVaos["default_cross"];
-            GLPrimitiveMeshVaos["default_cross"].material = GLmaterials["crossMat"];
 
+            GLPrimitiveMeshes["default_cross"] = new()
+            {
+                type = TYPES.GIZMO,
+                vao = GLPrimitiveVaos["default_cross"],
+                MetaData = new()
+                {
+                    BatchCount = c.geom.indicesCount,
+                    AABBMIN = new Vector3(-0.1f),
+                    AABBMAX = new Vector3(0.1f),
+                    IndicesLength = DrawElementsType.UnsignedInt,
+
+                }
+            };
+            
             //Default cube
             Primitives.Box bx = new(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true);
             GLPrimitiveVaos["default_box"] = bx.getVAO();
-            GLPrimitiveMeshVaos["default_box"] = new();
-            GLPrimitiveMeshVaos["default_box"].vao = GLPrimitiveVaos["default_box"];
+            GLPrimitiveMeshes["default_box"] = new();
+            GLPrimitiveMeshes["default_box"].vao = GLPrimitiveVaos["default_box"];
 
             //Default sphere
             Primitives.Sphere sph = new(new Vector3(0.0f, 0.0f, 0.0f), 100.0f);
             GLPrimitiveVaos["default_sphere"] = sph.getVAO();
-            GLPrimitiveMeshVaos["default_sphere"] = new();
-            GLPrimitiveMeshVaos["default_sphere"].vao = GLPrimitiveVaos["default_sphere"];
+            GLPrimitiveMeshes["default_sphere"] = new();
+            GLPrimitiveMeshes["default_sphere"].vao = GLPrimitiveVaos["default_sphere"];
 
             //Light Sphere Mesh
             Primitives.Sphere lsph = new(new Vector3(0.0f, 0.0f, 0.0f), 1.0f);
             GLPrimitiveVaos["default_light_sphere"] = lsph.getVAO();
-            GLPrimitiveMeshVaos["default_light_sphere"] = new GLInstancedLightMeshVao();
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData = new();
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.batchstart_graphics = 0;
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.vertrstart_graphics = 0;
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.vertrend_graphics = 11 * 11 - 1;
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.batchcount = 10 * 10 * 6;
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.AABBMIN = new(-0.1f);
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.AABBMAX = new(0.1f);
-            GLPrimitiveMeshVaos["default_light_sphere"].metaData.indicesLength = DrawElementsType.UnsignedInt;
-            GLPrimitiveMeshVaos["default_light_sphere"].type = TYPES.LIGHTVOLUME;
-            GLPrimitiveMeshVaos["default_light_sphere"].vao = GLPrimitiveVaos["default_light_sphere"];
-            GLPrimitiveMeshVaos["default_light_sphere"].material = GLmaterials["lightMat"];
+            GLPrimitiveMeshes["default_light_sphere"] = new GLInstancedLightMesh()
+            {
+                MetaData = new()
+                {
+                    BatchStartGraphics = 0,
+                    VertrStartGraphics = 0,
+                    VertrEndGraphics = 11 * 11 - 1,
+                    BatchCount = 10 * 10 * 6,
+                    AABBMIN = new(-0.1f),
+                    AABBMAX = new(0.1f),
+                    IndicesLength = DrawElementsType.UnsignedInt
+                },
+                type = TYPES.LIGHTVOLUME,
+                vao = GLPrimitiveVaos["default_light_sphere"]
+            };
             
             GenerateGizmoParts();
         }
 
-        public bool ShaderExistsForMaterial(Material mat)
+        public bool ShaderExistsForMaterial(MeshMaterial mat)
         {
             Dictionary<int, GLSLShaderConfig> shaderDict;
             
@@ -701,7 +707,7 @@ namespace MVCore
             Animations.Clear();
 
             //Cleanup Materials
-            foreach (Material p in GLmaterials.Values)
+            foreach (MeshMaterial p in GLmaterials.Values)
                 p.Dispose();
             GLmaterials.Clear();
 
@@ -724,7 +730,7 @@ namespace MVCore
             //NMSUtils.unloadNMSArchives(this);
             
             //Cleanup Lights
-            foreach (Light p in GLlights)
+            foreach (SceneGraphNode p in GLlights)
                 p.Dispose();
             GLlights.Clear();
 

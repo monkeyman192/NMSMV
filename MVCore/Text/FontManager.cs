@@ -8,7 +8,6 @@ using System.Drawing;
 using Newtonsoft.Json.Linq;
 using OpenTK.Audio.OpenAL;
 using OpenTK;
-using MVCore.GMDL;
 using MVCore.Primitives;
 using libMBIN.NMS.Toolkit;
 using Microsoft.SqlServer.Server;
@@ -16,8 +15,6 @@ using System.Linq;
 
 namespace MVCore.Text
 {
-    
-    
     public class FontManager
     {
         public Dictionary<string, Font> fonts = new Dictionary<string, Font>();

@@ -15,7 +15,7 @@ namespace MVCore.Text
         public Vector3 color;
         public float lineHeight;
         public string text;
-        public GLInstancedMeshVao meshVao;
+        public GLInstancedMesh meshVao;
         public Font font; //Keep reference of the Font used
         public GLText()
         {
@@ -37,13 +37,16 @@ namespace MVCore.Text
         {
             geom = getGeom();
 
-            meshVao = new GLInstancedMeshVao();
-            meshVao.type = TYPES.TEXT;
-            meshVao.metaData = new MeshMetaData();
-            meshVao.metaData.batchcount = geom.indicesCount;
-            meshVao.metaData.indicesLength = DrawElementsType.UnsignedInt;
-            meshVao.vao = geom.generateVAO();
-            meshVao.material = new Material(); //TODO use a material from the font
+            meshVao = new GLInstancedMesh()
+            {
+                type = TYPES.TEXT,
+                vao = geom.generateVAO(),
+                MetaData = new()
+                {
+                    BatchCount = geom.indicesCount,
+                    IndicesLength = DrawElementsType.UnsignedInt
+                }
+            };
 
             //Add instance
             GLMeshBufferManager.AddInstance(meshVao, null,
@@ -174,7 +177,6 @@ namespace MVCore.Text
             //Generate geometry GL buffers
             geom = getGeom();
             generateMeshVao();
-            meshVao.material = font.material;
         }
 
         private void updateGeomVertexBuffer()
@@ -186,7 +188,7 @@ namespace MVCore.Text
 
         public override GeomObject getGeom()
         {
-            GeomObject geom = new GeomObject();
+            GeomObject geom = new();
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 3;

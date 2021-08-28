@@ -14,22 +14,24 @@ namespace MVCore.Systems
 
         }
 
-        public void RegisterEntity(Entity e)
+        public bool RegisterEntity(Entity e)
         {
             if (e.ID > 0)
             {
                 Log("Entity has no default ID, probably already registered", Common.LogVerbosityLevel.INFO);
-                return;
+                return false;
             }
 
             if (IsRegistered(e))
             {
                 Log("Entity already registered", Common.LogVerbosityLevel.INFO);
-                return;
+                return false;
             }
             
-            e.ID = itemCounter++;
+            e.ID = ++itemCounter;
             EntityMap[e.ID] = e;
+
+            return true;
         }
 
         //This clears the registry, other systems are responsible for disposing all generated components

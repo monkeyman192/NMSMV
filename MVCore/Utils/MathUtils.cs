@@ -10,7 +10,7 @@ using OpenTK.Mathematics;
 
 namespace MVCore.Utils
 {
-    public class _2sComplement
+    public class TwosComplement
     {
         static public int toInt(uint val, int bits)
         {
@@ -178,7 +178,7 @@ namespace MVCore.Utils
 
         public static Assimp.Matrix4x4 convertMatrix(Matrix4 localMat)
         {
-            Assimp.Matrix4x4 mat = new Assimp.Matrix4x4
+            Assimp.Matrix4x4 mat = new()
             {
                 A1 = localMat.Column0.X,
                 A2 = localMat.Column0.Y,
@@ -203,7 +203,7 @@ namespace MVCore.Utils
 
         public static Assimp.Vector3D convertVector(Vector3 localVec)
         {
-            Assimp.Vector3D vec = new Assimp.Vector3D();
+            Assimp.Vector3D vec = new();
             vec.X = localVec.X;
             vec.Y = localVec.Y;
             vec.Z = localVec.Z;
@@ -212,7 +212,7 @@ namespace MVCore.Utils
 
         public static Assimp.Quaternion convertQuaternion(Quaternion localQuat)
         {
-            Assimp.Quaternion q = new Assimp.Quaternion();
+            Assimp.Quaternion q = new();
             q.X = localQuat.X;
             q.Y = localQuat.Y;
             q.Z = localQuat.Z;
@@ -429,7 +429,7 @@ namespace MVCore.Utils
 
         public static Vector3 matrixToEuler(Matrix4 rotMat, string order)
         {
-            Vector3 euler = new Vector3();
+            Vector3 euler = new();
 
             //rotMat.Transpose();
             double m11 = rotMat[0, 0];
@@ -579,6 +579,50 @@ namespace MVCore.Utils
             return euler;
         }
 
+
+        public static float[] convertVec(Vector3 vec)
+        {
+            float[] fmat = new float[3];
+            fmat[0] = vec.X;
+            fmat[1] = vec.Y;
+            fmat[2] = vec.Z;
+
+            return fmat;
+        }
+
+        public static float[] convertVec(Vector4 vec)
+        {
+            float[] fmat = new float[4];
+            fmat[0] = vec.X;
+            fmat[1] = vec.Y;
+            fmat[2] = vec.Z;
+            fmat[3] = vec.W;
+
+            return fmat;
+        }
+
+        public static float[] convertMat(Matrix4 mat)
+        {
+            float[] fmat = new float[16];
+            fmat[0] = mat.M11;
+            fmat[1] = mat.M12;
+            fmat[2] = mat.M13;
+            fmat[3] = mat.M14;
+            fmat[4] = mat.M21;
+            fmat[5] = mat.M22;
+            fmat[6] = mat.M23;
+            fmat[7] = mat.M24;
+            fmat[8] = mat.M31;
+            fmat[9] = mat.M32;
+            fmat[10] = mat.M33;
+            fmat[11] = mat.M34;
+            fmat[12] = mat.M41;
+            fmat[13] = mat.M42;
+            fmat[14] = mat.M43;
+            fmat[15] = mat.M44;
+
+            return fmat;
+        }
 
     }
 }

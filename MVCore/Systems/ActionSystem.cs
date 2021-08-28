@@ -6,7 +6,7 @@ using libMBIN.NMS;
 using libMBIN.NMS.GameComponents;
 using MathNet.Numerics;
 using MVCore.Common;
-using MVCore.GMDL;
+
 
 namespace MVCore.Systems
 {
@@ -16,7 +16,7 @@ namespace MVCore.Systems
         public Dictionary<long, string> ActionSceneStateMap = new();
         public Dictionary<long, List<Action>> ActionsExecutedInState = new();
         public Dictionary<long, string> PrevActionSceneStateMap = new();
-        private float timeInterval = 1000.0f / 60.0f;
+        private readonly float timeInterval = 1000.0f / 60.0f;
         private float time = 0.0f;
 
         public ActionSystem() : base(EngineSystemEnum.ACTION_SYSTEM)
@@ -57,7 +57,7 @@ namespace MVCore.Systems
                         //Execute actions
                         foreach (Action a in at.Actions)
                         {
-                            if (!ActionsExecutedInState[m.RefEntity.ID].Contains(a))
+                            if (!ActionsExecutedInState[m.ID].Contains(a))
                                 ExecuteAction(m, a);
                         }
                     }   
@@ -65,7 +65,7 @@ namespace MVCore.Systems
             }
         }
         
-        private bool TestTrigger(SceneGraphNode m, Trigger t)
+        private static bool TestTrigger(SceneGraphNode m, Trigger t)
         {
             if (t is null)
             {
@@ -86,10 +86,10 @@ namespace MVCore.Systems
             return false;
         }
 
-        private bool TestAnimFrameEventTrigger(SceneGraphNode m, AnimFrameEventTrigger t)
+        private static bool TestAnimFrameEventTrigger(SceneGraphNode m, AnimFrameEventTrigger t)
         {
             int target_frame = 0;
-            int anim_frameCount = RenderState.engineRef.animationSys.queryAnimationFrameCount(m.RefEntity, t.Anim);
+            int anim_frameCount = AnimationSystem.queryAnimationFrameCount(m, t.Anim);
             
             if (t.StartFromEnd)
             {
@@ -98,7 +98,7 @@ namespace MVCore.Systems
             else
                 target_frame = t.FrameStart;
 
-            int active_frame = RenderState.engineRef.animationSys.queryAnimationFrame(m.RefEntity, t.Anim);
+            int active_frame = AnimationSystem.queryAnimationFrame(m, t.Anim);
 
             if (active_frame >= target_frame)
                 return true;
@@ -106,11 +106,11 @@ namespace MVCore.Systems
             return false;
         }
 
-        private bool TestPlayerNearbyEventTrigger(SceneGraphNode m, PlayerNearbyEventTrigger t)
+        private static bool TestPlayerNearbyEventTrigger(SceneGraphNode m, PlayerNearbyEventTrigger t)
         {
             //Check the distance of the activeCamera from the model
             float distanceFromCam = (RenderState.activeCam.Position - 
-                                    TransformationSystem.GetEntityWorldPosition(m.RefEntity).Xyz).Length;
+                                    TransformationSystem.GetEntityWorldPosition(m).Xyz).Length;
 
             //TODO: Check all the inverse shit and the rest trigger parameters
 
@@ -149,16 +149,16 @@ namespace MVCore.Systems
         private void ExecuteGoToStateAction(SceneGraphNode m, GoToStateAction action)
         {
             //Change State
-            PrevActionSceneStateMap[m.RefEntity.ID] = ActionSceneStateMap[m.RefEntity.ID];
-            ActionSceneStateMap[m.RefEntity.ID] = action.State;
-            ActionsExecutedInState[m.RefEntity.ID] = new List<Action>(); //Reset executed actions 
+            PrevActionSceneStateMap[m.ID] = ActionSceneStateMap[m.ID];
+            ActionSceneStateMap[m.ID] = action.State;
+            ActionsExecutedInState[m.ID] = new List<Action>(); //Reset executed actions 
         }
 
         private void ExecutePlayAnimAction(SceneGraphNode m, PlayAnimAction action)
         {
-            RenderState.engineRef.animationSys.StopActiveLoopAnimations(m.RefEntity); //Not sure if this is correct
-            RenderState.engineRef.animationSys.StartAnimation(m.RefEntity, action.Anim);
-            ActionsExecutedInState[m.RefEntity.ID].Add(action);
+            AnimationSystem.StopActiveLoopAnimations(m); //Not sure if this is correct
+            AnimationSystem.StartAnimation(m, action.Anim);
+            ActionsExecutedInState[m.ID].Add(action);
         }
 
         private void ExecuteNodeActivationAction(SceneGraphNode m, NodeActivationAction action)
@@ -204,12 +204,12 @@ namespace MVCore.Systems
 
         public void Add(SceneGraphNode scn)
         {
-            if (scn.RefEntity.HasComponent<TriggerActionComponent>())
+            if (scn.HasComponent<TriggerActionComponent>())
             {
                 ActionSceneNodes.Add(scn);
-                ActionSceneStateMap[scn.RefEntity.ID] = "BOOT"; //Add Default State
-                PrevActionSceneStateMap[scn.RefEntity.ID] = "NONE"; //Add Default State
-                ActionsExecutedInState[scn.RefEntity.ID] = new();
+                ActionSceneStateMap[scn.ID] = "BOOT"; //Add Default State
+                PrevActionSceneStateMap[scn.ID] = "NONE"; //Add Default State
+                ActionsExecutedInState[scn.ID] = new();
             }
         }
     }

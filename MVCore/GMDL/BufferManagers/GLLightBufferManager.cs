@@ -53,7 +53,7 @@ namespace MVCore
         //Instance Data Format:
         //TODO
 
-        public int AddInstance(ref GLInstancedLightMeshVao mesh, Light l)
+        public int AddInstance(ref GLInstancedLightMesh mesh, SceneGraphNode l)
         {
             int instance_id = mesh.instance_count;
 
@@ -65,18 +65,19 @@ namespace MVCore
                 mesh.dataBuffer = newBuffer;
             }
 
-            if (instance_id < GLInstancedLightMeshVao.MAX_INSTANCES)
+            if (instance_id < GLInstancedLightMesh.MAX_INSTANCES)
             {
 
                 //Uplod worldMat to the meshVao
-
                 SetInstanceWorldMat(ref mesh, instance_id, TransformationSystem.GetEntityWorldMat(l));
-                SetInstanceColor(ref mesh, instance_id, l.Color);
-                SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
-                SetInstanceDirection(ref mesh, instance_id, l.Direction);
-                SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
-                SetInstanceFallOff(ref mesh, instance_id, (int) l.Falloff);
-                SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
+                
+                //TODO: Implement Light Component and set all light properties
+                //SetInstanceColor(ref mesh, instance_id, l.Color);
+                //SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
+                //SetInstanceDirection(ref mesh, instance_id, l.Direction);
+                //SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
+                //SetInstanceFallOff(ref mesh, instance_id, (int) l.Falloff);
+                //SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
                 
                 mesh.instanceRefs.Add(l); //Keep reference
                 mesh.instance_count++;
@@ -85,7 +86,7 @@ namespace MVCore
             return instance_id;
         }
 
-        public int AddInstance(ref GLInstancedLightMeshVao mesh, Light l, Matrix4 worldMat)
+        public int AddInstance(ref GLInstancedLightMesh mesh, SceneGraphNode l, Matrix4 worldMat)
         {
             int instance_id = mesh.instance_count;
 
@@ -97,18 +98,20 @@ namespace MVCore
                 mesh.dataBuffer = newBuffer;
             }
 
-            if (instance_id < GLInstancedLightMeshVao.MAX_INSTANCES)
+            if (instance_id < GLInstancedLightMesh.MAX_INSTANCES)
             {
 
                 //Uplod worldMat to the meshVao
-
                 SetInstanceWorldMat(ref mesh, instance_id, worldMat);
-                SetInstanceColor(ref mesh, instance_id, l.Color);
-                SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
-                SetInstanceDirection(ref mesh, instance_id, l.Direction);
-                SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
-                SetInstanceFallOff(ref mesh, instance_id, (int)l.Falloff);
-                SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
+                
+                
+                //TODO: Implement Light Component and use it to properly pass light properties
+                //SetInstanceColor(ref mesh, instance_id, l.Color);
+                //SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
+                //SetInstanceDirection(ref mesh, instance_id, l.Direction);
+                //SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
+                //SetInstanceFallOff(ref mesh, instance_id, (int)l.Falloff);
+                //SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
 
                 mesh.instanceRefs.Add(l); //Keep reference
                 mesh.instance_count++;
@@ -118,7 +121,7 @@ namespace MVCore
         }
 
         //WorldMat
-        private void SetInstanceWorldMat(ref GLInstancedLightMeshVao mesh, int instance_id, Matrix4 mat)
+        private void SetInstanceWorldMat(ref GLInstancedLightMesh mesh, int instance_id, Matrix4 mat)
         {
             unsafe
             {
@@ -130,7 +133,7 @@ namespace MVCore
             }
         }
 
-        public Matrix4 GetInstanceWorldMat(GLInstancedLightMeshVao mesh, int instance_id)
+        public Matrix4 GetInstanceWorldMat(GLInstancedLightMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -145,14 +148,14 @@ namespace MVCore
 
 
         //Color
-        public static void SetInstanceColor(ref GLInstancedLightMeshVao mesh, int instance_id, Vector3 color)
+        public static void SetInstanceColor(ref GLInstancedLightMesh mesh, int instance_id, Vector3 color)
         {
             SetPropertyVal(mesh.dataBuffer,
                            instance_id * instance_struct_size_floats + instance_color_float_Offset,
                            color);
         }
 
-        public static Vector3 GetInstanceColor(ref GLInstancedLightMeshVao mesh, int instance_id)
+        public static Vector3 GetInstanceColor(ref GLInstancedLightMesh mesh, int instance_id)
         {
             return (Vector3) GetPropertyVal(BufferPropertyType.VEC4,
                                             mesh.dataBuffer,
@@ -160,7 +163,7 @@ namespace MVCore
         }
 
         //Direction
-        public static void SetInstanceDirection(ref GLInstancedLightMeshVao mesh, int instance_id, Vector3 dir)
+        public static void SetInstanceDirection(ref GLInstancedLightMesh mesh, int instance_id, Vector3 dir)
         {
 
             SetPropertyVal(mesh.dataBuffer,
@@ -168,7 +171,7 @@ namespace MVCore
                            dir);
         }
 
-        public static Vector3 GetInstanceDirection(ref GLInstancedLightMeshVao mesh, int instance_id)
+        public static Vector3 GetInstanceDirection(ref GLInstancedLightMesh mesh, int instance_id)
         {
             return (Vector3) GetPropertyVal(BufferPropertyType.VEC3,
                                             mesh.dataBuffer,
@@ -176,14 +179,14 @@ namespace MVCore
         }
 
         //Falloff
-        public static void SetInstanceFallOff(ref GLInstancedLightMeshVao mesh, int instance_id, int falloff)
+        public static void SetInstanceFallOff(ref GLInstancedLightMesh mesh, int instance_id, int falloff)
         {
             SetPropertyVal(mesh.dataBuffer,
                            instance_id * instance_struct_size_floats + instance_falloff_float_Offset,
                            falloff);
         }
 
-        public static int GetInstanceFalloff(ref GLInstancedLightMeshVao mesh, int instance_id)
+        public static int GetInstanceFalloff(ref GLInstancedLightMesh mesh, int instance_id)
         {
             return (int) GetPropertyVal(BufferPropertyType.INT,
                                             mesh.dataBuffer,
@@ -191,14 +194,14 @@ namespace MVCore
         }
 
         //Type
-        public static void SetInstanceType(ref GLInstancedLightMeshVao mesh, int instance_id, float type)
+        public static void SetInstanceType(ref GLInstancedLightMesh mesh, int instance_id, float type)
         {
             SetPropertyVal(mesh.dataBuffer,
                            instance_id * instance_struct_size_floats + instance_type_float_Offset,
                            type);
         }
 
-        public static int GetInstanceType(ref GLInstancedLightMeshVao mesh, int instance_id)
+        public static int GetInstanceType(ref GLInstancedLightMesh mesh, int instance_id)
         {
             return (int) GetPropertyVal(BufferPropertyType.INT,
                                             mesh.dataBuffer,
@@ -206,14 +209,14 @@ namespace MVCore
         }
 
         //FOV
-        public static void SetInstanceFOV(ref GLInstancedLightMeshVao mesh, int instance_id, float fov)
+        public static void SetInstanceFOV(ref GLInstancedLightMesh mesh, int instance_id, float fov)
         {
             SetPropertyVal(mesh.dataBuffer,
                            instance_id * instance_struct_size_floats + instance_fov_float_Offset,
                            fov);
         }
 
-        public static float GetInstanceFOV(ref GLInstancedLightMeshVao mesh, int instance_id)
+        public static float GetInstanceFOV(ref GLInstancedLightMesh mesh, int instance_id)
         {
             return (float) GetPropertyVal(BufferPropertyType.FLOAT,
                                             mesh.dataBuffer,
@@ -221,14 +224,14 @@ namespace MVCore
         }
 
         //Intensity
-        public static void SetInstanceIntensity(ref GLInstancedLightMeshVao mesh, int instance_id, float intensity)
+        public static void SetInstanceIntensity(ref GLInstancedLightMesh mesh, int instance_id, float intensity)
         {
             SetPropertyVal(mesh.dataBuffer,
                            instance_id * instance_struct_size_floats + instance_intensity_float_Offset,
                            intensity);
         }
 
-        public static float GetInstanceIntensity(ref GLInstancedLightMeshVao mesh, int instance_id)
+        public static float GetInstanceIntensity(ref GLInstancedLightMesh mesh, int instance_id)
         {
             return (float) GetPropertyVal(BufferPropertyType.FLOAT,
                                             mesh.dataBuffer,

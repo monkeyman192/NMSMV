@@ -47,16 +47,15 @@ namespace MVCore
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
-    public class gizmo: Model
+    public class gizmo: SceneGraphNode
     {
-        public GLInstancedMeshVao meshVao;
+        public GLInstancedMesh meshVao;
         public gizmo()
         {
             Type = TYPES.GIZMO;
             
             //Assemble geometry in the constructor
-            meshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshVaos["default_translation_gizmo"];
-            instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
+            meshVao = RenderState.activeResMgr.GLPrimitiveMeshes["default_translation_gizmo"];
         }
 
     }
@@ -91,46 +90,6 @@ namespace MVCore
         public static readonly int SizeInBytes = 360;
     };
 
-    public class Collision : Model
-    {
-        public COLLISIONTYPES collisionType;
-        public GeomObject gobject;
-        public MeshMetaData metaData = new MeshMetaData();
-        public GLInstancedMeshVao meshVao;
-
-        //Custom constructor
-        public Collision()
-        {
-            
-        }
-
-        
-        protected Collision(Collision input) : base(input)
-        {
-            collisionType = input.collisionType;
-        }
-
-        public override void update()
-        {
-            base.update();
-
-        }
-
-        public override void updateMeshInfo(bool lod_filter=false)
-        {
-            if (renderable)
-            {
-                instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
-                base.updateMeshInfo(lod_filter);
-                return;
-            }
-
-            base.updateMeshInfo(lod_filter);
-        }
-
-    }
-
-
     public class GeomObject : IDisposable
     {
         public string mesh_descr;
@@ -155,20 +114,20 @@ namespace MVCore
         public byte[] nbuffer;
         public byte[] ubuffer;
         public byte[] tbuffer;
-        public List<int[]> bIndices = new List<int[]>();
-        public List<float[]> bWeights = new List<float[]>();
+        public List<int[]> bIndices = new();
+        public List<float[]> bWeights = new();
         public List<bufInfo> bufInfo = new();
         public int[] offsets; //List to save strides according to meshdescr
         public int[] small_offsets; //Same thing for the small description
         public short[] boneRemap;
-        public List<Vector3[]> bboxes = new List<Vector3[]>();
-        public List<Vector3> bhullverts = new List<Vector3>();
-        public List<int> bhullstarts = new List<int>();
-        public List<int> bhullends = new List<int>();
-        public List<int[]> bhullindices = new List<int[]>();
-        public List<int> vstarts = new List<int>();
-        public Dictionary<ulong, geomMeshMetaData> meshMetaDataDict = new Dictionary<ulong, geomMeshMetaData>();
-        public Dictionary<ulong, geomMeshData> meshDataDict = new Dictionary<ulong, geomMeshData>();
+        public List<Vector3[]> bboxes = new();
+        public List<Vector3> bhullverts = new();
+        public List<int> bhullstarts = new();
+        public List<int> bhullends = new();
+        public List<int[]> bhullindices = new();
+        public List<int> vstarts = new();
+        public Dictionary<ulong, geomMeshMetaData> meshMetaDataDict = new();
+        public Dictionary<ulong, geomMeshData> meshDataDict = new();
 
         //Joint info
         public int jointCount;
@@ -176,13 +135,13 @@ namespace MVCore
         public float[] invBMats = new float[256 * 16];
 
         //Dictionary with the compiled VAOs belonging on this gobject
-        private Dictionary<ulong, GLVao> GLVaos = new();
+        private readonly Dictionary<ulong, GLVao> GLVaos = new();
         //Dictionary to index 
-        private Dictionary<ulong, Dictionary<string, GLInstancedMeshVao>> GLMeshVaos = new();
+        private readonly Dictionary<ulong, Dictionary<string, GLInstancedMesh>> GLMeshVaos = new();
 
 
 
-        public Vector3 get_vec3_half(BinaryReader br)
+        public static Vector3 get_vec3_half(BinaryReader br)
         {
             Vector3 temp;
             //Get Values
@@ -197,7 +156,7 @@ namespace MVCore
             return temp;
         }
 
-        public Vector2 get_vec2_half(BinaryReader br)
+        public static Vector2 get_vec2_half(BinaryReader br)
         {
             Vector2 temp;
             //Get values
@@ -214,7 +173,7 @@ namespace MVCore
 
 
         //Fetch Meshvao from dictionary
-        public GLInstancedMeshVao findGLMeshVao(string material_name, ulong hash)
+        public GLInstancedMesh findGLMeshVao(string material_name, ulong hash)
         {
             if (GLMeshVaos.ContainsKey(hash))
                 if (GLMeshVaos[hash].ContainsKey(material_name))
@@ -232,7 +191,7 @@ namespace MVCore
         }
 
         //Save GLMeshVAO to gobject
-        public bool saveGLMeshVAO(ulong hash, string matname, GLInstancedMeshVao meshVao)
+        public bool saveGLMeshVAO(ulong hash, string matname, GLInstancedMesh meshVao)
         {
             if (GLMeshVaos.ContainsKey(hash))
             {
@@ -243,7 +202,7 @@ namespace MVCore
                 }
             }
             else
-                GLMeshVaos[hash] = new Dictionary<string, GLInstancedMeshVao>();
+                GLMeshVaos[hash] = new Dictionary<string, GLInstancedMesh>();
                 
             GLMeshVaos[hash][matname] = meshVao;
 
@@ -267,10 +226,10 @@ namespace MVCore
         }
 
         //Fetch main VAO
-        public GLVao generateVAO(Mesh so)
+        public GLVao generateVAO(MeshMetaData md)
         {
             //Generate VAO
-            GLVao vao = new GLVao();
+            GLVao vao = new();
             vao.vao_id = GL.GenVertexArray();
             GL.BindVertexArray(vao.vao_id);
             
@@ -285,18 +244,18 @@ namespace MVCore
             int size;
             GL.BindBuffer(BufferTarget.ArrayBuffer, vao.vertex_buffer_object);
             //Upload Vertex Buffer
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) meshMetaDataDict[so.metaData.Hash].vs_size,
-                meshDataDict[so.metaData.Hash].vs_buffer, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) meshMetaDataDict[md.Hash].vs_size,
+                meshDataDict[md.Hash].vs_buffer, BufferUsageHint.StaticDraw);
             GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize,
                 out size);
-            if (size != vx_size * (so.metaData.vertrend_graphics + 1))
+            if (size != vx_size * (md.VertrEndGraphics + 1))
             {
                 //throw new ApplicationException(String.Format("Problem with vertex buffer"));
                 Callbacks.showError("Mesh metadata does not match the vertex buffer size from the geometry file",
                     "Error");
             }
                 
-            RenderStats.vertNum += so.metaData.vertrend_graphics + 1; //Accumulate settings
+            RenderStats.vertNum += md.VertrEndGraphics + 1; //Accumulate settings
 
             //Assign VertexAttribPointers
             for (int i = 0; i < 7; i++)
@@ -309,17 +268,17 @@ namespace MVCore
 
             //Upload index buffer
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, vao.element_buffer_object);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr) meshMetaDataDict[so.metaData.Hash].is_size, 
-                meshDataDict[so.metaData.Hash].is_buffer, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr) meshMetaDataDict[md.Hash].is_size, 
+                meshDataDict[md.Hash].is_buffer, BufferUsageHint.StaticDraw);
             GL.GetBufferParameter(BufferTarget.ElementArrayBuffer, BufferParameterName.BufferSize,
                 out size);
-            if (size != meshMetaDataDict[so.metaData.Hash].is_size)
+            if (size != meshMetaDataDict[md.Hash].is_size)
             {
                 Callbacks.showError("Mesh metadata does not match the index buffer size from the geometry file", "Error");
                 //throw new ApplicationException(String.Format("Problem with vertex buffer"));
             }
 
-            RenderStats.trisNum += (int) (so.metaData.batchcount / 3); //Accumulate settings
+            RenderStats.trisNum += (int) (md.BatchCount / 3); //Accumulate settings
 
             //Unbind
             GL.BindVertexArray(0);
@@ -336,22 +295,22 @@ namespace MVCore
             //Collision Mesh isn't used anywhere else.
             //No need to check for hashes and shit
 
-            float[] vx_buffer_float = new float[(metaData.boundhullend - metaData.boundhullstart) * 3];
+            float[] vx_buffer_float = new float[(metaData.BoundHullEnd - metaData.BoundHullStart) * 3];
 
-            for (int i = 0; i < metaData.boundhullend - metaData.boundhullstart; i++)
+            for (int i = 0; i < metaData.BoundHullEnd - metaData.BoundHullStart; i++)
             {
-                Vector3 v = bhullverts[i + metaData.boundhullstart];
+                Vector3 v = bhullverts[i + metaData.BoundHullStart];
                 vx_buffer_float[3 * i + 0] = v.X;
                 vx_buffer_float[3 * i + 1] = v.Y;
                 vx_buffer_float[3 * i + 2] = v.Z;
             }
 
             //Generate intermediate geom
-            GeomObject temp_geom = new GeomObject();
+            GeomObject temp_geom = new();
 
             //Set main Geometry Info
             temp_geom.vertCount = vx_buffer_float.Length / 3;
-            temp_geom.indicesCount = metaData.batchcount;
+            temp_geom.indicesCount = metaData.BatchCount;
             temp_geom.indicesLength = indicesLength; 
 
             //Set Strides
@@ -374,10 +333,10 @@ namespace MVCore
             temp_geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
 
             //Set Buffers
-            temp_geom.ibuffer = new byte[temp_geom.indicesLength * metaData.batchcount];
+            temp_geom.ibuffer = new byte[temp_geom.indicesLength * metaData.BatchCount];
             temp_geom.vbuffer = new byte[sizeof(float) * vx_buffer_float.Length];
 
-            System.Buffer.BlockCopy(ibuffer, metaData.batchstart_physics * temp_geom.indicesLength, temp_geom.ibuffer, 0, temp_geom.ibuffer.Length);
+            System.Buffer.BlockCopy(ibuffer, metaData.BatchStartPhysics * temp_geom.indicesLength, temp_geom.ibuffer, 0, temp_geom.ibuffer.Length);
             System.Buffer.BlockCopy(vx_buffer_float, 0, temp_geom.vbuffer, 0, temp_geom.vbuffer.Length);
 
 
@@ -387,7 +346,7 @@ namespace MVCore
         public GLVao generateVAO()
         {
 
-            GLVao vao = new GLVao();
+            GLVao vao = new();
 
             //Generate VAO
             vao.vao_id = GL.GenVertexArray();
@@ -480,9 +439,9 @@ namespace MVCore
                     GLVaos.Clear();
 
                     //Dispose GLmeshes
-                    foreach (Dictionary<string, GLInstancedMeshVao> p in GLMeshVaos.Values)
+                    foreach (Dictionary<string, GLInstancedMesh> p in GLMeshVaos.Values)
                     {
-                        foreach (GLInstancedMeshVao m in p.Values)
+                        foreach (GLInstancedMesh m in p.Values)
                             m.Dispose(); 
                         p.Clear();
                         //Materials are stored globally
@@ -495,13 +454,10 @@ namespace MVCore
         }
 
         // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-#endregion
+        public void Dispose() => Dispose(true);
+        #endregion
 
-        
+
     }
 
     public class bufInfo
@@ -577,15 +533,16 @@ namespace MVCore
 
         public Sampler Clone()
         {
-            Sampler newsampler = new Sampler();
-
-            newsampler.PName = PName;
-            newsampler.PMap = PMap;
-            newsampler.texMgr = texMgr;
-            newsampler.tex = tex;
-            newsampler.texUnit = texUnit;
-            newsampler.TextureAddressMode = TextureAddressMode;
-            newsampler.TextureFilterMode = TextureFilterMode;
+            Sampler newsampler = new()
+            {
+                PName = PName,
+                PMap = PMap,
+                texMgr = texMgr,
+                tex = tex,
+                texUnit = texUnit,
+                TextureAddressMode = TextureAddressMode,
+                TextureFilterMode = TextureFilterMode
+            };
 
             return newsampler;
         }
@@ -891,8 +848,7 @@ namespace MVCore
 
         private void RaisePropertyChanged(string prop)
         {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(prop));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
         
     }
@@ -910,7 +866,7 @@ namespace MVCore
     {
         public OpenTK.Graphics.OpenGL4.TextureUnit texUnit;
 
-        public static Dictionary<string, TextureUnit> MapTextureUnit = new Dictionary<string, TextureUnit> {
+        public static Dictionary<string, TextureUnit> MapTextureUnit = new() {
             { "mpCustomPerMaterial.gDiffuseMap" , TextureUnit.Texture0 },
             { "mpCustomPerMaterial.gMasksMap" ,   TextureUnit.Texture1 },
             { "mpCustomPerMaterial.gNormalMap" ,  TextureUnit.Texture2 },
@@ -919,7 +875,7 @@ namespace MVCore
             { "mpCustomPerMaterial.gDetailNormalMap", TextureUnit.Texture5}
         };
 
-        public static Dictionary<string, int> MapTexUnitToSampler = new Dictionary<string, int> {
+        public static Dictionary<string, int> MapTexUnitToSampler = new() {
             { "mpCustomPerMaterial.gDiffuseMap" , 0 },
             { "mpCustomPerMaterial.gMasksMap" ,   1 },
             { "mpCustomPerMaterial.gNormalMap" ,  2 },
@@ -960,48 +916,54 @@ namespace MVCore
     
     public class AnimNodeFrameData
     {
-        public List<Quaternion> rotations = new List<Quaternion>();
-        public List<Vector3> translations = new List<Vector3>();
-        public List<Vector3> scales = new List<Vector3>();
+        public List<Quaternion> rotations = new();
+        public List<Vector3> translations = new();
+        public List<Vector3> scales = new();
 
         public void LoadRotations(FileStream fs,int count)
         {
-            BinaryReader br = new BinaryReader(fs);
+            BinaryReader br = new(fs);
             for (int i = 0; i < count; i++)
             {
-                Quaternion q = new Quaternion();
-                q.X = br.ReadSingle();
-                q.Y = br.ReadSingle();
-                q.Z = br.ReadSingle();
-                q.W = br.ReadSingle();
-
-                this.rotations.Add(q);
+                Quaternion q = new()
+                {
+                    X = br.ReadSingle(),
+                    Y = br.ReadSingle(),
+                    Z = br.ReadSingle(),
+                    W = br.ReadSingle()
+                };
+                
+                rotations.Add(q);
             }
         }
 
         public void LoadTranslations(FileStream fs, int count)
         {
-            BinaryReader br = new BinaryReader(fs);
+            BinaryReader br = new(fs);
             for (int i = 0; i < count; i++)
             {
-                Vector3 q = new Vector3();
-                q.X = br.ReadSingle();
-                q.Y = br.ReadSingle();
-                q.Z = br.ReadSingle();
+                Vector3 q = new()
+                {
+                    X = br.ReadSingle(),
+                    Y = br.ReadSingle(),
+                    Z = br.ReadSingle(),
+                };
                 br.ReadSingle();
-                this.translations.Add(q);
+                translations.Add(q);
             }
         }
 
         public void LoadScales(FileStream fs, int count)
         {
-            BinaryReader br = new BinaryReader(fs);
+            BinaryReader br = new(fs);
             for (int i = 0; i < count; i++)
             {
-                Vector3 q = new Vector3();
-                q.X = br.ReadSingle();
-                q.Y = br.ReadSingle();
-                q.Z = br.ReadSingle();
+                Vector3 q = new()
+                {
+                    X = br.ReadSingle(),
+                    Y = br.ReadSingle(),
+                    Z = br.ReadSingle(),
+                };
                 br.ReadSingle();
                 this.scales.Add(q);
             }
@@ -1127,7 +1089,7 @@ namespace MVCore
         public void Load(Stream fs)
         {
             //Binary Reader
-            BinaryReader br = new BinaryReader(fs);
+            BinaryReader br = new(fs);
             //Lamest way to read a matrix
             invBindMatrix.M11 = br.ReadSingle();
             invBindMatrix.M12 = br.ReadSingle();
@@ -1148,7 +1110,7 @@ namespace MVCore
 
             //Calculate Binding Matrix
             Vector3 BindTranslate, BindScale;
-            Quaternion BindRotation = new Quaternion();
+            Quaternion BindRotation = new();
 
             //Get Translate
             BindTranslate.X = br.ReadSingle();
@@ -1173,49 +1135,7 @@ namespace MVCore
         }
 
         
-        public float[] convertVec(Vector3 vec)
-        {
-            float[] fmat = new float[3];
-            fmat[0] = vec.X;
-            fmat[1] = vec.Y;
-            fmat[2] = vec.Z;
-            
-            return fmat;
-        }
-
-        public float[] convertVec(Vector4 vec)
-        {
-            float[] fmat = new float[4];
-            fmat[0] = vec.X;
-            fmat[1] = vec.Y;
-            fmat[2] = vec.Z;
-            fmat[3] = vec.W;
-
-            return fmat;
-        }
-
-        public float[] convertMat()
-        {
-            float[] fmat = new float[16];
-            fmat[0] = this.invBindMatrix.M11;
-            fmat[1] = this.invBindMatrix.M12;
-            fmat[2] = this.invBindMatrix.M13;
-            fmat[3] = this.invBindMatrix.M14;
-            fmat[4] = this.invBindMatrix.M21;
-            fmat[5] = this.invBindMatrix.M22;
-            fmat[6] = this.invBindMatrix.M23;
-            fmat[7] = this.invBindMatrix.M24;
-            fmat[8] = this.invBindMatrix.M31;
-            fmat[9] = this.invBindMatrix.M32;
-            fmat[10] = this.invBindMatrix.M33;
-            fmat[11] = this.invBindMatrix.M34;
-            fmat[12] = this.invBindMatrix.M41;
-            fmat[13] = this.invBindMatrix.M42;
-            fmat[14] = this.invBindMatrix.M43;
-            fmat[15] = this.invBindMatrix.M44;
-
-            return fmat;
-        }
+        
 
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using MVCore.GMDL;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
@@ -54,15 +53,15 @@ namespace MVCore
 
 
         //Methods
-        public void insert(Entity m)
+        public void insert(SceneGraphNode m)
         {
             MeshComponent mc = m.GetComponent<MeshComponent>() as MeshComponent;
             if (mc == null)
                 return;
 
             //Transform coordinates
-            IVector3 mincoords = transform_coords(mc.AABBMIN, max_width);
-            IVector3 maxcoords = transform_coords(mc.AABBMAX, max_width);
+            IVector3 mincoords = transform_coords(mc.MetaData.AABBMIN, max_width);
+            IVector3 maxcoords = transform_coords(mc.MetaData.AABBMAX, max_width);
 
             if (checkIfFits(maxcoords) == 0 && checkIfFits(mincoords) == 0)
             {
@@ -75,7 +74,7 @@ namespace MVCore
             }
             
             //Look for other scenes
-            foreach (Entity child in m.Children)
+            foreach (SceneGraphNode child in m.Children)
                 insert(child);
         }
 
@@ -145,7 +144,7 @@ namespace MVCore
 
     public class OctNode
     {
-        public List<OctNode> children = new List<OctNode>(8);
+        public List<OctNode> children = new(8);
         public List<Entity> objects = new();
         public static int maxObjects = 8;
         public static int maxDepth = 3;

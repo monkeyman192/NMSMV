@@ -8,8 +8,8 @@ namespace MVCore
     public class AnimComponent : Component
     {
         //animations list Contains all the animations bound to the locator through Tkanimationcomponent
-        public List<AnimData> _animations = new List<AnimData>();
-        public Dictionary<string, AnimData> _animDict = new Dictionary<string, AnimData>();
+        public List<AnimData> _animations = new();
+        public Dictionary<string, AnimData> _animDict = new();
 
         public List<AnimData> Animations
         {
@@ -34,7 +34,7 @@ namespace MVCore
 
         public List<AnimData> getActiveAnimations()
         {
-            List<AnimData> animList = new List<AnimData>();
+            List<AnimData> animList = new();
             
             foreach (AnimData ad in _animations)
             {
@@ -46,7 +46,7 @@ namespace MVCore
         }
 
 
-        public void assimpExport(ref Assimp.Scene scn)
+        public void AssimpExport(ref Assimp.Scene scn)
         {
             foreach (AnimData ad in Animations)
             {
@@ -68,7 +68,7 @@ namespace MVCore
             for (int i = 0; i < data.Anims.Count; i++)
             {
                 //Check if the animation is already loaded
-                AnimData my_ad = new AnimData(data.Anims[i]);
+                AnimData my_ad = new(data.Anims[i]);
                 _animations.Add(my_ad);
                 _animDict[my_ad.PName] = my_ad;
             }
@@ -86,7 +86,7 @@ namespace MVCore
 
         public override Component Clone()
         {
-            AnimComponent ac = new AnimComponent();
+            AnimComponent ac = new();
 
             //Copy Animations
             foreach (AnimData ad in _animations)

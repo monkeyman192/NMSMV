@@ -10,7 +10,6 @@ using MVCore;
 using MVCore.Common;
 using MVCore.Utils;
 using System.Collections.Generic;
-using MVCore.GMDL;
 using MVCore.Text;
 using System.IO;
 
@@ -22,19 +21,12 @@ namespace ImGUI_SDL_ModelViewer
         ImGuiController _controller;
         
         //Parameters
-        private string current_file_path = Environment.CurrentDirectory;
-        private string status_string = "Ready";
+        private readonly string current_file_path = Environment.CurrentDirectory;
         
         //Mouse Pos
-        private MouseMovementState mouseState = new MouseMovementState();
-        private MouseMovementStatus mouseMovementStatus = MouseMovementStatus.IDLE;
-
-        //Gizmo
-        public Gizmo activeGizmo;
-        public TranslationGizmo gizTranslate;
-
+        private readonly MouseMovementState mouseState = new();
+        
         //Scene Stuff
-        //public Model rootObject;
         public Entity activeModel; //Active Model Reference
         public Queue<Entity> modelUpdateQueue = new();
         public List<Tuple<AnimComponent, AnimData>> activeAnimScenes = new();
@@ -43,8 +35,8 @@ namespace ImGUI_SDL_ModelViewer
         private Engine engine;
 
         //Workers
-        private WorkThreadDispacher workDispatcher = new();
-        private RequestHandler requestHandler = new();
+        private readonly WorkThreadDispacher workDispatcher = new();
+        private readonly RequestHandler requestHandler = new();
         
         private Vector2i SceneViewSize = new();
         private bool isSceneViewActive = false;
@@ -105,30 +97,18 @@ namespace ImGUI_SDL_ModelViewer
             engine = new Engine(this);
             engine.init(Size.X, Size.Y); //Initialize Engine
             RenderState.engineRef = engine; //Set reference to engine
-            
+
             //Populate GLControl
-            SceneGraphNode scene = new()
-            {
-                Name = "DEFAULT SCENE",
-                Type = TYPES.MODEL
-            };
-
-            SceneGraphNode test1 = new()
-            {
-                Name = "Test Locator 1",
-                Type = TYPES.LOCATOR
-
-            };
-            
+            SceneGraphNode scene = SceneGraphNode.CreateScene("DEFAULT SCENE");
+            SceneGraphNode test1 = SceneGraphNode.CreateLocator("Test Locator 1");
             scene.AddChild(test1);
-
-            Locator test2 = new()
-            {
-                Name = "Test Locator 2",
-                Type = TYPES.LOCATOR
-            };
-
+            SceneGraphNode test2 = SceneGraphNode.CreateLocator("Test Locator 2");
             scene.AddChild(test2);
+
+            //Register Entities
+            engine.RegisterEntity(scene, true, false);
+            engine.RegisterEntity(test1, true, false);
+            engine.RegisterEntity(test2, true, false);
 
             //Add default scene to the resource manager
             RenderState.activeResMgr.GLScenes["DEFAULT_SCENE"] = scene;
@@ -137,7 +117,6 @@ namespace ImGUI_SDL_ModelViewer
             RenderState.rootObject = scene;
             modelUpdateQueue.Enqueue(scene);
             engine.renderSys.populate();
-
 
             //Populate SceneGraphView
             ImGuiManager.PopulateSceneGraph(scene);
@@ -149,29 +128,10 @@ namespace ImGUI_SDL_ModelViewer
             //Set active Components
             Util.activeWindow = this;
 
-            //Bind Settings
-            //RenderViewOptionsControl.Content = RenderState.renderViewSettings;
-            //RenderOptionsControl.Content = RenderState.settings.rendering;
-
-            //Add event handlers to GUI elements
-            //sliderzNear.ValueChanged += Sliders_OnValueChanged;
-            //sliderzFar.ValueChanged += Sliders_OnValueChanged;
-            //sliderFOV.ValueChanged += Sliders_OnValueChanged;
-            //sliderLightIntensity.ValueChanged += Sliders_OnValueChanged;
-            //sliderlightDistance.ValueChanged += Sliders_OnValueChanged;
-            //sliderMovementSpeed.ValueChanged += Sliders_OnValueChanged;
-            //sliderMovementFactor.ValueChanged += Sliders_OnValueChanged;
-
-            //Invoke the method in order to setup the control at startup
-
-            //TODO: Bring that back
-            //Sliders_OnValueChanged(null, new RoutedPropertyChangedEventArgs<double>(0.0f, 0.0f));
-
-            
             Callbacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
             
             //Issue work request 
-            ThreadRequest rq = new ThreadRequest();
+            ThreadRequest rq = new();
             rq.arguments.Add("NMSmanifest");
             rq.arguments.Add(Path.Combine(RenderState.settings.GameDir, "PCBANKS"));
             rq.arguments.Add(RenderState.activeResMgr);
@@ -260,17 +220,9 @@ namespace ImGUI_SDL_ModelViewer
             //Gizmo Picking
             //Send picking request
             //Make new request
-            activeGizmo = null;
             if (RenderState.settings.viewSettings.ViewGizmos)
             {
-                ThreadRequest req = new()
-                {
-                    type = THREAD_REQUEST_TYPE.ENGINE_GIZMO_PICKING
-                };
-                req.arguments.Clear();
-                req.arguments.Add(activeGizmo);
-                req.arguments.Add(mouseState.Position);
-                engine.SendRequest(ref req);
+                //TODO: Do gizmo picking shit (if needed)
             }
             
             //Calculate new Camera State
@@ -303,7 +255,7 @@ namespace ImGUI_SDL_ModelViewer
                 //TODO: Move gizmos
                 //gizTranslate.setReference(activeModel);
                 //gizTranslate.updateMeshInfo();
-                //GLMeshVao gz = resMgr.GLPrimitiveMeshVaos["default_translation_gizmo"];
+                //GLMeshVao gz = resMgr.GLPrimitiveMeshes["default_translation_gizmo"];
                 //GLMeshBufferManager.addInstance(ref gz, TranslationGizmo);
             }
             
@@ -371,9 +323,9 @@ namespace ImGUI_SDL_ModelViewer
             RenderState.rootObject?.Dispose();
 
             if (testScene)
-                addTestScene(testSceneID);
+                AddTestScene(testSceneID);
             else
-                addScene(filename);
+                AddScene(filename);
             
             //Populate 
             Util.setStatus("Creating SceneGraph...");
@@ -393,7 +345,7 @@ namespace ImGUI_SDL_ModelViewer
         
         }
 
-        private void Log(string msg, LogVerbosityLevel lvl)
+        private static void Log(string msg, LogVerbosityLevel lvl)
         {
             Callbacks.Log("* WINDOW : " + msg, lvl);
         }
@@ -460,7 +412,7 @@ namespace ImGUI_SDL_ModelViewer
         }
 
         //Scene Loading
-        public void addTestScene(int sceneID)
+        public void AddTestScene(int sceneID)
         {
             //Cleanup first
             modelUpdateQueue.Clear(); //Clear Update Queues
@@ -484,7 +436,7 @@ namespace ImGUI_SDL_ModelViewer
 
         }
 
-        public void addScene(string filename)
+        public void AddScene(string filename)
         {
             //Cleanup first
             modelUpdateQueue.Clear(); //Clear Update Queues
@@ -508,18 +460,18 @@ namespace ImGUI_SDL_ModelViewer
             findActionScenes(RenderState.rootObject); //Re-populate actionSystem
         }
         
-        public void findAnimScenes(Entity node)
+        public void findAnimScenes(SceneGraphNode node)
         {
             if (node.HasComponent<AnimComponent>())
             {
                 engine.animationSys.Add(node);
             }
 
-            foreach (Entity child in node.Children)
+            foreach (SceneGraphNode child in node.Children)
                 findAnimScenes(child);
         }
 
-        public void findActionScenes(Entity node)
+        public void findActionScenes(SceneGraphNode node)
         {
             if (node.HasComponent<TriggerActionComponent>())
             {
@@ -528,7 +480,7 @@ namespace ImGUI_SDL_ModelViewer
                 engine.actionSys.Add(n);
             }
             
-            foreach (Model child in node.Children)
+            foreach (SceneGraphNode child in node.Children)
                 findActionScenes(child);
         }
 
@@ -594,12 +546,12 @@ namespace ImGUI_SDL_ModelViewer
                     if (ImGui.MenuItem("Close", "Ctrl + Q"))
                     {
                         //Stop the renderer
-                        ThreadRequest req = new ThreadRequest();
+                        ThreadRequest req = new();
                         req.type = THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER;
                         engine.SendRequest(ref req);
 
                         //Send event to close the window
-                        ThreadRequest req1 = new ThreadRequest();
+                        ThreadRequest req1 = new();
                         req1.type = THREAD_REQUEST_TYPE.WINDOW_CLOSE;
                         requestHandler.AddRequest(ref req1);
                         
@@ -631,7 +583,7 @@ namespace ImGUI_SDL_ModelViewer
             {
                 ImGui.Columns(2);
                 ImGui.SetCursorPosY(0.25f * statusBarHeight);
-                ImGui.Text(status_string);
+                ImGui.Text(RenderState.StatusString);
                 ImGui.NextColumn();
                 string text = "Created by gregkwaste";
                 ImGui.SetCursorPosY(0.25f * statusBarHeight);
@@ -661,8 +613,7 @@ namespace ImGUI_SDL_ModelViewer
             {
                 //Update RenderSize
                 System.Numerics.Vector2 csize = ImGui.GetContentRegionAvail();
-                Vector2i csizetk = new Vector2i((int) csize.X,
-                                               (int) csize.Y);
+                Vector2i csizetk = new((int) csize.X, (int) csize.Y);
                 ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().channels[0]),
                                 csize,
                                 new System.Numerics.Vector2(0.0f, 1.0f),

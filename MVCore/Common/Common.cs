@@ -4,9 +4,9 @@ using System.Text;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
-using MVCore.GMDL;
-using MVCore.Input;
 using MVCore;
+using MVCore.Input;
+using MVCore.Utils;
 using GLSLHelper;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -14,7 +14,6 @@ using Newtonsoft.Json;
 using System.Resources;
 using System.Reflection;
 using System.IO;
-using MVCore.Utils;
 using System.Drawing;
 
 namespace MVCore.Common
@@ -58,10 +57,10 @@ namespace MVCore.Common
         public static SceneGraphNode rootObject;
         //Item Counter
         public static int itemCounter = 0;
+        //Status
+        public static string StatusString = "";
         //ActiveModel
         public static Model activeModel;
-        //ActiveGizmo
-        public static Gizmo activeGizmo;
         //Active GamePad
         public static BaseGamepadHandler activeGamepad;
 

@@ -9,10 +9,10 @@ namespace MVCore
 {
     public class AnimPoseComponent : Component
     {
-        public Model ref_object = null;
+        public Entity ref_object = null;
         public TkAnimMetadata animMeta = null;
         //AnimationPoseData
-        public List<AnimPoseData> _poseData = new List<AnimPoseData>();
+        public List<AnimPoseData> _poseData = new();
         public TkAnimMetadata _poseFrameData = null; //Stores the actual poseFrameData
         public List<AnimPoseData> poseData
         {
@@ -36,7 +36,7 @@ namespace MVCore
             //Load PoseAnims
             for (int i = 0; i < apcd.PoseAnims.Count; i++)
             {
-                AnimPoseData my_apd = new AnimPoseData(apcd.PoseAnims[i]);
+                AnimPoseData my_apd = new(apcd.PoseAnims[i]);
                 poseData.Add(my_apd);
             }
         }

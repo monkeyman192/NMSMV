@@ -18,11 +18,10 @@ namespace ImGUI_SDL_ModelViewer
         public static int VersionMinor = 0;
         
         public static string DonateLink = @"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=4365XYBWGTBSU&currency_code=USD&source=url";
-        public static readonly Random randgen = new Random();
+        public static readonly Random randgen = new();
         
         //Current GLControl Handle
         public static OpenTK.Windowing.Desktop.NativeWindow activeWindow;
-        public static string StatusStripText;
         
         //Public LogFile
         public static StreamWriter loggingSr;
@@ -42,7 +41,7 @@ namespace ImGUI_SDL_ModelViewer
         //Update Status strip
         public static void setStatus(string status)
         {
-            StatusStripText = status;
+            RenderState.StatusString = status;
         }
 
         public static void showError(string message, string caption)
@@ -105,7 +104,7 @@ namespace ImGUI_SDL_ModelViewer
 
             try
             {
-                BinaryReader _textStreamReader = new BinaryReader(_assembly.GetManifestResourceStream(nspace + ".Resources." + resource_name));
+                BinaryReader _textStreamReader = new(_assembly.GetManifestResourceStream(nspace + ".Resources." + resource_name));
                 data = _textStreamReader.ReadBytes((int) _textStreamReader.BaseStream.Length);
             } catch
             {
@@ -121,8 +120,8 @@ namespace ImGUI_SDL_ModelViewer
 
             if (data != null)
             {
-                MemoryStream ms = new MemoryStream(data);
-                Bitmap im = new Bitmap(ms);
+                MemoryStream ms = new(data);
+                Bitmap im = new(ms);
                 return im;
             }
 
@@ -135,8 +134,8 @@ namespace ImGUI_SDL_ModelViewer
 
             if (data != null)
             {
-                MemoryStream ms = new MemoryStream(data);
-                StreamReader tr = new StreamReader(ms);
+                MemoryStream ms = new(data);
+                StreamReader tr = new(ms);
                 return tr.ReadToEnd();
             }
 

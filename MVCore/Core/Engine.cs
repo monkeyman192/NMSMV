@@ -11,12 +11,14 @@ using OpenTK.Graphics.OpenGL4;
 using MVCore;
 using MVCore.Systems;
 using MVCore.Common;
-using System.Timers;
 using MVCore.Input;
-using GLSLHelper;
+using MVCore.Primitives;
 using MVCore.Utils;
+using System.Timers;
+using GLSLHelper;
 using Model_Viewer;
 using libMBIN.NMS.Toolkit;
+
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Desktop;
 
@@ -41,8 +43,8 @@ namespace MVCore
         public AnimationSystem animationSys;
         public SceneManagementSystem sceneManagementSys;
         public RenderingSystem renderSys;//TODO: Try to make it private. Noone should have a reason to access it
-        private RequestHandler reqHandler;
-        private NativeWindow windowHandler;
+        private readonly RequestHandler reqHandler;
+        private readonly NativeWindow windowHandler;
 
         //Rendering 
         public EngineRenderingState rt_State;
@@ -51,8 +53,8 @@ namespace MVCore
         public BaseGamepadHandler gpHandler;
         
         //Keyboard State
-        private KeyboardState kbState;
-        private MouseState mouseState;
+        private readonly KeyboardState kbState;
+        private readonly MouseState mouseState;
         private Vector2 mouseClickedPos;
         
         //Camera Stuff
@@ -111,10 +113,32 @@ namespace MVCore
             Log("Goodbye!", LogVerbosityLevel.INFO);
         }
 
-        private void Log(string msg, LogVerbosityLevel lvl)
+        private static void Log(string msg, LogVerbosityLevel lvl)
         {
             Callbacks.Log("* ENGINE : " + msg, lvl);
         }
+
+        public void RegisterEntity(Entity e, bool controllable, bool isDynamic)
+        {
+            //Add Entity to main registry
+            if (registrySys.RegisterEntity(e))
+            {
+                if (e.HasComponent<TransformComponent>())
+                {
+                    transformSys.RegisterEntity(e, controllable, isDynamic);
+                }
+                
+                if (e.HasComponent<TransformComponent>())
+                {
+                    transformSys.RegisterEntity(e, controllable, isDynamic);
+                }
+
+
+
+
+            }
+        }
+
 
         public void init(int width, int height)
         {
@@ -133,18 +157,10 @@ namespace MVCore
             {
                 isActive = false
             };
-            
-            //Register Camer to Entity Registry
-            registrySys.RegisterEntity(cam);
 
-            
             //Add Necessary Components to Camera
             TransformationSystem.AddTransformComponentToEntity(cam);
-            
-            //Register Camera to Transformation System
-            transformSys.RegisterEntity(cam, true);
-            //Add Camera to Dynamic Objects 
-            transformSys.AddDynamicEntity(cam);
+            RegisterEntity(cam, true, true); //Register Entity
             
             //Set global reference to cam
             RenderState.activeCam = cam;
@@ -153,16 +169,9 @@ namespace MVCore
             TransformController tcontroller = transformSys.GetEntityTransformController(cam);
             tcontroller.AddFutureState(new Vector3(), Quaternion.FromEulerAngles(0.0f, -3.14f/2.0f, 0.0f), new Vector3(1.0f));
 
-
             //Initialize the render manager
             renderSys.init(resMgr, width, height);
             rt_State = EngineRenderingState.ACTIVE;
-
-            
-
-            //Get System Info
-            
-
 
             Log("Initialized", LogVerbosityLevel.INFO);
         }
@@ -220,9 +229,7 @@ namespace MVCore
                             */
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_UPDATE_SCENE:
-                            Scene req_scn = (Scene)req.arguments[0];
-                            req_scn.update();
-                            req_status = THREAD_REQUEST_STATUS.FINISHED;
+                            throw new Exception("Not Implemented Yet!");
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_COMPILE_ALL_SHADERS:
                             resMgr.CompileMainShaders();
@@ -244,10 +251,7 @@ namespace MVCore
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_GIZMO_PICKING:
-                            //TODO: Send the nessessary arguments to the render manager and mark the active gizmoparts
-                            Gizmo g = (Gizmo)req.arguments[0];
-                            renderSys.gizmoPick(ref g, (Vector2)req.arguments[1]);
-                            req_status = THREAD_REQUEST_STATUS.FINISHED;
+                            throw new Exception("not yet implemented");
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER:
                             rt_State = EngineRenderingState.EXIT;
@@ -303,9 +307,7 @@ namespace MVCore
 
             RenderState.rootObject = null;
             RenderState.activeModel = null;
-            //Clear Gizmos
-            RenderState.activeGizmo = null;
-
+            
             //Clear RenderStats
             RenderStats.ClearStats();
 
@@ -320,84 +322,102 @@ namespace MVCore
                 Name = "DEFAULT SCENE",
                 Type = TYPES.MODEL
             };
-            
+
             //Add Lights
-            Light l = new()
+            SceneGraphNode l = new()
             {
                 Name = "Light 1",
-                Color = new Vector3(1.0f, 1.0f, 1.0f),
-                IsRenderable = true,
-                Intensity = 100.0f,
-                Falloff = ATTENUATION_TYPE.QUADRATIC
+                Type = TYPES.LIGHT,
+                IsRenderable = true
             };
+
+            //TODO add Light Component with the following properties
+            //Color = new Vector3(1.0f, 1.0f, 1.0f),
+            //Intensity = 100.0f,
+            //Falloff = ATTENUATION_TYPE.QUADRATIC
+
 
             TransformationSystem.SetEntityLocation(l, new Vector3(0.2f, 0.2f, -2.0f));
             RenderState.activeResMgr.GLlights.Add(l);
             scene.Children.Add(l);
 
-            Light l1 = new()
+            SceneGraphNode l1 = new()
             {
                 Name = "Light 2",
-                Color = new Vector3(1.0f, 1.0f, 1.0f),
-                IsRenderable = true,
-                Intensity = 100.0f,
-                Falloff = ATTENUATION_TYPE.QUADRATIC
+                Type = TYPES.LIGHT,
+                IsRenderable = true
             };
 
-            TransformationSystem.SetEntityLocation(l1, new Vector3(0.2f, -0.2f, -2.0f));
+            //TODO add Light Component with the following properties
+            //Color = new Vector3(1.0f, 1.0f, 1.0f),
+            //Intensity = 100.0f,
+            //Falloff = ATTENUATION_TYPE.QUADRATIC
 
+            TransformationSystem.SetEntityLocation(l1, new Vector3(0.2f, -0.2f, -2.0f));
             RenderState.activeResMgr.GLlights.Add(l1);
             scene.Children.Add(l1);
 
-            Light l2 = new()
+            SceneGraphNode l2 = new()
             {
                 Name = "Light 3",
-                Color = new Vector3(1.0f, 1.0f, 1.0f),
-                IsRenderable = true,
-                Intensity = 100.0f,
-                Falloff = ATTENUATION_TYPE.QUADRATIC
+                IsRenderable = true
             };
+
+            //TODO add Light Component with the following properties
+            //Color = new Vector3(1.0f, 1.0f, 1.0f),
+            //Intensity = 100.0f,
+            //Falloff = ATTENUATION_TYPE.QUADRATIC
 
             TransformationSystem.SetEntityLocation(l2, new Vector3(-0.2f, 0.2f, -2.0f));
             RenderState.activeResMgr.GLlights.Add(l2);
             scene.Children.Add(l2);
 
-            Light l3 = new()
+            SceneGraphNode l3 = new()
             {
                 Name = "Light 4",
-                Color = new Vector3(1.0f, 1.0f, 1.0f),
-                IsRenderable = true,
-                Intensity = 100.0f,
-                Falloff = ATTENUATION_TYPE.QUADRATIC
+                IsRenderable = true
             };
+
+            //TODO add Light Component with the following properties
+            //Color = new Vector3(1.0f, 1.0f, 1.0f),
+            //Intensity = 100.0f,
+            //Falloff = ATTENUATION_TYPE.QUADRATIC
 
             TransformationSystem.SetEntityLocation(l3, new Vector3(-0.2f, -0.2f, -2.0f));
             RenderState.activeResMgr.GLlights.Add(l3);
             scene.Children.Add(l3);
 
             //Generate a Sphere and center it in the scene
-            Mesh sphere = new();
-            sphere.Name = "Test Sphere";
-            sphere.Parent = scene;
-            sphere.setParentScene(scene);
-            MeshMetaData sphere_metadata = new MeshMetaData();
+
+            SceneGraphNode sphere = new()
+            {
+                Name = "Test Sphere",
+                Type = TYPES.MESH
+            };
+            
+            sphere.SetParent(scene);
 
 
+            //Add Mesh Component
             int bands = 80;
-
-            sphere_metadata.batchcount = bands * bands * 6;
-            sphere_metadata.batchstart_graphics = 0;
-            sphere_metadata.vertrstart_graphics = 0;
-            sphere_metadata.vertrend_graphics = (bands + 1) * (bands + 1) - 1;
-            sphere_metadata.indicesLength = DrawElementsType.UnsignedInt;
-
-            sphere.meshVao = new GLInstancedMeshVao(sphere_metadata);
-            sphere.meshVao.type = TYPES.MESH;
-            sphere.meshVao.vao = (new Primitives.Sphere(new Vector3(), 2.0f, 40)).getVAO();
-
-
+            MeshComponent mc = new()
+            {
+                MetaData = new()
+                {
+                    BatchCount = bands * bands * 6,
+                    BatchStartGraphics = 0,
+                    VertrStartGraphics = 0,
+                    VertrEndGraphics = (bands + 1) * (bands + 1) - 1,
+                    IndicesLength = DrawElementsType.UnsignedInt
+                }
+            };
+            
+            mc.MeshVao = new GLInstancedMesh(mc.MetaData);
+            mc.MeshVao.type = TYPES.MESH;
+            mc.MeshVao.vao = (new Primitives.Sphere(new Vector3(), 2.0f, 40)).getVAO();
+            
             //Sphere Material
-            Material mat = new();
+            MeshMaterial mat = new();
             mat.Name = "default_scn";
             
             Uniform uf = new();
@@ -416,8 +436,6 @@ namespace MVCore
                 
             mat.init();
             resMgr.GLmaterials["test_mat1"] = mat;
-            sphere.meshVao.material = mat;
-            sphere.instanceId = GLMeshBufferManager.AddInstance(ref sphere.meshVao, sphere); //Add instance
             
             scene.Children.Add(sphere);
 
@@ -436,9 +454,6 @@ namespace MVCore
             scene.IsSelected = true;
             RenderState.rootObject = scene;
             //RenderState.activeModel = root; //Set the new scene as the new activeModel
-
-            //Reinitialize gizmos
-            RenderState.activeGizmo = new TranslationGizmo();
 
             //Restart anim worker if it was active
             RenderState.settings.renderSettings.ToggleAnimations = animToggleStatus;
@@ -481,9 +496,7 @@ namespace MVCore
             RenderState.rootObject = null;
             RenderState.itemCounter = 0;
             RenderState.activeModel = null;
-            //Clear Gizmos
-            RenderState.activeGizmo = null;
-
+            
             //Clear RenderStats
             RenderStats.ClearStats();
 
@@ -513,9 +526,6 @@ namespace MVCore
             RenderState.rootObject = root;
             //RenderState.activeModel = root; //Set the new scene as the new activeModel
             
-            //Reinitialize gizmos
-            RenderState.activeGizmo = new TranslationGizmo();
-
             //Restart anim worker if it was active
             RenderState.settings.renderSettings.ToggleAnimations = animToggleStatus;
         

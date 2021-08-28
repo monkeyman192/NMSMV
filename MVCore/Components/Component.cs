@@ -10,26 +10,42 @@ namespace MVCore
         public abstract void CopyFrom(Component c);
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
+        //Disposable Stuff
+        public bool disposed = false;
+        public Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
 
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {
             Dispose(true);
+#if DEBUG
+            GC.SuppressFinalize(this);
+#endif
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+            {
+                handle.Dispose();
+            }
+
+            //Free unmanaged resources
+            disposed = true;
+        }
+
+#if DEBUG
+        ~Component()
+        {
+            // If this finalizer runs, someone somewhere failed to
+            // call Dispose, which means we've failed to leave
+            // a monitor!
+            System.Diagnostics.Debug.Fail("Undisposed lock. Object Type " + GetType().ToString());
+        }
+#endif
         #endregion
     };
 }

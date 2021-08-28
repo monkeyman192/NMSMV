@@ -61,19 +61,18 @@ namespace MVCore
         public bool culling;
 
         //Camera Frustum Planes
-        private Frustum extFrustum = new();
+        private readonly Frustum extFrustum = new();
         public Vector4[] frPlanes = new Vector4[6];
 
         //Rendering Stuff
-        public GLMeshVao vao;
+        public GLVao vao;
         public int program;
         
         public Camera(int angle, int program, int mode, bool cull)
         {
             //Set fov on init
             fov = angle;
-            vao = new GLMeshVao();
-            vao.vao = (new Primitives.Box(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true)).getVAO();
+            vao = (new Primitives.Box(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true)).getVAO();
             this.program = program;
             type = mode;
             culling = cull;
@@ -172,7 +171,7 @@ namespace MVCore
             //Calculate Next State 
             Vector3 currentPosition = t_controller.LastPosition;
             Quaternion currentRotation = t_controller.LastRotation;
-            Vector3 currentScale = new Vector3(1.0f);
+            Vector3 currentScale = new(1.0f);
 
             Vector3 offset = new();
             offset += SpeedScale * cam.Speed * target.PosImpulse.X * cam.Right;
@@ -324,14 +323,14 @@ namespace MVCore
         }
 
 
-        public bool frustum_occlude(GLInstancedMeshVao meshVao, Matrix4 transform)
+        public bool frustum_occlude(GLInstancedMesh meshVao, Matrix4 transform)
         {
             if (!culling) return true;
 
             Vector4 v1, v2;
 
-            v1 = new Vector4(meshVao.metaData.AABBMIN, 1.0f);
-            v2 = new Vector4(meshVao.metaData.AABBMAX, 1.0f);
+            v1 = new Vector4(meshVao.MetaData.AABBMIN, 1.0f);
+            v2 = new Vector4(meshVao.MetaData.AABBMAX, 1.0f);
             
             return frustum_occlude(v1.Xyz, v2.Xyz, transform);
         }
@@ -410,8 +409,7 @@ namespace MVCore
 
     public class Frustum
     {
-        private float[] _clipMatrix = new float[16];
-        private Vector4[] _frustum = new Vector4[6];
+        private readonly Vector4[] _frustum = new Vector4[6];
         public float[,] _frustum_points = new float[8, 3];
         
         public const int A = 0;
@@ -429,7 +427,7 @@ namespace MVCore
             Front = 5
         }
 
-        private void NormalizePlane(float[,] frustum, int side)
+        private static void NormalizePlane(float[,] frustum, int side)
         {
             float magnitude = 1.0f / (float)Math.Sqrt((frustum[side, 0] * frustum[side, 0]) + (frustum[side, 1] * frustum[side, 1])
                                                 + (frustum[side, 2] * frustum[side, 2]));
@@ -517,7 +515,7 @@ namespace MVCore
             return SphereVsFrustum(new Vector4(location, 1.0f), radius);
         }
 
-        public bool VolumeVsFrustum(float x, float y, float z, float width, float height, float length)
+        public static bool VolumeVsFrustum(float x, float y, float z, float width, float height, float length)
         {
             /* TO BE REPAIRED
             for (int i = 0; i < 6; i++)

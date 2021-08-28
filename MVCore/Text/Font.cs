@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using MVCore.GMDL;
 using System.Drawing;
 using System.IO;
 using OpenTK;
@@ -32,7 +31,7 @@ namespace MVCore.Text
         public int texWidth; //Texture width in pixels
         public int texHeight; //Texture height in pixels
         public int texID;
-        public Material material;
+        public MeshMaterial material;
         public Dictionary<string, Symbol> symbols = new Dictionary<string, Symbol>();
         private bool disposedValue;
 
@@ -139,7 +138,7 @@ namespace MVCore.Text
             sampl.tex = tex;
 
             //Generate Font Material
-            material = new Material();
+            material = new MeshMaterial();
             material.PSamplers[sampl.Name] = sampl;
         }
 
@@ -184,7 +183,7 @@ namespace MVCore.Text
             sampl.tex = tex;
 
             //Generate Font Material
-            material = new Material();
+            material = new MeshMaterial();
             material.PSamplers[sampl.Name] = sampl;
         }
 

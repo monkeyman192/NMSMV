@@ -7,7 +7,7 @@ using GLSLHelper;
 
 namespace MVCore
 {
-    public class Material : TkMaterialData, IDisposable
+    public class MeshMaterial : TkMaterialData, IDisposable
     {
         private bool disposed = false;
         public bool proc = false;
@@ -17,7 +17,7 @@ namespace MVCore
         public int shaderHash = int.MaxValue;
         public GLSLShaderConfig shader;
 
-        public static List<string> supported_flags = new List<string>() {
+        public static List<string> supported_flags = new() {
                 "_F01_DIFFUSEMAP",
                 "_F02_SKINNED",
                 "_F03_NORMALMAP",
@@ -62,7 +62,7 @@ namespace MVCore
         {
             get
             {
-                List<string> l = new List<string>();
+                List<string> l = new();
 
                 foreach (TkMaterialFlags f in Flags)
                 {
@@ -75,7 +75,7 @@ namespace MVCore
 
         public string type;
         //public MatOpts opts;
-        public Dictionary<string, Sampler> _PSamplers = new Dictionary<string, Sampler>();
+        public Dictionary<string, Sampler> _PSamplers = new();
 
         public Dictionary<string, Sampler> PSamplers
         {
@@ -85,7 +85,7 @@ namespace MVCore
             }
         }
 
-        private Dictionary<string, Uniform> _CustomPerMaterialUniforms = new Dictionary<string, Uniform>();
+        private readonly Dictionary<string, Uniform> _CustomPerMaterialUniforms = new();
         public Dictionary<string, Uniform> CustomPerMaterialUniforms
         {
             get
@@ -94,9 +94,9 @@ namespace MVCore
             }
         }
 
-        public List<Uniform> activeUniforms = new List<Uniform>();
+        public List<Uniform> activeUniforms = new();
 
-        public Material()
+        public MeshMaterial()
         {
             Name = "NULL";
             Shader = "NULL";
@@ -105,16 +105,16 @@ namespace MVCore
             TransparencyLayerID = -1;
             CastShadow = false;
             DisableZTest = false;
-            Flags = new List<TkMaterialFlags>();
-            Samplers = new List<TkMaterialSampler>();
-            Uniforms = new List<TkMaterialUniform>();
+            Flags = new();
+            Samplers = new();
+            Uniforms = new();
 
             //Clear material flags
             for (int i = 0; i < 64; i++)
                 material_flags[i] = 0.0f;
         }
 
-        public Material(TkMaterialData md)
+        public MeshMaterial(TkMaterialData md)
         {
             Name = md.Name;
             Shader = md.Shader;
@@ -123,9 +123,9 @@ namespace MVCore
             TransparencyLayerID = md.TransparencyLayerID;
             CastShadow = md.CastShadow;
             DisableZTest = md.DisableZTest;
-            Flags = new List<TkMaterialFlags>();
-            Samplers = new List<TkMaterialSampler>();
-            Uniforms = new List<TkMaterialUniform>();
+            Flags = new();
+            Samplers = new();
+            Uniforms = new();
 
             for (int i = 0; i < md.Flags.Count; i++)
                 Flags.Add(md.Flags[i]);
@@ -139,7 +139,7 @@ namespace MVCore
                 material_flags[i] = 0.0f;
         }
 
-        public static Material Parse(string path, TextureManager input_texMgr)
+        public static MeshMaterial Parse(string path, TextureManager input_texMgr)
         {
             //Load template
             //Try to use libMBIN to load the Material files
@@ -150,7 +150,7 @@ namespace MVCore
 #endif
 
             //Make new material based on the template
-            Material mat = new Material(template);
+            MeshMaterial mat = new(template);
 
             mat.texMgr = input_texMgr;
             mat.init();
@@ -166,14 +166,14 @@ namespace MVCore
             //Get Uniforms
             foreach (TkMaterialUniform un in Uniforms)
             {
-                Uniform my_un = new Uniform("mpCustomPerMaterial.", un);
+                Uniform my_un = new("mpCustomPerMaterial.", un);
                 CustomPerMaterialUniforms[my_un.Name] = my_un;
             }
 
             //Get Samplers
             foreach (TkMaterialSampler sm in Samplers)
             {
-                Sampler s = new Sampler(sm);
+                Sampler s = new(sm);
                 s.init(texMgr);
                 PSamplers[s.PName] = s;
             }
@@ -215,7 +215,7 @@ namespace MVCore
             }
 
             //Calculate material hash
-            List<string> includes = new List<string>();
+            List<string> includes = new();
             for (int i = 0; i < MaterialFlags.Count; i++)
             {
                 if (supported_flags.Contains(MaterialFlags[i]))
@@ -271,16 +271,16 @@ namespace MVCore
                     return false;
             }
 
-            TkMaterialFlags ff = new TkMaterialFlags();
+            TkMaterialFlags ff = new();
             ff.MaterialFlag = (TkMaterialFlags.MaterialFlagEnum)flag;
             Flags.Add(ff);
 
             return true;
         }
 
-        public Material Clone()
+        public MeshMaterial Clone()
         {
-            Material newmat = new();
+            MeshMaterial newmat = new();
             //Remix textures
             return newmat;
         }
@@ -306,7 +306,7 @@ namespace MVCore
             disposed = true;
         }
 
-        ~Material()
+        ~MeshMaterial()
         {
             Dispose(false);
         }
@@ -331,10 +331,10 @@ namespace MVCore
         private void compileMaterialShader()
         {
             Dictionary<int, GLSLShaderConfig> shaderDict;
-            Dictionary<int, List<GLInstancedMesh>> meshList;
+            Dictionary<int, List<MeshComponent>> meshList;
 
-            List<string> includes = new List<string>();
-            List<string> defines = new List<string>();
+            List<string> includes = new();
+            List<string> defines = new();
 
             //Save shader to resource Manager
             //Check for explicit materials
@@ -383,7 +383,7 @@ namespace MVCore
 
             //Save shader to the resource Manager
             shaderDict[shader.shaderHash] = shader;
-            meshList[shader.shaderHash] = new List<GLInstancedMesh>(); //Init list
+            meshList[shader.shaderHash] = new(); //Init list
         }
 
     }

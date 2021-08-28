@@ -305,22 +305,22 @@ namespace MVCore.Export
 
     public class AssimpExporter
     {
-        public static Node assimpExport(Entity m, ref Assimp.Scene scn, ref Dictionary<int, int> meshImportStatus)
+        public static Node assimpExport(SceneGraphNode m, ref Assimp.Scene scn, ref Dictionary<int, int> meshImportStatus)
         {
 
             //Default shit
             //Create assimp node
-            Node node = new Node(m.Name);
+            Node node = new(m.Name);
             node.Transform = MathUtils.convertMatrix(TransformationSystem.GetEntityLocalMat(m));
 
             //Handle animations maybe?
             if (m.HasComponent<AnimComponent>())
             {
                 AnimComponent cmp = m.GetComponent<AnimComponent>() as AnimComponent;
-                cmp.assimpExport(ref scn);
+                cmp.AssimpExport(ref scn);
             }
             
-            foreach (Entity child in m.Children)
+            foreach (SceneGraphNode child in m.Children)
             {
                 Node c = assimpExport(child, ref scn, ref meshImportStatus);
                 node.Children.Add(c);

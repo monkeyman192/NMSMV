@@ -12,7 +12,7 @@ using System.Windows.Input;
 
 namespace MVCore
 {
-    public abstract class Model : Entity, IDisposable, INotifyPropertyChanged
+    public abstract class Model : Entity, INotifyPropertyChanged
     {
         public bool renderable; //Used to toggle visibility from the UI
         public bool active; //Used internally
@@ -29,18 +29,10 @@ namespace MVCore
         
         //Components
         public SceneGraphNode parentScene;
-        public List<Component> _components = new List<Component>();
-        public int animComponentID;
-        public int animPoseComponentID;
-        public int actionComponentID;
-
+        
         //LOD
         public float[] _LODDistances = new float[5];
         public int _LODNum = 1; //Default value of 1 LOD per model
-
-        //Disposable Stuff
-        public bool disposed = false;
-        public Microsoft.Win32.SafeHandles.SafeFileHandle handle = new Microsoft.Win32.SafeHandles.SafeFileHandle(IntPtr.Zero, true);
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -55,7 +47,7 @@ namespace MVCore
         {
             get
             {
-                List<float> l = new List<float>();
+                List<float> l = new();
                 for (int i = 0; i < _LODDistances.Length; i++)
                 {
                     if (_LODDistances[i] > 0)
@@ -160,16 +152,14 @@ namespace MVCore
         
         public virtual void setupSkinMatrixArrays()
         {
-            foreach (Model s in Children)
-                s.setupSkinMatrixArrays();
+            //REWRITE
+            //foreach (Model s in Children)
+            //    s.setupSkinMatrixArrays();
         }
 
         public virtual void updateMeshInfo(bool lod_filter = false)
         {
-            foreach (Model child in Children)
-            {
-                child.updateMeshInfo(lod_filter);
-            }
+            //All Mesh Updates should happen from the Mesh Management System
         }
 
         public virtual void update()
@@ -192,8 +182,7 @@ namespace MVCore
             td.ScaleX = trans[6];
             td.ScaleY = trans[7];
             td.ScaleZ = trans[8];
-
-
+            
             //Set Original positions
             td.StoreAsOldTransform();
 
@@ -213,16 +202,10 @@ namespace MVCore
             Common.RenderState.itemCounter++;
             procFlag = false;    //This is used to define procgen usage
 
-
             //Component Init
 
             //Add TransformComponent
             TransformationSystem.AddTransformComponentToEntity(this);
-            
-            _components = new List<Component>();
-            animComponentID = -1;
-            animPoseComponentID = -1;
-            actionComponentID = -1;
         }
 
         private void catchPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -244,183 +227,11 @@ namespace MVCore
             _LODNum = input._LODNum;
             for (int i = 0; i < 5; i++)
                 this._LODDistances[i] = input._LODDistances[i];
-
-            //Component Stuff
-            animComponentID = input.animComponentID;
-            animPoseComponentID = input.animPoseComponentID;
-
-        }
-
-        //Copy Constructor
-        public Model(Model input)
-        {
-            this.copyFrom(input);
-            foreach (Entity child in input.Children)
-            {
-                Entity nChild = child.Clone();
-                nChild.Parent = this;
-                Children.Add(nChild);
-            }
-        }
-
-        #region AnimationComponent
-
-        public virtual void setParentScene(SceneGraphNode scene)
-        {
-            parentScene = scene;
-            foreach (Model child in Children)
-            {
-                child.setParentScene(scene);
-            }
-        }
-
-        #endregion
-
-        #region AnimPoseComponent
-        //TODO: It would be nice if I didn't have to do make the method public, but it needs a lot of work on the 
-        //AnimPoseComponent class to temporarily store the selected pose frames, while also in the model.update method
-
-        //Locator Animation Stuff
-
-        public Dictionary<string, Matrix4> loadPose()
-        {
-
-            if (animPoseComponentID < 0)
-                return new Dictionary<string, Matrix4>();
-
-            AnimPoseComponent apc = _components[animPoseComponentID] as AnimPoseComponent;
-            Dictionary<string, Matrix4> posematrices = new Dictionary<string, Matrix4>();
-
-            foreach (TkAnimNodeData node in apc._poseFrameData.NodeData)
-            {
-                List<Quaternion> quats = new List<Quaternion>();
-                List<Vector3> translations = new List<Vector3>();
-                List<Vector3> scales = new List<Vector3>();
-
-                //We should interpolate frame shit over all the selected Pose Data
-
-                //Gather all the transformation data for all the pose factors
-                for (int i = 0; i < apc._poseData.Count; i++)
-                //for (int i = 0; i < 1; i++)
-                {
-                    //Get Pose Frame
-                    int poseFrameIndex = apc._poseData[i].PActivePoseFrame;
-
-                    Vector3 v_t, v_s;
-                    Quaternion lq;
-                    //Fetch Rotation Quaternion
-                    lq = NMSUtils.fetchRotQuaternion(node, apc._poseFrameData, poseFrameIndex);
-                    v_t = NMSUtils.fetchTransVector(node, apc._poseFrameData, poseFrameIndex);
-                    v_s = NMSUtils.fetchScaleVector(node, apc._poseFrameData, poseFrameIndex);
-
-                    quats.Add(lq);
-                    translations.Add(v_t);
-                    scales.Add(v_s);
-                }
-
-                float fact = 1.0f / quats.Count;
-                Quaternion fq = new Quaternion();
-                Vector3 f_vt = new Vector3();
-                Vector3 f_vs = new Vector3();
-
-
-                fq = quats[0];
-                f_vt = translations[0];
-                f_vs = scales[0];
-
-                //Interpolate all data
-                for (int i = 1; i < quats.Count; i++)
-                {
-                    //Method A: Interpolate
-                    //Quaternion.Slerp(fq, quats[i], 0.5f);
-                    //Vector3.Lerp(f_vt, translations[i], 0.5f);
-                    //Vector3.Lerp(f_vs, scales[i], 0.5f);
-
-                    //Addup
-                    f_vs *= scales[i];
-                }
-
-                //Generate Transformation Matrix
-                //Matrix4 poseMat = Matrix4.CreateScale(f_vs) * Matrix4.CreateFromQuaternion(fq) * Matrix4.CreateTranslation(f_vt);
-                //Matrix4 poseMat = Matrix4.CreateScale(f_vs) * Matrix4.CreateFromQuaternion(fq);
-                Matrix4 poseMat = Matrix4.CreateScale(f_vs);
-                posematrices[node.Node] = poseMat;
-
-            }
-
-            return posematrices;
-
-        }
-
-        public virtual void applyPoses(Dictionary<string, Matrix4> poseMatrices)
-        {
-
-        }
-
-
-        #endregion
-
-        public ICommand ResetTransform
-        {
-            get { return new ResetTransformCommand(); }
-        }
-
-        private void resetTransform()
-        {
-            TransformData td = TransformationSystem.GetEntityTransformData(this);
-            td.ResetTransform();
-            
-            //Save values to underlying SceneNode
-            if (nms_template != null)
-            {
-                nms_template.Transform.ScaleX = td.ScaleX;
-                nms_template.Transform.ScaleY = td.ScaleY;
-                nms_template.Transform.ScaleZ = td.ScaleZ;
-                nms_template.Transform.TransX = td.TransX;
-                nms_template.Transform.TransY = td.TransY;
-                nms_template.Transform.TransZ = td.TransZ;
-                //Convert rotation from matrix to angles
-                //Vector3 q_euler = quaternionToEuler(oldrotation);
-                Matrix4 tempMat = Matrix4.CreateFromQuaternion(td.localRotation);
-                tempMat.Transpose();
-                Vector3 q_euler = MathUtils.matrixToEuler(tempMat, "ZXY");
-
-                nms_template.Transform.RotX = q_euler.X;
-                nms_template.Transform.RotY = q_euler.Y;
-                nms_template.Transform.RotZ = q_euler.Z;
-
-            }
-        }
-
-        public ICommand ExportToMBIN
-        {
-            get { return new ExportToMBINCommand(); }
         }
 
         //Export to MBIN
-        private void exportToMBIN()
-        {
-            if (nms_template != null)
-            {
-                //Fetch scene name
-                string[] split = nms_template.Name.Value.Split('\\');
-                string scnName = split[split.Length - 1];
-
-                //TODO Bring Back MBIN Export Support
-
-                TkSceneNodeData temp = new();
-                temp.WriteToMbin(scnName.ToUpper() + ".SCENE.MBIN");
-                Common.Callbacks.showInfo("Scene successfully exported to " + scnName.ToUpper() + ".MBIN", "Info");
-            }
-        }
-
         
-        public ICommand ExportToEXML
-        {
-            get { return new ExportToEXMLCommand(); }
-        }
-
-
+        
         //Export to EXML
         private void exportToEXML()
         {
@@ -428,120 +239,17 @@ namespace MVCore
             {
                 //Fetch scene name
                 string[] split = nms_template.Name.Value.Split('\\');
-                string scnName = split[split.Length - 1];
+                string scnName = split[^1];
                 
                 //Todo Repair Export to EXML
-
-                TkSceneNodeData temp = new TkSceneNodeData();
-
+                TkSceneNodeData temp = new();
+                
                 temp.WriteToExml(scnName + ".SCENE.EXML");
                 Common.Callbacks.showInfo("Scene successfully exported to " + scnName + ".exml", "Info");
             }
         }
 
-        //ICommands
-
-        private class ResetTransformCommand : ICommand
-        {
-            event EventHandler ICommand.CanExecuteChanged
-            {
-                add { }
-                remove { }
-            }
-
-            bool ICommand.CanExecute(object parameter)
-            {
-                return true;
-            }
-
-            void ICommand.Execute(object parameter)
-            {
-                Model m = (Model) parameter;
-                m.resetTransform();
-            }
-        }
-
-        private class ExportToMBINCommand : ICommand
-        {
-            event EventHandler ICommand.CanExecuteChanged
-            {
-                add { }
-                remove { }
-            }
-
-            bool ICommand.CanExecute(object parameter)
-            {
-                return true;
-            }
-
-            void ICommand.Execute(object parameter)
-            {
-                Model m = (Model)parameter;
-                m.exportToMBIN();
-            }
-        }
-
-        private class ExportToEXMLCommand : ICommand
-        {
-            event EventHandler ICommand.CanExecuteChanged
-            {
-                add { }
-                remove { }
-            }
-
-            bool ICommand.CanExecute(object parameter)
-            {
-                return true;
-            }
-
-            void ICommand.Execute(object parameter)
-            {
-                Model m = (Model)parameter;
-                m.exportToEXML();
-            }
-        }
-
-
-
-        public void Dispose()
-        {
-            Dispose(true);
-#if DEBUG
-            GC.SuppressFinalize(this);
-#endif
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed)
-                return;
-
-            if (disposing)
-            {
-                handle.Dispose();
-
-                //Free other resources here
-                if (Children != null)
-                    foreach (Model c in Children) c.Dispose();
-                Children.Clear();
-
-                //Free textureManager
-            }
-
-            //Free unmanaged resources
-
-            disposed = true;
-        }
-
-#if DEBUG
-        ~Model()
-        {
-            // If this finalizer runs, someone somewhere failed to
-            // call Dispose, which means we've failed to leave
-            // a monitor!
-            System.Diagnostics.Debug.Fail("Undisposed lock. Object Type " + Type.ToString());
-        }
-#endif
+        
 
 
     }

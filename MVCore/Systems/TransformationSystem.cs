@@ -28,7 +28,7 @@ namespace MVCore.Systems
             updateInterval = interval;
         }
 
-        public void RegisterEntity(Entity e, bool createController)
+        public void RegisterEntity(Entity e, bool createController, bool isDynamic)
         {
             if (EntityDataMap.ContainsKey(e.ID))
             {
@@ -49,7 +49,9 @@ namespace MVCore.Systems
             
             if (createController)
                 EntityControllerMap[e.ID] = new TransformController(tc);
-        
+
+            if (isDynamic)
+                AddDynamicEntity(e);
         }
 
         public void Update(double dt)

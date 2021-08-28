@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using MVCore.GMDL;
 using OpenTK;
 using OpenTK.Mathematics;
 
@@ -11,9 +10,7 @@ namespace MVCore.Systems
     {
         public List<Entity> AnimScenes = new();
         public Dictionary<Entity, List<AnimData>> AnimQueues = new();
-        private float timeInterval = 20.0f;
-        private float time = 0.0f;
-
+        
         public AnimationSystem() : base(EngineSystemEnum.ANIMATION_SYSTEM)
         {
             
@@ -27,6 +24,7 @@ namespace MVCore.Systems
 
         public override void Update(float dt)
         {
+            /* REWRITE
             //Clear queues for all the joints
             foreach (Model anim_model in AnimScenes)
             {
@@ -130,9 +128,11 @@ namespace MVCore.Systems
                     TransformationSystem.SetEntityScale(jt, s);
                 }
             }
+
+            */
         }
 
-        public void StartAnimation(Entity anim_model, string Anim)
+        public static void StartAnimation(Entity anim_model, string Anim)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             AnimData ad = ac.getAnimation(Anim);
@@ -144,7 +144,7 @@ namespace MVCore.Systems
             }
         }
 
-        public void StopActiveAnimations(Model anim_model)
+        public static void StopActiveAnimations(SceneGraphNode anim_model)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             List<AnimData> ad_list = ac.getActiveAnimations();
@@ -153,7 +153,7 @@ namespace MVCore.Systems
                 ad.IsPlaying = false;
         }
 
-        public void StopActiveLoopAnimations(Entity anim_model)
+        public static void StopActiveLoopAnimations(Entity anim_model)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             List<AnimData> ad_list = ac.getActiveAnimations();
@@ -166,7 +166,7 @@ namespace MVCore.Systems
                 
         }
 
-        public int queryAnimationFrame(Entity anim_model, string Anim)
+        public static int queryAnimationFrame(Entity anim_model, string Anim)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             AnimData ad = ac.getAnimation(Anim);
@@ -178,7 +178,7 @@ namespace MVCore.Systems
             return -1;
         }
 
-        public int queryAnimationFrameCount(Entity anim_model, string Anim)
+        public static int queryAnimationFrameCount(Entity anim_model, string Anim)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
             AnimData ad = ac.getAnimation(Anim);

@@ -24,13 +24,13 @@ namespace MVCore
     {
         
         //Overload with transform overrides
-        public static void ClearInstances(GLInstancedMeshVao mesh)
+        public static void ClearInstances(GLInstancedMesh mesh)
         {
             mesh.instanceRefs.Clear();
             mesh.instance_count = 0;
         }
 
-        public static void RemoveInstance(GLInstancedMeshVao mesh, Model m)
+        public static void RemoveInstance(GLInstancedMesh mesh, SceneGraphNode m)
         {
             int id = mesh.instanceRefs.IndexOf(m);
             //TODO: Make all the memory shit to push the instances backwards
