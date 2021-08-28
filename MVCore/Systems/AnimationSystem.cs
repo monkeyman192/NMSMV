@@ -40,7 +40,8 @@ namespace MVCore.Systems
                 
             foreach (Model anim_model in AnimScenes)
             {
-                AnimComponent ac = anim_model._components[anim_model.hasComponent(typeof(AnimComponent))] as AnimComponent;
+                AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
+                
                 bool found_first_active_anim = false;
 
                 foreach (AnimData ad in ac.Animations)

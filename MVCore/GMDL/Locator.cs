@@ -32,22 +32,6 @@ namespace MVCore
             this.copyFrom(input);
         }
 
-        public override Model Clone()
-        {
-            Locator new_s = new Locator();
-            new_s.copyFrom(this);
-            
-            //Clone children
-            foreach (Model child in Children)
-            {
-                Model new_child = child.Clone();
-                new_child.parent = new_s;
-                new_s.Children.Add(new_child);
-            }
-
-            return new_s;
-        }
-
         public override void update()
         {
             base.update();

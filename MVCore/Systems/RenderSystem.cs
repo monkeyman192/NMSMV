@@ -127,6 +127,12 @@ namespace MVCore.Systems
 
             GL.DebugMessageInsert(DebugSourceExternal.DebugSourceApplication, DebugType.DebugTypeMarker, 0, DebugSeverity.DebugSeverityNotification, -1, "Debug output enabled");
 #endif
+            //Identify System
+            Log(string.Format("Renderer {0}", GL.GetString(StringName.Vendor)), LogVerbosityLevel.INFO);
+            Log(string.Format("Vendor {0}", GL.GetString(StringName.Vendor)), LogVerbosityLevel.INFO);
+            Log(string.Format("OpenGL Version {0}", GL.GetString(StringName.Version)), LogVerbosityLevel.INFO);
+            Log(string.Format("Shading Language Version {0}", GL.GetString(StringName.ShadingLanguageVersion)), LogVerbosityLevel.INFO);
+
             //Setup Resource Manager
             resMgr = input_resMgr;
 
@@ -149,7 +155,7 @@ namespace MVCore.Systems
             octree = new Octree(MAX_OCTREE_WIDTH);
 
             //Initialize Gbuffer
-            setupGBuffer(width,height);
+            setupGBuffer(width, height);
 
             Log("Resource Manager Initialized", LogVerbosityLevel.INFO);
         }
@@ -170,7 +176,7 @@ namespace MVCore.Systems
                 $"openGL - {Marshal.PtrToStringAnsi(message, length)}" :
                 $"openGL - {Marshal.PtrToStringAnsi(message, length)}\n\tid:{id} severity:{severity} type:{type} source:{source}\n";
 
-                Callbacks.Log(msg, LogVerbosityLevel.DEBUG);
+                Log(msg, LogVerbosityLevel.DEBUG);
             }
         }
 
@@ -295,15 +301,15 @@ namespace MVCore.Systems
             }
         }
 
-        public void populate(Model root)
+        public void populate()
         {
             CleanUp();
 
             //Populate octree
-            octree.insert(root);
-            octree.report();
+            //octree.insert(root);
+            //octree.report();
 
-            foreach (Scene s in resMgr.GLScenes.Values)
+            foreach (SceneGraphNode s in resMgr.GLScenes.Values)
                 process_models(s);
 
             //Add gizmo meshes manually to the globalmeshlist\
@@ -385,7 +391,7 @@ namespace MVCore.Systems
 
         }
 
-        private void process_models(Model root)
+        private void process_models(Entity root)
         {
             switch (root.Type)
             {
@@ -419,7 +425,7 @@ namespace MVCore.Systems
             }
             
             //Repeat process with children
-            foreach (Model child in root.children)
+            foreach (Entity child in root.Children)
             {
                 process_models(child);
             }

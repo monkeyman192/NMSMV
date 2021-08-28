@@ -86,36 +86,7 @@ namespace MVCore
             base.updateMeshInfo();
         }
 
-        public override Model Clone()
-        {
-            Joint j = new Joint();
-            j.copyFrom(this);
-
-            j.jointIndex = this.jointIndex;
-            j.BindMat = this.BindMat;
-            j.invBMat = this.invBMat;
-            j.color = this.color;
-
-            j.meshVao = new GLInstancedMeshVao();
-            j.instanceId = GLMeshBufferManager.AddInstance(ref j.meshVao, j);
-            GLMeshBufferManager.SetInstanceWorldMat(j.meshVao, j.instanceId, Matrix4.Identity);
-            j.meshVao.type = TYPES.JOINT;
-            j.meshVao.metaData = new MeshMetaData();
-            //TODO: Find a place to keep references from the Joint GLMeshVAOs
-            j.meshVao.vao = new Primitives.LineSegment(Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
-            j.meshVao.material = Common.RenderState.activeResMgr.GLmaterials["jointMat"];
-            
-            //Clone children
-            foreach (Entity child in Children)
-            {
-                Entity new_child = child.Clone();
-                new_child.Parent = j;
-                j.Children.Add(new_child);
-            }
-
-            return j;
-        }
-
+        
         //Disposal
         protected override void Dispose(bool disposing)
         {

@@ -107,21 +107,25 @@ namespace ImGUI_SDL_ModelViewer
             RenderState.engineRef = engine; //Set reference to engine
             
             //Populate GLControl
-            Scene scene = new Scene()
+            SceneGraphNode scene = new()
             {
-                Name = "DEFAULT SCENE"
+                Name = "DEFAULT SCENE",
+                Type = TYPES.MODEL
             };
 
-            Locator test1 = new()
+            SceneGraphNode test1 = new()
             {
-                Name = "Test Locator 1"
+                Name = "Test Locator 1",
+                Type = TYPES.LOCATOR
+
             };
             
             scene.AddChild(test1);
 
             Locator test2 = new()
             {
-                Name = "Test Locator 2"
+                Name = "Test Locator 2",
+                Type = TYPES.LOCATOR
             };
 
             scene.AddChild(test2);
@@ -132,7 +136,7 @@ namespace ImGUI_SDL_ModelViewer
             //Force rootobject
             RenderState.rootObject = scene;
             modelUpdateQueue.Enqueue(scene);
-            engine.renderSys.populate(scene);
+            engine.renderSys.populate();
 
 
             //Populate SceneGraphView
@@ -233,9 +237,10 @@ namespace ImGUI_SDL_ModelViewer
             //Bind Default Framebuffer
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
-            
+
             //UI
             DrawUI();
+            //ImGui.ShowDemoWindow();
             
             //ImGui.ShowDemoWindow();
             _controller.Render();
@@ -289,9 +294,8 @@ namespace ImGUI_SDL_ModelViewer
             //}
 
             //rootObject?.update(); //Update Distances from camera
-            RenderState.rootObject?.updateLODDistances(); //Update Distances from camera
             engine.renderSys.clearInstances(); //Clear All mesh instances
-            RenderState.rootObject?.updateMeshInfo(); //Reapply frustum culling and re-setup visible instances
+            //RenderState.rootObject?.updateMeshInfo(); //Reapply frustum culling and re-setup visible instances
 
             //Update gizmo
             if (activeModel != null)
@@ -561,6 +565,7 @@ namespace ImGUI_SDL_ModelViewer
             ImGui.DockSpace(dockSpaceID,
                 dockSpaceSize, dockspace_flags);
 
+            
             //Main Menu
             if (ImGui.BeginMainMenuBar())
             {
@@ -643,7 +648,7 @@ namespace ImGUI_SDL_ModelViewer
             ImGui.SetNextWindowDockID(dockSpaceID, ImGuiCond.Once);
             ImGui.SetCursorPosX(0.0f);
             bool main_view = true;
-
+            
             //Scene Render
             bool scene_view = true;
             ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new System.Numerics.Vector2(0.0f, 0.0f));
@@ -674,9 +679,11 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.PopStyleVar();
                 ImGui.End();
             }
+            
+            
 
             //SideBar
-            if (ImGui.Begin("SideBar", ref main_view))
+            if (ImGui.Begin("SideBar", ref main_view, ImGuiWindowFlags.NoCollapse))
             {
                 ImGui.BeginGroup();
 

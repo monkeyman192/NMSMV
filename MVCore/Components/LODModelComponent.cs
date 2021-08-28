@@ -23,7 +23,10 @@ namespace MVCore
             return lmc;
         }
 
-
+        public override void CopyFrom(Component c)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class LODModelResource

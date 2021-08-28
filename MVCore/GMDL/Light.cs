@@ -40,6 +40,7 @@ namespace MVCore
         public Vector3 Direction;
         public float FOV = 360.0f;
         public float Intensity = 1.0f;
+        public bool IsRenderable = true;
         public ATTENUATION_TYPE Falloff;
         public LIGHT_TYPE LightType;
         
@@ -273,11 +274,7 @@ namespace MVCore
             
         }
 
-        public override Model Clone()
-        {
-            return new Light(this);
-        }
-
+        
         //Disposal
         protected override void Dispose(bool disposing)
         {

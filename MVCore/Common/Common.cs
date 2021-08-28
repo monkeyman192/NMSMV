@@ -55,7 +55,7 @@ namespace MVCore.Common
         //Active ResourceManager
         public static ResourceManager activeResMgr;
         //RootObject
-        public static Model rootObject;
+        public static SceneGraphNode rootObject;
         //Item Counter
         public static int itemCounter = 0;
         //ActiveModel

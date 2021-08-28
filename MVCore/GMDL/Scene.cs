@@ -64,12 +64,6 @@ namespace MVCore
         }
         */
 
-        public override Assimp.Node assimpExport(ref Assimp.Scene scn, ref Dictionary<int, int> meshImportStatus)
-        {
-
-            return base.assimpExport(ref scn, ref meshImportStatus);
-        }
-
         public Scene(Scene input) : base(input)
         {
             gobject = input.gobject;
@@ -83,63 +77,16 @@ namespace MVCore
             
         }
 
-        public override Model Clone()
-        {
-            Scene new_s = new Scene();
-            new_s.copyFrom(this);
-
-            new_s.meshVao = this.meshVao;
-            new_s.instanceId = GLMeshBufferManager.AddInstance(ref new_s.meshVao, this);
-
-            //Clone children
-            foreach (Model child in children)
-            {
-                Model new_child = child.Clone();
-                new_child.parent = new_s;
-                new_s.children.Add(new_child);
-            }
-
-            //Recursively update parentScene to all the new objects
-            new_s.setParentScene(new_s);
-
-            //Initialize jointDictionary
-            new_s.jointDict.Clear();
-            new_s.setupJointDict(new_s);
-
-            return new_s;
-        }
-
-        public void setupJointDict(Model m)
+        public void setupJointDict(Entity m)
         {
             if (m.Type == TYPES.JOINT)
-                jointDict[m.Name] = (Joint)m;
+                jointDict[m.Name] = (Joint) m;
 
-            foreach (Model c in m.children)
+            foreach (Entity c in m.Children)
                 setupJointDict(c);
         }
 
-        public override void updateLODDistances()
-        {
-            //TODO: Cache the distance elsewhere
-
-            //Set Current LOD Level
-            double distance = (TransformationSystem.GetEntityWorldPosition(this).Xyz - Common.RenderState.activeCam.Position).Length;
-
-            //Find active LOD
-            activeLOD = _LODNum - 1;
-            for (int j = 0; j < _LODNum - 1; j++)
-            {
-                if (distance < _LODDistances[j])
-                {
-                    activeLOD = j;
-                    break;
-                }
-            }
-
-            base.updateLODDistances();
-        }
-
-
+        
         public override void updateMeshInfo(bool lod_filter = false)
         {
             //Update Skin Matrices

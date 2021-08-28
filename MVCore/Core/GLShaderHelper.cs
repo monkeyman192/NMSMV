@@ -579,6 +579,7 @@ namespace GLSLHelper {
 
         static private void loadActiveUniforms(GLSLShaderConfig shader_conf)
         {
+            
             GL.GetProgram(shader_conf.program_id, GetProgramParameterName.ActiveUniforms, out int active_uniforms_count);
 
             shader_conf.uniformLocations.Clear(); //Reset locataions

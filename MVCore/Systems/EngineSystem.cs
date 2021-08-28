@@ -33,7 +33,7 @@ namespace MVCore.Systems
 
         public void Log(string msg, LogVerbosityLevel lvl)
         {
-            Callbacks.Log(string.Format("*{0} : {1}", systemName, msg), lvl);
+            Callbacks.Log(string.Format("* {0} : {1}", systemName, msg), lvl);
         }
         
         public EngineSystemEnum GetSystemType()
@@ -50,6 +50,7 @@ namespace MVCore.Systems
         {
             return engineRef;
         }
+        
         public virtual void Update(float dt)
         {
 

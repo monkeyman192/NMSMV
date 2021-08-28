@@ -85,6 +85,21 @@ namespace MVCore
         public TransformData() : base() {
 
         }
+
+        public TransformData(TkTransformData data) : base()
+        {
+            TransX = data.TransX;
+            TransY = data.TransY;
+            TransZ = data.TransZ;
+            RotX = data.RotX;
+            RotY = data.RotY;
+            RotZ = data.RotZ;
+            ScaleX = data.ScaleX;
+            ScaleY = data.ScaleY;
+            ScaleZ = data.ScaleZ;
+        }
+
+
         public void SetParentData(TransformData data)
         {
             parent = data;
@@ -146,6 +161,10 @@ namespace MVCore
             
             return n;
         }
-        
+
+        public override void CopyFrom(Component c)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

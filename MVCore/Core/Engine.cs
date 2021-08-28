@@ -160,6 +160,9 @@ namespace MVCore
 
             
 
+            //Get System Info
+            
+
 
             Log("Initialized", LogVerbosityLevel.INFO);
         }
@@ -312,9 +315,12 @@ namespace MVCore
             RenderState.settings.renderSettings.ToggleAnimations = false;
 
             //Setup new object
-            Scene scene = new();
-            scene.Name = "DEFAULT SCENE";
-
+            SceneGraphNode scene = new()
+            {
+                Name = "DEFAULT SCENE",
+                Type = TYPES.MODEL
+            };
+            
             //Add Lights
             Light l = new()
             {
@@ -372,7 +378,7 @@ namespace MVCore
             //Generate a Sphere and center it in the scene
             Mesh sphere = new();
             sphere.Name = "Test Sphere";
-            sphere.parent = scene;
+            sphere.Parent = scene;
             sphere.setParentScene(scene);
             MeshMetaData sphere_metadata = new MeshMetaData();
 
@@ -418,24 +424,18 @@ namespace MVCore
             //Explicitly add default light to the rootObject
             scene.Children.Add(resMgr.GLlights[0]);
 
-            scene.updateLODDistances();
-            scene.update(); //Refresh all transforms
-            scene.setupSkinMatrixArrays();
-
             //Save scene path to resourcemanager
             RenderState.activeResMgr.GLScenes["TEST_SCENE_1"] = scene; //Use input path
 
             //Populate RenderManager
-            renderSys.populate(scene);
+            renderSys.populate();
 
             //Clear Instances
             renderSys.clearInstances();
-            scene.updateMeshInfo(); //Update all mesh info
-
-            scene.selected = 1;
+            
+            scene.IsSelected = true;
             RenderState.rootObject = scene;
             //RenderState.activeModel = root; //Set the new scene as the new activeModel
-
 
             //Reinitialize gizmos
             RenderState.activeGizmo = new TranslationGizmo();
@@ -492,23 +492,24 @@ namespace MVCore
             RenderState.settings.renderSettings.ToggleAnimations = false;
             
             //Setup new object
-            Model root = GEOMMBIN.LoadObjects(filename);
+            SceneGraphNode root = GEOMMBIN.LoadObjects(filename);
 
             //Explicitly add default light to the rootObject
             root.Children.Add(resMgr.GLlights[0]);
 
-            root.updateLODDistances();
-            root.update(); //Refresh all transforms
-            root.setupSkinMatrixArrays();
+            //Todo make that through the systems update functions
+
+            //root.update(); //Refresh all transforms
+            //root.setupSkinMatrixArrays();
 
             //Populate RenderManager
-            renderSys.populate(root);
+            renderSys.populate();
 
             //Clear Instances
-            renderSys.clearInstances();
-            root.updateMeshInfo(); //Update all mesh info
+            //renderSys.clearInstances();
+            //root.updateMeshInfo(); //Update all mesh info
 
-            root.selected = 1;
+            root.IsSelected = true;
             RenderState.rootObject = root;
             //RenderState.activeModel = root; //Set the new scene as the new activeModel
             

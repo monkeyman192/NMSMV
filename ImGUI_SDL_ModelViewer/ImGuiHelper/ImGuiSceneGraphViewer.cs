@@ -24,19 +24,15 @@ namespace ImGuiHelper
         
         private void AddModelToMap(SceneGraphNode n)
         {
-            if (!ModelMap.ContainsKey(n.RefEntity.ID))
-                ModelMap[n.RefEntity.ID] = n;
+            if (!ModelMap.ContainsKey(n.ID))
+                ModelMap[n.ID] = n;
         }
         
-        public SceneGraphNode Traverse_Init(Entity m)
+        public void Traverse_Init(SceneGraphNode m)
         {
-            SceneGraphNode n = new SceneGraphNode();
-            n.RefEntity = m;
-            foreach (Entity child in m.Children)
-                AddChild(n, Traverse_Init(child));
-            
-            AddModelToMap(n);
-            return n;
+            AddModelToMap(m);
+            foreach (SceneGraphNode child in m.Children)
+                Traverse_Init(child);
         }
         
         public void Clear()
@@ -47,12 +43,13 @@ namespace ImGuiHelper
             _clicked = null;
         }
 
-        public void Init(Entity root)
+        public void Init(SceneGraphNode root)
         {
             Clear();
-            
+
             //Setup root
-            _root = Traverse_Init(root);
+            _root = root;
+            Traverse_Init(root);
         }
 
         public bool AddChild(Model m, Model child)
@@ -90,14 +87,14 @@ namespace ImGuiHelper
                 _selected = n;
             }
 
-            bool node_open = ImGui.TreeNodeEx(n.RefEntity.Name, base_flags);
+            bool node_open = ImGui.TreeNodeEx(n.Name, base_flags);
             
             n.IsOpen = node_open;
             
             if (ImGui.IsItemClicked())
             {
                 _clicked = n;
-                ImGuiManager.SetObjectReference(n.RefEntity);
+                ImGuiManager.SetObjectReference(n);
             }
 
             if (n.IsOpen)

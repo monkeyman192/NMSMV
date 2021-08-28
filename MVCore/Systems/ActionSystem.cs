@@ -41,8 +41,8 @@ namespace MVCore.Systems
             
             foreach (SceneGraphNode m in ActionSceneNodes)
             {
-                TriggerActionComponent tac = m.RefEntity.GetComponent<TriggerActionComponent>() as TriggerActionComponent;
-                ActionTriggerState activeState = tac.StateMap[ActionSceneStateMap[m.RefEntity.ID]];
+                TriggerActionComponent tac = m.GetComponent<TriggerActionComponent>() as TriggerActionComponent;
+                ActionTriggerState activeState = tac.StateMap[ActionSceneStateMap[m.ID]];
                 
                 //Apply Actions of state
                 Console.WriteLine("Current State {0}", activeState.StateID);

@@ -28,7 +28,7 @@ namespace MVCore
         public int VolumeinstanceId = -1;
         
         //Components
-        public Scene parentScene;
+        public SceneGraphNode parentScene;
         public List<Component> _components = new List<Component>();
         public int animComponentID;
         public int animPoseComponentID;
@@ -157,23 +157,16 @@ namespace MVCore
 
         */
 
-        public abstract Model Clone();
-
-        public virtual void updateLODDistances()
-        {
-            foreach (Entity s in Children)
-                s.updateLODDistances();
-        }
-
+        
         public virtual void setupSkinMatrixArrays()
         {
-            foreach (Entity s in Children)
+            foreach (Model s in Children)
                 s.setupSkinMatrixArrays();
         }
 
         public virtual void updateMeshInfo(bool lod_filter = false)
         {
-            foreach (Entity child in Children)
+            foreach (Model child in Children)
             {
                 child.updateMeshInfo(lod_filter);
             }
@@ -182,12 +175,6 @@ namespace MVCore
         public virtual void update()
         {
             //All transform updates should happen from the transformation system
-        }
-
-        public void AddChild(Model m)
-        {
-            Children.Add(m);
-            m.parent = this;
         }
 
         //TODO: Consider converting all such attributes using properties
@@ -276,57 +263,12 @@ namespace MVCore
             }
         }
 
-        //NMSTEmplate Export
-        
-        public virtual TkSceneNodeData ExportTemplate(bool keepRenderable)
-        {
-            //Copy main info
-            TkSceneNodeData cpy = new TkSceneNodeData();
-
-            cpy.Transform = nms_template.Transform;
-            cpy.Attributes = nms_template.Attributes;
-            cpy.Type = nms_template.Type;
-            cpy.Name = nms_template.Name;
-            cpy.NameHash = nms_template.NameHash;
-
-            if (Children.Count > 0)
-                cpy.Children = new List<TkSceneNodeData>();
-
-            foreach (Entity child in Children)
-            {
-                if (!child.renderable && keepRenderable)
-                    continue;
-                else if (child.nms_template != null)
-                    cpy.Children.Add(child.ExportTemplate(keepRenderable));
-            }
-
-            return cpy;
-        }
-
-
-
-        #region ComponentQueries
-        public int hasComponent(Type ComponentType)
-        {
-            for (int i = 0; i < _components.Count; i++)
-            {
-                Component temp = _components[i];
-                if (temp.GetType() == ComponentType)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        #endregion
-
-
         #region AnimationComponent
 
-        public virtual void setParentScene(Scene scene)
+        public virtual void setParentScene(SceneGraphNode scene)
         {
             parentScene = scene;
-            foreach (Model child in children)
+            foreach (Model child in Children)
             {
                 child.setParentScene(scene);
             }
@@ -464,7 +406,9 @@ namespace MVCore
                 string[] split = nms_template.Name.Value.Split('\\');
                 string scnName = split[split.Length - 1];
 
-                TkSceneNodeData temp = ExportTemplate(true);
+                //TODO Bring Back MBIN Export Support
+
+                TkSceneNodeData temp = new();
                 temp.WriteToMbin(scnName.ToUpper() + ".SCENE.MBIN");
                 Common.Callbacks.showInfo("Scene successfully exported to " + scnName.ToUpper() + ".MBIN", "Info");
             }
@@ -485,8 +429,10 @@ namespace MVCore
                 //Fetch scene name
                 string[] split = nms_template.Name.Value.Split('\\');
                 string scnName = split[split.Length - 1];
+                
+                //Todo Repair Export to EXML
 
-                TkSceneNodeData temp = ExportTemplate(true);
+                TkSceneNodeData temp = new TkSceneNodeData();
 
                 temp.WriteToExml(scnName + ".SCENE.EXML");
                 Common.Callbacks.showInfo("Scene successfully exported to " + scnName + ".exml", "Info");
@@ -575,9 +521,9 @@ namespace MVCore
                 handle.Dispose();
 
                 //Free other resources here
-                if (children != null)
-                    foreach (Model c in children) c.Dispose();
-                children.Clear();
+                if (Children != null)
+                    foreach (Model c in Children) c.Dispose();
+                Children.Clear();
 
                 //Free textureManager
             }

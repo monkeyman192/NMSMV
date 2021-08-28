@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 using MVCore;
 using OpenTK.Graphics.OpenGL4;
 
-namespace MVCore.Systems
+namespace MVCore
 {
     public class MeshComponent : Component
     {
@@ -34,7 +34,7 @@ namespace MVCore.Systems
         //New stuff Properties
         public DrawElementsType indicesLength = DrawElementsType.UnsignedShort;
 
-        MeshComponent()
+        public MeshComponent()
         {
             
         }

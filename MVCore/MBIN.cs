@@ -500,7 +500,7 @@ namespace MVCore
         };
 
 
-        public static Scene LoadObjects(string path)
+        public static SceneGraphNode LoadObjects(string path)
         {
             TkSceneNodeData template = (TkSceneNodeData) NMSUtils.LoadNMSTemplate(path, ref Common.RenderState.activeResMgr);
             
@@ -559,10 +559,12 @@ namespace MVCore
                     Common.Callbacks.Log(string.Format("Could not find geometry file {0} ", geomfile + ".PC"), Common.LogVerbosityLevel.ERROR);
 
                     //Create Dummy Scene
-                    Scene dummy = new Scene();
-                    dummy.Name = "DUMMY_SCENE";
-                    dummy.nms_template = null;
-                    dummy.Type = TYPES.MODEL;
+                    SceneGraphNode dummy = new()
+                    {
+                        Name = "DUMMY_SCENE",
+                        template = null,
+                        Type = TYPES.MODEL
+                    };
                     return dummy;
                 }
 
@@ -579,25 +581,13 @@ namespace MVCore
             Random randgen = new Random();
 
             //Parse root scene
-            Scene root = (Scene) parseNode(template, gobject, null, null);
-            root.nms_template = template;
+            SceneGraphNode root = parseNode(template, gobject, null, null);
+            root.template = template;
 
             //Save scene path to resourcemanager
             Common.RenderState.activeResMgr.GLScenes[path] = root; //Use input path
             
             return root;
-        }
-
-        private static int hasComponent(TkAttachmentData node, Type ComponentType)
-        {
-            for (int i = 0; i < node.Components.Count; i++)
-            {
-                NMSTemplate temp = node.Components[i];
-                if (temp.GetType() == ComponentType)
-                    return i;
-            }
-
-            return -1;
         }
 
         private static void ProcessAnimPoseComponent(Model node, TkAnimPoseComponentData component)
@@ -626,7 +616,7 @@ namespace MVCore
             node.AddComponent<TriggerActionComponent>(tac);
         }
 
-        private static void ProcessLODComponent(Model node, TkLODComponentData component)
+        private static void ProcessLODComponent(SceneGraphNode node, TkLODComponentData component)
         {
             //Load all LOD models as children to the node
             LODModelComponent lodmdlcomp = new LODModelComponent();
@@ -635,9 +625,8 @@ namespace MVCore
             {
                 string filepath = component.LODModel[i].LODModel.Filename;
                 Console.WriteLine("Loading LOD " + filepath);
-                Scene so = LoadObjects(filepath);
-                so.parent = node; //Set parent
-                node.children.Add(so);
+                SceneGraphNode so = LoadObjects(filepath);
+                so.SetParent(node);
                 //Create LOD Resource
                 LODModelResource lodres = new LODModelResource(component.LODModel[i]);
                 lodmdlcomp.Resources.Add(lodres);
@@ -708,7 +697,7 @@ namespace MVCore
             }
                 
 
-            foreach (Model child in node.children)
+            foreach (Model child in node.Children)
                 findAnimScenes(child);
         }
 
@@ -822,7 +811,7 @@ namespace MVCore
 
             //so.Bbox = gobject.bboxes[iid]; //Use scene parameters
             //so.setupBSphere();
-            so.parent = parent;
+            so.Parent = parent;
             so.nms_template = node;
             so.gobject = gobject; //Store the gobject for easier access of uniforms
             so.init(transforms); //Init object transforms
@@ -845,9 +834,7 @@ namespace MVCore
             
             //Process Attachments
             ProcessComponents(so, attachment_data);
-            so.animComponentID = so.hasComponent(typeof(AnimComponent));
-            so.animPoseComponentID = so.hasComponent(typeof(AnimPoseComponent));
-
+            
             //Search for the vao
             GLVao vao = gobject.findVao(so.metaData.Hash);
 
@@ -942,15 +929,7 @@ namespace MVCore
 
             Console.WriteLine("Object {0}, Number of skinmatrices required: {1}", so.Name, so.metaData.lastskinmat - so.metaData.firstskinmat);
 
-            //Console.WriteLine("Children Count {0}", childs.ChildNodes.Count);
-            foreach (TkSceneNodeData child in children)
-            {
-                Model part = parseNode(child, gobject, so, scene);
-                so.children.Add(part);
-            }
-
-            //Finally Order children by name
-            so.children.OrderBy(i => i.Name);
+            
             return so;
         }
 
@@ -978,7 +957,7 @@ namespace MVCore
                 transform.ScaleZ};
 
             //Get Transformation
-            so.parent = parent;
+            so.Parent = parent;
             so.nms_template = node;
             so.init(transforms);
             so.gobject = gobject;
@@ -1003,7 +982,7 @@ namespace MVCore
             foreach (TkSceneNodeData child in children)
             {
                 Model part = parseNode(child, gobject, so, so);
-                so.children.Add(part);
+                so.Children.Add(part);
             }
 
             return so;
@@ -1057,25 +1036,22 @@ namespace MVCore
             so.nms_template = node;
 
             //Get Transformation
-            so.parent = parent;
+            so.Parent = parent;
             so.parentScene = scene;
             so.init(transforms);
 
             //Process Locator Attachments
             ProcessComponents(so, attachment_data);
-            so.animComponentID = so.hasComponent(typeof(AnimComponent));
-            so.animPoseComponentID = so.hasComponent(typeof(AnimPoseComponent));
-            so.actionComponentID = so.hasComponent(typeof(TriggerActionComponent));
-
+            
             //Handle Children
             foreach (TkSceneNodeData child in children)
             {
                 Model part = parseNode(child, gobject, so, scene);
-                so.children.Add(part);
+                so.Children.Add(part);
             }
 
             //Finally Order children by name
-            so.children.OrderBy(i => i.Name);
+            so.Children.OrderBy(i => i.Name);
 
             //Do not restore the old AnimScene let them flow
             //localAnimScene = old_localAnimScene; //Restore old_localAnimScene
@@ -1109,7 +1085,7 @@ namespace MVCore
             so.NameHash = node.NameHash;
             so.nms_template = node;
             //Get Transformation
-            so.parent = parent;
+            so.Parent = parent;
             so.parentScene = scene;
             so.init(transforms);
 
@@ -1144,11 +1120,11 @@ namespace MVCore
             foreach (TkSceneNodeData child in children)
             {
                 Model part = parseNode(child, gobject, so, scene);
-                so.children.Add(part);
+                so.Children.Add(part);
             }
 
             //Finally Order children by name
-            so.children.OrderBy(i => i.Name);
+            so.Children.OrderBy(i => i.Name);
             return so;
 
         }
@@ -1330,12 +1306,12 @@ namespace MVCore
             Common.Callbacks.Log(string.Format("Batch Start {0} Count {1} ",
                 metaData.batchstart_physics, metaData.batchcount), Common.LogVerbosityLevel.INFO);
 
-            so.parent = parent;
+            so.Parent = parent;
             so.init(transforms);
 
             //Collision probably has no children biut I'm leaving that code here
             foreach (TkSceneNodeData child in children)
-                so.children.Add(parseNode(child, gobject, so, scene));
+                so.Children.Add(parseNode(child, gobject, so, scene));
 
             return so;
 
@@ -1369,7 +1345,7 @@ namespace MVCore
             so.Type = TYPES.LIGHT;
             so.nms_template = node;
 
-            so.parent = parent;
+            so.Parent = parent;
             so.init(transforms);
 
             //Parse Light Attributes
@@ -1423,11 +1399,11 @@ namespace MVCore
             so.NameHash = node.NameHash;
 
             //Get Transformation
-            so.parent = parent;
+            so.Parent = parent;
             so.nms_template = node;
             so.init(transforms);
 
-            Scene new_so;
+            SceneGraphNode new_so;
             //Check if scene has been parsed
             if (!Common.RenderState.activeResMgr.GLScenes.ContainsKey(scene_ref))
             {
@@ -1437,19 +1413,19 @@ namespace MVCore
             else
             {
                 //Make a shallow copy of the scene
-                new_so = (Scene)Common.RenderState.activeResMgr.GLScenes[scene_ref].Clone();
+                new_so = (SceneGraphNode) Common.RenderState.activeResMgr.GLScenes[scene_ref].Clone();
             }
 
             so.ref_scene = new_so;
-            new_so.parent = so;
-            so.children.Add(new_so); //Keep it also as a child so the rest of pipeline is not affected
+            new_so.Parent = so;
+            so.Children.Add(new_so); //Keep it also as a child so the rest of pipeline is not affected
 
             //Handle Children
             //Console.WriteLine("Children Count {0}", childs.ChildNodes.Count);
             foreach (TkSceneNodeData child in children)
             {
-                Model part = parseNode(child, gobject, so, scene);
-                so.children.Add(part);
+                SceneGraphNode part = parseNode(child, gobject, so, scene);
+                so.Children.Add(part);
             }
 
             return so;
@@ -1495,7 +1471,7 @@ namespace MVCore
             so.nms_template = node;
 
             //Get Transformation
-            so.parent = parent;
+            so.Parent = parent;
             so.init(transforms);
 
             //Process Locator Attachments
@@ -1505,7 +1481,7 @@ namespace MVCore
             foreach (TkSceneNodeData child in children)
             {
                 Model part = parseNode(child, gobject, so, scene);
-                so.children.Add(part);
+                so.Children.Add(part);
             }
 
             //Do not restore the old AnimScene let them flow
@@ -1513,70 +1489,113 @@ namespace MVCore
             return so;
         }
 
-        private static Model parseNode(TkSceneNodeData node, 
-            GeomObject gobject, Model parent, Scene scene)
+        private static SceneGraphNode parseNode(TkSceneNodeData node, 
+            GeomObject gobject, SceneGraphNode parent, SceneGraphNode parentScene)
         {
-            Common.Callbacks.Log(string.Format("Importing Scene {0} Node {1}", scene?.Name, node.Name), 
+            Common.Callbacks.Log(string.Format("Importing Node {0}", node.Name), 
                 Common.LogVerbosityLevel.INFO);
-            Common.Callbacks.updateStatus("Importing Scene: " + scene?.Name + " Part: " + node.Name);
+            Common.Callbacks.updateStatus("Importing Part: " + node.Name);
 
-            if (!Enum.TryParse<TYPES>(node.Type, out TYPES typeEnum))
+            if (!Enum.TryParse(node.Type, out TYPES typeEnum))
                 throw new Exception("Node Type " + node.Type + "Not supported");
 
+            SceneGraphNode so = new()
+            {
+                Name = node.Name,
+                NameHash = node.NameHash,
+                Type = typeEnum,
+                ID = Common.RenderState.itemCounter++,
+                template = node
+            };
+
+            //Add Transform Component
+            TransformData td = new TransformData(node.Transform);
+            TransformComponent tc = new TransformComponent(td);
+            so.AddComponent<TransformComponent>(tc);
+            
             if (typeEnum == TYPES.MESH)
             {
                 Common.Callbacks.Log(string.Format("Parsing Mesh {0}", node.Name), 
                     Common.LogVerbosityLevel.INFO);
-                return parseMesh(node, gobject, parent, scene);
+
+                //Add MeshComponent
+                MeshComponent mc = new()
+                {
+                    BatchStartPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTPHYSI")),
+                    VertrStartPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTPHYSI")),
+                    VertrEndPhysics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDPHYSICS")),
+                    BatchStartGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTGRAPH")),
+                    BatchCount = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHCOUNT")),
+                    VertrStartGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTGRAPH")),
+                    VertrEndGraphics = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDGRAPHIC")),
+                    FirstSkinMat = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "FIRSTSKINMAT")),
+                    LastSkinMat = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LASTSKINMAT")),
+                    LODLevel = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
+                    BoundHullStart = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
+                    BoundHullEnd = int.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
+                    AABBMIN = new Vector3(MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
+                                          MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINY")),
+                                          MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINZ"))),
+                    AABBMAX = new Vector3(MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
+                                          MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
+                                          MathUtils.FloatParse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
+                    Hash = ulong.Parse(NMSUtils.parseNMSTemplateAttrib(node.Attributes, "HASH"))
+                };
+
+                //TODO Process the corresponding mesh if needed
+
+                so.AddComponent<MeshComponent>(mc);
+
+                //TODO Process the mesh if Required
+
+
+                
             }
             else if (typeEnum == TYPES.MODEL)
             {
-                return parseScene(node, gobject, parent, scene);
+                throw new Exception("Not Implemented Yet!");
             }
             else if (typeEnum == TYPES.LOCATOR)
             {
-                return parseLocator(node, gobject, parent, scene);
+                throw new Exception("Not Implemented Yet!");
             }
             else if (typeEnum == TYPES.JOINT)
             {
-                return parseJoint(node, gobject, parent, scene);
+                throw new Exception("Not Implemented Yet!");
             }
             else if (typeEnum == TYPES.REFERENCE)
             {
-                return parseReference(node, gobject, parent, scene);
+                throw new Exception("Not Implemented Yet!");
             }
             else if (typeEnum == TYPES.COLLISION)
             {
-                return parseCollision(node, gobject, parent, scene);
+                throw new Exception("Not Implemented Yet!");
             }
             else if (typeEnum == TYPES.LIGHT)
             {
-                Common.Callbacks.Log(string.Format("Parsing Light, {0}", node.Name),
-                    Common.LogVerbosityLevel.INFO);
-                return parseLight(node, gobject, parent, scene);
+                throw new Exception("Not Implemented Yet!");
             }
-
             else if (typeEnum == TYPES.EMITTER)
             {
-                return parseEmitter(node, gobject, parent, scene);
-            }
-            else
+                throw new Exception("Not Implemented Yet!");
+            } else
             {
-                Common.Callbacks.Log(string.Format("Unknown Type, {0}", node.Type), Common.LogVerbosityLevel.INFO);
-                Locator so = new Locator();
-                //Set Properties
-                so.Name = node.Name + "_UNKNOWN";
-                so.NameHash = node.NameHash;
-                so.Type = TYPES.UNKNOWN;
-                so.nms_template = node;
-                //Locator Objects don't have options
-
-                //take care of children
-                return so;
-                //throw new ApplicationException("Unknown mesh type");
+                Common.Callbacks.Log("Unknown scenenode type. Please contant the developer", Common.LogVerbosityLevel.WARNING);
             }
 
-        
+            //Console.WriteLine("Children Count {0}", childs.ChildNodes.Count);
+            foreach (TkSceneNodeData child in node.Children)
+            {
+                SceneGraphNode part = parseNode(child, gobject, so);
+                so.Children.Add(part);
+            }
+
+            //Finally Order children by name
+            so.Children.OrderBy(i => i.Name);
+
+
+
+            return so;
         }
  
 

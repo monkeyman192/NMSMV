@@ -102,12 +102,12 @@ namespace MVCore
             }
         }
 
-
-        public static Model get_procgen_parts(ref List<string> descriptors, Model root)
+        /*
+        public static Model get_procgen_parts(ref List<string> descriptors, Entity root)
         {
             //Make deep copy of root 
-            Model newRoot = ((Scene) root).Clone();
-            root.procFlag = true; //Always keep the root node
+            Entity newRoot = root.Clone();
+            
 
             //PHASE 1
             //Flag Procgen parts
@@ -125,10 +125,10 @@ namespace MVCore
             return newRoot;
         }
 
-        public static void get_procgen_parts_phase1(ref List<string> descriptors, Model root)
+        public static void get_procgen_parts_phase1(ref List<string> descriptors, Entity root)
         {
             //During phase one all procgen parts are flagged
-            foreach (Model child in root.children)
+            foreach (Entity child in root.Children)
             {
                 //Identify Descriptors
                 if (child.Name.StartsWith("_"))
@@ -153,7 +153,6 @@ namespace MVCore
                     //Add part to partlist if not Joint, Light or Collision
                     if (child.Type != TYPES.JOINT & child.Type != TYPES.LIGHT & child.Type != TYPES.COLLISION)
                     {
-                        child.procFlag = true;
                         Debug.WriteLine("Setting Flag on " + child.Name);
                         //Cover the case where endpoints have children as well
                         get_procgen_parts_phase1(ref descriptors, child);
@@ -164,7 +163,7 @@ namespace MVCore
 
         public static void get_procgen_parts_phase2(ref List<string> dellist, Model root)
         {
-            foreach (Model child in root.children)
+            foreach (Model child in root.Children)
             {
                 if (!child.procFlag)
                     dellist.Add(child.Name);
@@ -173,22 +172,23 @@ namespace MVCore
             }   
         }
 
-        public static void get_procgen_parts_phase3(List<string> dellist, Model root)
+        public static void get_procgen_parts_phase3(List<string> dellist, Entity root)
         {
             for (int i = 0; i < dellist.Count; i++)
             {
                 string part_name = dellist[i];
-                Model child;
-                child = collectPart(root.children, part_name);
+                Entity child;
+                child = collectPart(root.Children, part_name);
 
                 if (child != null)
                 {
-                    Model parent = child.parent;
-                    parent.children.Remove(child);
+                    Entity parent = child.Parent;
+                    parent.Children.Remove(child);
                 }
                 
             }
         }
+        */
 
         public static void parse_procTexture(ref List<TkProceduralTexture> parts, TkProceduralTextureList template, ref ResourceManager resMgr)
         {
@@ -216,9 +216,9 @@ namespace MVCore
             }
         }
 
-        public static Model collectPart(List<Model> coll, string name)
+        public static Entity collectPart(List<Entity> coll, string name)
         {
-            foreach (Model child in coll)
+            foreach (Entity child in coll)
             {
                 if (child.Name == name)
                 {
@@ -227,7 +227,7 @@ namespace MVCore
                 else
                 {
 
-                    Model ret = collectPart(child.children, name);
+                    Entity ret = collectPart(child.Children, name);
                     if (ret != null)
                         return ret;
                     else
@@ -236,6 +236,9 @@ namespace MVCore
             }
             return null;
         }
+    
+    
+    
     }
 
     class opt_dict_val

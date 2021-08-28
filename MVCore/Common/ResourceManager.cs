@@ -27,7 +27,7 @@ namespace MVCore
         //public Dictionary<string, GMDL.Texture> GLtextures = new Dictionary<string, GMDL.Texture>();
         public Dictionary<string, Material> GLmaterials = new();
         public Dictionary<string, GeomObject> GLgeoms = new();
-        public Dictionary<string, Scene> GLScenes = new();
+        public Dictionary<string, SceneGraphNode> GLScenes = new();
         public Dictionary<string, Texture> GLTextures = new();
         public Dictionary<string, AnimMetadata> Animations = new();
 
@@ -342,6 +342,9 @@ namespace MVCore
             sr.WriteLine("###COMPILING PASSTHROUGH SHADER ###");
             sr.WriteLine(shader_conf.log);
 
+            /*
+             * TESTING
+             * 
             //Red Shader
             gbuffer_shader_vs = new(ShaderType.VertexShader);
             GLSLShaderText red_shader_fs = new(ShaderType.FragmentShader);
@@ -350,6 +353,10 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, red_shader_fs, null, null, null,
                             SHADER_TYPE.RED_FILL_SHADER);
             
+             
+             */
+
+
             //Attach UBO binding Points
             GLShaderHelper.attachUBOToShaderBindingPoint(shader_conf, "_COMMON_PER_FRAME", 0);
 
@@ -676,7 +683,7 @@ namespace MVCore
             txtMgr.cleanup();
             //procTextureLayerSelections.Clear();
 
-            foreach (Scene p in GLScenes.Values)
+            foreach (SceneGraphNode p in GLScenes.Values)
                 p.Dispose();
             GLScenes.Clear();
 

@@ -123,6 +123,11 @@ namespace MVCore
             }
         }
 
+        public override void CopyFrom(Component c)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
     }

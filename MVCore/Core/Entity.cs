@@ -5,7 +5,7 @@ using MVCore;
 
 namespace MVCore
 {
-    public class Entity
+    public class Entity : IDisposable
     {
         //Public
         public long ID; //unique entity identifier
@@ -24,10 +24,15 @@ namespace MVCore
 
         }
 
+        public void AddChild(Entity e)
+        {
+            e.SetParent(this);
+        }
+
         public void SetParent(Entity e)
         {
             Parent = e;
-            Parent.Children.Add(e);
+            Parent.Children.Add(this);
 
             //Connect TransformComponents if both have
             if (e.HasComponent<TransformComponent>() && HasComponent<TransformComponent>())
@@ -113,5 +118,9 @@ namespace MVCore
             }
         }
 
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -59,10 +59,6 @@ namespace MVCore
             instanceId = GLMeshBufferManager.AddInstance(ref meshVao, this);
         }
 
-        public override Model Clone()
-        {
-            return new gizmo();
-        }
     }
 
     
@@ -108,26 +104,6 @@ namespace MVCore
             
         }
 
-        public override Model Clone()
-        {
-            Collision new_m = new Collision();
-            new_m.collisionType = collisionType;
-            new_m.copyFrom(this);
-
-            new_m.meshVao = this.meshVao;
-            new_m.instanceId = GLMeshBufferManager.AddInstance(ref new_m.meshVao, new_m);
-            
-            //Clone children
-            foreach (Entity child in Children)
-            {
-                Entity new_child = child.Clone();
-                new_child.Parent = new_m;
-                new_m.Children.Add(new_child);
-            }
-
-            return new_m;
-        }
-        
         
         protected Collision(Collision input) : base(input)
         {
