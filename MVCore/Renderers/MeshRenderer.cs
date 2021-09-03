@@ -22,10 +22,8 @@ namespace MVCore
             }
         }
 
-        public static void renderBbox(SceneGraphNode m)
+        public static void renderBbox(MeshComponent mc)
         {
-            MeshComponent mc = m.GetComponent<MeshComponent>() as MeshComponent;
-            
             if (mc == null)
                 return;
 

@@ -51,7 +51,7 @@ namespace MVCore.Systems
             return engineRef;
         }
         
-        public virtual void Update(float dt)
+        public virtual void Update(double dt)
         {
 
         }

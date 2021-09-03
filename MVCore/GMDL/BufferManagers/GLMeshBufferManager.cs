@@ -46,14 +46,14 @@ namespace MVCore
         //18-20: padding
 
 
-        public static int AddInstance(ref GLInstancedMesh mesh, SceneGraphNode m)
+        public static int AddInstance(ref GLInstancedMesh mesh, TransformData td, MeshComponent mc)
         {
             int instance_id = mesh.instance_count;
 
             //Expand mesh data buffer if required
             if (instance_id * instance_struct_size_bytes > mesh.dataBuffer.Length)
             {
-                float[] newBuffer = new float[mesh.dataBuffer.Length + 256];
+                float[] newBuffer = new float[mesh.dataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
                 Array.Copy(mesh.dataBuffer, newBuffer, mesh.dataBuffer.Length);
                 mesh.dataBuffer = newBuffer;
             }
@@ -62,21 +62,42 @@ namespace MVCore
             {
                 //Uplod worldMat to the meshVao
 
-                Matrix4 actualWorldMat = TransformationSystem.GetEntityWorldMat(m);
+                Matrix4 actualWorldMat = td.WorldTransformMat;
                 Matrix4 actualWorldMatInv = (actualWorldMat).Inverted();
                 SetInstanceWorldMat(mesh, instance_id, actualWorldMat);
                 SetInstanceWorldMatInv(mesh, instance_id, actualWorldMatInv);
                 SetInstanceNormalMat(mesh, instance_id, Matrix4.Transpose(actualWorldMatInv));
 
-                mesh.instanceRefs.Add(m); //Keep reference
+                mesh.instanceRefs.Add(mc); //Keep reference
                 mesh.instance_count++;
             }
 
             return instance_id;
         }
 
+        public static void RemoveInstance(ref GLInstancedMesh mesh, MeshComponent mc)
+        {
+            Common.Callbacks.Assert(mc.InstanceID >= 0, "Negative instance ID. ILLEGAL instance removal");
+
+            int instance_float_offset = mc.InstanceID * instance_struct_size_floats;
+            int next_instance_float_offset = instance_float_offset + instance_struct_size_floats;
+            float[] tempbuffer = new float[mesh.dataBuffer.Length - next_instance_float_offset];
+            //Copy next instance data to the tempbuffer
+            Array.Copy(mesh.dataBuffer, next_instance_float_offset, tempbuffer, 0, tempbuffer.Length);
+            //Overwrite tempbuffer to the data buffer
+            Array.Copy(tempbuffer, 0, mesh.dataBuffer, instance_float_offset, tempbuffer.Length);
+            
+            //Fix instance IDs for the next instance_refs
+            for (int i = mc.InstanceID + 1; i < mesh.instance_count; i++)
+                mesh.instanceRefs[i].InstanceID--;
+
+            mesh.instanceRefs.RemoveAt(mc.InstanceID);
+            mesh.instance_count--;
+        }
+
         //Overload with transform overrides
-        public static int AddInstance(GLInstancedMesh mesh, SceneGraphNode m, Matrix4 worldMat, Matrix4 worldMatInv, Matrix4 normMat)
+        public static int AddInstance(GLInstancedMesh mesh, MeshComponent mc, 
+                                            Matrix4 worldMat, Matrix4 worldMatInv, Matrix4 normMat)
         {
             int instance_id = mesh.instance_count;
 
@@ -94,7 +115,7 @@ namespace MVCore
                 SetInstanceWorldMatInv(mesh, instance_id, worldMatInv);
                 SetInstanceNormalMat(mesh, instance_id, normMat);
 
-                mesh.instanceRefs.Add(m); //Keep reference
+                mesh.instanceRefs.Add(mc); //Keep reference
                 mesh.instance_count++;
             }
 
@@ -106,13 +127,6 @@ namespace MVCore
             mesh.instanceRefs.Clear();
             mesh.instance_count = 0;
         }
-
-        public static void RemoveInstance(GLInstancedMesh mesh, SceneGraphNode m)
-        {
-            int id = mesh.instanceRefs.IndexOf(m);
-            //TODO: Make all the memory shit to push the instances backwards
-        }
-
 
         public static void SetInstanceOccludedStatus(GLInstancedMesh mesh, int instance_id, bool status)
         {

@@ -109,26 +109,10 @@ namespace MVCore
             this.copyFrom(input);
         }
 
-        #region IDisposable Support
-        private bool disposed = false; // To detect redundant calls
-        protected override void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposing)
-                {
-                    base.Dispose(disposing);
-                }
-                disposed = true;
-            }
-        }
-
         public override void CopyFrom(Component c)
         {
             throw new NotImplementedException();
         }
-
-        #endregion
 
     }
 }

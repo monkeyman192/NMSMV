@@ -44,7 +44,7 @@ namespace MVCore
 
         public int instance_count = 0;
         public int visible_instances = 0;
-        public List<SceneGraphNode> instanceRefs = new();
+        public List<MeshComponent> instanceRefs = new();
         public float[] instanceBoneMatrices;
         public int instanceBoneMatricesTex;
         public int instanceBoneMatricesTexTBO;

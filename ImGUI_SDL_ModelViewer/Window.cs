@@ -28,7 +28,6 @@ namespace ImGUI_SDL_ModelViewer
         
         //Scene Stuff
         public Entity activeModel; //Active Model Reference
-        public Queue<Entity> modelUpdateQueue = new();
         public List<Tuple<AnimComponent, AnimData>> activeAnimScenes = new();
         
         //Engine
@@ -99,27 +98,40 @@ namespace ImGUI_SDL_ModelViewer
             RenderState.engineRef = engine; //Set reference to engine
 
             //Populate GLControl
-            SceneGraphNode scene = SceneGraphNode.CreateScene("DEFAULT SCENE");
+            SceneGraphNode sceneRoot = SceneGraphNode.CreateScene("SCENE ROOT");
             SceneGraphNode test1 = SceneGraphNode.CreateLocator("Test Locator 1");
-            scene.AddChild(test1);
+            sceneRoot.AddChild(test1);
             SceneGraphNode test2 = SceneGraphNode.CreateLocator("Test Locator 2");
-            scene.AddChild(test2);
+            sceneRoot.AddChild(test2);
 
             //Register Entities
-            engine.RegisterEntity(scene, true, false);
+            engine.RegisterEntity(sceneRoot, true, false);
             engine.RegisterEntity(test1, true, false);
             engine.RegisterEntity(test2, true, false);
 
+            //Create Render Scene
+            Scene scene = engine.CreateScene();
+            scene.AddNode(sceneRoot, true);
+            scene.AddNode(test1);
+            scene.AddNode(test2);
+            scene.Update(); //Add instances
+
+            engine.sceneManagementSys.SetActiveScene(scene);
+
+            //Request tranform update for the added nodes
+            engine.transformSys.RequestEntityUpdate(sceneRoot);
+            engine.transformSys.RequestEntityUpdate(test1);
+            engine.transformSys.RequestEntityUpdate(test2);
+
             //Add default scene to the resource manager
-            RenderState.activeResMgr.GLScenes["DEFAULT_SCENE"] = scene;
+            RenderState.activeResMgr.GLScenes["DEFAULT_SCENE"] = sceneRoot;
 
             //Force rootobject
-            RenderState.rootObject = scene;
-            modelUpdateQueue.Enqueue(scene);
-            engine.renderSys.populate();
+            RenderState.rootObject = sceneRoot;
+            engine.renderSys.populate(scene);
 
             //Populate SceneGraphView
-            ImGuiManager.PopulateSceneGraph(scene);
+            ImGuiManager.PopulateSceneGraph(sceneRoot);
 
             //Check if Temp folder exists
 #if DEBUG
@@ -172,10 +184,11 @@ namespace ImGUI_SDL_ModelViewer
             base.OnRenderFrame(e);
             
             _controller.Update(this, (float) e.Time);
-            
+
             //Per Frame System Updates
             engine.transformSys.Update(e.Time);
-
+            engine.sceneManagementSys.Update(e.Time);
+            
             Camera.UpdateCameraDirectionalVectors(RenderState.activeCam);
 
             //Console.WriteLine("Rendering Frame");
@@ -245,10 +258,6 @@ namespace ImGUI_SDL_ModelViewer
             //    m.update();
             //}
 
-            //rootObject?.update(); //Update Distances from camera
-            engine.renderSys.clearInstances(); //Clear All mesh instances
-            //RenderState.rootObject?.updateMeshInfo(); //Reapply frustum culling and re-setup visible instances
-
             //Update gizmo
             if (activeModel != null)
             {
@@ -259,12 +268,6 @@ namespace ImGUI_SDL_ModelViewer
                 //GLMeshBufferManager.addInstance(ref gz, TranslationGizmo);
             }
             
-            //Identify dynamic Objects
-            foreach (Model s in engine.animationSys.AnimScenes)
-            {
-                modelUpdateQueue.Enqueue(s.parentScene);
-            }
-
             //Console.WriteLine("Dt {0}", dt);
             if (RenderState.settings.viewSettings.EmulateActions)
             {
@@ -414,9 +417,6 @@ namespace ImGUI_SDL_ModelViewer
         //Scene Loading
         public void AddTestScene(int sceneID)
         {
-            //Cleanup first
-            modelUpdateQueue.Clear(); //Clear Update Queues
-
             //Generate Request for rendering thread
             ThreadRequest req1 = new()
             {
@@ -438,9 +438,6 @@ namespace ImGUI_SDL_ModelViewer
 
         public void AddScene(string filename)
         {
-            //Cleanup first
-            modelUpdateQueue.Clear(); //Clear Update Queues
-
             //Generate Request for rendering thread
             ThreadRequest req1 = new()
             {

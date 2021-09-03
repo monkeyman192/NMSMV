@@ -55,12 +55,11 @@ namespace MVCore
         //Keyboard State
         private readonly KeyboardState kbState;
         private readonly MouseState mouseState;
-        private Vector2 mouseClickedPos;
         
         //Camera Stuff
         public CameraPos targetCameraPos;
         public Vector2 prevMousePos;
-        //public int movement_speed = 1;
+        
 
         //Use public variables for now because getters/setters are so not worth it for our purpose
         public float light_angle_y = 0.0f;
@@ -124,19 +123,15 @@ namespace MVCore
             if (registrySys.RegisterEntity(e))
             {
                 if (e.HasComponent<TransformComponent>())
-                {
                     transformSys.RegisterEntity(e, controllable, isDynamic);
-                }
                 
-                if (e.HasComponent<TransformComponent>())
-                {
-                    transformSys.RegisterEntity(e, controllable, isDynamic);
-                }
-
-
-
-
+                //TODO Register to the rest systems if necessary
             }
+        }
+
+        public Scene CreateScene()
+        {
+            return sceneManagementSys.CreateScene();
         }
 
 
@@ -446,11 +441,8 @@ namespace MVCore
             RenderState.activeResMgr.GLScenes["TEST_SCENE_1"] = scene; //Use input path
 
             //Populate RenderManager
-            renderSys.populate();
+            renderSys.populate(null);
 
-            //Clear Instances
-            renderSys.clearInstances();
-            
             scene.IsSelected = true;
             RenderState.rootObject = scene;
             //RenderState.activeModel = root; //Set the new scene as the new activeModel
@@ -516,7 +508,7 @@ namespace MVCore
             //root.setupSkinMatrixArrays();
 
             //Populate RenderManager
-            renderSys.populate();
+            renderSys.populate(null);
 
             //Clear Instances
             //renderSys.clearInstances();

@@ -8,10 +8,11 @@ namespace MVCore.Systems
 {
     public class TransformationSystem : EngineSystem
     {
-        private List<TransformData> data;
-        private Dictionary<long, TransformController> EntityControllerMap;
-        private Dictionary<long, TransformComponent> EntityDataMap;
-        private List<Entity> DynamicEntities; //Entities to update on update
+        private readonly List<TransformData> _Data;
+        private readonly Dictionary<long, TransformController> EntityControllerMap;
+        private readonly Dictionary<long, TransformComponent> EntityDataMap;
+        private readonly Queue<Entity> UpdatedEntities; //Entities to update on demand
+        private readonly List<Entity> DynamicEntities; //Dynamic entities that need to be constantly updated
         
         //Properties
         public static double updateInterval = 1.0 / 60; //Default Update interval of 60hz
@@ -21,6 +22,8 @@ namespace MVCore.Systems
             EntityControllerMap = new();
             EntityDataMap = new();
             DynamicEntities = new();
+            UpdatedEntities = new Queue<Entity> ();
+            _Data = new();
         }
 
         public void SetInterval(double interval)
@@ -46,6 +49,7 @@ namespace MVCore.Systems
             
             //Insert to Maps
             EntityDataMap[e.ID] = tc;
+            _Data.Add(tc.Data); //Add ref to TransformData list
             
             if (createController)
                 EntityControllerMap[e.ID] = new TransformController(tc);
@@ -54,12 +58,29 @@ namespace MVCore.Systems
                 AddDynamicEntity(e);
         }
 
-        public void Update(double dt)
+        public override void Update(double dt)
         {
+            //Update On Demand Entities
+            foreach (Entity e in UpdatedEntities)
+            {
+                //Immediately calculate new transforms
+                TransformData td = GetEntityTransformData(e);
+                td.RecalculateTransformMatrices();
+            }
+            
+            //Update Dynamic Entities
             foreach (Entity e in DynamicEntities)
             {
                 TransformController tc = GetEntityTransformController(e);
                 tc.Update(dt);
+            }
+
+            //TODO: Apply frustum culling to all transform data objects and set visibility
+            //For now mark all as visible
+            foreach (TransformData td in _Data)
+            {
+                td.WasOccluded = td.IsOccluded;
+                td.IsOccluded = false;
             }
         }
 
@@ -67,6 +88,15 @@ namespace MVCore.Systems
         {
             if (EntityDataMap.ContainsKey(e.ID) && !DynamicEntities.Contains(e))
                 DynamicEntities.Add(e);
+        }
+
+        public void RequestEntityUpdate(Entity e)
+        {
+            if (EntityDataMap.ContainsKey(e.ID))
+                UpdatedEntities.Enqueue(e);
+            else
+                Log("Entity not registered to the transformation system", 
+                    Common.LogVerbosityLevel.WARNING);
         }
 
         public void RemoveDynamicEntity(Entity e)
@@ -85,7 +115,6 @@ namespace MVCore.Systems
         {
             TransformData td = new();
             TransformComponent tc = new(td);
-
             e.AddComponent<TransformComponent>(tc);
         }
 

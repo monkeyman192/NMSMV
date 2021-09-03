@@ -254,25 +254,22 @@ namespace MVCore.Systems
             }
         }
 
-        public void populate()
+        public void populate(Scene s)
         {
             CleanUp();
 
             //Populate octree
             //octree.insert(root);
             //octree.report();
-
-            foreach (SceneGraphNode s in resMgr.GLScenes.Values)
-                process_models(s);
-
-            //Add gizmo meshes manually to the globalmeshlist\
-            //Translation gizmo parts
-            globalMeshList.Add(resMgr.GLPrimitiveMeshes["default_translation_gizmo_x_axis"]);
-            globalMeshList.Add(resMgr.GLPrimitiveMeshes["default_translation_gizmo_y_axis"]);
-            globalMeshList.Add(resMgr.GLPrimitiveMeshes["default_translation_gizmo_z_axis"]);
-
+            MeshComponent mc;
+            foreach (SceneGraphNode n in s.GetMeshNodes())
+            {
+                mc = n.GetComponent<MeshComponent>() as MeshComponent;
+                process_model(mc);
+            }
+            
             //Add default light mesh
-            MeshComponent mc = resMgr.GLlights[0].GetComponent<MeshComponent>() as MeshComponent;
+            mc = resMgr.GLlights[0].GetComponent<MeshComponent>() as MeshComponent;
             process_model(mc);
             
             IdentifyActiveShaders();
@@ -359,15 +356,6 @@ namespace MVCore.Systems
             foreach (SceneGraphNode child in root.Children)
             {
                 process_models(child);
-            }
-        }
-
-        public void clearInstances()
-        {
-            lock (globalMeshList)
-            {
-                foreach (GLInstancedMesh m in globalMeshList)
-                    GLMeshBufferManager.ClearInstances(m);
             }
         }
 

@@ -27,8 +27,7 @@ namespace MVCore
         public Vector3 Position;
         public Quaternion Rotation;
         public Vector3 Scale;
-        public Matrix4 State;
-
+        
         private Queue<Vector3> FutureTranslation = new();
         private Queue<Quaternion> FutureRotation = new();
         private Queue<Vector3> FutureScale = new();
@@ -114,9 +113,6 @@ namespace MVCore
             //                    Position.X, Position.Y, Position.Z, Time),
             //                    LogVerbosityLevel.INFO);
 
-            State = Matrix4.CreateScale(Scale) * 
-                    Matrix4.CreateFromQuaternion(Rotation) * 
-                    Matrix4.CreateTranslation(Position);
         }
 
         private void ApplyStateToActor()
@@ -126,16 +122,8 @@ namespace MVCore
                 actor.Data.localTranslation = Position;
                 actor.Data.localRotation = Rotation;
                 actor.Data.localScale = Scale;
-                actor.Data.LocalTransformMat = State;
-                actor.Data.WorldTransformMat = actor.Data.CalculateWorldTransformMatrix();
+                actor.Data.RecalculateTransformMatrices();
             }
         }
-
-        public Matrix4 GetState()
-        {
-            return State;
-        }
-
-
     }
 }

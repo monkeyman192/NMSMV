@@ -81,6 +81,8 @@ namespace MVCore
         public Matrix4 inverseTransform = Matrix4.Identity;
 
         private TransformData parent = null;
+        public bool WasOccluded = true; //Set this to true so as to trigger the first instance setup
+        public bool IsOccluded = false;
 
         public TransformData() : base() {
 
@@ -109,13 +111,17 @@ namespace MVCore
         {
             parent = null;
         }
-        
-        internal Matrix4 CalculateWorldTransformMatrix()
+
+        public void RecalculateTransformMatrices()
         {
+            LocalTransformMat = Matrix4.CreateScale(localScale) *
+                                Matrix4.CreateFromQuaternion(localRotation) *
+                                Matrix4.CreateTranslation(localTranslation);
+            
             if (parent != null)
-                return LocalTransformMat * parent.WorldTransformMat;
+                WorldTransformMat = LocalTransformMat * parent.WorldTransformMat;
             else
-                return LocalTransformMat;
+                WorldTransformMat = LocalTransformMat;
         }
 
         public void StoreAsOldTransform()

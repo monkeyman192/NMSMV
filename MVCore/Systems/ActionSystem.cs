@@ -30,9 +30,9 @@ namespace MVCore.Systems
             ActionSceneNodes.Clear();
         }
 
-        public override void Update(float dt)
+        public override void Update(double dt)
         {
-            time += dt;
+            time += (float) dt;
 
             if (time < timeInterval)
                 return;

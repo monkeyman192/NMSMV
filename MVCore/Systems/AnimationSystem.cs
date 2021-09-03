@@ -22,7 +22,7 @@ namespace MVCore.Systems
             AnimQueues.Clear();
         }
 
-        public override void Update(float dt)
+        public override void Update(double dt)
         {
             /* REWRITE
             //Clear queues for all the joints

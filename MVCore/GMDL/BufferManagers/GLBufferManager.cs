@@ -30,12 +30,6 @@ namespace MVCore
             mesh.instance_count = 0;
         }
 
-        public static void RemoveInstance(GLInstancedMesh mesh, SceneGraphNode m)
-        {
-            int id = mesh.instanceRefs.IndexOf(m);
-            //TODO: Make all the memory shit to push the instances backwards
-        }
-
         //Setters
 
         public static void SetPropertyVal(float[] buffer, int offset, bool val)
