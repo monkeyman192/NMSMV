@@ -30,7 +30,7 @@ namespace MVCore.Systems
             ActionSceneNodes.Clear();
         }
 
-        public override void Update(double dt)
+        public override void OnFrameUpdate(double dt)
         {
             time += (float) dt;
 

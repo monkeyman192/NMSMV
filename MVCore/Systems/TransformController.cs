@@ -6,7 +6,7 @@ using MVCore.Systems;
 
 namespace MVCore
 {
-    public class TransformController
+    public unsafe class TransformController
     {
         //Previous
         public Vector3 PrevPosition;
@@ -40,6 +40,7 @@ namespace MVCore
         {
             actor = act;
             //Init States
+            
             PrevPosition = act.Data.localTranslation;
             PrevRotation = act.Data.localRotation;
             PrevScale = act.Data.localScale;

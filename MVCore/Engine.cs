@@ -32,7 +32,7 @@ namespace MVCore
         ACTIVE
     }
 
-    public class Engine
+    public class Engine : EngineSystem
     {
         public ResourceManager resMgr;
 
@@ -71,7 +71,7 @@ namespace MVCore
         //Palette
         Dictionary<string, Dictionary<string, Vector4>> palette;
 
-        public Engine(NativeWindow win)
+        public Engine(NativeWindow win) :base(EngineSystemEnum.CORE_SYSTEM)
         {
             //Store Window handler
             windowHandler = win;
@@ -110,11 +110,6 @@ namespace MVCore
         ~Engine()
         {
             Log("Goodbye!", LogVerbosityLevel.INFO);
-        }
-
-        private static void Log(string msg, LogVerbosityLevel lvl)
-        {
-            Callbacks.Log("* ENGINE : " + msg, lvl);
         }
 
         public void RegisterEntity(Entity e, bool controllable, bool isDynamic)
@@ -528,8 +523,64 @@ namespace MVCore
             reqHandler.AddRequest(ref r);
         }
 
+        public override void OnFrameUpdate(double dt)
+        {
+            handleRequests(); //Handle engine requests
 
-#region INPUT_HANDLERS
+            //Calculate new Camera State
+            Camera.CalculateNextCameraState(RenderState.activeCam, targetCameraPos);
+
+            //Update systems
+            transformSys.OnFrameUpdate(dt);
+            sceneManagementSys.OnFrameUpdate(dt);
+            
+            //Reset Stats
+            RenderStats.occludedNum = 0;
+
+            
+            //Enable Action System
+            if (RenderState.settings.viewSettings.EmulateActions)
+                actionSys.OnFrameUpdate(dt); 
+            //Enable Animation System
+            if (RenderState.settings.renderSettings.ToggleAnimations)
+                animationSys.OnFrameUpdate(dt);
+            
+
+            //Camera & Light Positions
+            //Update common transforms
+
+            
+            //Apply extra viewport rotation
+            Matrix4 Rotx = Matrix4.CreateRotationX(MathUtils.radians(RenderState.rotAngles.X));
+            Matrix4 Roty = Matrix4.CreateRotationY(MathUtils.radians(RenderState.rotAngles.Y));
+            Matrix4 Rotz = Matrix4.CreateRotationZ(MathUtils.radians(RenderState.rotAngles.Z));
+            RenderState.rotMat = Rotz * Rotx * Roty;
+            //RenderState.rotMat = Matrix4.Identity;
+        }
+
+        public override void OnRenderUpdate(double dt)
+        {
+            //Per Frame System Updates
+            transformSys.OnRenderUpdate(dt);
+            sceneManagementSys.OnRenderUpdate(dt);
+
+            //Render Shit
+            if (rt_State == EngineRenderingState.ACTIVE)
+            {
+                //Callbacks.Log("* CONTROL : STARTING FRAME UPDATE", LogVerbosityLevel.DEBUG);
+                //Callbacks.Log("* CONTROL : FRAME UPDATED", LogVerbosityLevel.DEBUG);
+                //Callbacks.Log("* CONTROL : STARTING FRAME RENDER", LogVerbosityLevel.DEBUG);
+
+                renderSys.testrender(dt); //Render Everything
+
+                //Callbacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
+            }
+
+
+        }
+
+
+        #region INPUT_HANDLERS
 
         //Gamepad handler
         private void gamepadController()

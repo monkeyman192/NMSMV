@@ -8,6 +8,7 @@ namespace MVCore.Systems
     public enum EngineSystemEnum
     {
         NULL,
+        CORE_SYSTEM,
         TRANSFORMATION_SYSTEM,
         RENDERING_SYSTEM,
         ANIMATION_SYSTEM,
@@ -51,7 +52,12 @@ namespace MVCore.Systems
             return engineRef;
         }
         
-        public virtual void Update(double dt)
+        public virtual void OnRenderUpdate(double dt)
+        {
+
+        }
+
+        public virtual void OnFrameUpdate(double dt)
         {
 
         }

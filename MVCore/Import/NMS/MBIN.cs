@@ -18,6 +18,7 @@ using libMBIN.NMS.GameComponents;
 using libMBIN.NMS;
 using System.CodeDom;
 
+//TODO move to MVCore.Import.NMS
 namespace MVCore
 {
     public enum TYPES
@@ -1232,7 +1233,15 @@ namespace MVCore
             };
             
             //Add Transform Component
-            TransformData td = new(node.Transform);
+            TransformData td = new(node.Transform.TransX,
+                                   node.Transform.TransY,
+                                   node.Transform.TransZ,
+                                   node.Transform.RotX,
+                                   node.Transform.RotY,
+                                   node.Transform.RotZ,
+                                   node.Transform.ScaleX,
+                                   node.Transform.ScaleY,
+                                   node.Transform.ScaleY);
             TransformComponent tc = new(td);
             so.AddComponent<TransformComponent>(tc);
 

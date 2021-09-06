@@ -149,9 +149,8 @@ namespace MVCore
             //cam.Up = Vector3.Cross(cam.Right, cam.Front);
         }
 
-        public static void CalculateNextCameraState(Camera cam, CameraPos target, double dt)
+        public static void CalculateNextCameraState(Camera cam, CameraPos target)
         {
-            TransformComponent tc = cam.GetComponent<TransformComponent>() as TransformComponent;
             TransformController t_controller = Common.RenderState.engineRef.transformSys.GetEntityTransformController(cam);
 
             //Calculate actual camera speed

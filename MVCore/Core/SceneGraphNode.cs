@@ -45,7 +45,7 @@ namespace MVCore
             if (e.HasComponent<TransformComponent>() && HasComponent<TransformComponent>())
             {
                 TransformComponent tc = GetComponent<TransformComponent>() as TransformComponent;
-                TransformComponent parent_tc = GetComponent<TransformComponent>() as TransformComponent;
+                TransformComponent parent_tc = Parent.GetComponent<TransformComponent>() as TransformComponent;
                 tc.Data.SetParentData(parent_tc.Data);
             }
         }

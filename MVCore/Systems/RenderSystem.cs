@@ -1079,8 +1079,13 @@ namespace MVCore.Systems
         }
 
         //Rendering Mechanism
-        public void testrender()
+        public void testrender(double dt)
         {
+            gfTime += dt; //Update render time
+
+            //Console.WriteLine("Rendering Frame");
+            GL.ClearColor(new Color4(5, 5, 5, 255));
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
             //Prepare UBOs
             prepareCommonPerFrameUBO();

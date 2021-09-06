@@ -62,14 +62,23 @@ namespace MVCore
                 TransformData td = TransformationSystem.GetEntityTransformData(n);
                 MeshComponent mc = n.GetComponent<MeshComponent>() as MeshComponent;
 
-                if (td.IsOccluded && !td.WasOccluded)
+                if (td.IsUpdated)
                 {
-                    //Remove Instance
-                    GLMeshBufferManager.RemoveInstance(ref mc.MeshVao, mc);
-                }
-                else if (!td.IsOccluded && td.WasOccluded)
-                {
-                    mc.InstanceID = GLMeshBufferManager.AddInstance(ref mc.MeshVao, td, mc);
+                    if (td.IsOccluded && !td.WasOccluded)
+                    {
+                        //Remove Instance
+                        GLMeshBufferManager.RemoveInstance(ref mc.MeshVao, mc);
+                    }
+                    else if (!td.IsOccluded && td.WasOccluded)
+                    {
+                        mc.InstanceID = GLMeshBufferManager.AddInstance(ref mc.MeshVao, td, mc);
+                    }
+                    else if (!td.IsOccluded)
+                    {
+                        GLMeshBufferManager.SetInstanceWorldMat(mc.MeshVao, mc.InstanceID, td.WorldTransformMat);
+                        GLMeshBufferManager.SetInstanceWorldMatInv(mc.MeshVao, mc.InstanceID, td.InverseTransformMat);
+                    }
+                    td.IsUpdated = false; //Reset updated status to prevent further updates on the same frame update
                 }
             }
         }

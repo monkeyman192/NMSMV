@@ -64,7 +64,7 @@ namespace MVCore.Systems
                 s.Update();
         }
 
-        public override void Update(double dt)
+        public override void OnFrameUpdate(double dt)
         {
             UpdateActiveScene();
         }

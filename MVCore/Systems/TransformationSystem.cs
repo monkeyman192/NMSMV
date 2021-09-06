@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 
 namespace MVCore.Systems
 {
-    public class TransformationSystem : EngineSystem
+    public unsafe class TransformationSystem : EngineSystem
     {
         private readonly List<TransformData> _Data;
         private readonly Dictionary<long, TransformController> EntityControllerMap;
@@ -58,16 +58,10 @@ namespace MVCore.Systems
                 AddDynamicEntity(e);
         }
 
-        public override void Update(double dt)
+        public override void OnRenderUpdate(double dt)
         {
-            //Update On Demand Entities
-            foreach (Entity e in UpdatedEntities)
-            {
-                //Immediately calculate new transforms
-                TransformData td = GetEntityTransformData(e);
-                td.RecalculateTransformMatrices();
-            }
-            
+            //Dynamic entities that have transform controllers should be updated per frame
+
             //Update Dynamic Entities
             foreach (Entity e in DynamicEntities)
             {
@@ -81,6 +75,22 @@ namespace MVCore.Systems
             {
                 td.WasOccluded = td.IsOccluded;
                 td.IsOccluded = false;
+                td.IsUpdated = true;
+            }
+
+        }
+
+        public override void OnFrameUpdate(double dt)
+        {
+            //Update On Demand Entities
+            while (UpdatedEntities.Count > 0)
+            {
+                Entity e = UpdatedEntities.Dequeue();
+
+                //Immediately calculate new transforms
+                TransformData td = GetEntityTransformData(e);
+                MeshComponent mc = e.GetComponent<MeshComponent>() as MeshComponent;
+                td.RecalculateTransformMatrices();
             }
         }
 

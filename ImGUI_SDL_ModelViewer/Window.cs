@@ -114,8 +114,7 @@ namespace ImGUI_SDL_ModelViewer
             scene.AddNode(sceneRoot, true);
             scene.AddNode(test1);
             scene.AddNode(test2);
-            scene.Update(); //Add instances
-
+            
             engine.sceneManagementSys.SetActiveScene(scene);
 
             //Request tranform update for the added nodes
@@ -167,14 +166,26 @@ namespace ImGUI_SDL_ModelViewer
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-            engine.handleRequests(); //Handle engine requests
+
+            //Pass Global rendering settings
+            VSync = RenderState.settings.renderSettings.UseVSync ? VSyncMode.On : VSyncMode.Off;
+            RenderFrequency = RenderState.settings.renderSettings.FPS;
+
+            engine.handleRequests();
             handleRequests(); //Handle window requests
             
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
                 //Capture Keyboard Presses
                 engine.UpdateInput(e.Time, isSceneViewActive);
-                frameUpdate(e.Time);
+
+                //TODO: Move these two lines in the engine and retrieve the sceneviewsize from the rendersystem
+                RenderState.activeCam.aspect = (float)SceneViewSize.X / SceneViewSize.Y;
+                RenderState.activeCam.updateViewMatrix();
+
+                //Execute Engine On Frame Update
+                engine.OnFrameUpdate(e.Time);
+
             }
                 
         }
@@ -184,29 +195,10 @@ namespace ImGUI_SDL_ModelViewer
             base.OnRenderFrame(e);
             
             _controller.Update(this, (float) e.Time);
-
-            //Per Frame System Updates
-            engine.transformSys.Update(e.Time);
-            engine.sceneManagementSys.Update(e.Time);
-            
             Camera.UpdateCameraDirectionalVectors(RenderState.activeCam);
 
-            //Console.WriteLine("Rendering Frame");
-            GL.ClearColor(new Color4(5, 5, 5, 255));
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+            engine.OnRenderUpdate(e.Time);
 
-            //Render Shit
-            if (engine.rt_State == EngineRenderingState.ACTIVE)
-            {
-                //Callbacks.Log("* CONTROL : STARTING FRAME UPDATE", LogVerbosityLevel.DEBUG);
-                //Callbacks.Log("* CONTROL : FRAME UPDATED", LogVerbosityLevel.DEBUG);
-                //Callbacks.Log("* CONTROL : STARTING FRAME RENDER", LogVerbosityLevel.DEBUG);
-
-                engine.renderSys.testrender(); //Render Everything
-
-                //Callbacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
-            }
-            
             //Bind Default Framebuffer
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
@@ -222,82 +214,6 @@ namespace ImGUI_SDL_ModelViewer
 
             RenderStats.fpsCount = 1.0f / (float)e.Time;
             SwapBuffers();
-        }
-
-        private void frameUpdate(double dt)
-        {
-            //Pass Global rendering settings
-            VSync = RenderState.settings.renderSettings.UseVSync ? VSyncMode.On : VSyncMode.Off;
-            RenderFrequency = RenderState.settings.renderSettings.FPS;
-            
-            //Gizmo Picking
-            //Send picking request
-            //Make new request
-            if (RenderState.settings.viewSettings.ViewGizmos)
-            {
-                //TODO: Do gizmo picking shit (if needed)
-            }
-            
-            //Calculate new Camera State
-            Camera.CalculateNextCameraState(RenderState.activeCam, engine.targetCameraPos, dt);
-            
-            RenderState.activeCam.aspect = (float)SceneViewSize.X / SceneViewSize.Y;
-            RenderState.activeCam.updateViewMatrix();
-            
-            //Set time to the renderManager
-            engine.renderSys.progressTime(dt);
-            
-            //Reset Stats
-            RenderStats.occludedNum = 0;
-
-            //Update moving queue
-            //TODO: Let the transformation system do that
-            //while (modelUpdateQueue.Count > 0)
-            //{
-            //    Entity m = modelUpdateQueue.Dequeue();
-            //    m.update();
-            //}
-
-            //Update gizmo
-            if (activeModel != null)
-            {
-                //TODO: Move gizmos
-                //gizTranslate.setReference(activeModel);
-                //gizTranslate.updateMeshInfo();
-                //GLMeshVao gz = resMgr.GLPrimitiveMeshes["default_translation_gizmo"];
-                //GLMeshBufferManager.addInstance(ref gz, TranslationGizmo);
-            }
-            
-            //Console.WriteLine("Dt {0}", dt);
-            if (RenderState.settings.viewSettings.EmulateActions)
-            {
-                engine.actionSys.Update((float)(1000 * dt)); //time is expected in ms
-            }
-
-            //Progress animations
-            if (RenderState.settings.renderSettings.ToggleAnimations)
-            {
-                engine.animationSys.Update((float)(1000 * dt)); //time is expected in ms
-            }
-
-            //Camera & Light Positions
-            //Update common transforms
-            
-
-            //Apply extra viewport rotation
-            Matrix4 Rotx = Matrix4.CreateRotationX(MathUtils.radians(RenderState.rotAngles.X));
-            Matrix4 Roty = Matrix4.CreateRotationY(MathUtils.radians(RenderState.rotAngles.Y));
-            Matrix4 Rotz = Matrix4.CreateRotationZ(MathUtils.radians(RenderState.rotAngles.Z));
-            RenderState.rotMat = Rotz * Rotx * Roty;
-            //RenderState.rotMat = Matrix4.Identity;
-
-            
-
-            //Update Text Counters
-            RenderState.activeResMgr.txtMgr.getText(TextManager.Semantic.FPS).update(string.Format("FPS: {0:000.0}",
-                                                                        (float)RenderStats.fpsCount));
-            RenderState.activeResMgr.txtMgr.getText(TextManager.Semantic.OCCLUDED_COUNT).update(string.Format("OccludedNum: {0:0000}",
-                                                                        RenderStats.occludedNum));
         }
 
         protected override void OnTextInput(TextInputEventArgs e)
