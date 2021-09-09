@@ -96,28 +96,16 @@ namespace MVCore.Import.NMS
         }
     
     }
+    
+    
+    
+    
 }
 
 //TODO move to MVCore.Import.NMS
 namespace MVCore
 {
-    public enum TYPES
-    {
-        MODEL=0x0,
-        LOCATOR,
-        JOINT,
-        MESH,
-        LIGHT,
-        LIGHTVOLUME,
-        EMITTER,
-        COLLISION,
-        REFERENCE,
-        DECAL,
-        GIZMO,
-        GIZMOPART,
-        TEXT,
-        UNKNOWN
-    }
+    
 
     public enum COLLISIONTYPES
     {
@@ -644,7 +632,6 @@ namespace MVCore
                     SceneGraphNode dummy = new()
                     {
                         Name = "DUMMY_SCENE",
-                        Template = null,
                         Type = TYPES.MODEL
                     };
                     return dummy;
@@ -664,10 +651,9 @@ namespace MVCore
 
             //Parse root scene
             SceneGraphNode root = parseNode(template, gobject, null, null);
-            root.Template = template;
-
+            
             //Save scene path to resourcemanager
-            Common.RenderState.activeResMgr.GLScenes[path] = root; //Use input path
+            RenderState.activeResMgr.GLScenes[path] = root; //Use input path
             
             return root;
         }
@@ -1310,8 +1296,7 @@ namespace MVCore
                 Name = node.Name,
                 NameHash = node.NameHash,
                 Type = typeEnum,
-                ID = Common.RenderState.itemCounter++,
-                Template = node
+                ID = Common.RenderState.itemCounter++
             };
             
             //Add Transform Component

@@ -16,6 +16,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\SceneComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\TransformData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Scene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Export\NMSExporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedLightMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLVao.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\MeshMetaData.cs" />

@@ -1,18 +1,33 @@
 ﻿using System.Collections.Generic;
 using MVCore.Systems;
-using libMBIN.NMS.Toolkit;
 using OpenTK.Mathematics;
 using MVCore.Utils;
 
 namespace MVCore
 {
+    public enum TYPES
+    {
+        MODEL=0x0,
+        LOCATOR,
+        JOINT,
+        MESH,
+        LIGHT,
+        LIGHTVOLUME,
+        EMITTER,
+        COLLISION,
+        REFERENCE,
+        DECAL,
+        GIZMO,
+        GIZMOPART,
+        TEXT,
+        UNKNOWN
+    }
     public class SceneGraphNode : Entity
     {
         public bool IsSelected = false;
         public bool IsRenderable = true;
         public bool IsOpen = false;
         public SceneGraphNode ParentScene = null;
-        public TkSceneNodeData Template = null;
         public List<float> LODDistances = new();
         public SceneGraphNode Parent = null;
         public List<SceneGraphNode> Children = new();
@@ -90,45 +105,10 @@ namespace MVCore
             }
         }
 
-        public void exportToMBIN()
-        {
-            if (Template != null)
-            {
-                //Fetch scene name
-                string[] split = Template.Name.Value.Split('\\');
-                string scnName = split[^1];
-
-                //TODO Bring Back MBIN Export Support
-                TkSceneNodeData temp = new();
-                temp.WriteToMbin(scnName.ToUpper() + ".SCENE.MBIN");
-                Common.Callbacks.showInfo("Scene successfully exported to " + scnName.ToUpper() + ".MBIN", "Info");
-            }
-        }
-
         public void resetTransform()
         {
             TransformData td = TransformationSystem.GetEntityTransformData(this);
             td.ResetTransform();
-
-            //Save values to underlying SceneNode
-            if (Template != null)
-            {
-                Template.Transform.ScaleX = td.ScaleX;
-                Template.Transform.ScaleY = td.ScaleY;
-                Template.Transform.ScaleZ = td.ScaleZ;
-                Template.Transform.TransX = td.TransX;
-                Template.Transform.TransY = td.TransY;
-                Template.Transform.TransZ = td.TransZ;
-                //Convert rotation from matrix to angles
-                //Vector3 q_euler = quaternionToEuler(oldrotation);
-                Matrix4 tempMat = Matrix4.CreateFromQuaternion(td.localRotation);
-                tempMat.Transpose();
-                Vector3 q_euler = MathUtils.matrixToEuler(tempMat, "ZXY");
-
-                Template.Transform.RotX = q_euler.X;
-                Template.Transform.RotY = q_euler.Y;
-                Template.Transform.RotZ = q_euler.Z;
-            }
         }
 
         //Static Methods for node generation
