@@ -13,6 +13,15 @@ namespace GLSLHelper {
     //Delegate function for sending requests to the active GL control
     public delegate void GLSLShaderModRequest(GLSLShaderConfig config, GLSLShaderText shaderText);
     public delegate void GLSLShaderCompileRequest(GLSLShaderConfig config);
+
+    [Flags]
+    public enum SHADER_MODE
+    {
+        DEFAULT,
+        DEFFERED,
+        FORWARD,
+        DECAL
+    }
     
     public enum SHADER_TYPE
     {
@@ -264,11 +273,12 @@ namespace GLSLHelper {
 
     }
 
-    
+
 
     public class GLSLShaderConfig
     {
         public string name = "";
+
         //Store the raw shader text objects temporarily
         public GLSLShaderText vs_text;
         public GLSLShaderText fs_text;
@@ -276,10 +286,11 @@ namespace GLSLHelper {
         public GLSLShaderText tcs_text;
         public GLSLShaderText tes_text;
 
-        
+
         //Store the raw shader text temporarily
         public SHADER_TYPE shader_type = SHADER_TYPE.NULL_SHADER;
 
+        public SHADER_MODE ShaderMode = SHADER_MODE.DEFAULT;
         //Publically hold the filepaths of the shaders
         //For now I am keeping the paths in the filewatcher
         
@@ -387,17 +398,17 @@ namespace GLSLHelper {
         }
 
         public static GLSLShaderConfig compileShader(string vs_path, string fs_path, string gs_path, string tcs_path, string tes_path,
-            List<string> directives, List<string> includes, SHADER_TYPE type)
+            List<string> includes, SHADER_TYPE type, SHADER_MODE mode)
         {
             List<string> defines = new List<string>();
 
             //General Directives are provided here
-            foreach (string d in directives)
-                defines.Add(d);
-
+            if ((mode & SHADER_MODE.DEFFERED) == SHADER_MODE.DEFFERED)
+                defines.Add("_D_DEFERRED_RENDERING");
+            
             //Material Flags are provided here
             foreach (string  f in includes)
-                defines.Add("_" + f);
+                defines.Add(f);
             
             //Main Object Shader - Deferred Shading
             GLSLShaderText main_deferred_shader_vs = new GLSLShaderText(ShaderType.VertexShader);
@@ -651,7 +662,7 @@ namespace GLSLHelper {
                 Console.WriteLine("Log File not ready yet");
             };
             
-            StreamWriter sr = new StreamWriter(log_file);
+            StreamWriter sr = new StreamWriter(log_file, true);
             sr.WriteLine("### COMPILING " + conf.shader_type + "###");
             sr.Write(conf.log);
             sr.Close();

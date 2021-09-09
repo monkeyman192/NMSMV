@@ -15,6 +15,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\ReferenceComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\SceneComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\TransformData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Core\DDSImage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Export\NMS\Exporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedLightMesh.cs" />
@@ -26,6 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Core\SceneGraphNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Sampler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Uniform.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\ModelProcGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Palettes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Util.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\MeshRenderer.cs" />
@@ -55,7 +57,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\TextureMixer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Image\DDSImage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLMeshBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\TextureManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\Font.cs" />
@@ -72,7 +73,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utils\HTMLUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\MathUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Importer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ModelProcGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Octree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\RenderSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\ResourceManager.cs" />
@@ -85,7 +85,6 @@
     <Folder Include="$(MSBuildThisFileDirectory)Export\" />
     <Folder Include="$(MSBuildThisFileDirectory)Import\NMS\" />
     <Folder Include="$(MSBuildThisFileDirectory)Renderers\" />
-    <Folder Include="$(MSBuildThisFileDirectory)Image\" />
     <Folder Include="$(MSBuildThisFileDirectory)Input\" />
   </ItemGroup>
 </Project>

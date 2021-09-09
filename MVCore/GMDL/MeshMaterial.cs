@@ -82,7 +82,6 @@ namespace MVCore
         public bool proc = false;
         public string name_key = "";
         public TextureManager texMgr;
-        public int shaderHash = int.MaxValue;
         public GLSLShaderConfig Shader;
         public readonly List<Uniform> Uniforms = new();
         public readonly List<Sampler> Samplers = new();
@@ -171,13 +170,13 @@ namespace MVCore
                     includes.Add(Flags[i].ToString().Split(".")[^1]);
             }
 
-            shaderHash = GLShaderHelper.calculateShaderHash(includes);
+            int hash  = GLShaderHelper.calculateShaderHash(includes);
 
-            if (!Common.RenderState.activeResMgr.ShaderExistsForMaterial(this))
+            if (!RenderState.activeResMgr.ShaderExistsForMaterial(hash))
             {
                 try
                 {
-                    compileMaterialShader();
+                    compileMaterialShader(this);
 
                     //Load Active Uniforms to Material
                     foreach (Uniform un in Uniforms)
@@ -191,11 +190,16 @@ namespace MVCore
 
                 } catch (Exception e)
                 {
-                    Common.Callbacks.Log("Error during material shader compilation: " + e.Message, Common.LogVerbosityLevel.ERROR);
+                    Callbacks.Log("Error during material shader compilation: " + e.Message, Common.LogVerbosityLevel.ERROR);
                 }
             }
-                
-
+            else
+            {
+                Shader = RenderState.activeResMgr.ShaderMap[hash];
+            }
+            
+            //TODO: I dont like that, maybe add an AddMaterial method in the resource manager to do that shit
+            RenderState.activeResMgr.MaterialMeshMap[this] = new();
         }
 
         //Wrapper to support uberflags
@@ -264,63 +268,43 @@ namespace MVCore
             return hash.GetHashCode();
         }
 
-        private void compileMaterialShader()
+        public static void compileMaterialShader(MeshMaterial mat)
         {
-            Dictionary<int, GLSLShaderConfig> shaderDict;
-            Dictionary<int, List<MeshComponent>> meshList;
-
-            List<string> includes = new();
-            List<string> defines = new();
-
-            //Save shader to resource Manager
-            //Check for explicit materials
-            if (Name == "collisionMat" || Name == "jointMat" || Name == "crossMat")
-            {
-                shaderDict = Common.RenderState.activeResMgr.GLDefaultShaderMap;
-                meshList = Common.RenderState.activeResMgr.defaultMeshShaderMap;
-                defines.Add("_D_DEFERRED_RENDERING");
-            }
-            else if (Flags.Contains(MaterialFlagEnum._F51_DECAL_DIFFUSE) ||
-                Flags.Contains(MaterialFlagEnum._F52_DECAL_NORMAL))
-            {
-                shaderDict = Common.RenderState.activeResMgr.GLDeferredShaderMapDecal;
-                meshList = Common.RenderState.activeResMgr.decalMeshShaderMap;
-                defines.Add("_D_DEFERRED_RENDERING");
-            }
-            else if (Flags.Contains(MaterialFlagEnum._F09_TRANSPARENT) ||
-                     Flags.Contains(MaterialFlagEnum._F22_TRANSPARENT_SCALAR) ||
-                     Flags.Contains(MaterialFlagEnum._F11_ALPHACUTOUT))
-            {
-                shaderDict = Common.RenderState.activeResMgr.GLForwardShaderMapTransparent;
-                meshList = Common.RenderState.activeResMgr.transparentMeshShaderMap;
-            }
-            else
-            {
-                shaderDict = Common.RenderState.activeResMgr.GLDeferredShaderMap;
-                meshList = Common.RenderState.activeResMgr.opaqueMeshShaderMap;
-                defines.Add("_D_DEFERRED_RENDERING");
-            }
-
-            for (int i = 0; i < Flags.Count; i++)
-            {
-                if (supported_flags.Contains(Flags[i]))
-                    includes.Add(Flags[i].ToString().Split(".")[^1]);
-            }
-
-            Shader = GLShaderHelper.compileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl", null, null, null,
-                defines, includes, SHADER_TYPE.MATERIAL_SHADER);
+            SHADER_MODE mode = SHADER_MODE.DEFFERED;
             
-            //TODO: Add shader compilation log of material shaders
+            List<string> includes = new();
+            
+            if (mat.Flags.Contains(MaterialFlagEnum._F51_DECAL_DIFFUSE) ||
+                mat.Flags.Contains(MaterialFlagEnum._F52_DECAL_NORMAL))
+            {
+                mode = SHADER_MODE.DECAL | SHADER_MODE.FORWARD;
+            } else if (mat.Flags.Contains(MaterialFlagEnum._F09_TRANSPARENT) ||
+                       mat.Flags.Contains(MaterialFlagEnum._F22_TRANSPARENT_SCALAR) ||
+                       mat.Flags.Contains(MaterialFlagEnum._F11_ALPHACUTOUT))
+            {
+                mode = SHADER_MODE.FORWARD;
+            }
+            
+            for (int i = 0; i < mat.Flags.Count; i++)
+            {
+                if (supported_flags.Contains(mat.Flags[i]))
+                    includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
+            }
 
+            GLSLShaderConfig shader = GLShaderHelper.compileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl", null, null, null,
+                includes, SHADER_TYPE.MATERIAL_SHADER, mode);
+            
             //Attach UBO binding Points
-            GLShaderHelper.attachUBOToShaderBindingPoint(Shader, "_COMMON_PER_FRAME", 0);
-            GLShaderHelper.attachSSBOToShaderBindingPoint(Shader, "_COMMON_PER_MESH", 1);
+            GLShaderHelper.attachUBOToShaderBindingPoint(shader, "_COMMON_PER_FRAME", 0);
+            GLShaderHelper.attachSSBOToShaderBindingPoint(shader, "_COMMON_PER_MESH", 1);
 
 
             //Save shader to the resource Manager
-            shaderDict[Shader.shaderHash] = Shader;
-            meshList[Shader.shaderHash] = new(); //Init list
-
+            mat.Shader = shader;
+            RenderState.activeResMgr.ShaderMap[shader.shaderHash] = shader;
+            RenderState.activeResMgr.ShaderMaterialMap[shader] = new();
+            RenderState.activeResMgr.ShaderMaterialMap[shader].Add(mat);
+            
         }
 
     }

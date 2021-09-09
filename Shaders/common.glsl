@@ -10,35 +10,35 @@
 //For ease of use all the includes will be the same flags with an underscore 
 
 
-#define _F01_DIFFUSEMAP 0
-#define _F02_SKINNED 1
-#define _F03_NORMALMAP 2
-#define _F07_UNLIT 6
-#define _F08_ 7
-#define _F09_TRANSPARENT 8
-#define _F11_ALPHACUTOUT 10
-#define _F14_UVSCROLL 13
-#define _F16_DIFFUSE2MAP 15
-#define _F17_MULTIPLYDIFFUSE2MAP 16
-#define _F21_VERTEXCOLOUR 20
-#define _F22_TRANSPARENT_SCALAR 21
-#define _F24_AOMAP 23
-#define _F25_ROUGHNESS_MASK 24
-#define _F29_VBCOLOUR 28
-#define _F31_DISPLACEMENT 30
-#define _F34_GLOW 33
-#define _F35_GLOW_MASK 34
-#define _F37_RECOLOUR 36
-#define _F39_METALLIC_MASK 38
-#define _F40_SUBSURFACE_MASK 39
-#define _F41_DETAIL_DIFFUSE 40
-#define _F42_DETAIL_NORMAL 41
-#define _F43_NORMAL_TILING 42
-#define _F51_DECAL_DIFFUSE 50
-#define _F52_DECAL_NORMAL 51
-#define _F53_COLOURISABLE 52
-#define _F55_MULTITEXTURE 54
-#define _F62_DETAIL_ALPHACUTOUT 61
+// #define _F01_DIFFUSEMAP 0
+// #define _F02_SKINNED 1
+// #define _F03_NORMALMAP 2
+// #define _F07_UNLIT 6
+// #define _F08_ 7
+// #define _F09_TRANSPARENT 8
+// #define _F11_ALPHACUTOUT 10
+// #define _F14_UVSCROLL 13
+// #define _F16_DIFFUSE2MAP 15
+// #define _F17_MULTIPLYDIFFUSE2MAP 16
+// #define _F21_VERTEXCOLOUR 20
+// #define _F22_TRANSPARENT_SCALAR 21
+// #define _F24_AOMAP 23
+// #define _F25_ROUGHNESS_MASK 24
+// #define _F29_VBCOLOUR 28
+// #define _F31_DISPLACEMENT 30
+// #define _F34_GLOW 33
+// #define _F35_GLOW_MASK 34
+// #define _F37_RECOLOUR 36
+// #define _F39_METALLIC_MASK 38
+// #define _F40_SUBSURFACE_MASK 39
+// #define _F41_DETAIL_DIFFUSE 40
+// #define _F42_DETAIL_NORMAL 41
+// #define _F43_NORMAL_TILING 42
+// #define _F51_DECAL_DIFFUSE 50
+// #define _F52_DECAL_NORMAL 51
+// #define _F53_COLOURISABLE 52
+// #define _F55_MULTITEXTURE 54
+// #define _F62_DETAIL_ALPHACUTOUT 61
 
 
 

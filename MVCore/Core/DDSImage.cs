@@ -6,30 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-/*
- * Kons 2012-12-03 Version .2
- * 
- * Changelog:
- * .3
- * - Added support for V8U8 (thanks to AmaroK86)
- * .2
- * - Fixed a bug computing width/height of mipmaps (thanks to AmaroK86)
- * .1
- * - Base implementation
- * 
- * Supported features:
- * - DX10 Textures (by gregkwaste)
- * - DXT1
- * - DXT5
- * - LinearImage (untested)
- * - V8U8 (by AmaroK86)
- * 
- * http://code.google.com/p/kprojects/
- * Send me any change/improvement at kons.snok<at>gmail.com
- * 
- */
-
-namespace KUtility {
+namespace MVCore {
 
 	public class DDSImage {
 		private const int DDPF_ALPHAPIXELS = 0x00000001;

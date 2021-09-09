@@ -9,7 +9,6 @@ using System.Drawing.Imaging;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
-using KUtility;
 using System.Linq;
 using libMBIN.NMS.Toolkit;
 using System.ComponentModel;
@@ -168,7 +167,7 @@ namespace MVCore
             {
                 if (GLMeshVaos[hash].ContainsKey(matname))
                 {
-                    Console.WriteLine("MeshVao already in the dictionary, nothing to do...");
+                    Callbacks.Log("MeshVao already in the dictionary, nothing to do...", LogVerbosityLevel.INFO);
                     return false;
                 }
             }
@@ -187,7 +186,7 @@ namespace MVCore
             //Double check tha the VAO is not already in the dictinary
             if (GLVaos.ContainsKey(hash))
             {
-                Console.WriteLine("Vao already in the dictinary, nothing to do...");
+                Callbacks.Log("Vao already in the dictinary, nothing to do...", LogVerbosityLevel.INFO);
                 return false;
             }
                 
