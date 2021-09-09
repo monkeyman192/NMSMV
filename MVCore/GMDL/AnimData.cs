@@ -247,7 +247,7 @@ namespace MVCore
             }
             else
             {
-                TkAnimMetadata amd = NMSUtils.LoadNMSTemplate(Filename,
+                TkAnimMetadata amd = Import.NMS.Util.LoadNMSTemplate(Filename,
                     ref Common.RenderState.activeResMgr) as TkAnimMetadata;
                 animMeta = new AnimMetadata(amd);
                 animMeta.load(); //Load data as well

@@ -206,7 +206,7 @@ namespace MVCore
                 {
                     GL.Uniform1(shader.uniformLocations[s.Name], MyTextureUnit.MapTexUnitToSampler[s.Name]);
                     GL.ActiveTexture(s.texUnit.texUnit);
-                    GL.BindTexture(s.tex.target, s.tex.texID);
+                    GL.BindTexture(s.Tex.target, s.Tex.texID);
                 }
             }
             

@@ -16,7 +16,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\SceneComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\TransformData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Scene.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Export\NMSExporter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Export\NMS\Exporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedLightMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLVao.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\MeshMetaData.cs" />
@@ -24,6 +24,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\MeshComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\SceneGraphNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Sampler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GMDL\Uniform.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Palettes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Util.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\MeshRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\RequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\ActionSystem.cs" />
@@ -67,11 +71,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Input\KeyboardHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\HTMLUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\MathUtils.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\MBIN.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Importer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ModelProcGen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utils\NMS_Util.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Octree.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Palettes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\RenderSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\ResourceManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\ShadowRenderer.cs" />

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -178,6 +179,21 @@ namespace MVCore
             ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
         }
 
+        public static void dumpChannelToImage(int fbo_id, ReadBufferMode from_channel, string name, int width, int height)
+        {
+            var pixels = new byte[4 * width * height];
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, fbo_id);
+            GL.ReadBuffer(from_channel);
+            GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+            var bmp = new Bitmap(width, height);
+            for (int i = 0; i < height; i++)
+            for (int j = 0; j < width; j++)
+                bmp.SetPixel(j, i, Color.FromArgb(pixels[4 * (width * i + j) + 3],
+                    (int)pixels[4 * (width * i + j) + 0],
+                    (int)pixels[4 * (width * i + j) + 1],
+                    (int)pixels[4 * (width * i + j) + 2]));
+            bmp.Save("Temp//framebuffer_raw_" + name + ".png", System.Drawing.Imaging.ImageFormat.Png);
+        }
     }
 
     public class PBuffer

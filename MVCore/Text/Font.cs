@@ -135,7 +135,7 @@ namespace MVCore.Text
             sampl.Name = "mpCustomPerMaterial.gDiffuseMap";
             sampl.texUnit = new MyTextureUnit(sampl.Name);
             sampl.texUnit.texUnit = TextureUnit.Texture0;
-            sampl.tex = tex;
+            sampl.Tex = tex;
 
             //Generate Font Material
             material = new MeshMaterial();
@@ -180,7 +180,7 @@ namespace MVCore.Text
             sampl.Name = "mpCustomPerMaterial.gDiffuseMap";
             sampl.texUnit = new MyTextureUnit(sampl.Name);
             sampl.texUnit.texUnit = TextureUnit.Texture0;
-            sampl.tex = tex;
+            sampl.Tex = tex;
 
             //Generate Font Material
             material = new MeshMaterial();

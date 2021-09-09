@@ -53,7 +53,7 @@ namespace MVCore
                     string gameDir = (string) tr.arguments[1];
                     ResourceManager resMgr = (ResourceManager) tr.arguments[2];
                     Common.Callbacks.Log("* Issuing PAK Loading Work Thread", Common.LogVerbosityLevel.INFO);
-                    t = new Thread(() => NMSUtils.loadNMSArchives(filepath, gameDir, ref resMgr, ref tk.thread_request.response));
+                    t = new Thread(() => Import.NMS.Util.loadNMSArchives(filepath, gameDir, ref resMgr, ref tk.thread_request.response));
                     break;
                 default:
                     Console.WriteLine("");

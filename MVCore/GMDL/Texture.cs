@@ -38,7 +38,7 @@ namespace MVCore
             {
                 try
                 {
-                    fs = NMSUtils.LoadNMSFileStream(path, ref RenderState.activeResMgr);
+                    fs = Import.NMS.Util.LoadNMSFileStream(path, ref RenderState.activeResMgr);
                 }
                 catch (FileNotFoundException)
                 {
@@ -332,18 +332,19 @@ namespace MVCore
             return (ulong)((r << 24) | (g << 16) | (b << 8) | a);
         }
 
-        // void DecompressBlockDXT1(): Decompresses one block of a DXT1 texture and stores the resulting pixels at the appropriate offset in 'image'.
-        //
-        // unsigned long x:						x-coordinate of the first pixel in the block.
-        // unsigned long y:						y-coordinate of the first pixel in the block.
-        // unsigned long width: 				width of the texture being decompressed.
-        // unsigned long height:				height of the texture being decompressed.
-        // const unsigned char *blockStorage:	pointer to the block to decompress.
-        // unsigned long *image:				pointer to image where the decompressed pixel data should be stored.
-
-        private void DecompressBlockDXT1(ulong x, ulong y, ulong width, byte[] blockStorage, byte[] image)
+        public static void dump_texture(int texid, TextureTarget target, string name, int width, int height)
         {
-
+            var pixels = new byte[4 * width * height];
+            GL.BindTexture(target, texid);
+            GL.GetTexImage(target, 0, OpenTK.Graphics.OpenGL4.PixelFormat.Rgba, PixelType.Byte, pixels);
+            var bmp = new Bitmap(width, height);
+            for (int i = 0; i < height; i++)
+            for (int j = 0; j < width; j++)
+                bmp.SetPixel(j, i, Color.FromArgb(pixels[4 * (width * i + j) + 3],
+                    (int)pixels[4 * (width * i + j) + 0],
+                    (int)pixels[4 * (width * i + j) + 1],
+                    (int)pixels[4 * (width * i + j) + 2]));
+            bmp.Save("Temp//framebuffer_raw_" + name + ".png", ImageFormat.Png);
         }
 
     }

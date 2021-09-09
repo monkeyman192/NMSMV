@@ -16,7 +16,6 @@ using MVCore.Primitives;
 using MVCore.Utils;
 using System.Timers;
 using GLSLHelper;
-using Model_Viewer;
 using libMBIN.NMS.Toolkit;
 
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -86,7 +85,8 @@ namespace MVCore
             RenderState.activeGamepad = gpHandler;
 
             //Assign new palette to GLControl
-            palette = Palettes.createPalettefromBasePalettes();
+            //Todo get rid of palettes they have no place here
+            palette = Import.NMS.Palettes.createPalettefromBasePalettes();
 
             //Systems Init
             renderSys = new RenderingSystem(); //Init renderManager of the engine
@@ -283,7 +283,7 @@ namespace MVCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            Palettes.set_palleteColors();
+            Import.NMS.Palettes.set_palleteColors();
 
             //Clear Systems
             actionSys.CleanUp();
@@ -466,7 +466,7 @@ namespace MVCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            Palettes.set_palleteColors();
+            Import.NMS.Palettes.set_palleteColors();
 
             //Clear Systems
             actionSys.CleanUp();
@@ -490,7 +490,7 @@ namespace MVCore
             RenderState.settings.renderSettings.ToggleAnimations = false;
             
             //Setup new object
-            SceneGraphNode root = GEOMMBIN.LoadObjects(filename);
+            SceneGraphNode root = Import.NMS.Importer.ImportScene(filename);
 
             //Explicitly add default light to the rootObject
             root.Children.Add(resMgr.GLlights[0]);

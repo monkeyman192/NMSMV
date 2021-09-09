@@ -16,7 +16,7 @@ using MVCore;
 using MVCore.Common;
 using MVCore.Utils;
 
-namespace Model_Viewer
+namespace MVCore.Import.NMS
 {
     public static class Palettes
     {
@@ -113,7 +113,7 @@ namespace Model_Viewer
             GcPaletteList template;
             
             
-             template = NMSUtils.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN",
+             template = Util.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN",
                 ref RenderState.activeResMgr) as GcPaletteList;
 
              if (template == null)

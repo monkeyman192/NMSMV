@@ -10,7 +10,6 @@ using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using KUtility;
-using Model_Viewer;
 using System.Linq;
 using libMBIN.NMS.Toolkit;
 using System.ComponentModel;
@@ -24,6 +23,15 @@ using MVCore.Utils;
 
 namespace MVCore
 {   
+    public enum COLLISIONTYPES
+    {
+        MESH = 0x0,
+        SPHERE,
+        CYLINDER,
+        BOX,
+        CAPSULE    
+    }
+
     public enum RENDERPASS
     {
         DEFERRED = 0x0,
@@ -36,59 +44,22 @@ namespace MVCore
         COUNT
     }
 
-    public class SimpleSampler
+    public class geomMeshMetaData
     {
-        public string PName { get; set; }
-        SimpleSampler()
-        {
-
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
+        public string name;
+        public ulong hash;
+        public uint vs_size;
+        public uint vs_abs_offset;
+        public uint is_size;
+        public uint is_abs_offset;
     }
 
-    public class gizmo: SceneGraphNode
+    public class geomMeshData
     {
-        public GLInstancedMesh meshVao;
-        public gizmo()
-        {
-            Type = TYPES.GIZMO;
-            
-            //Assemble geometry in the constructor
-            meshVao = RenderState.activeResMgr.GLPrimitiveMeshes["default_translation_gizmo"];
-        }
-
+        public ulong hash;
+        public byte[] vs_buffer;
+        public byte[] is_buffer;
     }
-
-    
-
-    
-    [StructLayout(LayoutKind.Explicit)]
-    struct CustomPerMaterialUniforms
-    {
-        [FieldOffset(0)] //256 Bytes
-        public unsafe fixed int matflags[64];
-        [FieldOffset(256)] //64 Bytes
-        public int diffuseTex;
-        [FieldOffset(260)] //4 bytes
-        public int maskTex;
-        [FieldOffset(264)] //4 bytes
-        public int normalTex;
-        [FieldOffset(276)] //16 bytes
-        public Vector4 gMaterialColourVec4;
-        [FieldOffset(292)] //16 bytes
-        public Vector4 gMaterialParamsVec4;
-        [FieldOffset(308)] //16 bytes
-        public Vector4 gMaterialSFXVec4;
-        [FieldOffset(324)] //16 bytes
-        public Vector4 gMaterialSFXColVec4;
-        [FieldOffset(340)] //16 bytes
-        public Vector4 gDissolveDataVec4;
-        [FieldOffset(356)] //16 bytes
-        public Vector4 gCustomParams01Vec4;
-        
-        public static readonly int SizeInBytes = 360;
-    };
 
     public class GeomObject : IDisposable
     {
@@ -483,225 +454,10 @@ namespace MVCore
     }
 
 
-    public class Sampler
-    {
-        public string Name = "";
-        public string Map = "";
-        public bool IsCube = false;
-        public bool IsSRGB = true;
-        public bool UseCompression = false;
-        public bool UseMipMaps = false;
-        public MyTextureUnit texUnit;
-        public Texture tex;
-        public TextureManager texMgr; //For now it should be inherited from the scene. In the future I can use a delegate
-        public bool isProcGen = false;
-
-        //Override Properties
-        public Sampler()
-        {
-            
-        }
-
-        public Sampler(TkMaterialSampler ms)
-        {
-            //Pass everything here because there is no base copy constructor in the NMS template
-            Name = "mpCustomPerMaterial." + ms.Name;
-            Map = ms.Map;
-            IsCube = ms.IsCube;
-            IsSRGB = ms.IsSRGB;
-            UseCompression = ms.UseCompression;
-            UseMipMaps = ms.UseMipMaps;
-        }
-
-        public Sampler Clone()
-        {
-            Sampler newsampler = new()
-            {
-                Name = Name,
-                Map = Map,
-                IsSRGB = IsSRGB,
-                UseCompression = UseCompression,
-                UseMipMaps = UseMipMaps,
-                texMgr = texMgr,
-                tex = tex,
-                texUnit = texUnit
-            };
-
-            return newsampler;
-        }
-
-
-        public void init(TextureManager input_texMgr)
-        {
-            texMgr = input_texMgr;
-            texUnit = new MyTextureUnit(Name);
-
-            //Save texture to material
-            switch (Name)
-            {
-                case "mpCustomPerMaterial.gDiffuseMap":
-                case "mpCustomPerMaterial.gDiffuse2Map":
-                case "mpCustomPerMaterial.gMasksMap":
-                case "mpCustomPerMaterial.gNormalMap":
-                    prepTextures();
-                    break;
-                default:
-                    Callbacks.Log("Not sure how to handle Sampler " + Name, LogVerbosityLevel.WARNING);
-                    break;
-            }
-        }
-
-
-        public void prepTextures()
-        {
-            string[] split = Map.Split('.');
-
-            string temp = "";
-            if (Name == "mpCustomPerMaterial.gDiffuseMap")
-            {
-                //Check if the sampler describes a proc gen texture
-                temp = split[0] + ".";
-                //Construct main filename
-
-                string texMbin = temp + "TEXTURE.MBIN";
-                
-                //Detect Procedural Texture
-                if (RenderState.activeResMgr.NMSFileToArchiveMap.Keys.Contains(texMbin))
-                {
-                    TextureMixer.combineTextures(Map, Palettes.paletteSel, ref texMgr);
-                    //Override Map
-                    Map = temp + "DDS";
-                    isProcGen = true;
-                }
-            }
-
-            //Load the texture to the sampler
-            loadTexture();
-        }
-
-
-        private void loadTexture()
-        {
-            if (Map == "")
-                return;
-
-            //Try to load the texture
-            if (texMgr.HasTexture(Map))
-            {
-                tex = texMgr.GetTexture(Map);
-            }
-            else
-            {
-                tex = new Texture(Map);
-                tex.palOpt = new PaletteOpt(false);
-                tex.procColor = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
-                //At this point this should be a common texture. Store it to the master texture manager
-                RenderState.activeResMgr.texMgr.AddTexture(tex);
-            }
-        }
-        
-        public static void dump_texture(string name, int width, int height)
-        {
-            var pixels = new byte[4 * width * height];
-            GL.GetTexImage(TextureTarget.Texture2DArray, 0, PixelFormat.Rgba, PixelType.Byte, pixels);
-            var bmp = new Bitmap(width, height);
-            for (int i = 0; i < height; i++)
-                for (int j = 0; j < width; j++)
-                    bmp.SetPixel(j, i, Color.FromArgb(pixels[4 * (width * i + j) + 3],
-                        (int)pixels[4 * (width * i + j) + 0],
-                        (int)pixels[4 * (width * i + j) + 1],
-                        (int)pixels[4 * (width * i + j) + 2]));
-            bmp.Save("Temp//framebuffer_raw_" + name + ".png", ImageFormat.Png);
-        }
-
-        public static void dump_texture_fb(string name, int width, int height)
-        {
-            var pixels = new byte[4 * width * height];
-            GL.ReadPixels(0, 0, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
-            var bmp = new Bitmap(width, height);
-            for (int i = 0; i < height; i++)
-                for (int j = 0; j < width; j++)
-                    bmp.SetPixel(j, i, Color.FromArgb(pixels[4 * (width * i + j) + 3],
-                        (int)pixels[4 * (width * i + j) + 0],
-                        (int)pixels[4 * (width * i + j) + 1],
-                        (int)pixels[4 * (width * i + j) + 2]));
-            bmp.Save("Temp//framebuffer_raw_" + name + ".png", ImageFormat.Png);
-        }
-
-
-        public static int generate2DTexture(PixelInternalFormat fmt, int w, int h, PixelFormat pix_fmt, PixelType pix_type, int mipmap_count)
-        {
-            int tex_id = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, tex_id);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, fmt, w, h, 0, pix_fmt, pix_type, IntPtr.Zero);
-            return tex_id;
-        }
-
-        public static int generateTexture2DArray(PixelInternalFormat fmt, int w, int h, int d, PixelFormat pix_fmt, PixelType pix_type, int mipmap_count)
-        {
-            int tex_id = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2DArray, tex_id);
-            GL.TexImage3D(TextureTarget.Texture2DArray, 0, fmt, w, h, d, 0, pix_fmt, pix_type, IntPtr.Zero);
-            return tex_id;
-        }
-
-        public static void generateTexture2DMipmaps(int texture)
-        {
-            GL.BindTexture(TextureTarget.Texture2D, texture);
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-        }
-
-        public static void generateTexture2DArrayMipmaps(int texture)
-        {
-            GL.BindTexture(TextureTarget.Texture2DArray, texture);
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2DArray);
-        }
-
-        public static void setupTextureParameters(TextureTarget texTarget, int texture, int wrapMode, int magFilter, int minFilter, float af_amount)
-        {
-
-            GL.BindTexture(texTarget, texture);
-            GL.TexParameter(texTarget, TextureParameterName.TextureWrapS, wrapMode);
-            GL.TexParameter(texTarget, TextureParameterName.TextureWrapT, wrapMode);
-            GL.TexParameter(texTarget, TextureParameterName.TextureMagFilter, magFilter);
-            GL.TexParameter(texTarget, TextureParameterName.TextureMinFilter, minFilter);
-            //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 4.0f);
-
-            //Use anisotropic filtering
-            af_amount = Math.Max(af_amount, GL.GetFloat((GetPName)All.MaxTextureMaxAnisotropy));
-            GL.TexParameter(texTarget, (TextureParameterName)0x84FE, af_amount);
-        }
-        
-    }
+    
 
     
-    public class Uniform
-    {
-        public string Name;
-        public Vector4 Values;
-        public int ShaderLoc = -1;
-        
-        public Uniform()
-        {
-            Values = new Vector4(0.0f);
-        }
-
-        public Uniform(string name)
-        {
-            Name = name;
-            Values = new Vector4(0.0f);
-        }
-    }
-
-    public class MatOpts
-    {
-        public int transparency;
-        public bool castshadow;
-        public bool disableTestz;
-        public string link;
-        public string shadername;
-    }
-
+    
     public class MyTextureUnit
     {
         public TextureUnit texUnit;
@@ -729,7 +485,6 @@ namespace MVCore
             texUnit = MapTextureUnit[sampler_name];
         }
     }
-
 
     public class PaletteOpt
     {
@@ -912,9 +667,9 @@ namespace MVCore
 
                 for (int i = 0; i < FrameCount; i++)
                 {
-                    NMSUtils.fetchRotQuaternion(node, this, i, ref anim_rotations[node.Node][i]); //use Ref
-                    NMSUtils.fetchTransVector(node, this, i, ref anim_positions[node.Node][i]); //use Ref
-                    NMSUtils.fetchScaleVector(node, this, i, ref anim_scales[node.Node][i]); //use Ref
+                    Import.NMS.Util.fetchRotQuaternion(node, this, i, ref anim_rotations[node.Node][i]); //use Ref
+                    Import.NMS.Util.fetchTransVector(node, this, i, ref anim_positions[node.Node][i]); //use Ref
+                    Import.NMS.Util.fetchScaleVector(node, this, i, ref anim_scales[node.Node][i]); //use Ref
                 }
             }
         }

@@ -97,7 +97,7 @@ namespace MVCore
             Console.WriteLine("Procedural Texture Detected: " + path);
             Callbacks.Log(string.Format("Parsing Procedural Texture"), LogVerbosityLevel.INFO);
 
-            TkProceduralTextureList template = NMSUtils.LoadNMSTemplate(path, ref Common.RenderState.activeResMgr) as TkProceduralTextureList;
+            TkProceduralTextureList template = Import.NMS.Util.LoadNMSTemplate(path, ref Common.RenderState.activeResMgr) as TkProceduralTextureList;
 
             List<TkProceduralTexture> texList = new List<TkProceduralTexture>(8);
             for (int i = 0; i < 8; i++) texList.Add(null);

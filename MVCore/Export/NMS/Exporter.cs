@@ -1,7 +1,6 @@
-using libMBIN;
 using libMBIN.NMS.Toolkit;
 
-namespace MVCore.Export
+namespace MVCore.Export.NMS
 {
     public static class NMSExporter
     {

@@ -245,9 +245,10 @@ namespace MVCore.Common
         public static Settings generateDefaultSettings()
         {
             Settings settings = new Settings();
-
+            
+            //Game is available only on windows :(
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                settings.GameDir = NMSUtils.getGameInstallationDir();
+                settings.GameDir = Import.NMS.Util.getGameInstallationDir();
             else
                 settings.GameDir = "";
             settings.unpackdir = settings.GameDir;

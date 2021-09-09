@@ -30,7 +30,7 @@ namespace MVCore
 
         public AnimPoseComponent(TkAnimPoseComponentData apcd)
         {
-            _poseFrameData = (TkAnimMetadata) NMSUtils.LoadNMSTemplate(apcd.Filename,
+            _poseFrameData = (TkAnimMetadata) Import.NMS.Util.LoadNMSTemplate(apcd.Filename,
                 ref Common.RenderState.activeResMgr);
 
             //Load PoseAnims

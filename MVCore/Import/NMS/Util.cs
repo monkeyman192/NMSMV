@@ -16,9 +16,9 @@ using System.Windows;
 using System.Reflection;
 using libMBIN.NMS;
 
-namespace MVCore.Utils
+namespace MVCore.Import.NMS
 {
-    public static class NMSUtils
+    public static class Util
     {
         public static NMSTemplate LoadNMSFileOLD(string filepath)
         {
@@ -68,7 +68,6 @@ namespace MVCore.Utils
 
             return template;
         }
-
 
         public static Stream LoadNMSFileStream(string filepath, ref ResourceManager resMgr)
         {
@@ -298,61 +297,6 @@ namespace MVCore.Utils
             v.X = activeFrame.Translations[transIndex].x;
             v.Y = activeFrame.Translations[transIndex].y;
             v.Z = activeFrame.Translations[transIndex].z;
-        }
-
-        public static Vector3 fetchTransVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
-        {
-            //Load Frames
-            //Console.WriteLine("Setting Frame Index {0}", frameIndex);
-            TkAnimNodeFrameData frame = animMeta.AnimFrameData[frameCounter];
-            TkAnimNodeFrameData stillframe = animMeta.StillFrameData;
-
-            Vector3 v;
-            //Load Translations
-            if (node.TransIndex < frame.Translations.Count)
-            {
-                v = new Vector3(frame.Translations[node.TransIndex].x,
-                                                    frame.Translations[node.TransIndex].y,
-                                                    frame.Translations[node.TransIndex].z);
-            }
-            else //Load stillframedata
-            {
-                int transindex = node.TransIndex - frame.Translations.Count;
-                v = new Vector3(stillframe.Translations[transindex].x,
-                                                    stillframe.Translations[transindex].y,
-                                                    stillframe.Translations[transindex].z);
-            }
-
-            return v;
-        }
-
-
-        public static Vector3 fetchScaleVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
-        {
-            //Load Frames
-            //Console.WriteLine("Setting Frame Index {0}", frameIndex);
-            TkAnimNodeFrameData frame = animMeta.AnimFrameData[frameCounter];
-            TkAnimNodeFrameData stillframe = animMeta.StillFrameData;
-
-            Vector3 v;
-
-            if (node.ScaleIndex < frame.Scales.Count)
-            {
-                v = new Vector3(
-                    frame.Scales[node.ScaleIndex].x,
-                    frame.Scales[node.ScaleIndex].y, 
-                    frame.Scales[node.ScaleIndex].z);
-            }
-            else //Load stillframedata
-            {
-                int scaleindex = node.ScaleIndex - frame.Scales.Count;
-                v = new Vector3(
-                    stillframe.Scales[scaleindex].x,
-                    stillframe.Scales[scaleindex].y,
-                    stillframe.Scales[scaleindex].z);
-            }
-
-            return v;
         }
 
         public static void fetchScaleVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter, ref Vector3 s)
@@ -645,5 +589,71 @@ namespace MVCore.Utils
             return "";
         }
 
+        //Texture Utilities
+        
+        private static void loadSamplerTexture(Sampler sampler, TextureManager texMgr)
+        {
+            if (sampler.Map == "")
+                return;
+
+            //Try to load the texture
+            if (texMgr.HasTexture(sampler.Map))
+            {
+                sampler.Tex = texMgr.GetTexture(sampler.Map);
+            }
+            else
+            {
+                Texture tex = new Texture(sampler.Map);
+                tex.palOpt = new PaletteOpt(false);
+                tex.procColor = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+                //At this point this should be a common texture. Store it to the master texture manager
+                RenderState.activeResMgr.texMgr.AddTexture(tex);
+                sampler.Tex = tex;
+            }
+        }
+        public static void PrepareSamplerTextures(Sampler sampler, TextureManager texMgr)
+        {
+            sampler.texUnit = new MyTextureUnit(sampler.Name);
+            
+            //Save texture to material
+            switch (sampler.Name)
+            {
+                case "mpCustomPerMaterial.gDiffuseMap":
+                case "mpCustomPerMaterial.gDiffuse2Map":
+                case "mpCustomPerMaterial.gMasksMap":
+                case "mpCustomPerMaterial.gNormalMap":
+                    break;
+                default:
+                    Callbacks.Log("Not sure how to handle Sampler " + sampler.Name, LogVerbosityLevel.WARNING);
+                    return;
+            }
+            
+            
+            
+            string[] split = sampler.Map.Split('.');
+
+            string temp = "";
+            if (sampler.Name == "mpCustomPerMaterial.gDiffuseMap")
+            {
+                //Check if the sampler describes a proc gen texture
+                temp = split[0] + ".";
+                //Construct main filename
+
+                string texMbin = temp + "TEXTURE.MBIN";
+                
+                //Detect Procedural Texture
+                if (RenderState.activeResMgr.NMSFileToArchiveMap.Keys.Contains(texMbin))
+                {
+                    TextureMixer.combineTextures(sampler.Map, Palettes.paletteSel, ref texMgr);
+                    //Override Map
+                    sampler.Map = temp + "DDS";
+                    sampler.isProcGen = true;
+                }
+            }
+
+            //Load the texture to the sampler
+            loadSamplerTexture(sampler, texMgr);
+        }
+        
     }
 }

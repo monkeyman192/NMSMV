@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using GLSLHelper;
+using MVCore.Common;
 
 namespace MVCore
 {
@@ -149,14 +150,14 @@ namespace MVCore
                     {
                         string new_name = pre_ext_name + "MASKS.DDS";
                         SamplerMap["mpCustomPerMaterial.gMasksMap"].Map = new_name;
-                        SamplerMap["mpCustomPerMaterial.gMasksMap"].tex = SamplerMap["mpCustomPerMaterial.gMasksMap"].texMgr.GetTexture(new_name);
+                        SamplerMap["mpCustomPerMaterial.gMasksMap"].Tex = RenderState.activeResMgr.texMgr.GetTexture(new_name);
                     }
 
                     if (SamplerMap.ContainsKey("mpCustomPerMaterial.gNormalMap"))
                     {
                         string new_name = pre_ext_name + "NORMAL.DDS";
                         SamplerMap["mpCustomPerMaterial.gNormalMap"].Map = new_name;
-                        SamplerMap["mpCustomPerMaterial.gNormalMap"].tex = SamplerMap["mpCustomPerMaterial.gNormalMap"].texMgr.GetTexture(new_name);
+                        SamplerMap["mpCustomPerMaterial.gNormalMap"].Tex = RenderState.activeResMgr.texMgr.GetTexture(new_name);;
                     }
                     break;
                 }
