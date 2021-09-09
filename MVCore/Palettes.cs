@@ -112,19 +112,21 @@ namespace Model_Viewer
 
             GcPaletteList template;
             
-            try {
-                 template = NMSUtils.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN",
-                    ref RenderState.activeResMgr) as GcPaletteList;
-            } catch (Exception) {
-                Callbacks.Log("Using Default Palettes", LogVerbosityLevel.WARNING);
-                return createPalette();
-            }
             
-            TkPaletteTexture tkpt = new TkPaletteTexture();
-            GcPaletteData gcpd = new GcPaletteData();
+             template = NMSUtils.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN",
+                ref RenderState.activeResMgr) as GcPaletteList;
+
+             if (template == null)
+             {
+                 Callbacks.Log("Using Default Palettes", LogVerbosityLevel.WARNING);
+                 return createPalette();
+             }
             
-            for (int i = 0; i < template.Palettes.Length; i++)
-            {
+             TkPaletteTexture tkpt = new TkPaletteTexture();
+             GcPaletteData gcpd = new GcPaletteData();
+            
+             for (int i = 0; i < template.Palettes.Length; i++)
+             {
                 string pal_name = ((TkPaletteTexture.PaletteEnum) i).ToString();
                 Callbacks.Log(string.Format("Palette {0} NumColors {1}", pal_name, template.Palettes[i].NumColours),
                     LogVerbosityLevel.INFO);

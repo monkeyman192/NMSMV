@@ -123,7 +123,7 @@ namespace MVCore
             LocalTransformMat = Matrix4.Identity;
             WorldTransformMat = Matrix4.Identity;
             InverseTransformMat = Matrix4.Identity;
-            WasOccluded = false;
+            WasOccluded = true;
             IsOccluded = true;
             IsUpdated = false;
         }

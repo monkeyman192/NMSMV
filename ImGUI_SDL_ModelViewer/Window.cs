@@ -206,8 +206,6 @@ namespace ImGUI_SDL_ModelViewer
             //UI
             DrawUI();
             //ImGui.ShowDemoWindow();
-            
-            //ImGui.ShowDemoWindow();
             _controller.Render();
 
             //ImGuiUtil.CheckGLError("End of frame");

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 using OpenTK;
 using OpenTK.Mathematics;
@@ -245,7 +246,10 @@ namespace MVCore.Common
         {
             Settings settings = new Settings();
 
-            settings.GameDir = NMSUtils.getGameInstallationDir();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                settings.GameDir = NMSUtils.getGameInstallationDir();
+            else
+                settings.GameDir = "";
             settings.unpackdir = settings.GameDir;
 
             return settings;

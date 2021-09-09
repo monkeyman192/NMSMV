@@ -105,7 +105,7 @@ namespace ImGuiHelper
                 MeshComponent mc = _model.GetComponent<MeshComponent>() as MeshComponent;
                 ImGui.Separator();
                 ImGui.Text("Mesh Component");
-                ImGui.InputText("Material Name", ref mc.Material.Name.Value, 30);
+                ImGui.InputText("Material Name", ref mc.Material.Name, 30);
                 ImGui.Text("Mesh Info");
                 ImGui.Text("TODO");
 

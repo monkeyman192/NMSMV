@@ -483,65 +483,48 @@ namespace MVCore
     }
 
 
-    public class Sampler : TkMaterialSampler, IDisposable
+    public class Sampler
     {
+        public string Name = "";
+        public string Map = "";
+        public bool IsCube = false;
+        public bool IsSRGB = true;
+        public bool UseCompression = false;
+        public bool UseMipMaps = false;
         public MyTextureUnit texUnit;
         public Texture tex;
         public TextureManager texMgr; //For now it should be inherited from the scene. In the future I can use a delegate
         public bool isProcGen = false;
 
         //Override Properties
-        public string PName
-        {
-            get
-            {
-                return Name;
-            }
-            set
-            {
-                Name = value;
-            }
-        }
-
-        public string PMap
-        {
-            get
-            {
-                return Map;
-            }
-            set
-            {
-                Map = value;
-            }
-        }
-
         public Sampler()
         {
-
+            
         }
 
         public Sampler(TkMaterialSampler ms)
         {
             //Pass everything here because there is no base copy constructor in the NMS template
-            this.Name = "mpCustomPerMaterial." + ms.Name;
-            this.Map = ms.Map;
-            this.IsCube = ms.IsCube;
-            this.IsSRGB = ms.IsSRGB;
-            this.UseCompression = ms.UseCompression;
-            this.UseMipMaps = ms.UseMipMaps;
+            Name = "mpCustomPerMaterial." + ms.Name;
+            Map = ms.Map;
+            IsCube = ms.IsCube;
+            IsSRGB = ms.IsSRGB;
+            UseCompression = ms.UseCompression;
+            UseMipMaps = ms.UseMipMaps;
         }
 
         public Sampler Clone()
         {
             Sampler newsampler = new()
             {
-                PName = PName,
-                PMap = PMap,
+                Name = Name,
+                Map = Map,
+                IsSRGB = IsSRGB,
+                UseCompression = UseCompression,
+                UseMipMaps = UseMipMaps,
                 texMgr = texMgr,
                 tex = tex,
-                texUnit = texUnit,
-                TextureAddressMode = TextureAddressMode,
-                TextureFilterMode = TextureFilterMode
+                texUnit = texUnit
             };
 
             return newsampler;
@@ -571,7 +554,7 @@ namespace MVCore
 
         public void prepTextures()
         {
-            string[] split = Map.Value.Split('.');
+            string[] split = Map.Split('.');
 
             string temp = "";
             if (Name == "mpCustomPerMaterial.gDiffuseMap")
@@ -688,169 +671,26 @@ namespace MVCore
             af_amount = Math.Max(af_amount, GL.GetFloat((GetPName)All.MaxTextureMaxAnisotropy));
             GL.TexParameter(texTarget, (TextureParameterName)0x84FE, af_amount);
         }
-
-
-
-#region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    //Texture lists should have been disposed from the dictionary
-                    //Free other resources here
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-#endregion
-
-
+        
     }
 
     
-    public class Uniform: TkMaterialUniform
+    public class Uniform
     {
-        public MVector4 vec;
-        private string prefix;
+        public string Name;
+        public Vector4 Values;
+        public int ShaderLoc = -1;
         
         public Uniform()
         {
-            prefix = "";
-            vec = new MVector4(0.0f);
+            Values = new Vector4(0.0f);
         }
 
         public Uniform(string name)
         {
-            prefix = "";
-            PName = name;
-            vec = new MVector4(0.0f);
+            Name = name;
+            Values = new Vector4(0.0f);
         }
-
-        public Uniform(TkMaterialUniform un)
-        {
-            //Copy Attributes
-            Name = un.Name;
-            vec = new MVector4(un.Values.x, un.Values.y, un.Values.z, un.Values.t);
-        }
-
-        public Uniform(string pref, TkMaterialUniform un) : this(un)
-        {
-            prefix = pref;
-            Name = prefix + un.Name;
-        }
-
-        public void setPrefix(string pref)
-        {
-            prefix = pref;
-        }
-
-        public string PName
-        {
-            get { return Name; }
-            set { Name = value; }
-        }
-
-        public MVector4 Vec
-        {
-            get {
-                return vec;
-            }
-
-            set
-            {
-                vec = value;
-            }
-        }
-
-    }
-
-    public class MVector4: INotifyPropertyChanged
-    {
-        public Vector4 vec4;
-
-        public MVector4(Vector4 v)
-        {
-            vec4 = v;
-        }
-
-        public MVector4(float x , float y, float z, float w)
-        {
-            vec4 = new Vector4(x, y, z, w);
-        }
-
-        public MVector4(float x)
-        {
-            vec4 = new Vector4(x);
-        }
-
-        //Properties
-        public Vector4 Vec
-        {
-            get { return vec4; }
-            set { 
-                vec4 = value; 
-                RaisePropertyChanged("Vec"); 
-            }
-        }
-        public float X
-        {
-            get { return vec4.X; }
-            set { 
-                vec4.X = value; 
-                RaisePropertyChanged("X"); 
-            }
-        }
-        public float Y
-        {
-            get { return vec4.Y; }
-            set { vec4.Y = value; RaisePropertyChanged("Y"); }
-        }
-
-        public float Z
-        {
-            get { return vec4.Z; }
-            set { vec4.Z = value; RaisePropertyChanged("Z"); }
-        }
-
-        public float W
-        {
-            get { return vec4.W; }
-            set { vec4.W = value; RaisePropertyChanged("W"); }
-        }
-
-        public static MVector4 operator -(MVector4 a, MVector4 b)
-        {
-            return new MVector4(a.X - b.X, a.Y - b.Y, a.Z - b.Z, a.W - b.W);
-        }
-
-
-        //Property Change Callbacks
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void RaisePropertyChanged(string prop)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-        }
-        
     }
 
     public class MatOpts
@@ -864,7 +704,7 @@ namespace MVCore
 
     public class MyTextureUnit
     {
-        public OpenTK.Graphics.OpenGL4.TextureUnit texUnit;
+        public TextureUnit texUnit;
 
         public static Dictionary<string, TextureUnit> MapTextureUnit = new() {
             { "mpCustomPerMaterial.gDiffuseMap" , TextureUnit.Texture0 },

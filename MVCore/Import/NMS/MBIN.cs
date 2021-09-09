@@ -17,6 +17,86 @@ using MVCore.Utils;
 using libMBIN.NMS.GameComponents;
 using libMBIN.NMS;
 using System.CodeDom;
+using MVCore.Common;
+
+
+namespace MVCore.Import.NMS
+{
+    public static class NMSMaterialUtils
+    {
+        public static MeshMaterial Parse(string path, TextureManager input_texMgr)
+        {
+            //Load template
+            //Try to use libMBIN to load the Material files
+            TkMaterialData template = NMSUtils.LoadNMSTemplate(path, ref Common.RenderState.activeResMgr) as TkMaterialData;
+#if DEBUG
+            //Save NMSTemplate to exml
+            template.WriteToExml("Temp\\" + template.Name + ".exml");
+#endif
+
+            //Make new material based on the template
+            MeshMaterial mat = CreateMaterialFromStruct(template, input_texMgr);
+            
+            mat.texMgr = input_texMgr;
+            mat.init();
+            return mat;
+        }
+
+        public static Sampler CreateSamplerFromStruct(TkMaterialSampler ms, TextureManager texMgr)
+        {
+            Sampler sam = new()
+            {
+                
+            };
+
+            sam.init(texMgr);
+            return sam;
+        }
+        
+        public static MeshMaterial CreateMaterialFromStruct(TkMaterialData md, TextureManager texMgr)
+        {
+            MeshMaterial mat = new()
+            {
+                Name = md.Name,
+                Class = md.Class
+            };
+            
+            //Copy flags and uniforms
+
+            for (int i = 0; i < md.Flags.Count; i++)
+                mat.add_flag((MaterialFlagEnum) md.Flags[i].MaterialFlag);
+
+            
+            //Get Samplers
+            for (int i = 0; i < md.Samplers.Count; i++)
+            {
+                TkMaterialSampler ms = md.Samplers[i];
+                Sampler s = CreateSamplerFromStruct(md.Samplers[i], texMgr);
+                s.Name = md.Samplers[i].Name;
+                s.Map = md.Samplers[i].Map;
+                
+                mat.Samplers.Add(s);
+            }
+            
+            //Get Uniforms
+            for (int i = 0; i < md.Uniforms.Count; i++)
+            {
+                TkMaterialUniform mu = md.Uniforms[i];
+                Uniform uf = new("mpCustomPerMaterial." + mu.Name);
+                uf.Name = mu.Name;
+                uf.Values = new(mu.Values.x,
+                                        mu.Values.y,
+                                        mu.Values.z,
+                                        mu.Values.t);
+                mat.Uniforms.Add(uf);
+            }
+
+                
+            return mat;
+        }
+    
+    }
+}
 
 //TODO move to MVCore.Import.NMS
 namespace MVCore
@@ -682,16 +762,18 @@ namespace MVCore
         }
 
 
-        private static MeshMaterial parseMaterial(string matname)
+        private static MeshMaterial parseMaterial(string matname, TextureManager texMgr)
         {
             MeshMaterial mat;
 
             Common.Callbacks.Log(string.Format("Trying to load Material {0}", matname), Common.LogVerbosityLevel.INFO);
             string matkey = matname; //Use the entire path
 
-
+            TkMaterialData template =
+                NMSUtils.LoadNMSTemplate(matname, ref RenderState.activeResMgr) as TkMaterialData;
+            
             //Material mat = MATERIALMBIN.Parse(newXml);
-            mat = MeshMaterial.Parse(matname, localTexMgr);
+            mat = Import.NMS.NMSMaterialUtils.CreateMaterialFromStruct(template, texMgr);
             
             //File probably not found not even in the PAKS, 
             if (mat == null)
@@ -1321,12 +1403,12 @@ namespace MVCore
 
                 //Search for the material
                 MeshMaterial mat;
-                if (Common.RenderState.activeResMgr.GLmaterials.ContainsKey(matname))
-                    mat = Common.RenderState.activeResMgr.GLmaterials[matname];
+                if (RenderState.activeResMgr.GLmaterials.ContainsKey(matname))
+                    mat = RenderState.activeResMgr.GLmaterials[matname];
                 else
                 {
                     //Parse material
-                    mat = parseMaterial(matname);
+                    mat = parseMaterial(matname, localTexMgr);
                     //Save Material to the resource manager
                     Common.RenderState.activeResMgr.AddMaterial(mat);
                 }
@@ -1377,7 +1459,7 @@ namespace MVCore
                         meshVao.skinned = true;
 
                     //Set skinned flag if its set as a metarial flag
-                    if (mat.has_flag((TkMaterialFlags.MaterialFlagEnum)TkMaterialFlags.UberFlagEnum._F02_SKINNED))
+                    if (mat.has_flag(MaterialFlagEnum._F02_SKINNED))
                         meshVao.skinned = true;
 
                     //Generate collision mesh vao

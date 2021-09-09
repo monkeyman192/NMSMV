@@ -139,7 +139,7 @@ namespace MVCore.Text
 
             //Generate Font Material
             material = new MeshMaterial();
-            material.PSamplers[sampl.Name] = sampl;
+            material.SamplerMap[sampl.Name] = sampl;
         }
 
         private void loadJsonFont(StreamReader fnt_sr, Bitmap img_data)
@@ -184,7 +184,7 @@ namespace MVCore.Text
 
             //Generate Font Material
             material = new MeshMaterial();
-            material.PSamplers[sampl.Name] = sampl;
+            material.SamplerMap[sampl.Name] = sampl;
         }
 
         private int genGLTexture(Bitmap bmp)

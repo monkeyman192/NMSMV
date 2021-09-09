@@ -5,6 +5,7 @@ using MVCore;
 using MVCore.Common;
 using ImGuiNET;
 using System.Drawing;
+using System.Linq;
 using System.Reflection;
 
 
@@ -102,13 +103,18 @@ namespace ImGUI_SDL_ModelViewer
             Assembly _assembly = Assembly.GetExecutingAssembly();
             string[] resources = _assembly.GetManifestResourceNames();
 
+            for (int i=0;i<resources.Length;i++)
+                Console.WriteLine((resources[i]));
+            
             try
             {
-                BinaryReader _textStreamReader = new(_assembly.GetManifestResourceStream(nspace + ".Resources." + resource_name));
+                string res_name = resources.First(s => s.EndsWith(resource_name));
+                BinaryReader _textStreamReader = new(_assembly.GetManifestResourceStream(res_name));
                 data = _textStreamReader.ReadBytes((int) _textStreamReader.BaseStream.Length);
             } catch
             {
-                Callbacks.Log("Unable to Fetch Resource", LogVerbosityLevel.ERROR);
+                Callbacks.Log(string.Format("Unable to Fetch Resource {0}", resource_name), 
+                              LogVerbosityLevel.ERROR);
             }
             
             return data;

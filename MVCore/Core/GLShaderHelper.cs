@@ -351,7 +351,7 @@ namespace GLSLHelper {
         public static void issuemodifyShaderRequest(GLSLShaderConfig config, GLSLShaderText shaderText)
         {
             Console.WriteLine("Sending Shader Modification Request");
-            ThreadRequest req = new ThreadRequest();
+            ThreadRequest req = new();
             req.type = THREAD_REQUEST_TYPE.ENGINE_MODIFY_SHADER;
             req.arguments.Add(config);
             req.arguments.Add(shaderText);
@@ -512,36 +512,31 @@ namespace GLSLHelper {
             if (config.vs_text != null)
             {
                 config.vs_text.compile();
-                if (RenderState.enableShaderCompilationLog)
-                    config.log += NumberLines(config.vs_text.resolved_text) + "\n";
+                config.log += NumberLines(config.vs_text.resolved_text) + "\n";
             }
 
             if (config.fs_text != null)
             {
                 config.fs_text.compile();
-                if (RenderState.enableShaderCompilationLog)
-                    config.log += NumberLines(config.fs_text.resolved_text) + "\n";
+                config.log += NumberLines(config.fs_text.resolved_text) + "\n";
             }
 
             if (config.gs_text != null)
             {
                 config.gs_text.compile();
-                if (RenderState.enableShaderCompilationLog)
-                    config.log += NumberLines(config.gs_text.resolved_text) + "\n";
+                config.log += NumberLines(config.gs_text.resolved_text) + "\n";
             }
 
             if (config.tes_text != null)
             {
                 config.tes_text.compile();
-                if (RenderState.enableShaderCompilationLog)
-                    config.log += NumberLines(config.tes_text.resolved_text) + "\n";
+                config.log += NumberLines(config.tes_text.resolved_text) + "\n";
             }
 
             if (config.tcs_text != null)
             {
                 config.tcs_text.compile();
-                if (RenderState.enableShaderCompilationLog)
-                    config.log += NumberLines(config.tcs_text.resolved_text) + "\n";
+                config.log += NumberLines(config.tcs_text.resolved_text) + "\n";
             }
             
             //Create new program
@@ -573,6 +568,7 @@ namespace GLSLHelper {
             if (status_code != 1)
                 throwCompilationError(config.log);
 
+            ShaderCompilationLog(config);
             loadActiveUniforms(config);
         }
 
@@ -643,6 +639,25 @@ namespace GLSLHelper {
         }
 
 
+        public static void ShaderCompilationLog(GLSLShaderConfig conf)
+        {
+            string log_file = "shader_compilation_log.out";
+
+            if (!File.Exists(log_file))
+                File.Create(log_file);
+
+            while (!FileUtils.IsFileReady(log_file))
+            {
+                Console.WriteLine("Log File not ready yet");
+            };
+            
+            StreamWriter sr = new StreamWriter(log_file);
+            sr.WriteLine("### COMPILING " + conf.shader_type + "###");
+            sr.Write(conf.log);
+            sr.Close();
+            //Console.WriteLine(conf.log);
+        }
+
         public static void throwCompilationError(string log)
         {
             //Lock execution until the file is available
@@ -650,8 +665,11 @@ namespace GLSLHelper {
 
             if (!File.Exists(log_file))
                 File.Create(log_file);
-            
-            while (!FileUtils.IsFileReady(log_file)) { };
+
+            while (!FileUtils.IsFileReady(log_file))
+            {
+                Console.WriteLine("Log File not ready yet");
+            };
             
             StreamWriter sr = new StreamWriter(log_file);
             sr.Write(log);

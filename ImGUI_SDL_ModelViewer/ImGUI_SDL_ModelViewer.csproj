@@ -1,5 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk"> 
+  
+  
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
@@ -18,23 +19,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\default.dds" />
-    <None Remove="Resources\default_mask.dds" />
-    <None Remove="Resources\droid.fnt" />
-    <None Remove="Resources\droid.png" />
-    <None Remove="Resources\ianm32logo_border.png" />
-    <None Remove="Resources\segoe.fnt" />
-    <None Remove="Resources\segoe.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\default.dds" />
-    <EmbeddedResource Include="Resources\default_mask.dds" />
-    <EmbeddedResource Include="Resources\droid.fnt" />
-    <EmbeddedResource Include="Resources\droid.png" />
-    <EmbeddedResource Include="Resources\ianm32logo_border.png" />
-    <EmbeddedResource Include="Resources\segoe.fnt" />
-    <EmbeddedResource Include="Resources\segoe.png" />
+    <EmbeddedResource Include="resources\default.dds" />
+    <EmbeddedResource Include="resources\default_mask.dds" />
+    <EmbeddedResource Include="resources\droid.fnt" />
+    <EmbeddedResource Include="resources\droid.png" />
+    <EmbeddedResource Include="resources\ianm32logo_border.png" />
+    <EmbeddedResource Include="resources\segoe.fnt" />
+    <EmbeddedResource Include="resources\segoe.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -74,10 +65,16 @@
     </EmbeddedResource>
   </ItemGroup>
 
+
   <Import Project="..\MVCore\MVCore.projitems" Label="Shared" />
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="XCOPY &quot;$(SolutionDir)Shaders&quot; &quot;$(TargetDir)Shaders&quot; /s /i /y" />
-  </Target>
+  <ItemGroup>
+    <ShaderFiles Include="$(SolutionDir)Shaders\**\*.glsl"/>
+  </ItemGroup>
 
+
+  <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
+    <Copy SourceFiles="@(ShaderFiles)" DestinationFolder="$(TargetDir)Shaders" />
+  </Target>
+  
 </Project>

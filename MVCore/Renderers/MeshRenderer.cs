@@ -190,23 +190,21 @@ namespace MVCore
 
         public static void renderMain(GLInstancedMesh mesh, MeshMaterial material)
         {
-            GLSLShaderConfig shader = material.shader;
+            GLSLShaderConfig shader = material.Shader;
             
             //Upload Material Information
             
             //Upload Custom Per Material Uniforms
-            foreach (Uniform un in material.activeUniforms)
-            {
-                GL.Uniform4(shader.uniformLocations[un.Name], un.vec.vec4);
-            }
-
+            foreach (Uniform un in material.ActiveUniforms)
+                GL.Uniform4(un.ShaderLoc, un.Values);
+            
             //BIND TEXTURES
             //Diffuse Texture
-            foreach (Sampler s in material.PSamplers.Values)
+            foreach (Sampler s in material.Samplers)
             {
-                if (shader.uniformLocations.ContainsKey(s.Name.Value) && s.Map != "")
+                if (shader.uniformLocations.ContainsKey(s.Name) && s.Map != "")
                 {
-                    GL.Uniform1(shader.uniformLocations[s.Name.Value], MyTextureUnit.MapTexUnitToSampler[s.Name.Value]);
+                    GL.Uniform1(shader.uniformLocations[s.Name], MyTextureUnit.MapTexUnitToSampler[s.Name]);
                     GL.ActiveTexture(s.texUnit.texUnit);
                     GL.BindTexture(s.tex.target, s.tex.texID);
                 }
@@ -253,7 +251,7 @@ namespace MVCore
         public static void renderMain(GLInstancedLightMesh mesh, MeshMaterial material)
         {
             //Upload Material Information
-            GLSLShaderConfig shader = material.shader;
+            GLSLShaderConfig shader = material.Shader;
 
             //LightInstanceTex
             GL.Uniform1(shader.uniformLocations["lightsTex"], 6);
@@ -294,7 +292,7 @@ namespace MVCore
                 GL.Uniform1(loc + i, 0.0f);
 
             for (int i = 0; i < mc.Material.Flags.Count; i++)
-                GL.Uniform1(loc + (int) mc.Material.Flags[i].MaterialFlag, 1.0f);
+                GL.Uniform1(loc + (int) mc.Material.Flags[i], 1.0f);
 
             //Upload joint transform data
             //Multiply matrices before sending them

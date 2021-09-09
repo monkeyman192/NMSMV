@@ -7,6 +7,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common.Input;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 namespace ImGuiHelper
 {
@@ -70,6 +71,7 @@ namespace ImGuiHelper
             _vertexBufferSize = 10000;
             _indexBufferSize = 2000;
 
+            
             ImGuiUtil.CreateVertexBuffer("ImGui", out _vertexBuffer);
             ImGuiUtil.CreateElementBuffer("ImGui", out _indexBuffer);
             GL.NamedBufferData(_vertexBuffer, _vertexBufferSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
@@ -100,7 +102,7 @@ void main()
     outputColor = color * texture(in_fontTexture, texCoord);
 }";
             _shader = new ImGuiShader("ImGui", VertexSource, FragmentSource);
-
+            
             GL.VertexArrayVertexBuffer(_vertexArray, 0, _vertexBuffer, IntPtr.Zero, Unsafe.SizeOf<ImDrawVert>());
             GL.VertexArrayElementBuffer(_vertexArray, _indexBuffer);
 
@@ -275,7 +277,6 @@ void main()
                     int newSize = (int)Math.Max(_vertexBufferSize * 1.5f, vertexSize);
                     GL.NamedBufferData(_vertexBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                     _vertexBufferSize = newSize;
-
                     Console.WriteLine($"Resized dear imgui vertex buffer to new size {_vertexBufferSize}");
                 }
 
@@ -285,7 +286,6 @@ void main()
                     int newSize = (int)Math.Max(_indexBufferSize * 1.5f, indexSize);
                     GL.NamedBufferData(_indexBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                     _indexBufferSize = newSize;
-
                     Console.WriteLine($"Resized dear imgui index buffer to new size {_indexBufferSize}");
                 }
             }

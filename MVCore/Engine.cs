@@ -417,11 +417,9 @@ namespace MVCore
 
             uf = new();
             uf.Name = "gMaterialParamsVec4";
-            uf.Values = new();
-            uf.Values.x = 0.15f; //Roughness
-            uf.Values.y = 0.0f;
-            uf.Values.z = 0.2f; //Metallic
-            uf.Values.t = 0.0f;
+            uf.Values = new(0.15f, 0.0f, 0.2f, 0.0f);
+            //x: roughness
+            //z: metallic
             mat.Uniforms.Add(uf);
                 
             mat.init();

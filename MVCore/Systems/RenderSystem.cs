@@ -291,15 +291,15 @@ namespace MVCore.Systems
                 shaderMeshMap = RenderState.activeResMgr.defaultMeshShaderMap;
             }
             //Check if the model is a decal
-            else if (m.Material.has_flag((TkMaterialFlags.MaterialFlagEnum)TkMaterialFlags.UberFlagEnum._F51_DECAL_DIFFUSE) ||
-                     m.Material.has_flag((TkMaterialFlags.MaterialFlagEnum)TkMaterialFlags.UberFlagEnum._F52_DECAL_NORMAL))
+            else if (m.Material.has_flag(MaterialFlagEnum._F51_DECAL_DIFFUSE) ||
+                     m.Material.has_flag(MaterialFlagEnum._F52_DECAL_NORMAL))
             {
                 shaderMeshMap = RenderState.activeResMgr.decalMeshShaderMap;
             }
             //Check if the model has a transparent material
-            else if (m.Material.has_flag((TkMaterialFlags.MaterialFlagEnum)TkMaterialFlags.UberFlagEnum._F22_TRANSPARENT_SCALAR) ||
-                     m.Material.has_flag((TkMaterialFlags.MaterialFlagEnum)TkMaterialFlags.UberFlagEnum._F09_TRANSPARENT) ||
-                     m.Material.has_flag((TkMaterialFlags.MaterialFlagEnum)TkMaterialFlags.UberFlagEnum._F11_ALPHACUTOUT))
+            else if (m.Material.has_flag(MaterialFlagEnum._F22_TRANSPARENT_SCALAR) ||
+                     m.Material.has_flag(MaterialFlagEnum._F09_TRANSPARENT) ||
+                     m.Material.has_flag(MaterialFlagEnum._F11_ALPHACUTOUT))
             {
                 shaderMeshMap = RenderState.activeResMgr.transparentMeshShaderMap;
             }
@@ -780,7 +780,7 @@ namespace MVCore.Systems
             if (RenderState.settings.viewSettings.ViewCollisions)
             {
                 MeshMaterial mat = resMgr.GLmaterials["collisionMat"];
-                GLSLShaderConfig shader = mat.shader;
+                GLSLShaderConfig shader = mat.Shader;
                 GL.UseProgram(shader.program_id); //Set Program
 
                 //Render static meshes
@@ -800,7 +800,7 @@ namespace MVCore.Systems
             if (RenderState.settings.viewSettings.ViewLights)
             {
                 MeshMaterial mat = resMgr.GLmaterials["lightMat"];
-                GLSLShaderConfig shader = mat.shader;
+                GLSLShaderConfig shader = mat.Shader;
                 GL.UseProgram(shader.program_id); //Set Program
 
                 //Render static meshes
@@ -820,7 +820,7 @@ namespace MVCore.Systems
             if (RenderState.settings.viewSettings.ViewLightVolumes)
             {
                 MeshMaterial mat = resMgr.GLmaterials["lightMat"];
-                GLSLShaderConfig shader = mat.shader;
+                GLSLShaderConfig shader = mat.Shader;
                 GL.UseProgram(shader.program_id); //Set Program
 
                 //Render static meshes
@@ -840,7 +840,7 @@ namespace MVCore.Systems
             if (RenderState.settings.viewSettings.ViewJoints)
             {
                 MeshMaterial mat = resMgr.GLmaterials["jointMat"];
-                GLSLShaderConfig shader = mat.shader;
+                GLSLShaderConfig shader = mat.Shader;
 
                 GL.UseProgram(shader.program_id); //Set Program
 
@@ -863,7 +863,7 @@ namespace MVCore.Systems
             if (RenderState.settings.viewSettings.ViewLocators)
             {
                 MeshMaterial mat = resMgr.GLmaterials["crossMat"];
-                GLSLShaderConfig shader = mat.shader;
+                GLSLShaderConfig shader = mat.Shader;
                 //GLSLShaderConfig shader = RenderState.activeResMgr.GLDefaultShaderMap[mat.shaderHash];
 
                 GL.UseProgram(shader.program_id); //Set Program
@@ -1471,7 +1471,8 @@ namespace MVCore.Systems
                 GL.BindTexture(sampler_targets[i], texture_ids[i]);
             }
             
-            MeshRenderer.renderMesh(mesh);
+            if (mesh.instance_count > 0) 
+                MeshRenderer.renderMesh(mesh);
 
             GL.DepthMask(true);
             GL.Enable(EnableCap.DepthTest);

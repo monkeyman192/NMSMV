@@ -87,7 +87,7 @@ namespace MVCore
             AddDefaultFonts();
             AddDefaultTexts();
             CompileMainShaders();
-
+            
             initialized = true;
         }
 
@@ -95,7 +95,6 @@ namespace MVCore
         {
 
             //Populate shader list
-            string log_file = "shader_compilation_log.out";
             
 #if (DEBUG)
             //Query GL Extensions
@@ -115,10 +114,6 @@ namespace MVCore
             Console.WriteLine("MaxUniformBlock Size {0}", GL.GetInteger(GetPName.MaxUniformBlockSize));
 #endif
 
-            //TODO BRING CHECK BACK
-            //while (!FileUtils.IsFileReady(log_file)) { };
-            StreamWriter sr = new(log_file, false);
-
             GLSLHelper.GLSLShaderConfig shader_conf;
 
             //Geometry Shader
@@ -133,9 +128,6 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(geometry_shader_vs, geometry_shader_fs, geometry_shader_gs, null, null,
                             SHADER_TYPE.DEBUG_MESH_SHADER);
             
-            sr.WriteLine("###COMPILING MAIN SHADER ###");
-            sr.WriteLine(shader_conf.log);
-            
             //Compile Object Shaders
             GLSLShaderText gizmo_shader_vs = new(ShaderType.VertexShader);
             GLSLShaderText gizmo_shader_fs = new(ShaderType.FragmentShader);
@@ -143,9 +135,7 @@ namespace MVCore
             gizmo_shader_fs.addStringFromFile("Shaders/Gizmo_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(gizmo_shader_vs, gizmo_shader_fs, null, null, null,
                             SHADER_TYPE.GIZMO_SHADER);
-            sr.WriteLine("###COMPILING GIZMO SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
             //Attach UBO binding Points
             GLShaderHelper.attachUBOToShaderBindingPoint(shader_conf, "_COMMON_PER_FRAME", 0);
             GLShaders[SHADER_TYPE.GIZMO_SHADER] = shader_conf;
@@ -167,10 +157,8 @@ namespace MVCore
             bbox_shader_fs.addStringFromFile("Shaders/Bound_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(bbox_shader_vs, bbox_shader_fs, null, null, null,
                 GLSLHelper.SHADER_TYPE.BBOX_SHADER);
-
-            sr.WriteLine("###COMPILING BBOX SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
+            
             //Texture Mixing Shader
             GLSLShaderText texture_mixing_shader_vs = new(ShaderType.VertexShader);
             GLSLShaderText texture_mixing_shader_fs = new(ShaderType.FragmentShader);
@@ -180,9 +168,9 @@ namespace MVCore
                             GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER);
             
             GLShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING TEXTURE MIXER SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
+            
+            
             //GBuffer Shaders
 
             GLSLShaderText gbuffer_shader_vs = new(ShaderType.VertexShader);
@@ -192,9 +180,8 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             SHADER_TYPE.GBUFFER_SHADER);
             GLShaders[SHADER_TYPE.GBUFFER_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING GBUFFER SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
+            
             //Light Pass Shaders
 
             //UNLIT
@@ -205,9 +192,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(lpass_shader_vs, lpass_shader_fs, null, null, null,
                             SHADER_TYPE.LIGHT_PASS_UNLIT_SHADER);
             GLShaders[SHADER_TYPE.LIGHT_PASS_UNLIT_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING LIGHT PASS UNLIT SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
             //LIT
             lpass_shader_vs = new(ShaderType.VertexShader);
             lpass_shader_fs = new(ShaderType.FragmentShader);
@@ -217,10 +202,8 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(lpass_shader_vs, lpass_shader_fs, null, null, null,
                             SHADER_TYPE.LIGHT_PASS_LIT_SHADER);
             GLShaders[SHADER_TYPE.LIGHT_PASS_LIT_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING LIGHT PASS LIT SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
-
+            
+            
             //GAUSSIAN HORIZONTAL BLUR SHADER
             gbuffer_shader_vs = new(ShaderType.VertexShader);
             GLSLShaderText gaussian_blur_shader_fs = new(ShaderType.FragmentShader);
@@ -229,9 +212,8 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gaussian_blur_shader_fs, null, null, null,
                             SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER);
             GLShaders[SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING HBLUR SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
+            
             //GAUSSIAN VERTICAL BLUR SHADER
             gbuffer_shader_vs = new(ShaderType.VertexShader);
             gaussian_blur_shader_fs = new(ShaderType.FragmentShader);
@@ -240,10 +222,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gaussian_blur_shader_fs, null, null, null,
                             GLSLHelper.SHADER_TYPE.GAUSSIAN_VERTICAL_BLUR_SHADER);
             GLShaders[GLSLHelper.SHADER_TYPE.GAUSSIAN_VERTICAL_BLUR_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING VBLUR SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
-
+            
             //BRIGHTNESS EXTRACTION SHADER
             gbuffer_shader_vs = new(ShaderType.VertexShader);
             gbuffer_shader_fs = new(ShaderType.FragmentShader);
@@ -252,9 +231,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             GLSLHelper.SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER);
             GLShaders[GLSLHelper.SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING BRIGHTNESS EXTRACTION SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
 
             //ADDITIVE BLEND
             gbuffer_shader_vs = new(ShaderType.VertexShader);
@@ -264,9 +241,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             GLSLHelper.SHADER_TYPE.ADDITIVE_BLEND_SHADER);
             GLShaders[GLSLHelper.SHADER_TYPE.ADDITIVE_BLEND_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING ADDITIVE BLEND SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
             //FXAA
             gbuffer_shader_vs = new(ShaderType.VertexShader);
             gbuffer_shader_fs = new(ShaderType.FragmentShader);
@@ -275,9 +250,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             GLSLHelper.SHADER_TYPE.FXAA_SHADER);
             GLShaders[GLSLHelper.SHADER_TYPE.FXAA_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING FXAA SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
             //TONE MAPPING + GAMMA CORRECTION
             gbuffer_shader_vs = new(ShaderType.VertexShader);
             gbuffer_shader_fs = new(ShaderType.FragmentShader);
@@ -286,9 +259,8 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             GLSLHelper.SHADER_TYPE.TONE_MAPPING);
             GLShaders[GLSLHelper.SHADER_TYPE.TONE_MAPPING] = shader_conf;
-            sr.WriteLine("###COMPILING TONE MAPPING SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
+            
             //INV TONE MAPPING + GAMMA CORRECTION
             gbuffer_shader_vs = new(ShaderType.VertexShader);
             gbuffer_shader_fs = new(ShaderType.FragmentShader);
@@ -297,9 +269,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             SHADER_TYPE.INV_TONE_MAPPING);
             GLShaders[SHADER_TYPE.INV_TONE_MAPPING] = shader_conf;
-            sr.WriteLine("###COMPILING INV TONE MAPPING SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
 
             //BWOIT SHADER
             gbuffer_shader_vs = new(ShaderType.VertexShader);
@@ -309,10 +279,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             SHADER_TYPE.BWOIT_COMPOSITE_SHADER);
             GLShaders[SHADER_TYPE.BWOIT_COMPOSITE_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING BWOIT SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
-
+            
             //Text Shaders
             GLSLShaderText text_shader_vs = new(ShaderType.VertexShader);
             GLSLShaderText text_shader_fs = new(ShaderType.FragmentShader);
@@ -321,9 +288,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(text_shader_vs, text_shader_fs, null, null, null,
                             SHADER_TYPE.TEXT_SHADER);
             GLShaders[SHADER_TYPE.TEXT_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING TEXT SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
             //Camera Shaders
             //TODO: Add Camera Shaders if required
             GLShaders[GLSLHelper.SHADER_TYPE.CAMERA_SHADER] = null;
@@ -338,9 +303,7 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, passthrough_shader_fs, null, null, null,
                             SHADER_TYPE.PASSTHROUGH_SHADER);
             GLShaders[SHADER_TYPE.PASSTHROUGH_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING PASSTHROUGH SHADER ###");
-            sr.WriteLine(shader_conf.log);
-
+            
             /*
              * TESTING
              * 
@@ -352,23 +315,16 @@ namespace MVCore
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, red_shader_fs, null, null, null,
                             SHADER_TYPE.RED_FILL_SHADER);
             
-             
-             */
-
-
             //Attach UBO binding Points
             GLShaderHelper.attachUBOToShaderBindingPoint(shader_conf, "_COMMON_PER_FRAME", 0);
-
-            GLShaders[SHADER_TYPE.RED_FILL_SHADER] = shader_conf;
-            sr.WriteLine("###COMPILING RED FILL SHADER ###");
-            sr.WriteLine(shader_conf.log);
+            GLShaders[SHADER_TYPE.RED_FILL_SHADER] = shader_conf; 
+            */
 
 
-            sr.WriteLine("###FINISHED SHADER COMPILATION###");
-
-            sr.Close();
-
-
+            
+            
+            
+            
         }
 
         private void AddDefaultTextures()
@@ -405,12 +361,12 @@ namespace MVCore
 
             mat = new();
             mat.Name = "crossMat";
-            mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
-            mat.add_flag(TkMaterialFlags.UberFlagEnum._F21_VERTEXCOLOUR);
-            TkMaterialUniform uf = new()
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+            mat.add_flag(MaterialFlagEnum._F21_VERTEXCOLOUR);
+            Uniform uf = new()
             {
                 Name = "gMaterialColourVec4",
-                Values = new libMBIN.NMS.Vector4f(1.0f, 1.0f,1.0f,1.0f)
+                Values = new(1.0f, 1.0f,1.0f,1.0f)
             };
             mat.Uniforms.Add(uf);
             mat.init();
@@ -421,10 +377,11 @@ namespace MVCore
             {
                 Name = "jointMat"
             };
-            mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
 
+            uf = new Uniform();
             uf.Name = "gMaterialColourVec4";
-            uf.Values = new libMBIN.NMS.Vector4f(1.0f,0.0f,0.0f,1.0f);
+            uf.Values = new(1.0f,0.0f,0.0f,1.0f);
             mat.Uniforms.Add(uf);
             mat.init();
             GLmaterials["jointMat"] = mat;
@@ -434,15 +391,11 @@ namespace MVCore
             {
                 Name = "lightMat"
             };
-            mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
 
             uf = new();
             uf.Name = "gMaterialColourVec4";
-            uf.Values = new();
-            uf.Values.x = 1.0f;
-            uf.Values.y = 1.0f;
-            uf.Values.z = 0.0f;
-            uf.Values.t = 1.0f;
+            uf.Values = new(1.0f, 1.0f, 0.0f, 1.0f);
             mat.Uniforms.Add(uf);
             mat.init();
             GLmaterials["lightMat"] = mat;
@@ -450,15 +403,11 @@ namespace MVCore
             //Collision Material
             mat = new();
             mat.Name = "collisionMat";
-            mat.add_flag(TkMaterialFlags.UberFlagEnum._F07_UNLIT);
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
 
             uf = new();
             uf.Name = "gMaterialColourVec4";
-            uf.Values = new();
-            uf.Values.x = 0.8f;
-            uf.Values.y = 0.8f;
-            uf.Values.z = 0.2f;
-            uf.Values.t = 1.0f;
+            uf.Values = new(0.8f, 0.8f, 0.2f, 1.0f);
             mat.Uniforms.Add(uf);
             mat.init();
             GLmaterials["collisionMat"] = mat;
@@ -662,14 +611,14 @@ namespace MVCore
             {
                 shaderDict = GLDefaultShaderMap;
             }
-            else if (mat.MaterialFlags.Contains("_F51_DECAL_DIFFUSE") ||
-                mat.MaterialFlags.Contains("_F52_DECAL_NORMAL"))
+            else if (mat.Flags.Contains(MaterialFlagEnum._F51_DECAL_DIFFUSE) ||
+                     mat.Flags.Contains(MaterialFlagEnum._F52_DECAL_NORMAL))
             {
                 shaderDict = GLDeferredShaderMapDecal;
             }
-            else if (mat.MaterialFlags.Contains("_F09_TRANSPARENT") ||
-                     mat.MaterialFlags.Contains("_F22_TRANSPARENT_SCALAR") ||
-                     mat.MaterialFlags.Contains("_F11_ALPHACUTOUT"))
+            else if (mat.Flags.Contains(MaterialFlagEnum._F09_TRANSPARENT) ||
+                     mat.Flags.Contains(MaterialFlagEnum._F22_TRANSPARENT_SCALAR) ||
+                     mat.Flags.Contains(MaterialFlagEnum._F11_ALPHACUTOUT))
             {
                 shaderDict = GLForwardShaderMapTransparent;
             }
