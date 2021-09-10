@@ -90,8 +90,7 @@ namespace ImGuiHelper
             bool node_open = ImGui.TreeNodeEx(n.Name, base_flags);
             
             n.IsOpen = node_open;
-            
-            if (ImGui.IsItemClicked())
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
                 _clicked = n;
                 ImGuiManager.SetObjectReference(n);

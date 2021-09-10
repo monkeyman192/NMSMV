@@ -131,7 +131,10 @@ namespace MVCore
                 MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
                 Material = Common.RenderState.activeResMgr.GLmaterials["crossMat"]
             };
-
+            
+            //Register new instance in the meshVao
+            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
+            
             n.AddComponent<MeshComponent>(mc);
 
             //Create SceneComponent
@@ -160,6 +163,9 @@ namespace MVCore
                 MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
                 Material = Common.RenderState.activeResMgr.GLmaterials["crossMat"]
             };
+            
+            //Register new instance in the meshVao
+            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
 
             n.AddComponent<MeshComponent>(mc);
 

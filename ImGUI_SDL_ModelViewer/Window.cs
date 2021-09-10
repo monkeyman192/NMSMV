@@ -541,30 +541,25 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.PopStyleVar();
                 ImGui.End();
             }
+
+            if (ImGui.Begin("SceneGraph", ImGuiWindowFlags.NoCollapse))
+            {
+                ImGuiManager.DrawSceneGraph();
+                ImGui.End();
+            }
             
-            
+            if (ImGui.Begin("Object Viewer", ImGuiWindowFlags.NoCollapse))
+            {
+                ImGuiManager.DrawObjectInfoViewer();
+                ImGui.End();
+            }
 
             //SideBar
             if (ImGui.Begin("SideBar", ref main_view, ImGuiWindowFlags.NoCollapse))
             {
-                ImGui.BeginGroup();
-
-                ImGui.Text("SceneGraph");
-                ImGuiManager.DrawSceneGraph();
-                ImGui.EndGroup();
-                //ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMin(), 0x00FFFFFF);
-
-                ImGui.Separator();
-                
                 ////Draw Tab Controls
                 if (ImGui.BeginTabBar("TabControl1", ImGuiTabBarFlags.None))
                 {
-                    if (ImGui.BeginTabItem("Object Info"))
-                    {
-                        ImGuiManager.DrawObjectInfoViewer();
-                        ImGui.EndTabItem();
-                    }
-
                     if (ImGui.BeginTabItem("Tools"))
                     {
 
@@ -592,13 +587,6 @@ namespace ImGUI_SDL_ModelViewer
                         ImGui.EndTabItem();
                     }
 #endif
-                    ImGui.EndTabBar();
-                }
-
-                ImGui.Separator();
-
-                if (ImGui.BeginTabBar("TabControl2", ImGuiTabBarFlags.None))
-                {
                     if (ImGui.BeginTabItem("Camera"))
                     {
                         //Camera Settings
@@ -647,9 +635,10 @@ namespace ImGUI_SDL_ModelViewer
 
                         ImGui.EndTabItem();
                     }
-
-                    if (ImGui.BeginTabItem("View Options"))
+                    
+                    if (ImGui.BeginTabItem("Options"))
                     {
+                        ImGui.LabelText("View Options", "");
                         ImGui.Checkbox("Show Lights", ref RenderState.settings.viewSettings.ViewLights);
                         ImGui.Checkbox("Show Light Volumes", ref RenderState.settings.viewSettings.ViewLightVolumes);
                         ImGui.Checkbox("Show Joints", ref RenderState.settings.viewSettings.ViewJoints);
@@ -657,12 +646,10 @@ namespace ImGUI_SDL_ModelViewer
                         ImGui.Checkbox("Show Collisions", ref RenderState.settings.viewSettings.ViewCollisions);
                         ImGui.Checkbox("Show Bounding Hulls", ref RenderState.settings.viewSettings.ViewBoundHulls);
                         ImGui.Checkbox("Emulate Actions", ref RenderState.settings.viewSettings.EmulateActions);
-
-                        ImGui.EndTabItem();
-                    }
-                
-                    if (ImGui.BeginTabItem("Rendering Options"))
-                    {
+                        
+                        ImGui.Separator();
+                        ImGui.LabelText("Rendering Options", "");
+                        
                         ImGui.Checkbox("Use Textures", ref RenderState.settings.renderSettings.UseTextures);
                         ImGui.Checkbox("Use Lighting", ref RenderState.settings.renderSettings.UseLighting);
                         ImGui.Checkbox("Use VSYNC", ref RenderState.settings.renderSettings.UseVSync);
@@ -674,10 +661,10 @@ namespace ImGUI_SDL_ModelViewer
 
                         ImGui.InputInt("FPS", ref RenderState.settings.renderSettings.FPS);
                         ImGui.InputFloat("HDR Exposure", ref RenderState.settings.renderSettings.HDRExposure);
-
+                        
                         ImGui.EndTabItem();
                     }
-
+                
                     ImGui.EndTabBar();
                 }
 

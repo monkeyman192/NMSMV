@@ -19,7 +19,10 @@ layout(location=6) in vec4 blendWeights;
 
 
 uniform CustomPerMaterialUniforms mpCustomPerMaterial;
-uniform samplerBuffer skinMatsTex;
+
+#ifdef _F02_SKINNED
+    uniform samplerBuffer skinMatsTex;
+#endif
 
 //Uniform Blocks
 layout (std140, binding=0) uniform _COMMON_PER_FRAME
@@ -49,6 +52,8 @@ flat out int instanceId;
 /*
 ** Returns matrix4x4 from texture cache.
 */
+#ifdef _F02_SKINNED
+
 mat4 get_skin_matrix(int offset)
 {
     return (mat4(texelFetch(skinMatsTex, offset),
@@ -57,9 +62,7 @@ mat4 get_skin_matrix(int offset)
                  texelFetch(skinMatsTex, offset + 3)));
 }
 
-
-
-
+#endif
 
 void main()
 {
@@ -67,7 +70,7 @@ void main()
     uv = uvPosition0;
     vertColor = bPosition;
 
-    #ifdef __F14_UVSCROLL
+    #ifdef _F14_UVSCROLL
         vec4 lFlippedScrollingUVVec4 = mpCustomPerMaterial.gUVScrollStepVec4;
         //TODO: Convert uvs to vec4 for diffuse2maps
         uv.xy += lFlippedScrollingUVVec4.xy * mpCommonPerFrame.gfTime;
@@ -81,7 +84,7 @@ void main()
     mat4 lWorldMat;
     
     //Check F02_SKINNED
-    #ifdef __F02_SKINNED
+    #ifdef _F02_SKINNED
         ivec4 index;
         
         index.x = int(blendIndices.x);

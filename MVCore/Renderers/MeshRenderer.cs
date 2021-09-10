@@ -14,10 +14,8 @@ namespace MVCore
     {
         public static void renderBBoxes(GLInstancedMesh mesh, int pass)
         {
-            for (int i = 0; i > mesh.instance_count; i++)
+            for (int i = 0; i > mesh.RenderedInstanceCount; i++)
             {
-                if (GLMeshBufferManager.GetInstanceOccludedStatus(mesh, i))
-                    continue;
                 renderBbox(mesh.instanceRefs[i]);
             }
         }
@@ -128,7 +126,7 @@ namespace MVCore
         {
             GL.BindVertexArray(mesh.vao.vao_id);
             GL.DrawElementsInstanced(PrimitiveType.Triangles,
-                mesh.MetaData.BatchCount, mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.instance_count);
+                mesh.MetaData.BatchCount, mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.RenderedInstanceCount);
             GL.BindVertexArray(0);
         }
 
@@ -136,8 +134,8 @@ namespace MVCore
         {
             GL.BindVertexArray(mesh.vao.vao_id);
             GL.PointSize(5.0f);
-            GL.DrawArraysInstanced(PrimitiveType.Lines, 0, 2, mesh.instance_count);
-            GL.DrawArraysInstanced(PrimitiveType.Points, 0, 2, mesh.instance_count); //Draw both points
+            GL.DrawArraysInstanced(PrimitiveType.Lines, 0, 2, mesh.RenderedInstanceCount);
+            GL.DrawArraysInstanced(PrimitiveType.Points, 0, 2, mesh.RenderedInstanceCount); //Draw both points
             GL.BindVertexArray(0);
         }
 
@@ -152,9 +150,9 @@ namespace MVCore
                 //Rendering based on the original mesh buffers
                 case COLLISIONTYPES.MESH:
                     GL.DrawElementsInstancedBaseVertex(PrimitiveType.Points, mesh.MetaData.BatchCount,
-                        mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.instance_count, -mesh.MetaData.VertrStartPhysics);
+                        mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.RenderedInstanceCount, -mesh.MetaData.VertrStartPhysics);
                     GL.DrawElementsInstancedBaseVertex(PrimitiveType.Triangles, mesh.MetaData.BatchCount,
-                        mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.instance_count, -mesh.MetaData.VertrStartPhysics);
+                        mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.RenderedInstanceCount, -mesh.MetaData.VertrStartPhysics);
                     break;
                 //Rendering custom geometry
                 case COLLISIONTYPES.BOX:
@@ -162,9 +160,9 @@ namespace MVCore
                 case COLLISIONTYPES.CAPSULE:
                 case COLLISIONTYPES.SPHERE:
                     GL.DrawElementsInstanced(PrimitiveType.Points, mesh.MetaData.BatchCount,
-                        DrawElementsType.UnsignedInt, IntPtr.Zero, mesh.instance_count);
+                        DrawElementsType.UnsignedInt, IntPtr.Zero, mesh.RenderedInstanceCount);
                     GL.DrawElementsInstanced(PrimitiveType.Triangles, mesh.MetaData.BatchCount,
-                        DrawElementsType.UnsignedInt, IntPtr.Zero, mesh.instance_count);
+                        DrawElementsType.UnsignedInt, IntPtr.Zero, mesh.RenderedInstanceCount);
                     break;
             }
 
@@ -175,7 +173,7 @@ namespace MVCore
         {
             GL.BindVertexArray(mesh.vao.vao_id);
             GL.DrawElementsInstanced(PrimitiveType.Lines, 6,
-                mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.instance_count); //Use Instancing
+                mesh.MetaData.IndicesLength, IntPtr.Zero, mesh.RenderedInstanceCount); //Use Instancing
             GL.BindVertexArray(0);
         }
 

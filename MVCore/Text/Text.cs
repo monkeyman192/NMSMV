@@ -49,7 +49,7 @@ namespace MVCore.Text
             };
 
             //Add instance
-            GLMeshBufferManager.AddInstance(meshVao, null,
+            GLMeshBufferManager.AddRenderInstance(ref meshVao,
                 Matrix4.Identity, Matrix4.Identity, Matrix4.Identity);
         }
 

@@ -53,70 +53,44 @@ namespace MVCore
         //Instance Data Format:
         //TODO
 
-        public int AddInstance(ref GLInstancedLightMesh mesh, TransformData td, MeshComponent mc)
+        public int AddRenderInstance(ref GLInstancedLightMesh mesh, MeshComponent mc, Matrix4 worldMat)
         {
-            int instance_id = mesh.instance_count;
-
+            int render_instance_id = mesh.RenderedInstanceCount;
+            
             //Expand mesh data buffer if required
-            if (instance_id * instance_struct_size_bytes > mesh.dataBuffer.Length)
+            if (render_instance_id * instance_struct_size_bytes > mesh.dataBuffer.Length)
             {
                 float[] newBuffer = new float[mesh.dataBuffer.Length + 256];
                 Array.Copy(mesh.dataBuffer, newBuffer, mesh.dataBuffer.Length);
                 mesh.dataBuffer = newBuffer;
             }
-            
-            if (instance_id < GLInstancedLightMesh.MAX_INSTANCES)
-            {
 
-                //Uplod worldMat to the meshVao
-                SetInstanceWorldMat(ref mesh, instance_id, td.WorldTransformMat);
+            //Uplod worldMat to the meshVao
+            SetInstanceWorldMat(ref mesh, render_instance_id, worldMat);
                 
-                //TODO: Implement Light Component and set all light properties
-                //SetInstanceColor(ref mesh, instance_id, l.Color);
-                //SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
-                //SetInstanceDirection(ref mesh, instance_id, l.Direction);
-                //SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
-                //SetInstanceFallOff(ref mesh, instance_id, (int) l.Falloff);
-                //SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
-                
-                mesh.instanceRefs.Add(mc); //Keep reference
-                mesh.instance_count++;
-            }
+            //TODO: Implement Light Component and use it to properly pass light properties
+            //SetInstanceColor(ref mesh, instance_id, l.Color);
+            //SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
+            //SetInstanceDirection(ref mesh, instance_id, l.Direction);
+            //SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
+            //SetInstanceFallOff(ref mesh, instance_id, (int)l.Falloff);
+            //SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
 
-            return instance_id;
+            mesh.RenderedInstanceCount++;
+
+            return render_instance_id;
         }
 
-        public int AddInstance(ref GLInstancedLightMesh mesh, MeshComponent mc, Matrix4 worldMat)
+        public int AddMeshInstance(ref GLInstancedLightMesh mesh, MeshComponent mc, Matrix4 worldMat)
         {
-            int instance_id = mesh.instance_count;
-            
-            //Expand mesh data buffer if required
-            if (instance_id * instance_struct_size_bytes > mesh.dataBuffer.Length)
-            {
-                float[] newBuffer = new float[mesh.dataBuffer.Length + 256];
-                Array.Copy(mesh.dataBuffer, newBuffer, mesh.dataBuffer.Length);
-                mesh.dataBuffer = newBuffer;
-            }
+            int instance_id = mesh.InstanceCount;
 
             if (instance_id < GLInstancedLightMesh.MAX_INSTANCES)
             {
-
-                //Uplod worldMat to the meshVao
-                SetInstanceWorldMat(ref mesh, instance_id, worldMat);
-                
-                
-                //TODO: Implement Light Component and use it to properly pass light properties
-                //SetInstanceColor(ref mesh, instance_id, l.Color);
-                //SetInstanceIntensity(ref mesh, instance_id, l.Intensity);
-                //SetInstanceDirection(ref mesh, instance_id, l.Direction);
-                //SetInstanceFOV(ref mesh, instance_id, (float)Math.Cos(MathUtils.radians(l.FOV)));
-                //SetInstanceFallOff(ref mesh, instance_id, (int)l.Falloff);
-                //SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
-
-                mesh.instanceRefs.Add(mc); //Keep reference
-                mesh.instance_count++;
+                mesh.instanceRefs.Add(mc);
+                mesh.InstanceCount++;
             }
-
+            
             return instance_id;
         }
 

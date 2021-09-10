@@ -49,7 +49,7 @@ namespace MVCore
             }
             else
             {
-                int bufferSize = instance_count * GLLightBufferManager.instance_struct_size_bytes;
+                int bufferSize = RenderedInstanceCount * GLLightBufferManager.instance_struct_size_bytes;
                 GL.BufferSubData(BufferTarget.TextureBuffer, IntPtr.Zero, bufferSize, dataBuffer);
             }
             GL.BindBuffer(BufferTarget.TextureBuffer, 0);

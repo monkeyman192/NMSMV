@@ -462,7 +462,7 @@ namespace MVCore.Systems
         {
 
             //if (m.instance_count == 0 || m.visible_instances == 0) //use the visible_instance if we maintain an occluded status
-            if (m.instance_count == 0)
+            if (m.RenderedInstanceCount == 0)
                 return true;
 
             m.UBO_aligned_size = 0;
@@ -721,7 +721,7 @@ namespace MVCore.Systems
                 //Render static meshes
                 foreach (GLInstancedMesh m in collisionMeshList)
                 {
-                    if (m.instance_count == 0 || m.UBO_aligned_size == 0)
+                    if (m.RenderedInstanceCount == 0 || m.UBO_aligned_size == 0)
                         continue;
 
                     GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, SSBOs["_COMMON_PER_MESH"],
@@ -741,7 +741,7 @@ namespace MVCore.Systems
                 //Render static meshes
                 foreach (GLInstancedMesh m in lightMeshList)
                 {
-                    if (m.instance_count == 0 || m.UBO_aligned_size == 0)
+                    if (m.RenderedInstanceCount == 0 || m.UBO_aligned_size == 0)
                         continue;
 
                     GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, SSBOs["_COMMON_PER_MESH"],
@@ -761,7 +761,7 @@ namespace MVCore.Systems
                 //Render static meshes
                 foreach (GLInstancedMesh m in lightVolumeMeshList)
                 {
-                    if (m.instance_count == 0 || m.UBO_aligned_size == 0)
+                    if (m.RenderedInstanceCount == 0 || m.UBO_aligned_size == 0)
                         continue;
 
                     GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, SSBOs["_COMMON_PER_MESH"],
@@ -782,7 +782,7 @@ namespace MVCore.Systems
                 //Render static meshes
                 foreach (GLInstancedMesh m in jointMeshList)
                 {
-                    if (m.instance_count == 0 || m.UBO_aligned_size == 0)
+                    if (m.RenderedInstanceCount == 0 || m.UBO_aligned_size == 0)
                         continue;
 
                     GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, SSBOs["_COMMON_PER_MESH"],
@@ -806,7 +806,7 @@ namespace MVCore.Systems
                 //Render static meshes
                 foreach (GLInstancedMesh m in locatorMeshList)
                 {
-                    if (m.instance_count == 0 || m.UBO_aligned_size == 0)
+                    if (m.RenderedInstanceCount == 0 || m.UBO_aligned_size == 0)
                         continue;
 
                     GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, SSBOs["_COMMON_PER_MESH"],
@@ -832,7 +832,7 @@ namespace MVCore.Systems
                 {
                     foreach (GLInstancedMesh mesh in resMgr.MaterialMeshMap[mat])
                     {
-                        if (mesh.instance_count == 0 || mesh.UBO_aligned_size == 0)
+                        if (mesh.RenderedInstanceCount == 0 || mesh.UBO_aligned_size == 0)
                             continue;
 
                         GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, SSBOs["_COMMON_PER_MESH"],
@@ -923,7 +923,7 @@ namespace MVCore.Systems
                 {
                     foreach (GLInstancedMesh mesh in resMgr.MaterialMeshMap[mat])
                     {
-                        if (mesh.instance_count == 0 || mesh.UBO_aligned_size == 0)
+                        if (mesh.RenderedInstanceCount == 0 || mesh.UBO_aligned_size == 0)
                             continue;
 
                         GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, 
@@ -972,7 +972,7 @@ namespace MVCore.Systems
                 {
                     foreach (GLInstancedMesh mesh in resMgr.MaterialMeshMap[mat])
                     {
-                        if (mesh.instance_count == 0 || mesh.UBO_aligned_size == 0)
+                        if (mesh.RenderedInstanceCount == 0 || mesh.UBO_aligned_size == 0)
                             continue;
                     
                         GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, SSBOs["_COMMON_PER_MESH"],
@@ -1414,7 +1414,7 @@ namespace MVCore.Systems
                 GL.BindTexture(sampler_targets[i], texture_ids[i]);
             }
             
-            if (mesh.instance_count > 0) 
+            if (mesh.RenderedInstanceCount > 0) 
                 MeshRenderer.renderMesh(mesh);
 
             GL.DepthMask(true);

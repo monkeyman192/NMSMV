@@ -27,7 +27,8 @@ namespace MVCore
         public static void ClearInstances(GLInstancedMesh mesh)
         {
             mesh.instanceRefs.Clear();
-            mesh.instance_count = 0;
+            mesh.InstanceCount = 0;
+            mesh.RenderedInstanceCount = 0;
         }
 
         //Setters

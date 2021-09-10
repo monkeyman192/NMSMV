@@ -15,6 +15,7 @@ namespace MVCore
         public GLInstancedMesh MeshVao;
         public MeshMaterial Material;
         public int InstanceID;
+        public int RenderInstanceID;
         
         public MeshComponent()
         {

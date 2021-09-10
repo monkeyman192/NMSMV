@@ -42,8 +42,8 @@ namespace MVCore
         //Material Properties
         public Vector3 color; //Keep a default color for the mesh
 
-        public int instance_count = 0;
-        public int visible_instances = 0;
+        public int InstanceCount = 0;
+        public int RenderedInstanceCount = 0;
         public List<MeshComponent> instanceRefs = new();
         public float[] instanceBoneMatrices;
         public int instanceBoneMatricesTex;
@@ -83,7 +83,7 @@ namespace MVCore
 
         public void initializeSkinMatrices(SceneComponent sc)
         {
-            if (instance_count == 0 || sc == null)
+            if (RenderedInstanceCount == 0 || sc == null)
                 return;
 
             int jointCount = sc.jointDict.Values.Count;
@@ -92,8 +92,8 @@ namespace MVCore
             //Console.WriteLine("MAX : 128  vs Effective : " + jointCount.ToString());
 
             //Re-initialize the array based on the number of instances
-            instanceBoneMatrices = new float[instance_count * 128 * 16];
-            int bufferSize = instance_count * 128 * 16 * 4;
+            instanceBoneMatrices = new float[RenderedInstanceCount * 128 * 16];
+            int bufferSize = RenderedInstanceCount * 128 * 16 * 4;
 
             //Setup the TBO
             instanceBoneMatricesTex = GL.GenTexture();
@@ -109,7 +109,7 @@ namespace MVCore
         public void uploadSkinningData()
         {
             GL.BindBuffer(BufferTarget.TextureBuffer, instanceBoneMatricesTexTBO);
-            int bufferSize = instance_count * 128 * 16 * 4;
+            int bufferSize = RenderedInstanceCount * 128 * 16 * 4;
             GL.BufferSubData(BufferTarget.TextureBuffer, IntPtr.Zero, bufferSize, instanceBoneMatrices);
             //Console.WriteLine(GL.GetError());
             GL.BindBuffer(BufferTarget.TextureBuffer, 0);

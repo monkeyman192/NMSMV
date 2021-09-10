@@ -67,11 +67,11 @@ namespace MVCore
                     if (td.IsOccluded && !td.WasOccluded)
                     {
                         //Remove Instance
-                        GLMeshBufferManager.RemoveInstance(ref mc.MeshVao, mc);
+                        GLMeshBufferManager.RemoveRenderInstance(ref mc.MeshVao, mc);
                     }
                     else if (!td.IsOccluded && td.WasOccluded)
                     {
-                        mc.InstanceID = GLMeshBufferManager.AddInstance(ref mc.MeshVao, td, mc);
+                        mc.RenderInstanceID = GLMeshBufferManager.AddRenderInstance(ref mc.MeshVao, td);
                     }
                     else if (!td.IsOccluded)
                     {

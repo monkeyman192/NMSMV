@@ -12,41 +12,12 @@ using OpenTK.Mathematics;
 
 namespace MVCore
 {
-    public class AnimTransform
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        public Vector3 scale;
-
-        public AnimTransform()
-        {
-            position = new Vector3();
-            rotation = new Quaternion();
-            scale = new Vector3();
-        }
-
-        public static AnimTransform Lerp(AnimTransform prev, AnimTransform next, float x)
-        {
-            AnimTransform t = new();
-            t.position = Vector3.Lerp(prev.position, next.position, x);
-            t.rotation = Quaternion.Slerp(prev.rotation, next.rotation, x);
-            t.scale = Vector3.Lerp(prev.scale, next.scale, x);
-
-            return t;
-        }
-    }
-
-
-
     public class AnimData : TkAnimationData, INotifyPropertyChanged
     {
         public AnimMetadata animMeta;
         private int prevFrameIndex = 0;
         private int activeFrameIndex = 0;
         private int nextFrameIndex = 0;
-        //private AnimTransform prevFrameTransform;
-        //private AnimTransform nextFrameTransform;
-        //public AnimTransform activeFrameTransform;
         private float animationTime = 0.0f;
         private float prevFrameTime = 0.0f;
         private float nextFrameTime = 0.0f;
