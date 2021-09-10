@@ -94,6 +94,8 @@ namespace ImGuiHelper
             {
                 _clicked = n;
                 ImGuiManager.SetObjectReference(n);
+                ImGuiManager.SetActiveMaterial(n);
+                
             }
 
             if (n.IsOpen)

@@ -69,7 +69,7 @@
   <Import Project="..\MVCore\MVCore.projitems" Label="Shared" />
 
   <ItemGroup>
-    <ShaderFiles Include="$(SolutionDir)Shaders\**\*.glsl"/>
+    <ShaderFiles Include="$(SolutionDir)Shaders\**\*.glsl" />
   </ItemGroup>
 
 

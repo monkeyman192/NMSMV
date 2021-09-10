@@ -13,6 +13,8 @@ namespace ImGuiHelper
         static private ImGuiObjectViewer ObjectViewer = new ImGuiObjectViewer();
         static private ImGuiSceneGraphViewer SceneGraphViewer = new();
         static private ImGuiPakBrowser PakBrowser  = new ImGuiPakBrowser();
+        static private ImGuiMaterialEditor MaterialEditor = new ImGuiMaterialEditor();
+        static private ImGuiShaderEditor ShaderEditor = new();
         static private ImGuiAboutWindow AboutWindow = new ImGuiAboutWindow();
         static private ImGuiSettingsWindow SettingsWindow = new ImGuiSettingsWindow();
         static private bool show_open_file_dialog = false;
@@ -70,6 +72,33 @@ namespace ImGuiHelper
         {
             show_update_libmbin_dialog = true;
         }
+        
+        //Material Viewer Related Methods
+        public static void DrawMaterialEditor()
+        {
+            MaterialEditor?.Draw();
+        }
+
+        public static void SetActiveMaterial(Entity m)
+        {
+            if (m.HasComponent<MeshComponent>())
+            {
+                MeshComponent mc = m.GetComponent<MeshComponent>() as MeshComponent;
+                MaterialEditor.SetMaterial(mc.Material);
+                SetActiveShader(mc.Material.Shader);
+            }
+        }
+        
+        //Shader Editor Related Methods
+        public static void DrawShaderEditor()
+        {
+            ShaderEditor?.Draw();
+        }
+
+        public static void SetActiveShader(GLSLHelper.GLSLShaderConfig conf)
+        {
+            ShaderEditor.SetShader(conf);
+        }
 
         //Object Viewer Related Methods
 
@@ -77,6 +106,8 @@ namespace ImGuiHelper
         {
             ObjectViewer?.Draw();
         }
+
+        
 
         public static void SetObjectReference(Entity m)
         {

@@ -108,73 +108,33 @@ namespace ImGuiHelper
             if (_model.HasComponent<MeshComponent>())
             {
                 MeshComponent mc = _model.GetComponent<MeshComponent>() as MeshComponent;
+                MeshMaterial mm = mc.Material;
                 if (ImGui.CollapsingHeader("Mesh Component", ImGuiTreeNodeFlags.DefaultOpen))
                 {
                     ImGui.Columns(2);
                     ImGui.Text("Instance ID");
                     ImGui.Text("Render Instance ID");
+                    ImGui.Text("Material");
                     ImGui.NextColumn();
                     ImGui.Text(mc.InstanceID.ToString());
                     ImGui.Text(mc.RenderInstanceID.ToString());
-                    ImGui.Columns(1);
-                    MeshMaterial mm = mc.Material;
-                    if (ImGui.TreeNode("Material"))
+                    if (mm != null)
                     {
-                        ImGui.Columns(2);
-                        ImGui.Text("Name");
-                        ImGui.Text("Class");
-                        ImGui.Text("Flags");
-                        ImGui.NextColumn();
                         ImGui.Text(mm.Name);
-                        ImGui.Text(mm.Class);
-                        //Flags
-                        int current_item = 0;
-                        //Create string list of flags
-                        List<string> flags = new();
-                        for (int i = 0;i<mm.Flags.Count;i++)
-                            flags.Add(mm.Flags[i].ToString());
-                        
-                        if (ImGui.ListBox("", ref current_material_flag, flags.ToArray(), flags.Count, 5))
-                        {
-                            Console.WriteLine("ListBox event");
-                        }
-                        
-                        if (ImGui.Button("+"))
-                        {
-                            
-                        }
                         ImGui.SameLine();
                         if (ImGui.Button("-"))
-                        {
-                            
-                        }
-                        ImGui.NextColumn();
-                        ImGui.Text("Samplers");
-                        ImGui.NextColumn();
-                        List<string> samplers = new();
-                        for (int i=0;i<mm.Samplers.Count;i++)
-                            samplers.Add(mm.Samplers[i].Name);
-                        if (ImGui.ListBox("", ref current_material_sampler, samplers.ToArray(), samplers.Count, 5))
-                        {
-                            Sampler current_sampler = mm.Samplers[current_material_sampler];
-                            ImGui.Text(current_sampler.Name);
-                            ImGui.Text(current_sampler.Map);
-                        }
-                        
-                        if (ImGui.Button("+"))
-                        {
-                            Console.WriteLine("Adding Sampler");
-                        }
-                        ImGui.SameLine();
-                        if (ImGui.Button("-"))
-                        {
-                            Console.WriteLine("Removing Sampler");   
-                        }
-                        
-                        ImGui.Columns(1);
-                        ImGui.TreePop();
+                            Console.WriteLine("Remove Material not implemented yet");
                     }
-
+                    else
+                    {
+                        ImGui.Text("Null");
+                        ImGui.SameLine();
+                        if (ImGui.Button("-"))
+                            Console.WriteLine("Add Material not implemented yet");
+                    }
+                    
+                    ImGui.Columns(1);
+                    
                     if (ImGui.TreeNode("Mesh"))
                     {
                         GLInstancedMesh mesh = mc.MeshVao;

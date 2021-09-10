@@ -554,6 +554,18 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.End();
             }
 
+            if (ImGui.Begin("Material Editor", ImGuiWindowFlags.NoCollapse))
+            {
+                ImGuiManager.DrawMaterialEditor();
+                ImGui.End();
+            }
+            
+            if (ImGui.Begin("Shader Editor", ImGuiWindowFlags.NoCollapse))
+            {
+                ImGuiManager.DrawShaderEditor();
+                ImGui.End();
+            }
+
             //SideBar
             if (ImGui.Begin("SideBar", ref main_view, ImGuiWindowFlags.NoCollapse))
             {
