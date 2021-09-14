@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using ImGuiNET;
 using MVCore;
 
@@ -13,6 +14,7 @@ namespace ImGuiHelper
         private Dictionary<long, SceneGraphNode> ModelMap = new();
         private SceneGraphNode _selected = null;
         private SceneGraphNode _clicked = null;
+        private bool showctxmenu = false;
 
         //Inline AddChild Function
         private static void AddChild(SceneGraphNode m, SceneGraphNode n) => m.Children.Add(n);
@@ -90,12 +92,36 @@ namespace ImGuiHelper
             bool node_open = ImGui.TreeNodeEx(n.Name, base_flags);
             
             n.IsOpen = node_open;
+            System.Numerics.Vector2 ctxPos = Vector2.Zero;
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
                 _clicked = n;
                 ImGuiManager.SetObjectReference(n);
                 ImGuiManager.SetActiveMaterial(n);
+                ImGui.CloseCurrentPopup();
+            } 
+            if (ImGui.BeginPopupContextItem()) // <-- use last item id as popup id
+            {
+                if (ImGui.BeginMenu("Add Child##child-ctx"))
+                {
+                    if (ImGui.MenuItem("Add Locator"))
+                    {
+                        Console.WriteLine("Add new locator node as a child to selected node");
+                    }
+                    
+                    if (ImGui.MenuItem("Add Light"))
+                    {
+                        Console.WriteLine("Add new locator node as a child to selected node");
+                    }
+                    ImGui.EndMenu();
+                }
+
+                if (ImGui.MenuItem("Delete"))
+                {
+                    Console.WriteLine("Delete Node permanently");
+                }
                 
+                ImGui.EndPopup();
             }
 
             if (n.IsOpen)

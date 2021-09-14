@@ -325,7 +325,7 @@ namespace MVCore
             Texture dDiff = Common.RenderState.activeResMgr.texMgr.GetTexture("default.dds");
 
             //USE PROGRAM
-            int pass_program = Common.RenderState.activeResMgr.GenericShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].program_id;
+            int pass_program = Common.RenderState.activeResMgr.GenericShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].ProgramID;
             GL.UseProgram(pass_program);
 
             //Upload base Layers Used
@@ -446,7 +446,7 @@ namespace MVCore
             Texture dDiff = Common.RenderState.activeResMgr.texMgr.GetTexture("default.dds");
 
             //USE PROGRAM
-            int pass_program = Common.RenderState.activeResMgr.GenericShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].program_id;
+            int pass_program = Common.RenderState.activeResMgr.GenericShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].ProgramID;
             GL.UseProgram(pass_program);
 
             //Upload base Layers Used
@@ -567,7 +567,7 @@ namespace MVCore
             Texture dDiff = Common.RenderState.activeResMgr.texMgr.GetTexture("default.dds");
 
             //USE PROGRAM
-            int pass_program = Common.RenderState.activeResMgr.GenericShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].program_id;
+            int pass_program = Common.RenderState.activeResMgr.GenericShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER].ProgramID;
             GL.UseProgram(pass_program);
 
             //Upload base Layers Used

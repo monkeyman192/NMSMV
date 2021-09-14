@@ -223,24 +223,24 @@ namespace MVCore
 
             switch (mesh.type)
             {
-                case TYPES.GIZMO:
-                case TYPES.GIZMOPART:
-                case TYPES.MESH:
-                case TYPES.LIGHTVOLUME:
-                case TYPES.TEXT:
+                case SceneNodeType.GIZMO:
+                case SceneNodeType.GIZMOPART:
+                case SceneNodeType.MESH:
+                case SceneNodeType.LIGHTVOLUME:
+                case SceneNodeType.TEXT:
                     renderMesh(mesh);
                     break;
-                case TYPES.LOCATOR:
-                case TYPES.MODEL:
+                case SceneNodeType.LOCATOR:
+                case SceneNodeType.MODEL:
                     renderLocator(mesh);
                     break;
-                case TYPES.JOINT:
+                case SceneNodeType.JOINT:
                     renderJoint(mesh);
                     break;
-                case TYPES.COLLISION:
+                case SceneNodeType.COLLISION:
                     renderCollision(mesh);
                     break;
-                case TYPES.LIGHT:
+                case SceneNodeType.LIGHT:
                     renderLight(mesh);
                     break;
             }

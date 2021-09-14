@@ -23,8 +23,8 @@ namespace MVCore
     //Class Which will store all the texture resources for better memory management
     public class ResourceManager : IBaseResourceManager
     {
-        //public Dictionary<string, GMDL.Texture> GLtextures = new Dictionary<string, GMDL.Texture>();
-        public Dictionary<string, MeshMaterial> GLmaterials = new();
+        public Dictionary<long, MeshMaterial> MaterialIDMap = new();
+        public List<MeshMaterial> MaterialList = new();
         public Dictionary<string, GeomObject> GLgeoms = new();
         public Dictionary<string, SceneGraphNode> GLScenes = new();
         public Dictionary<string, Texture> GLTextures = new();
@@ -34,7 +34,7 @@ namespace MVCore
         public Dictionary<string, GLVao> GLVaos = new();
         public Dictionary<string, GLInstancedMesh> GLPrimitiveMeshes = new();
 
-        public List<SceneGraphNode> GLlights = new();
+        public List<SceneGraphNode> LightList = new();
         public Dictionary<string, Font> FontMap = new();
         //public Dictionary<string, int> GLShaders = new Dictionary<string, int>();
         public Dictionary<SHADER_TYPE, GLSLShaderConfig> GenericShaders = new(); //Generic Shader Map
@@ -74,7 +74,6 @@ namespace MVCore
 
             //Add defaults
             AddDefaultTextures();
-            AddDefaultMaterials();
             AddDefaultPrimitives();
             AddDefaultLights();
             AddDefaultFonts();
@@ -111,23 +110,18 @@ namespace MVCore
 
             //Geometry Shader
             //Compile Object Shaders
-            GLSLShaderText geometry_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText geometry_shader_fs = new(ShaderType.FragmentShader);
-            GLSLShaderText geometry_shader_gs = new(ShaderType.GeometryShader);
-            geometry_shader_vs.addStringFromFile("Shaders/Simple_VSEmpty.glsl");
-            geometry_shader_fs.addStringFromFile("Shaders/Simple_FSEmpty.glsl");
-            geometry_shader_gs.addStringFromFile("Shaders/Simple_GS.glsl");
-
+            GLSLShaderSource geometry_shader_vs = new("Shaders/Simple_VSEmpty.glsl", true);
+            GLSLShaderSource geometry_shader_fs = new("Shaders/Simple_FSEmpty.glsl", true);
+            GLSLShaderSource geometry_shader_gs = new("Shaders/Simple_GS.glsl", true); 
+            
             shader_conf = GLShaderHelper.compileShader(geometry_shader_vs, geometry_shader_fs, geometry_shader_gs, null, null,
-                            SHADER_TYPE.DEBUG_MESH_SHADER);
+                            new(), new(), SHADER_TYPE.DEBUG_MESH_SHADER, SHADER_MODE.DEFFERED);
             
             //Compile Object Shaders
-            GLSLShaderText gizmo_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText gizmo_shader_fs = new(ShaderType.FragmentShader);
-            gizmo_shader_vs.addStringFromFile("Shaders/Gizmo_VS.glsl");
-            gizmo_shader_fs.addStringFromFile("Shaders/Gizmo_FS.glsl");
+            GLSLShaderSource gizmo_shader_vs = new("Shaders/Gizmo_VS.glsl", true);
+            GLSLShaderSource gizmo_shader_fs = new("Shaders/Gizmo_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gizmo_shader_vs, gizmo_shader_fs, null, null, null,
-                            SHADER_TYPE.GIZMO_SHADER);
+                            new(), new(), SHADER_TYPE.GIZMO_SHADER, SHADER_MODE.DEFFERED);
             
             //Attach UBO binding Points
             GLShaderHelper.attachUBOToShaderBindingPoint(shader_conf, "_COMMON_PER_FRAME", 0);
@@ -144,21 +138,18 @@ namespace MVCore
             //Compile Default Shaders
 
             //BoundBox Shader
-            GLSLShaderText bbox_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText bbox_shader_fs = new(ShaderType.FragmentShader);
-            bbox_shader_vs.addStringFromFile("Shaders/Bound_VS.glsl");
-            bbox_shader_fs.addStringFromFile("Shaders/Bound_FS.glsl");
+            GLSLShaderSource bbox_shader_vs = new("Shaders/Bound_VS.glsl", true);
+            GLSLShaderSource bbox_shader_fs = new("Shaders/Bound_FS.glsl", true);
+            
             shader_conf = GLShaderHelper.compileShader(bbox_shader_vs, bbox_shader_fs, null, null, null,
-                GLSLHelper.SHADER_TYPE.BBOX_SHADER);
+                new(), new(), GLSLHelper.SHADER_TYPE.BBOX_SHADER, SHADER_MODE.DEFFERED);
             
             
             //Texture Mixing Shader
-            GLSLShaderText texture_mixing_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText texture_mixing_shader_fs = new(ShaderType.FragmentShader);
-            texture_mixing_shader_vs.addStringFromFile("Shaders/texture_mixer_VS.glsl");
-            texture_mixing_shader_fs.addStringFromFile("Shaders/texture_mixer_FS.glsl");
+            GLSLShaderSource texture_mixing_shader_vs = new("Shaders/texture_mixer_VS.glsl", true);
+            GLSLShaderSource texture_mixing_shader_fs = new("Shaders/texture_mixer_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(texture_mixing_shader_vs, texture_mixing_shader_fs, null, null, null,
-                            GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER);
+                            new(), new(), GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER, SHADER_MODE.DEFAULT);
             
             GenericShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER] = shader_conf;
             
@@ -166,120 +157,89 @@ namespace MVCore
             
             //GBuffer Shaders
 
-            GLSLShaderText gbuffer_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText gbuffer_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gbuffer_shader_fs.addStringFromFile("Shaders/Gbuffer_FS.glsl");
+            GLSLShaderSource gbuffer_shader_vs = new("Shaders/Gbuffer_VS.glsl", true);
+            GLSLShaderSource gbuffer_shader_fs = new("Shaders/Gbuffer_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
-                            SHADER_TYPE.GBUFFER_SHADER);
+                            new(), new(), SHADER_TYPE.GBUFFER_SHADER, SHADER_MODE.DEFAULT);
             GenericShaders[SHADER_TYPE.GBUFFER_SHADER] = shader_conf;
-            
             
             //Light Pass Shaders
 
             //UNLIT
-            GLSLShaderText lpass_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText lpass_shader_fs = new(ShaderType.FragmentShader);
-            lpass_shader_vs.addStringFromFile("Shaders/light_pass_VS.glsl");
-            lpass_shader_fs.addStringFromFile("Shaders/light_pass_FS.glsl");
+            GLSLShaderSource lpass_shader_vs = new("Shaders/light_pass_VS.glsl", true);
+            GLSLShaderSource lpass_shader_fs = new("Shaders/light_pass_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(lpass_shader_vs, lpass_shader_fs, null, null, null,
-                            SHADER_TYPE.LIGHT_PASS_UNLIT_SHADER);
+                            new(), new(),SHADER_TYPE.LIGHT_PASS_UNLIT_SHADER, SHADER_MODE.FORWARD);
             GenericShaders[SHADER_TYPE.LIGHT_PASS_UNLIT_SHADER] = shader_conf;
             
             //LIT
-            lpass_shader_vs = new(ShaderType.VertexShader);
-            lpass_shader_fs = new(ShaderType.FragmentShader);
-            lpass_shader_vs.addStringFromFile("Shaders/light_pass_VS.glsl");
-            lpass_shader_fs.addString("#define _D_LIGHTING");
-            lpass_shader_fs.addStringFromFile("Shaders/light_pass_FS.glsl");
+            lpass_shader_vs = new("Shaders/light_pass_VS.glsl");
+            lpass_shader_fs = new("Shaders/light_pass_FS.glsl");
+            lpass_shader_fs.AddDirective("_D_LIGHTING");
             shader_conf = GLShaderHelper.compileShader(lpass_shader_vs, lpass_shader_fs, null, null, null,
-                            SHADER_TYPE.LIGHT_PASS_LIT_SHADER);
+                            new(), new(), SHADER_TYPE.LIGHT_PASS_LIT_SHADER, SHADER_MODE.FORWARD);
             GenericShaders[SHADER_TYPE.LIGHT_PASS_LIT_SHADER] = shader_conf;
             
             
             //GAUSSIAN HORIZONTAL BLUR SHADER
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText gaussian_blur_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gaussian_blur_shader_fs.addStringFromFile("Shaders/gaussian_horizontalBlur_FS.glsl");
+            GLSLShaderSource gaussian_blur_shader_fs = new("Shaders/gaussian_horizontalBlur_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gaussian_blur_shader_fs, null, null, null,
-                            SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER);
+                            new(), new(), SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER, SHADER_MODE.FORWARD);
             GenericShaders[SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER] = shader_conf;
             
             
             //GAUSSIAN VERTICAL BLUR SHADER
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            gaussian_blur_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gaussian_blur_shader_fs.addStringFromFile("Shaders/gaussian_verticalBlur_FS.glsl");
+            gaussian_blur_shader_fs = new("Shaders/gaussian_verticalBlur_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gaussian_blur_shader_fs, null, null, null,
-                            GLSLHelper.SHADER_TYPE.GAUSSIAN_VERTICAL_BLUR_SHADER);
-            GenericShaders[GLSLHelper.SHADER_TYPE.GAUSSIAN_VERTICAL_BLUR_SHADER] = shader_conf;
+                            new(), new(), 
+                            SHADER_TYPE.GAUSSIAN_VERTICAL_BLUR_SHADER, SHADER_MODE.DEFAULT);
+            GenericShaders[SHADER_TYPE.GAUSSIAN_VERTICAL_BLUR_SHADER] = shader_conf;
             
             //BRIGHTNESS EXTRACTION SHADER
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            gbuffer_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gbuffer_shader_fs.addStringFromFile("Shaders/brightness_extract_shader_fs.glsl");
+            gbuffer_shader_fs = new("Shaders/brightness_extract_shader_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
-                            GLSLHelper.SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER);
-            GenericShaders[GLSLHelper.SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER] = shader_conf;
+                            new(), new(),
+                            SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER, SHADER_MODE.FORWARD);
+            GenericShaders[SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER] = shader_conf;
             
 
             //ADDITIVE BLEND
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            gbuffer_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gbuffer_shader_fs.addStringFromFile("Shaders/additive_blend_fs.glsl");
+            gbuffer_shader_fs = new("Shaders/additive_blend_fs.glsl",  true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
-                            GLSLHelper.SHADER_TYPE.ADDITIVE_BLEND_SHADER);
-            GenericShaders[GLSLHelper.SHADER_TYPE.ADDITIVE_BLEND_SHADER] = shader_conf;
+                            new(), new(), 
+                            SHADER_TYPE.ADDITIVE_BLEND_SHADER, SHADER_MODE.FORWARD);
+            GenericShaders[SHADER_TYPE.ADDITIVE_BLEND_SHADER] = shader_conf;
             
             //FXAA
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            gbuffer_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gbuffer_shader_fs.addStringFromFile("Shaders/fxaa_shader_fs.glsl");
+            gbuffer_shader_fs = new("Shaders/fxaa_shader_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
-                            GLSLHelper.SHADER_TYPE.FXAA_SHADER);
-            GenericShaders[GLSLHelper.SHADER_TYPE.FXAA_SHADER] = shader_conf;
+                new(), new(), SHADER_TYPE.FXAA_SHADER, SHADER_MODE.FORWARD);
+            GenericShaders[SHADER_TYPE.FXAA_SHADER] = shader_conf;
             
             //TONE MAPPING + GAMMA CORRECTION
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            gbuffer_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gbuffer_shader_fs.addStringFromFile("Shaders/tone_mapping_fs.glsl");
+            gbuffer_shader_fs = new("Shaders/tone_mapping_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
-                            GLSLHelper.SHADER_TYPE.TONE_MAPPING);
-            GenericShaders[GLSLHelper.SHADER_TYPE.TONE_MAPPING] = shader_conf;
-            
+                new(),new(), SHADER_TYPE.TONE_MAPPING, SHADER_MODE.FORWARD);
+            GenericShaders[SHADER_TYPE.TONE_MAPPING] = shader_conf;
             
             //INV TONE MAPPING + GAMMA CORRECTION
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            gbuffer_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gbuffer_shader_fs.addStringFromFile("Shaders/inv_tone_mapping_fs.glsl");
+            gbuffer_shader_fs = new("Shaders/inv_tone_mapping_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
-                            SHADER_TYPE.INV_TONE_MAPPING);
+                            new(), new(), SHADER_TYPE.INV_TONE_MAPPING, SHADER_MODE.FORWARD);
             GenericShaders[SHADER_TYPE.INV_TONE_MAPPING] = shader_conf;
             
 
             //BWOIT SHADER
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            gbuffer_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            gbuffer_shader_fs.addStringFromFile("Shaders/bwoit_shader_fs.glsl");
+            gbuffer_shader_fs = new("Shaders/bwoit_shader_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
-                            SHADER_TYPE.BWOIT_COMPOSITE_SHADER);
+                            new(), new(), SHADER_TYPE.BWOIT_COMPOSITE_SHADER, SHADER_MODE.FORWARD);
             GenericShaders[SHADER_TYPE.BWOIT_COMPOSITE_SHADER] = shader_conf;
             
             //Text Shaders
-            GLSLShaderText text_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText text_shader_fs = new(ShaderType.FragmentShader);
-            text_shader_vs.addStringFromFile("Shaders/Text_VS.glsl");
-            text_shader_fs.addStringFromFile("Shaders/Text_FS.glsl");
+            GLSLShaderSource text_shader_vs = new("Shaders/Text_VS.glsl");
+            GLSLShaderSource text_shader_fs = new("Shaders/Text_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(text_shader_vs, text_shader_fs, null, null, null,
-                            SHADER_TYPE.TEXT_SHADER);
+                            new(), new(), SHADER_TYPE.TEXT_SHADER, SHADER_MODE.FORWARD);
             GenericShaders[SHADER_TYPE.TEXT_SHADER] = shader_conf;
             
             //Camera Shaders
@@ -289,12 +249,9 @@ namespace MVCore
             //FILTERS - EFFECTS
 
             //Pass Shader
-            gbuffer_shader_vs = new(ShaderType.VertexShader);
-            GLSLShaderText passthrough_shader_fs = new(ShaderType.FragmentShader);
-            gbuffer_shader_vs.addStringFromFile("Shaders/Gbuffer_VS.glsl");
-            passthrough_shader_fs.addStringFromFile("Shaders/PassThrough_FS.glsl");
+            GLSLShaderSource passthrough_shader_fs = new("Shaders/PassThrough_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, passthrough_shader_fs, null, null, null,
-                            SHADER_TYPE.PASSTHROUGH_SHADER);
+                            new(), new(), SHADER_TYPE.PASSTHROUGH_SHADER, SHADER_MODE.FORWARD);
             GenericShaders[SHADER_TYPE.PASSTHROUGH_SHADER] = shader_conf;
             
             /*
@@ -344,68 +301,10 @@ namespace MVCore
             SceneGraphNode light = SceneGraphNode.CreateLight("Default Light", 200.0f, ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
             TransformationSystem.SetEntityLocation(light, new Vector3(100.0f, 100.0f, 100.0f));
             
-            GLlights.Add(light);
+            LightList.Add(light);
         }
 
-        private void AddDefaultMaterials()
-        {
-            //Cross Material
-            MeshMaterial mat;
-
-            mat = new();
-            mat.Name = "crossMat";
-            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-            mat.add_flag(MaterialFlagEnum._F21_VERTEXCOLOUR);
-            Uniform uf = new()
-            {
-                Name = "gMaterialColourVec4",
-                Values = new(1.0f, 1.0f,1.0f,1.0f)
-            };
-            mat.Uniforms.Add(uf);
-            mat.init();
-            GLmaterials["crossMat"] = mat;
-
-            //Joint Material
-            mat = new MeshMaterial
-            {
-                Name = "jointMat"
-            };
-            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-
-            uf = new Uniform();
-            uf.Name = "gMaterialColourVec4";
-            uf.Values = new(1.0f,0.0f,0.0f,1.0f);
-            mat.Uniforms.Add(uf);
-            mat.init();
-            GLmaterials["jointMat"] = mat;
-
-            //Light Material
-            mat = new()
-            {
-                Name = "lightMat"
-            };
-            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-
-            uf = new();
-            uf.Name = "gMaterialColourVec4";
-            uf.Values = new(1.0f, 1.0f, 0.0f, 1.0f);
-            mat.Uniforms.Add(uf);
-            mat.init();
-            GLmaterials["lightMat"] = mat;
-
-            //Collision Material
-            mat = new();
-            mat.Name = "collisionMat";
-            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-
-            uf = new();
-            uf.Name = "gMaterialColourVec4";
-            uf.Values = new(0.8f, 0.8f, 0.2f, 1.0f);
-            mat.Uniforms.Add(uf);
-            mat.init();
-            GLmaterials["collisionMat"] = mat;
-
-        }
+        
 
         private void AddDefaultFonts()
         {
@@ -459,12 +358,6 @@ namespace MVCore
         
         }
 
-        public void AddMaterial(MeshMaterial mat)
-        {
-            GLmaterials[mat.name_key] = mat;
-            //Assign material to shaders
-        }
-
         private void GenerateGizmoParts()
         {
             //Translation Gizmo
@@ -512,7 +405,7 @@ namespace MVCore
 
                 GLPrimitiveMeshes[name] = new()
                 {
-                    type = TYPES.GIZMOPART,
+                    type = SceneNodeType.GIZMOPART,
                     vao = GLPrimitiveVaos[name],
                     MetaData = new()
                     {
@@ -549,7 +442,7 @@ namespace MVCore
 
             GLPrimitiveMeshes["default_cross"] = new()
             {
-                type = TYPES.GIZMO,
+                type = SceneNodeType.GIZMO,
                 vao = GLPrimitiveVaos["default_cross"],
                 MetaData = new()
                 {
@@ -588,7 +481,7 @@ namespace MVCore
                     AABBMAX = new(0.1f),
                     IndicesLength = DrawElementsType.UnsignedInt
                 },
-                type = TYPES.LIGHTVOLUME,
+                type = SceneNodeType.LIGHTVOLUME,
                 vao = GLPrimitiveVaos["default_light_sphere"]
             };
             
@@ -626,10 +519,7 @@ namespace MVCore
             Animations.Clear();
 
             //Cleanup Materials
-            foreach (MeshMaterial p in GLmaterials.Values)
-                p.Dispose();
-            GLmaterials.Clear();
-
+            
             //Cleanup Material Shaders
             ShaderMaterialMap.Clear();
             MaterialMeshMap.Clear();
@@ -641,16 +531,6 @@ namespace MVCore
             
             //Cleanup archives
             //NMSUtils.unloadNMSArchives(this);
-            
-            //Cleanup Lights
-            foreach (SceneGraphNode p in GLlights)
-                p.Dispose();
-            GLlights.Clear();
-
-            //Cleanup Cameras
-            //TODO: Make Camera Disposable
-            //foreach (GMDL.Camera p in GLCameras)
-            //    p.Dispose();
             
         }
     }

@@ -5,15 +5,32 @@ using MVCore;
 
 namespace MVCore
 {
+    public enum EntityType
+    {
+        SceneNode,
+        SceneNodeLight,
+        SceneNodeJoint,
+        SceneNodeMesh,
+        SceneNodeModel,
+        MeshComponent,
+        AnimationComponent,
+        SceneComponent,
+        LightComponent,
+        Material,
+        Texture,
+        GeometryObject,
+        Camera,
+        Script,
+        ShaderSource,
+        Shader
+    }
     public class Entity : IDisposable
     {
         //Public
         public long ID; //unique entity identifier
-        public string Name = "";
         public ulong NameHash;
-        public TYPES Type;
+        public EntityType Type;
         
-
         //Private
         private readonly Dictionary<Type, Component> _componentMap = new();
 
@@ -76,7 +93,6 @@ namespace MVCore
         {
             //Copy data from e
             Type = e.Type;
-            Name = e.Name;
             ID = e.ID;
 
             //Clone components

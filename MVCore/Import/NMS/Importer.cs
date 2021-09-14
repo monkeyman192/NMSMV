@@ -677,10 +677,9 @@ namespace MVCore.Import.NMS
                     Callbacks.Log(string.Format("Could not find geometry file {0} ", geomfile + ".PC"), Common.LogVerbosityLevel.ERROR);
 
                     //Create Dummy Scene
-                    SceneGraphNode dummy = new()
+                    SceneGraphNode dummy = new(SceneNodeType.MODEL)
                     {
-                        Name = "DUMMY_SCENE",
-                        Type = TYPES.MODEL
+                        Name = "DUMMY_SCENE"
                     };
                     return dummy;
                 }
@@ -713,14 +712,13 @@ namespace MVCore.Import.NMS
                 Common.LogVerbosityLevel.INFO);
             Callbacks.updateStatus("Importing Part: " + node.Name);
 
-            if (!Enum.TryParse(node.Type, out TYPES typeEnum))
+            if (!Enum.TryParse(node.Type, out SceneNodeType typeEnum))
                 throw new Exception("Node Type " + node.Type + "Not supported");
 
-            SceneGraphNode so = new()
+            SceneGraphNode so = new(typeEnum)
             {
                 Name = node.Name,
                 NameHash = node.NameHash,
-                Type = typeEnum,
                 ID = Common.RenderState.itemCounter++
             };
             
@@ -753,7 +751,7 @@ namespace MVCore.Import.NMS
             //Process Attachments
             ProcessComponents(so, attachment_data);
 
-            if (typeEnum == TYPES.MESH)
+            if (typeEnum == SceneNodeType.MESH)
             {
                 Common.Callbacks.Log(string.Format("Parsing Mesh {0}", node.Name), 
                     Common.LogVerbosityLevel.INFO);
@@ -812,15 +810,13 @@ namespace MVCore.Import.NMS
                 string matname = Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "MATERIAL");
 
                 //Search for the material
-                MeshMaterial mat;
-                if (RenderState.activeResMgr.GLmaterials.ContainsKey(matname))
-                    mat = RenderState.activeResMgr.GLmaterials[matname];
-                else
+                MeshMaterial mat = RenderState.engineRef.GetMaterialByName(matname);
+                if (mat == null)
                 {
                     //Parse material
                     mat = ImportMaterial(matname, localTexMgr);
                     //Save Material to the resource manager
-                    Common.RenderState.activeResMgr.AddMaterial(mat);
+                    RenderState.engineRef.RegisterEntity(mat);
                 }
 
                 //Search for the meshVao in the gobject
@@ -830,7 +826,7 @@ namespace MVCore.Import.NMS
                 {
                     //Generate new meshVao
                     meshVao = new GLInstancedMesh(mc.MetaData);
-                    meshVao.type = TYPES.MESH;
+                    meshVao.type = SceneNodeType.MESH;
                     meshVao.vao = vao;
                     mc.Material = mat; //Set meshVao Material
 
@@ -889,13 +885,13 @@ namespace MVCore.Import.NMS
                     gobject.saveGLMeshVAO(mc.MetaData.Hash, matname, meshVao);
                 }
             }
-            else if (typeEnum == TYPES.MODEL)
+            else if (typeEnum == SceneNodeType.MODEL)
             {
                 //Create MeshComponent
                 MeshComponent mc = new()
                 {
                     MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
-                    Material = Common.RenderState.activeResMgr.GLmaterials["crossMat"]
+                    Material = RenderState.engineRef.GetMaterialByName("crossMat")
                 };
                 
                 so.AddComponent<MeshComponent>(mc);
@@ -919,27 +915,27 @@ namespace MVCore.Import.NMS
                 }
 
             }
-            else if (typeEnum == TYPES.LOCATOR)
+            else if (typeEnum == SceneNodeType.LOCATOR)
             {
                 throw new Exception("Not Implemented Yet!");
             }
-            else if (typeEnum == TYPES.JOINT)
+            else if (typeEnum == SceneNodeType.JOINT)
             {
                 throw new Exception("Not Implemented Yet!");
             }
-            else if (typeEnum == TYPES.REFERENCE)
+            else if (typeEnum == SceneNodeType.REFERENCE)
             {
                 throw new Exception("Not Implemented Yet!");
             }
-            else if (typeEnum == TYPES.COLLISION)
+            else if (typeEnum == SceneNodeType.COLLISION)
             {
                 throw new Exception("Not Implemented Yet!");
             }
-            else if (typeEnum == TYPES.LIGHT)
+            else if (typeEnum == SceneNodeType.LIGHT)
             {
                 throw new Exception("Not Implemented Yet!");
             }
-            else if (typeEnum == TYPES.EMITTER)
+            else if (typeEnum == SceneNodeType.EMITTER)
             {
                 throw new Exception("Not Implemented Yet!");
             } else

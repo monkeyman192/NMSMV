@@ -27,7 +27,7 @@ namespace MVCore
         
         //Mesh type
         public COLLISIONTYPES collisionType;
-        public TYPES type;
+        public SceneNodeType type;
 
         //Instance Data
         public int UBO_aligned_size = 0; //Actual size of the data for the UBO, multiple to 256

@@ -109,7 +109,7 @@ namespace ImGuiHelper
 
         
 
-        public static void SetObjectReference(Entity m)
+        public static void SetObjectReference(SceneGraphNode m)
         {
             ObjectViewer.SetModel(m);
         }

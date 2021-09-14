@@ -5,8 +5,8 @@
 
  
 //Imports
-#include "/common.glsl"
-#include "/common_structs.glsl"
+#include "common.glsl"
+#include "common_structs.glsl"
 
 //Mesh Attributes
 layout(location=0) in vec4 vPosition;
@@ -38,7 +38,7 @@ layout (std430, binding=1) buffer _COMMON_PER_MESH
 };
 
 //Outputs
-out vec4 fragPos;
+out vec4 fragPos; 
 out vec4 screenPos;
 out vec4 vertColor;
 out float isOccluded;

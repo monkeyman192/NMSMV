@@ -92,8 +92,6 @@ namespace ImGUI_SDL_ModelViewer
         //Resource Handler
         public static byte[] getResource(string resource_name)
         {
-            string nspace = nameof(ImGUI_SDL_ModelViewer);
-
             byte[] data = null; //output data
 
             // Determine path

@@ -52,7 +52,7 @@ namespace MVCore.Systems
             _Data.Add(tc.Data); //Add ref to TransformData list
             
             if (createController)
-                EntityControllerMap[e.ID] = new TransformController(tc);
+                EntityControllerMap[e.ID] = new TransformController(tc.Data);
 
             if (isDynamic)
                 AddDynamicEntity(e);

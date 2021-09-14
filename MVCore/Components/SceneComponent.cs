@@ -37,15 +37,6 @@ namespace MVCore
             throw new NotImplementedException();
         }
 
-        public void setupJointDict(SceneGraphNode m)
-        {
-            if (m.Type == TYPES.JOINT)
-                jointDict[m.Name] = m;
-
-            foreach (SceneGraphNode c in m.Children)
-                setupJointDict(c);
-        }
-
         protected override void Dispose(bool disposing)
         {
             if (disposed)

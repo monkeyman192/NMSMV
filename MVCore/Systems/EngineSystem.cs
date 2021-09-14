@@ -20,7 +20,7 @@ namespace MVCore.Systems
 
     public abstract class EngineSystem
     {
-        private Engine engineRef = null;
+        protected Engine engineRef = null;
         private string systemName = "";
         private EngineSystemEnum systemType = EngineSystemEnum.NULL;
 

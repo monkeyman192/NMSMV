@@ -26,10 +26,6 @@ namespace ImGUI_SDL_ModelViewer
         //Mouse Pos
         private readonly MouseMovementState mouseState = new();
         
-        //Scene Stuff
-        public Entity activeModel; //Active Model Reference
-        public List<Tuple<AnimComponent, AnimData>> activeAnimScenes = new();
-        
         //Engine
         private Engine engine;
 
@@ -37,8 +33,14 @@ namespace ImGUI_SDL_ModelViewer
         private readonly WorkThreadDispacher workDispatcher = new();
         private readonly RequestHandler requestHandler = new();
         
+        //ImGui stuff
         private Vector2i SceneViewSize = new();
         private bool isSceneViewActive = false;
+        private bool firstDockSetup = true;
+        private uint dockSpaceID = 0;
+        uint dockSpaceMain = 0;
+        uint dockSpaceRightUp = 0;
+        uint dockSpaceRightDown = 0;
 
         static private bool open_file_enabled = false;
 
@@ -63,12 +65,10 @@ namespace ImGUI_SDL_ModelViewer
             
             SceneViewSize = Size;
             
+            
             //Start worker thread
             workDispatcher.Start();
 
-            //Initialize Resource Manager
-            RenderState.activeResMgr = new ResourceManager();
-            RenderState.activeResMgr.Init();
         }
 
         protected override void OnLoad()
@@ -96,7 +96,8 @@ namespace ImGUI_SDL_ModelViewer
             engine = new Engine(this);
             engine.init(Size.X, Size.Y); //Initialize Engine
             RenderState.engineRef = engine; //Set reference to engine
-
+            RenderState.activeResMgr = engine.resMgr; //Set program reference to the resMgr of the engine
+            
             //Populate GLControl
             SceneGraphNode sceneRoot = SceneGraphNode.CreateScene("SCENE ROOT");
             SceneGraphNode test1 = SceneGraphNode.CreateLocator("Test Locator 1");
@@ -158,7 +159,7 @@ namespace ImGUI_SDL_ModelViewer
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-
+            
             // Tell ImGui of the new size
             _controller.WindowResized(ClientSize.X, ClientSize.Y);
         }
@@ -344,7 +345,6 @@ namespace ImGUI_SDL_ModelViewer
             waitForRequest(ref req1);
 
             //find Animation Capable nodes
-            activeModel = null; //TODO: Fix that with the gizmos
             findAnimScenes(RenderState.rootObject); //Repopulate animScenes
             findActionScenes(RenderState.rootObject); //Re-populate actionSystem
 
@@ -366,7 +366,6 @@ namespace ImGUI_SDL_ModelViewer
             waitForRequest(ref req1);
             
             //find Animation Capable nodes
-            activeModel = null; //TODO: Fix that with the gizmos
             findAnimScenes(RenderState.rootObject); //Repopulate animScenes
             findActionScenes(RenderState.rootObject); //Re-populate actionSystem
         }
@@ -407,27 +406,70 @@ namespace ImGUI_SDL_ModelViewer
                                             ImGuiWindowFlags.NoDocking;
 
             ImGuiViewportPtr vp = ImGui.GetMainViewport();
-            ImGui.SetNextWindowPos(vp.GetWorkPos());
-            ImGui.SetNextWindowSize(vp.GetWorkSize());
+            ImGui.SetNextWindowPos(vp.WorkPos);
+            ImGui.SetNextWindowSize(vp.WorkSize);
             ImGui.SetNextWindowViewport(vp.ID);
             ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
             ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.0f);
             ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, 0.0f);
 
+            bool keep_window_open = true;
             int statusBarHeight = (int) (1.75f * ImGui.CalcTextSize("Status").Y);
-
-            //DockSpace
-            bool dockspace_open = true;
-            ImGui.Begin("DockSpaceDemo", ref dockspace_open, window_flags);
-
+            ImGui.Begin("MainWindow", ref keep_window_open, window_flags);
             ImGui.PopStyleVar(2);
+            
             
             uint dockSpaceID = ImGui.GetID("MainDockSpace");
             //System.Numerics.Vector2 dockSpaceSize = vp.GetWorkSize();
             System.Numerics.Vector2 dockSpaceSize = new(0.0f, -statusBarHeight);
-            ImGui.DockSpace(dockSpaceID,
-                dockSpaceSize, dockspace_flags);
+            ImGui.DockSpace(dockSpaceID, dockSpaceSize, dockspace_flags);
 
+            
+            unsafe
+            {
+                if (firstDockSetup)
+                {
+                    firstDockSetup = false;
+                    dockSpaceID = ImGui.GetID("MainDockSpace");
+                    ImGuiNative.igDockBuilderRemoveNode(dockSpaceID);
+                    ImGuiNative.igDockBuilderAddNode(dockSpaceID, dockspace_flags);
+                    ImGuiNative.igDockBuilderSetNodeSize(dockSpaceID, dockSpaceSize);
+                    
+                    //Add Right dock
+                    uint temp;
+                    uint dockSpaceLeft;
+                    uint dockSpaceRight = ImGuiNative.igDockBuilderSplitNode(dockSpaceID, ImGuiDir.Right, 0.3f,
+                        null, &temp);
+                    dockSpaceID = temp; //Temp holds the main view
+                    
+                    dockSpaceRightDown =
+                        ImGuiNative.igDockBuilderSplitNode(dockSpaceRight, ImGuiDir.Down, 
+                            0.5f, null, &dockSpaceRight);
+                    dockSpaceRightUp = dockSpaceRight;
+                    
+                    uint dockSpaceLeftDown = ImGuiNative.igDockBuilderSplitNode(dockSpaceID, ImGuiDir.Down, 0.1f,
+                        null, &temp);
+                    dockSpaceID = temp; //Temp holds the main view
+                    
+                    
+                    //Set Window Docks
+                    //Left 
+                    ImGui.DockBuilderDockWindow("Scene", dockSpaceID);
+                    ImGui.DockBuilderDockWindow("Statistics", dockSpaceLeftDown);
+                    //Right
+                    ImGui.DockBuilderDockWindow("SceneGraph", dockSpaceRightUp);
+                    ImGui.DockBuilderDockWindow("Camera", dockSpaceRightUp);
+                    ImGui.DockBuilderDockWindow("Options", dockSpaceRightUp);
+                    ImGui.DockBuilderDockWindow("Test Options", dockSpaceRightUp);
+                    ImGui.DockBuilderDockWindow("Tools", dockSpaceRightUp);
+                    ImGui.DockBuilderDockWindow("Node Editor", dockSpaceRightDown);
+                    ImGui.DockBuilderDockWindow("Shader Editor", dockSpaceRightDown);
+                    ImGui.DockBuilderDockWindow("Material Editor", dockSpaceRightDown);
+                    
+                    ImGuiNative.igDockBuilderFinish(dockSpaceID);
+                }
+            }
+            
             
             //Main Menu
             if (ImGui.BeginMainMenuBar())
@@ -508,9 +550,7 @@ namespace ImGUI_SDL_ModelViewer
 
             ImGui.End();
 
-            ImGui.SetNextWindowDockID(dockSpaceID, ImGuiCond.Once);
             ImGui.SetCursorPosX(0.0f);
-            bool main_view = true;
             
             //Scene Render
             bool scene_view = true;
@@ -519,11 +559,12 @@ namespace ImGUI_SDL_ModelViewer
 
             //Cause of ImguiNET that does not yet support DockBuilder. The main Viewport will be docked to the main window.
             //All other windows will be separate.
-
             if (ImGui.Begin("Scene", ref scene_view, ImGuiWindowFlags.NoScrollbar))
             {
                 //Update RenderSize
                 System.Numerics.Vector2 csize = ImGui.GetContentRegionAvail();
+                csize.X = Math.Max(csize.X, 100);
+                csize.Y = Math.Max(csize.Y, 100);
                 Vector2i csizetk = new((int) csize.X, (int) csize.Y);
                 ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().channels[0]),
                                 csize,
@@ -541,14 +582,15 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.PopStyleVar();
                 ImGui.End();
             }
-
+            
+            
             if (ImGui.Begin("SceneGraph", ImGuiWindowFlags.NoCollapse))
             {
                 ImGuiManager.DrawSceneGraph();
                 ImGui.End();
             }
             
-            if (ImGui.Begin("Object Viewer", ImGuiWindowFlags.NoCollapse))
+            if (ImGui.Begin("Node Editor", ImGuiWindowFlags.NoCollapse))
             {
                 ImGuiManager.DrawObjectInfoViewer();
                 ImGui.End();
@@ -566,123 +608,110 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.End();
             }
 
-            //SideBar
-            if (ImGui.Begin("SideBar", ref main_view, ImGuiWindowFlags.NoCollapse))
+            if (ImGui.Begin("Tools", ImGuiWindowFlags.NoCollapse))
             {
-                ////Draw Tab Controls
-                if (ImGui.BeginTabBar("TabControl1", ImGuiTabBarFlags.None))
+                if (ImGui.Button("ProcGen", new System.Numerics.Vector2(80.0f, 40.0f)))
                 {
-                    if (ImGui.BeginTabItem("Tools"))
-                    {
+                    //TODO generate proc gen view
+                }
 
-                        if (ImGui.Button("ProcGen", new System.Numerics.Vector2(80.0f, 40.0f)))
-                        {
-                            //TODO generate proc gen view
-                        }
+                ImGui.SameLine();
 
-                        ImGui.SameLine();
-
-                        if (ImGui.Button("Reset Pose", new System.Numerics.Vector2(80.0f, 40.0f)))
-                        {
-                            //TODO Reset The models pose
-                        }
-
-                        ImGui.EndTabItem();
-                    }
-
-#if (DEBUG)
-                    if (ImGui.BeginTabItem("Test Options"))
-                    {
-                        ImGui.DragFloat("Test Option 1", ref RenderState.settings.renderSettings.testOpt1);
-                        ImGui.DragFloat("Test Option 2", ref RenderState.settings.renderSettings.testOpt2);
-                        ImGui.DragFloat("Test Option 3", ref RenderState.settings.renderSettings.testOpt3);
-                        ImGui.EndTabItem();
-                    }
-#endif
-                    if (ImGui.BeginTabItem("Camera"))
-                    {
-                        //Camera Settings
-                        ImGui.BeginGroup();
-                        ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Settings");
-                        ImGui.SliderFloat("FOV", ref RenderState.activeCam.fov, 15.0f, 100.0f);
-                        ImGui.SliderFloat("Sensitivity", ref RenderState.activeCam.Sensitivity, 0.1f, 10.0f);
-                        ImGui.InputFloat("MovementSpeed", ref RenderState.activeCam.Speed, 1.0f, 500000.0f);
-                        ImGui.SliderFloat("zNear", ref RenderState.activeCam.zNear, 0.01f, 1.0f);
-                        ImGui.SliderFloat("zFar", ref RenderState.activeCam.zFar, 101.0f, 30000.0f);
-
-                        if (ImGui.Button("Reset Camera"))
-                        {
-                            RenderState.activeCam.Position = new Vector3(0.0f);
-                        }
-                        
-                        ImGui.SameLine();
-
-                        if (ImGui.Button("Reset Scene Rotation"))
-                        {
-                            //TODO :Maybe enclose all settings in a function
-                            RenderState.activeCam.pitch = 0.0f;
-                            RenderState.activeCam.yaw = -90.0f;
-                        }
-
-                        ImGui.EndGroup();
-                        
-                        ImGui.Separator();
-                        ImGui.BeginGroup();
-                        ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Controls");
-
-                        ImGui.Columns(2);
-
-                        ImGui.Text("Horizontal Camera Movement");
-                        ImGui.Text("Vertical Camera Movement");
-                        ImGui.Text("Camera Rotation");
-                        ImGui.Text("Scene Rotate (Y Axis)");
-                        ImGui.NextColumn();
-                        ImGui.Text("W, A, S, D");
-                        ImGui.Text("R, F");
-                        ImGui.Text("Hold RMB +Move");
-                        ImGui.Text("Q, E");
-                        ImGui.EndGroup();
-
-                        ImGui.Columns(1);
-
-                        ImGui.EndTabItem();
-                    }
-                    
-                    if (ImGui.BeginTabItem("Options"))
-                    {
-                        ImGui.LabelText("View Options", "");
-                        ImGui.Checkbox("Show Lights", ref RenderState.settings.viewSettings.ViewLights);
-                        ImGui.Checkbox("Show Light Volumes", ref RenderState.settings.viewSettings.ViewLightVolumes);
-                        ImGui.Checkbox("Show Joints", ref RenderState.settings.viewSettings.ViewJoints);
-                        ImGui.Checkbox("Show Locators", ref RenderState.settings.viewSettings.ViewLocators);
-                        ImGui.Checkbox("Show Collisions", ref RenderState.settings.viewSettings.ViewCollisions);
-                        ImGui.Checkbox("Show Bounding Hulls", ref RenderState.settings.viewSettings.ViewBoundHulls);
-                        ImGui.Checkbox("Emulate Actions", ref RenderState.settings.viewSettings.EmulateActions);
-                        
-                        ImGui.Separator();
-                        ImGui.LabelText("Rendering Options", "");
-                        
-                        ImGui.Checkbox("Use Textures", ref RenderState.settings.renderSettings.UseTextures);
-                        ImGui.Checkbox("Use Lighting", ref RenderState.settings.renderSettings.UseLighting);
-                        ImGui.Checkbox("Use VSYNC", ref RenderState.settings.renderSettings.UseVSync);
-                        ImGui.Checkbox("Show Animations", ref RenderState.settings.renderSettings.ToggleAnimations);
-                        ImGui.Checkbox("Wireframe", ref RenderState.settings.renderSettings.RenderWireFrame);
-                        ImGui.Checkbox("FXAA", ref RenderState.settings.renderSettings.UseFXAA);
-                        ImGui.Checkbox("Bloom", ref RenderState.settings.renderSettings.UseBLOOM);
-                        ImGui.Checkbox("LOD Filtering", ref RenderState.settings.renderSettings.LODFiltering);
-
-                        ImGui.InputInt("FPS", ref RenderState.settings.renderSettings.FPS);
-                        ImGui.InputFloat("HDR Exposure", ref RenderState.settings.renderSettings.HDRExposure);
-                        
-                        ImGui.EndTabItem();
-                    }
-                
-                    ImGui.EndTabBar();
+                if (ImGui.Button("Reset Pose", new System.Numerics.Vector2(80.0f, 40.0f)))
+                {
+                    //TODO Reset The models pose
                 }
 
                 ImGui.End();
             }
+            
+#if (DEBUG)
+            if (ImGui.Begin("Test Options", ImGuiWindowFlags.NoCollapse))
+            {
+                ImGui.DragFloat("Test Option 1", ref RenderState.settings.renderSettings.testOpt1);
+                ImGui.DragFloat("Test Option 2", ref RenderState.settings.renderSettings.testOpt2);
+                ImGui.DragFloat("Test Option 3", ref RenderState.settings.renderSettings.testOpt3);
+                ImGui.End();
+            }
+#endif
+            if (ImGui.Begin("Camera", ImGuiWindowFlags.NoCollapse))
+            {
+                //Camera Settings
+                ImGui.BeginGroup();
+                ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Settings");
+                ImGui.SliderFloat("FOV", ref RenderState.activeCam.fov, 15.0f, 100.0f);
+                ImGui.SliderFloat("Sensitivity", ref RenderState.activeCam.Sensitivity, 0.1f, 10.0f);
+                ImGui.InputFloat("MovementSpeed", ref RenderState.activeCam.Speed, 1.0f, 500000.0f);
+                ImGui.SliderFloat("zNear", ref RenderState.activeCam.zNear, 0.01f, 1.0f);
+                ImGui.SliderFloat("zFar", ref RenderState.activeCam.zFar, 101.0f, 30000.0f);
 
+                if (ImGui.Button("Reset Camera"))
+                {
+                    RenderState.activeCam.Position = new Vector3(0.0f);
+                }
+                
+                ImGui.SameLine();
+
+                if (ImGui.Button("Reset Scene Rotation"))
+                {
+                    //TODO :Maybe enclose all settings in a function
+                    RenderState.activeCam.pitch = 0.0f;
+                    RenderState.activeCam.yaw = -90.0f;
+                }
+
+                ImGui.EndGroup();
+                
+                ImGui.Separator();
+                ImGui.BeginGroup();
+                ImGui.TextColored(ImGuiManager.DarkBlue, "Camera Controls");
+
+                ImGui.Columns(2);
+
+                ImGui.Text("Horizontal Camera Movement");
+                ImGui.Text("Vertical Camera Movement");
+                ImGui.Text("Camera Rotation");
+                ImGui.Text("Scene Rotate (Y Axis)");
+                ImGui.NextColumn();
+                ImGui.Text("W, A, S, D");
+                ImGui.Text("R, F");
+                ImGui.Text("Hold RMB +Move");
+                ImGui.Text("Q, E");
+                ImGui.EndGroup();
+
+                ImGui.Columns(1);
+
+                ImGui.End();
+            }
+            
+            if (ImGui.Begin("Options", ImGuiWindowFlags.NoCollapse))
+            {
+                ImGui.LabelText("View Options", "");
+                ImGui.Checkbox("Show Lights", ref RenderState.settings.viewSettings.ViewLights);
+                ImGui.Checkbox("Show Light Volumes", ref RenderState.settings.viewSettings.ViewLightVolumes);
+                ImGui.Checkbox("Show Joints", ref RenderState.settings.viewSettings.ViewJoints);
+                ImGui.Checkbox("Show Locators", ref RenderState.settings.viewSettings.ViewLocators);
+                ImGui.Checkbox("Show Collisions", ref RenderState.settings.viewSettings.ViewCollisions);
+                ImGui.Checkbox("Show Bounding Hulls", ref RenderState.settings.viewSettings.ViewBoundHulls);
+                ImGui.Checkbox("Emulate Actions", ref RenderState.settings.viewSettings.EmulateActions);
+                
+                ImGui.Separator();
+                ImGui.LabelText("Rendering Options", "");
+                
+                ImGui.Checkbox("Use Textures", ref RenderState.settings.renderSettings.UseTextures);
+                ImGui.Checkbox("Use Lighting", ref RenderState.settings.renderSettings.UseLighting);
+                ImGui.Checkbox("Use VSYNC", ref RenderState.settings.renderSettings.UseVSync);
+                ImGui.Checkbox("Show Animations", ref RenderState.settings.renderSettings.ToggleAnimations);
+                ImGui.Checkbox("Wireframe", ref RenderState.settings.renderSettings.RenderWireFrame);
+                ImGui.Checkbox("FXAA", ref RenderState.settings.renderSettings.UseFXAA);
+                ImGui.Checkbox("Bloom", ref RenderState.settings.renderSettings.UseBLOOM);
+                ImGui.Checkbox("LOD Filtering", ref RenderState.settings.renderSettings.LODFiltering);
+
+                ImGui.InputInt("FPS", ref RenderState.settings.renderSettings.FPS);
+                ImGui.InputFloat("HDR Exposure", ref RenderState.settings.renderSettings.HDRExposure);
+                
+                ImGui.End();
+            }
+            
             ImGuiManager.ProcessModals(this, current_file_path);
 
             //Debugging Information

@@ -39,7 +39,7 @@ namespace MVCore.Text
 
             meshVao = new GLInstancedMesh()
             {
-                type = TYPES.TEXT,
+                type = SceneNodeType.TEXT,
                 vao = geom.generateVAO(),
                 MetaData = new()
                 {

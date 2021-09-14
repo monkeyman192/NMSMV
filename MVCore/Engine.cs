@@ -36,12 +36,12 @@ namespace MVCore
         public ResourceManager resMgr;
 
         //Init Systems
-        public EntityRegistrySystem registrySys;
+        private EntityRegistrySystem registrySys;
         public TransformationSystem transformSys;
         public ActionSystem actionSys;
         public AnimationSystem animationSys;
         public SceneManagementSystem sceneManagementSys;
-        public RenderingSystem renderSys;//TODO: Try to make it private. Noone should have a reason to access it
+        public RenderingSystem renderSys; //TODO: Try to make it private. Noone should have a reason to access it
         private readonly RequestHandler reqHandler;
         private readonly NativeWindow windowHandler;
 
@@ -50,15 +50,15 @@ namespace MVCore
 
         //Input
         public BaseGamepadHandler gpHandler;
-        
+
         //Keyboard State
         private readonly KeyboardState kbState;
         private readonly MouseState mouseState;
-        
+
         //Camera Stuff
         public CameraPos targetCameraPos;
         public Vector2 prevMousePos;
-        
+
 
         //Use public variables for now because getters/setters are so not worth it for our purpose
         public float light_angle_y = 0.0f;
@@ -70,7 +70,7 @@ namespace MVCore
         //Palette
         Dictionary<string, Dictionary<string, Vector4>> palette;
 
-        public Engine(NativeWindow win) :base(EngineSystemEnum.CORE_SYSTEM)
+        public Engine(NativeWindow win) : base(EngineSystemEnum.CORE_SYSTEM)
         {
             //Store Window handler
             windowHandler = win;
@@ -83,10 +83,6 @@ namespace MVCore
             reqHandler = new RequestHandler();
 
             RenderState.activeGamepad = gpHandler;
-
-            //Assign new palette to GLControl
-            //Todo get rid of palettes they have no place here
-            palette = Import.NMS.Palettes.createPalettefromBasePalettes();
 
             //Systems Init
             renderSys = new RenderingSystem(); //Init renderManager of the engine
@@ -102,7 +98,17 @@ namespace MVCore
             animationSys.SetEngine(this);
             transformSys.SetEngine(this);
             sceneManagementSys.SetEngine(this);
-            
+
+            //Initialize Resource Manager
+            resMgr = new ResourceManager();
+            InitializeResourceManager();
+
+            //Assign new palette to GLControl
+            //Todo get rid of palettes they have no place here
+            palette = Import.NMS.Palettes.createPalettefromBasePalettes(ref resMgr);
+
+
+
             //Set Start Status
             rt_State = EngineRenderingState.UNINITIALIZED;
         }
@@ -112,14 +118,14 @@ namespace MVCore
             Log("Goodbye!", LogVerbosityLevel.INFO);
         }
 
-        public void RegisterEntity(Entity e, bool controllable, bool isDynamic)
+        public void RegisterEntity(Entity e, bool controllable = false, bool isDynamic = false)
         {
             //Add Entity to main registry
             if (registrySys.RegisterEntity(e))
             {
                 if (e.HasComponent<TransformComponent>())
                     transformSys.RegisterEntity(e, controllable, isDynamic);
-                
+
                 //TODO Register to the rest systems if necessary
             }
         }
@@ -129,13 +135,115 @@ namespace MVCore
             return sceneManagementSys.CreateScene();
         }
 
+        #region ResourceManager
 
-        public void init(int width, int height)
+        public void InitializeResourceManager()
+        {
+            AddDefaultMaterials();
+        }
+
+        private void AddDefaultMaterials()
+        {
+            //Cross Material
+            MeshMaterial mat;
+
+            mat = new();
+            mat.Name = "crossMat";
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+            mat.add_flag(MaterialFlagEnum._F21_VERTEXCOLOUR);
+            Uniform uf = new()
+            {
+                Name = "gMaterialColourVec4",
+                Values = new(1.0f, 1.0f, 1.0f, 1.0f)
+            };
+            mat.Uniforms.Add(uf);
+            mat.init();
+            RegisterEntity(mat);
+
+            //Joint Material
+            mat = new MeshMaterial
+            {
+                Name = "jointMat"
+            };
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+
+            uf = new Uniform();
+            uf.Name = "gMaterialColourVec4";
+            uf.Values = new(1.0f, 0.0f, 0.0f, 1.0f);
+            mat.Uniforms.Add(uf);
+            mat.init();
+            RegisterEntity(mat);
+
+            //Light Material
+            mat = new()
+            {
+                Name = "lightMat"
+            };
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+
+            uf = new();
+            uf.Name = "gMaterialColourVec4";
+            uf.Values = new(1.0f, 1.0f, 0.0f, 1.0f);
+            mat.Uniforms.Add(uf);
+            mat.init();
+            RegisterEntity(mat);
+
+            //Collision Material
+            mat = new();
+            mat.Name = "collisionMat";
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+
+            uf = new();
+            uf.Name = "gMaterialColourVec4";
+            uf.Values = new(0.8f, 0.8f, 0.2f, 1.0f);
+            mat.Uniforms.Add(uf);
+            mat.init();
+            RegisterEntity(mat);
+
+        }
+
+
+        #endregion
+
+        //Asset Getter
+        public MeshMaterial GetMaterialByName(string name)
+        {
+            return registrySys.GetEntityTypeList(EntityType.Material).Find(x => ((MeshMaterial) x).Name == name) as MeshMaterial;
+        }
+
+        public SceneGraphNode GetSceneNodeByName(string name)
+        {
+            return registrySys.GetEntityTypeList(EntityType.SceneNode).Find(x=>((SceneGraphNode) x).Name == name) as SceneGraphNode;
+        }
+        
+        public SceneGraphNode GetSceneNodeByNameType(SceneNodeType type, string name)
+        {
+            return registrySys.GetEntityTypeList(EntityType.SceneNode).Find(x=>((SceneGraphNode) x).Name == name && ((SceneGraphNode) x).Type == type) as SceneGraphNode;
+        }
+
+        public GLSLShaderSource GetShaderSourceByFilePath(string path)
+        {
+            return registrySys.GetEntityTypeList(EntityType.ShaderSource)
+                .Find(x => ((GLSLShaderSource)x).SourceFilePath == path) as GLSLShaderSource;
+        }
+
+        public int GetLightCount()
+        {
+            return registrySys.GetEntityTypeList(EntityType.LightComponent).Count;
+        }
+
+        public List<Entity> GetEntityTypeList(EntityType type)
+        {
+            return registrySys.GetEntityTypeList(type);
+        }
+        
+    
+
+    public void init(int width, int height)
         {
             //Init Gizmos
             //gizTranslate = new TranslationGizmo();
             //activeGizmo = gizTranslate;
-            resMgr = RenderState.activeResMgr;
             if (!resMgr.initialized)
             {
                 throw new Exception("Resource Manager not initialized");
@@ -237,7 +345,7 @@ namespace MVCore
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_MODIFY_SHADER:
                             GLShaderHelper.modifyShader((GLSLShaderConfig)req.arguments[0],
-                                         (GLSLShaderText)req.arguments[1]);
+                                         (GLSLShaderSource) req.arguments[1]);
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_GIZMO_PICKING:
@@ -283,7 +391,7 @@ namespace MVCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            Import.NMS.Palettes.set_palleteColors();
+            Import.NMS.Palettes.set_palleteColors(ref resMgr);
 
             //Clear Systems
             actionSys.CleanUp();
@@ -307,17 +415,15 @@ namespace MVCore
             RenderState.settings.renderSettings.ToggleAnimations = false;
 
             //Setup new object
-            SceneGraphNode scene = new()
+            SceneGraphNode scene = new(SceneNodeType.MODEL)
             {
-                Name = "DEFAULT SCENE",
-                Type = TYPES.MODEL
+                Name = "DEFAULT SCENE"
             };
 
             //Add Lights
-            SceneGraphNode l = new()
+            SceneGraphNode l = new(SceneNodeType.LIGHT)
             {
                 Name = "Light 1",
-                Type = TYPES.LIGHT,
                 IsRenderable = true
             };
 
@@ -328,13 +434,12 @@ namespace MVCore
 
 
             TransformationSystem.SetEntityLocation(l, new Vector3(0.2f, 0.2f, -2.0f));
-            RenderState.activeResMgr.GLlights.Add(l);
+            RegisterEntity(l);
             scene.Children.Add(l);
 
-            SceneGraphNode l1 = new()
+            SceneGraphNode l1 = new(SceneNodeType.LIGHT)
             {
                 Name = "Light 2",
-                Type = TYPES.LIGHT,
                 IsRenderable = true
             };
 
@@ -344,10 +449,10 @@ namespace MVCore
             //Falloff = ATTENUATION_TYPE.QUADRATIC
 
             TransformationSystem.SetEntityLocation(l1, new Vector3(0.2f, -0.2f, -2.0f));
-            RenderState.activeResMgr.GLlights.Add(l1);
+            RegisterEntity(l1);
             scene.Children.Add(l1);
 
-            SceneGraphNode l2 = new()
+            SceneGraphNode l2 = new(SceneNodeType.LIGHT)
             {
                 Name = "Light 3",
                 IsRenderable = true
@@ -359,10 +464,10 @@ namespace MVCore
             //Falloff = ATTENUATION_TYPE.QUADRATIC
 
             TransformationSystem.SetEntityLocation(l2, new Vector3(-0.2f, 0.2f, -2.0f));
-            RenderState.activeResMgr.GLlights.Add(l2);
+            RegisterEntity(l2);
             scene.Children.Add(l2);
 
-            SceneGraphNode l3 = new()
+            SceneGraphNode l3 = new(SceneNodeType.LIGHT)
             {
                 Name = "Light 4",
                 IsRenderable = true
@@ -374,15 +479,14 @@ namespace MVCore
             //Falloff = ATTENUATION_TYPE.QUADRATIC
 
             TransformationSystem.SetEntityLocation(l3, new Vector3(-0.2f, -0.2f, -2.0f));
-            RenderState.activeResMgr.GLlights.Add(l3);
+            RegisterEntity(l3);
             scene.Children.Add(l3);
 
             //Generate a Sphere and center it in the scene
 
-            SceneGraphNode sphere = new()
+            SceneGraphNode sphere = new(SceneNodeType.MESH)
             {
-                Name = "Test Sphere",
-                Type = TYPES.MESH
+                Name = "Test Sphere"
             };
             
             sphere.SetParent(scene);
@@ -403,7 +507,7 @@ namespace MVCore
             };
             
             mc.MeshVao = new GLInstancedMesh(mc.MetaData);
-            mc.MeshVao.type = TYPES.MESH;
+            mc.MeshVao.type = SceneNodeType.MESH;
             mc.MeshVao.vao = (new Primitives.Sphere(new Vector3(), 2.0f, 40)).getVAO();
             
             //Sphere Material
@@ -423,12 +527,12 @@ namespace MVCore
             mat.Uniforms.Add(uf);
                 
             mat.init();
-            resMgr.GLmaterials["test_mat1"] = mat;
+            RegisterEntity(mat);
             
             scene.Children.Add(sphere);
 
             //Explicitly add default light to the rootObject
-            scene.Children.Add(resMgr.GLlights[0]);
+            scene.Children.Add(l);
 
             //Save scene path to resourcemanager
             RenderState.activeResMgr.GLScenes["TEST_SCENE_1"] = scene; //Use input path
@@ -466,7 +570,7 @@ namespace MVCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            Import.NMS.Palettes.set_palleteColors();
+            Import.NMS.Palettes.set_palleteColors(ref resMgr);
 
             //Clear Systems
             actionSys.CleanUp();
@@ -493,8 +597,9 @@ namespace MVCore
             SceneGraphNode root = Import.NMS.Importer.ImportScene(filename);
 
             //Explicitly add default light to the rootObject
-            root.Children.Add(resMgr.GLlights[0]);
-
+            //TODO: add default light
+            
+            
             //Todo make that through the systems update functions
 
             //root.update(); //Refresh all transforms

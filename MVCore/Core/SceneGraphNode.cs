@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using MVCore.Systems;
 using OpenTK.Mathematics;
 using MVCore.Utils;
 
 namespace MVCore
 {
-    public enum TYPES
+    public enum SceneNodeType
     {
         MODEL=0x0,
         LOCATOR,
@@ -24,17 +25,34 @@ namespace MVCore
     }
     public class SceneGraphNode : Entity
     {
+        public SceneNodeType Type = SceneNodeType.UNKNOWN;
         public bool IsSelected = false;
+        public string Name = "";
         public bool IsRenderable = true;
         public bool IsOpen = false;
         public SceneGraphNode ParentScene = null;
         public List<float> LODDistances = new();
         public SceneGraphNode Parent = null;
         public List<SceneGraphNode> Children = new();
+        
 
-        public SceneGraphNode()
+        public SceneGraphNode(SceneNodeType type)
         {
-
+            Type = type;
+            switch (type)
+            {
+                case SceneNodeType.MESH:
+                    base.Type = EntityType.SceneNodeMesh;
+                    break;
+                case SceneNodeType.JOINT:
+                    base.Type = EntityType.SceneNodeJoint;
+                    break;
+                case SceneNodeType.LIGHT:
+                    base.Type = EntityType.SceneNodeLight;
+                    break;
+                default:
+                    throw new Exception("make sure to property initialize base type");
+            }
         }
 
         public void RemoveChild(SceneGraphNode m)
@@ -114,10 +132,9 @@ namespace MVCore
         //Static Methods for node generation
         public static SceneGraphNode CreateScene(string name)
         {
-            SceneGraphNode n = new()
+            SceneGraphNode n = new(SceneNodeType.MODEL)
             {
-                Name = name,
-                Type = TYPES.MODEL
+                Name = name
             };
 
             //Add Transform Component
@@ -129,7 +146,7 @@ namespace MVCore
             MeshComponent mc = new()
             {
                 MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
-                Material = Common.RenderState.activeResMgr.GLmaterials["crossMat"]
+                Material = Common.RenderState.engineRef.GetMaterialByName("crossMat")
             };
             
             //Register new instance in the meshVao
@@ -146,10 +163,9 @@ namespace MVCore
 
         public static SceneGraphNode CreateLocator(string name)
         {
-            SceneGraphNode n = new()
+            SceneGraphNode n = new(SceneNodeType.LOCATOR)
             {
-                Name = name,
-                Type = TYPES.LOCATOR
+                Name = name
             };
 
             //Add Transform Component
@@ -161,7 +177,7 @@ namespace MVCore
             MeshComponent mc = new()
             {
                 MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
-                Material = Common.RenderState.activeResMgr.GLmaterials["crossMat"]
+                Material = Common.RenderState.engineRef.GetMaterialByName("crossMat")
             };
             
             //Register new instance in the meshVao
@@ -174,8 +190,8 @@ namespace MVCore
 
         public static SceneGraphNode CreateJoint()
         {
-            SceneGraphNode n = new();
-
+            SceneGraphNode n = new(SceneNodeType.JOINT);
+            
             //Add Transform Component
             TransformData td = new();
             TransformComponent tc = new(td);
@@ -185,11 +201,11 @@ namespace MVCore
             MeshComponent mc = new();
             mc.MeshVao = new()
             {
-                type = TYPES.JOINT
+                type = SceneNodeType.JOINT
             };
 
             mc.MeshVao.vao = new Primitives.LineSegment(n.Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
-            mc.Material = Common.RenderState.activeResMgr.GLmaterials["jointMat"];
+            mc.Material = Common.RenderState.engineRef.GetMaterialByName("jointMat");
 
             //Add Joint Component
             JointComponent jc = new();
@@ -202,11 +218,11 @@ namespace MVCore
                                                 ATTENUATION_TYPE attenuation=ATTENUATION_TYPE.QUADRATIC,
                                                 LIGHT_TYPE lighttype = LIGHT_TYPE.POINT)
         {
-            SceneGraphNode n = new()
+            SceneGraphNode n = new(SceneNodeType.LIGHT)
             {
                 Name = name
             };
-
+            
             //Add Transform Component
             TransformData td = new();
             TransformComponent tc = new(td);
@@ -217,14 +233,14 @@ namespace MVCore
             {
                 MeshVao = new()
                 {
-                    type = TYPES.LIGHT,
+                    type = SceneNodeType.LIGHT,
                     vao = new Primitives.LineSegment(n.Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO(),
                     MetaData = new()
                     {
                         BatchCount = 2
                     },
                 },
-                Material = Common.RenderState.activeResMgr.GLmaterials["lightMat"]
+                Material = Common.RenderState.engineRef.GetMaterialByName("lightMat")
             };
             n.AddComponent<MeshComponent>(mc);
 

@@ -34,24 +34,24 @@ namespace MVCore
 
         private double Time = 0.0;
         private double InterpolationCoeff = 1.0f;
-        private TransformComponent actor = null;
-
-        public TransformController(TransformComponent act)
+        private TransformData actorData = null;
+        
+        public TransformController(TransformData data)
         {
-            actor = act;
+            actorData = data;
             //Init States
             
-            PrevPosition = act.Data.localTranslation;
-            PrevRotation = act.Data.localRotation;
-            PrevScale = act.Data.localScale;
+            PrevPosition = actorData.localTranslation;
+            PrevRotation = actorData.localRotation;
+            PrevScale = actorData.localScale;
 
-            NextPosition = act.Data.localTranslation;
-            NextRotation = act.Data.localRotation;
-            NextScale = act.Data.localScale;
+            NextPosition = actorData.localTranslation;
+            NextRotation = actorData.localRotation;
+            NextScale = actorData.localScale;
 
-            LastPosition = act.Data.localTranslation;
-            LastRotation = act.Data.localRotation;
-            LastScale = act.Data.localScale;
+            LastPosition = actorData.localTranslation;
+            LastRotation = actorData.localRotation;
+            LastScale = actorData.localScale;
         }
 
         public void AddFutureState(Vector3 dp, Quaternion dr, Vector3 ds)
@@ -118,12 +118,12 @@ namespace MVCore
 
         private void ApplyStateToActor()
         {
-            if (actor != null)
+            if (actorData != null)
             {
-                actor.Data.localTranslation = Position;
-                actor.Data.localRotation = Rotation;
-                actor.Data.localScale = Scale;
-                actor.Data.RecalculateTransformMatrices();
+                actorData.localTranslation = Position;
+                actorData.localRotation = Rotation;
+                actorData.localScale = Scale;
+                actorData.RecalculateTransformMatrices();
             }
         }
     }

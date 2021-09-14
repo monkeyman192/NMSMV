@@ -9,7 +9,7 @@ namespace ImGuiHelper
 {
     class ImGuiObjectViewer
     {
-        private Entity _model;
+        private SceneGraphNode _model;
         
         //Imgui variables to reference 
         private int current_material_sampler = 0;
@@ -19,7 +19,7 @@ namespace ImGuiHelper
         
         }
 
-        public void SetModel(Entity m)
+        public void SetModel(SceneGraphNode m)
         {
             if (m == null)
                 return;
@@ -37,14 +37,14 @@ namespace ImGuiHelper
             {
                 switch (_model.Type)
                 {
-                    case TYPES.MODEL:
-                    case TYPES.LOCATOR:
+                    case SceneNodeType.MODEL:
+                    case SceneNodeType.LOCATOR:
                         DrawLocator();
                         break;
-                    case TYPES.MESH:
+                    case SceneNodeType.MESH:
                         DrawMesh();
                         break;
-                    case TYPES.LIGHT:
+                    case SceneNodeType.LIGHT:
                         DrawLight();
                         break;
                     default:

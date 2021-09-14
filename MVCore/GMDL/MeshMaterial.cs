@@ -74,11 +74,10 @@ namespace MVCore
         _F64_,
     }
     
-    public class MeshMaterial : IDisposable
+    public class MeshMaterial : Entity
     {
         public string Name = "";
         public string Class = "";
-        private bool disposed = false;
         public bool proc = false;
         public string name_key = "";
         public TextureManager texMgr;
@@ -111,13 +110,13 @@ namespace MVCore
             MaterialFlagEnum._F55_MULTITEXTURE
         };
 
-        public string Type;
         public List<Uniform> ActiveUniforms = new();
 
         public MeshMaterial()
         {
             Name = "NULL";
             Class = "NULL";
+            Type = EntityType.Material;
             
             //Clear material flags
             for (int i = 0; i < 64; i++)
@@ -227,13 +226,7 @@ namespace MVCore
         }
 
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (disposed)
                 return;
@@ -291,17 +284,19 @@ namespace MVCore
                     includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
             }
 
-            GLSLShaderConfig shader = GLShaderHelper.compileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl", null, null, null,
-                includes, SHADER_TYPE.MATERIAL_SHADER, mode);
+            GLSLShaderSource vs = RenderState.engineRef.GetShaderSourceByFilePath("Shaders/Simple_VS.glsl");
+            GLSLShaderSource fs = RenderState.engineRef.GetShaderSourceByFilePath("Shaders/Simple_FS.glsl");
+            
+            GLSLShaderConfig shader = GLShaderHelper.compileShader(vs, fs, null, null, null,
+                new(), includes, SHADER_TYPE.MATERIAL_SHADER, mode);
             
             //Attach UBO binding Points
             GLShaderHelper.attachUBOToShaderBindingPoint(shader, "_COMMON_PER_FRAME", 0);
             GLShaderHelper.attachSSBOToShaderBindingPoint(shader, "_COMMON_PER_MESH", 1);
 
-
             //Save shader to the resource Manager
             mat.Shader = shader;
-            RenderState.activeResMgr.ShaderMap[shader.shaderHash] = shader;
+            RenderState.activeResMgr.ShaderMap[shader.Hash] = shader;
             RenderState.activeResMgr.ShaderMaterialMap[shader] = new();
             RenderState.activeResMgr.ShaderMaterialMap[shader].Add(mat);
             

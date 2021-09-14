@@ -259,7 +259,8 @@ namespace MVCore.Systems
             }
             
             //Add default light mesh
-            mc = resMgr.GLlights[0].GetComponent<MeshComponent>() as MeshComponent;
+            var light = engineRef.GetSceneNodeByNameType(SceneNodeType.LIGHT, "Default Light");
+            mc = light.GetComponent<MeshComponent>() as MeshComponent;
             process_model(mc);
             
             IdentifyActiveShaders();
@@ -274,24 +275,24 @@ namespace MVCore.Systems
             //Explicitly handle locator, scenes and collision meshes
             switch (m.MeshVao.type)
             {
-                case (TYPES.MODEL):
-                case (TYPES.LOCATOR):
-                case (TYPES.GIZMO):
+                case (SceneNodeType.MODEL):
+                case (SceneNodeType.LOCATOR):
+                case (SceneNodeType.GIZMO):
                     {
                         if (!locatorMeshList.Contains(m.MeshVao))
                             locatorMeshList.Add(m.MeshVao);
                         break;
                     }
-                case (TYPES.COLLISION):
+                case (SceneNodeType.COLLISION):
                     collisionMeshList.Add(m.MeshVao);
                     break;
-                case (TYPES.JOINT):
+                case (SceneNodeType.JOINT):
                     jointMeshList.Add(m.MeshVao);
                     break;
-                case (TYPES.LIGHT):
+                case (SceneNodeType.LIGHT):
                     lightMeshList.Add(m.MeshVao);
                     break;
-                case (TYPES.LIGHTVOLUME):
+                case (SceneNodeType.LIGHTVOLUME):
                     {
                         if (!lightVolumeMeshList.Contains(m.MeshVao))
                             lightVolumeMeshList.Add(m.MeshVao);
@@ -404,7 +405,7 @@ namespace MVCore.Systems
             cpfu.cameraDirection = RenderState.activeCam.Front;
             cpfu.cameraNearPlane = RenderState.activeCam.zNear;
             cpfu.cameraFarPlane = RenderState.activeCam.zFar;
-            cpfu.light_number = Math.Min(32, resMgr.GLlights.Count);
+            cpfu.light_number = Math.Min(32, engineRef.GetLightCount());
             cpfu.gfTime = (float) gfTime;
             cpfu.MSAA_SAMPLES = gbuf.msaa_samples;
 
@@ -413,12 +414,14 @@ namespace MVCore.Systems
             byte[] light_buffer = new byte[size];
             
             //Upload light information
-            for (int i = 0; i < Math.Min(32, resMgr.GLlights.Count); i++)
+            List<Entity> lights = engineRef.GetEntityTypeList(EntityType.SceneNodeLight);
+            for (int i = 0; i < Math.Min(32, cpfu.light_number); i++)
             {
+                SceneGraphNode l = lights[i] as SceneGraphNode;
+                Callbacks.Assert(l != null,
+                    "A non scenegraphnode object made it to the list. THis should not happen");
+                
                 int offset = (GLLight.SizeInBytes / 4) * i;
-
-                SceneGraphNode l = resMgr.GLlights[i];
-
                 LightComponent lc = l.GetComponent<LightComponent>() as LightComponent;
 
                 /* NEW WAY TESTING
@@ -484,7 +487,7 @@ namespace MVCore.Systems
             if (m.skinned)
                 m.uploadSkinningData();
 
-            if (m.type == TYPES.LIGHTVOLUME)
+            if (m.type == SceneNodeType.LIGHTVOLUME)
             {
                 ((GLInstancedLightMesh) m).uploadData();
             }
@@ -533,13 +536,17 @@ namespace MVCore.Systems
 
         private void sortLights()
         {
-            SceneGraphNode mainLight = resMgr.GLlights[0];
+            List<Entity> lights = engineRef.GetEntityTypeList(EntityType.SceneNodeLight);
+            SceneGraphNode mainLight = (SceneGraphNode) lights[0];
 
-            resMgr.GLlights.RemoveAt(0);
+            lights.RemoveAt(0);
             
-            resMgr.GLlights.Sort(
-                delegate (SceneGraphNode l1, SceneGraphNode l2)
+            lights.Sort(
+                delegate (Entity e1, Entity e2)
                 {
+                    SceneGraphNode l1 = (SceneGraphNode) e1;
+                    SceneGraphNode l2 = (SceneGraphNode) e2;
+                    
                     float d1 = (TransformationSystem.GetEntityWorldPosition(l1).Xyz - RenderState.activeCam.Position).Length;
                     float d2 = (TransformationSystem.GetEntityWorldPosition(l2).Xyz - RenderState.activeCam.Position).Length;
 
@@ -547,7 +554,7 @@ namespace MVCore.Systems
                 }
             );
 
-            resMgr.GLlights.Insert(0, mainLight);
+            lights.Insert(0, mainLight);
         }
 
 
@@ -714,9 +721,9 @@ namespace MVCore.Systems
             //Collisions
             if (RenderState.settings.viewSettings.ViewCollisions)
             {
-                MeshMaterial mat = resMgr.GLmaterials["collisionMat"];
+                MeshMaterial mat = engineRef.GetMaterialByName("collisionMat");
                 GLSLShaderConfig shader = mat.Shader;
-                GL.UseProgram(shader.program_id); //Set Program
+                GL.UseProgram(shader.ProgramID); //Set Program
 
                 //Render static meshes
                 foreach (GLInstancedMesh m in collisionMeshList)
@@ -734,9 +741,9 @@ namespace MVCore.Systems
             //Lights
             if (RenderState.settings.viewSettings.ViewLights)
             {
-                MeshMaterial mat = resMgr.GLmaterials["lightMat"];
+                MeshMaterial mat = engineRef.GetMaterialByName("lightMat");
                 GLSLShaderConfig shader = mat.Shader;
-                GL.UseProgram(shader.program_id); //Set Program
+                GL.UseProgram(shader.ProgramID); //Set Program
 
                 //Render static meshes
                 foreach (GLInstancedMesh m in lightMeshList)
@@ -754,9 +761,9 @@ namespace MVCore.Systems
             //Light Volumes
             if (RenderState.settings.viewSettings.ViewLightVolumes)
             {
-                MeshMaterial mat = resMgr.GLmaterials["lightMat"];
+                MeshMaterial mat = engineRef.GetMaterialByName("lightMat");
                 GLSLShaderConfig shader = mat.Shader;
-                GL.UseProgram(shader.program_id); //Set Program
+                GL.UseProgram(shader.ProgramID); //Set Program
 
                 //Render static meshes
                 foreach (GLInstancedMesh m in lightVolumeMeshList)
@@ -774,10 +781,10 @@ namespace MVCore.Systems
             //Joints
             if (RenderState.settings.viewSettings.ViewJoints)
             {
-                MeshMaterial mat = resMgr.GLmaterials["jointMat"];
+                MeshMaterial mat = engineRef.GetMaterialByName("jointMat");
                 GLSLShaderConfig shader = mat.Shader;
 
-                GL.UseProgram(shader.program_id); //Set Program
+                GL.UseProgram(shader.ProgramID); //Set Program
 
                 //Render static meshes
                 foreach (GLInstancedMesh m in jointMeshList)
@@ -797,11 +804,11 @@ namespace MVCore.Systems
             //Locators
             if (RenderState.settings.viewSettings.ViewLocators)
             {
-                MeshMaterial mat = resMgr.GLmaterials["crossMat"];
+                MeshMaterial mat = engineRef.GetMaterialByName("crossMat");
                 GLSLShaderConfig shader = mat.Shader;
                 //GLSLShaderConfig shader = RenderState.activeResMgr.GLDefaultShaderMap[mat.shaderHash];
 
-                GL.UseProgram(shader.program_id); //Set Program
+                GL.UseProgram(shader.ProgramID); //Set Program
 
                 //Render static meshes
                 foreach (GLInstancedMesh m in locatorMeshList)
@@ -826,7 +833,7 @@ namespace MVCore.Systems
             
             foreach (GLSLShaderConfig shader in resMgr.GLDeferredShaders)
             {
-                GL.UseProgram(shader.program_id); //Set Program
+                GL.UseProgram(shader.ProgramID); //Set Program
 
                 foreach (MeshMaterial mat in resMgr.ShaderMaterialMap[shader])
                 {
@@ -911,7 +918,7 @@ namespace MVCore.Systems
             
             foreach (GLSLShaderConfig shader in RenderState.activeResMgr.GLDeferredDecalShaders)
             {
-                GL.UseProgram(shader.program_id);
+                GL.UseProgram(shader.ProgramID);
                 //Upload depth texture to the shader
 
                 //Bind Depth Buffer
@@ -966,7 +973,7 @@ namespace MVCore.Systems
 
             foreach (GLSLShaderConfig shader in resMgr.GLForwardTransparentShaders)
             {
-                GL.UseProgram(shader.program_id); //Set Program
+                GL.UseProgram(shader.ProgramID); //Set Program
 
                 foreach (MeshMaterial mat in resMgr.ShaderMaterialMap[shader])
                 {
@@ -1097,9 +1104,10 @@ namespace MVCore.Systems
 
         private void render_lights()
         {
-            for (int i = 0; i < resMgr.GLlights.Count; i++)
+            List<Entity> lights = engineRef.GetEntityTypeList(EntityType.SceneNodeLight);
+            for (int i = 0; i < lights.Count; i++)
             {
-                SceneGraphNode l = resMgr.GLlights[i];
+                SceneGraphNode l = (SceneGraphNode) lights[i];
 
                 //Fetch MeshComponent
                 MeshComponent mc = l.GetComponent<MeshComponent>() as MeshComponent;
@@ -1145,7 +1153,7 @@ namespace MVCore.Systems
         {
             int quad_vao = resMgr.GLPrimitiveVaos["default_renderquad"].vao_id;
 
-            GL.UseProgram(shaderConf.program_id);
+            GL.UseProgram(shaderConf.ProgramID);
             GL.BindVertexArray(quad_vao);
 
             //Upload samplers
@@ -1400,7 +1408,7 @@ namespace MVCore.Systems
 
             GLInstancedLightMesh mesh = resMgr.GLPrimitiveMeshes["default_light_sphere"] as GLInstancedLightMesh;
 
-            GL.UseProgram(shader_conf.program_id);
+            GL.UseProgram(shader_conf.ProgramID);
 
             //Upload samplers
             string[] sampler_names = new string[] { "albedoTex", "depthTex", "normalTex", "parameterTex" };

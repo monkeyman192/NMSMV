@@ -30,7 +30,6 @@
 
   <ItemGroup>
     <PackageReference Include="AssimpNet" Version="4.1.0" />
-    <PackageReference Include="ImGui.NET" Version="1.78.0" />
     <PackageReference Include="MathNet.Numerics" Version="4.15.0" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -42,6 +41,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="ImGui.NET, Version=1.82.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\ImGui.NET\bin\Debug\ImGui.NET\net5.0\ImGui.NET.dll</HintPath>
+    </Reference>
     <Reference Include="libMBIN">
       <HintPath>..\lib\libMBIN.dll</HintPath>
     </Reference>
