@@ -49,11 +49,9 @@ namespace MVCore
             switch (tr.type)
             {
                 case THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES:
-                    string filepath = (string) tr.arguments[0];
-                    string gameDir = (string) tr.arguments[1];
-                    ResourceManager resMgr = (ResourceManager) tr.arguments[2];
+                    string gameDir = (string) tr.arguments[0];
                     Common.Callbacks.Log("* Issuing PAK Loading Work Thread", Common.LogVerbosityLevel.INFO);
-                    t = new Thread(() => Import.NMS.Util.loadNMSArchives(filepath, gameDir, ref resMgr, ref tk.thread_request.response));
+                    t = new Thread(() => Import.NMS.FileUtils.loadNMSArchives(gameDir, ref tk.thread_request.response));
                     break;
                 default:
                     Console.WriteLine("");

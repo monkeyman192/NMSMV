@@ -25,7 +25,7 @@ namespace MVCore
     }
     public class SceneGraphNode : Entity
     {
-        public SceneNodeType Type = SceneNodeType.UNKNOWN;
+        public new SceneNodeType Type = SceneNodeType.UNKNOWN;
         public bool IsSelected = false;
         public string Name = "";
         public bool IsRenderable = true;
@@ -36,13 +36,16 @@ namespace MVCore
         public List<SceneGraphNode> Children = new();
         
 
-        public SceneGraphNode(SceneNodeType type)
+        public SceneGraphNode(SceneNodeType type) : base(EntityType.SceneNode)
         {
             Type = type;
             switch (type)
             {
                 case SceneNodeType.MESH:
                     base.Type = EntityType.SceneNodeMesh;
+                    break;
+                case SceneNodeType.MODEL:
+                    base.Type = EntityType.SceneNodeModel;
                     break;
                 case SceneNodeType.JOINT:
                     base.Type = EntityType.SceneNodeJoint;
@@ -145,7 +148,7 @@ namespace MVCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
+                MeshVao = Common.RenderState.engineRef.resourceMgmtSys.GLPrimitiveMeshes["default_cross"],
                 Material = Common.RenderState.engineRef.GetMaterialByName("crossMat")
             };
             
@@ -176,7 +179,7 @@ namespace MVCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
+                MeshVao = Common.RenderState.engineRef.resourceMgmtSys.GLPrimitiveMeshes["default_cross"],
                 Material = Common.RenderState.engineRef.GetMaterialByName("crossMat")
             };
             

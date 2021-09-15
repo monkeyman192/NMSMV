@@ -29,7 +29,7 @@ namespace ImGuiHelper
                             new System.Numerics.Vector2(ImGui.GetWindowSize().X, 250),
                             true))
             {
-                foreach (var line in RenderState.activeResMgr.NMSSceneFilesList)
+                foreach (var line in MVCore.Import.NMS.FileUtils.NMSSceneFilesList)
                 {
                     if (_filter.PassFilter(line))
                     {

@@ -5,8 +5,8 @@
 
 
 //Includes
-#include "/common.glsl"
-#include "/common_structs.glsl"
+#include "common.glsl"
+#include "common_structs.glsl"
 
 //TODO: Do some queries internally and figure out the exact locations of the uniforms
 uniform CommonPerFrameSamplers mpCommonPerFrameSamplers;

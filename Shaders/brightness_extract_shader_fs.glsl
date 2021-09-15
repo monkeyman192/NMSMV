@@ -5,7 +5,7 @@
 
 //Extract brightness based on hardwired threshold
 
-#include "/common.glsl"
+#include "common.glsl"
 
 //Diffuse Textures
 uniform sampler2D inTex;

@@ -4,9 +4,9 @@
  */
  
 //Includes
-#include "/common.glsl"
-#include "/common_structs.glsl"
-#include "/common_lighting.glsl"
+#include "common.glsl"
+#include "common_structs.glsl"
+#include "common_lighting.glsl"
 
 
 //Diffuse Textures

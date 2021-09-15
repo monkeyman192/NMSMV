@@ -6,7 +6,7 @@ namespace MVCore
     {
         public string Name;
         public Vector4 Values;
-        public int ShaderLoc = -1;
+        public int ShaderLocation = -1;
         
         public Uniform()
         {

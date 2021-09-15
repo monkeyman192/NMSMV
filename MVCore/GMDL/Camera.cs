@@ -68,7 +68,7 @@ namespace MVCore
         public GLVao vao;
         public int program;
         
-        public Camera(int angle, int program, int mode, bool cull)
+        public Camera(int angle, int program, int mode, bool cull) : base(EntityType.Camera)
         {
             //Set fov on init
             fov = angle;
@@ -275,6 +275,7 @@ namespace MVCore
             //extFrustum.CalculateFrustum(projMat, lookMat); //Old Method
             extFrustum.CalculateFrustum(viewMat); // New Method
             return;
+            /*
             Matrix4 mat = viewMat;
             mat.Transpose();
             //Matrix4 mat = proj;
@@ -300,7 +301,7 @@ namespace MVCore
                 frPlanes[i].Z /= l;
                 frPlanes[i].W /= l;
             }
-
+            */
         }
 
         public bool frustum_occlude(Vector3 AABBMIN, Vector3 AABBMAX, Matrix4 transform)

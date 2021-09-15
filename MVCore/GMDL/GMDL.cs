@@ -452,39 +452,6 @@ namespace MVCore
         }
     }
 
-
-    
-
-    
-    
-    public class MyTextureUnit
-    {
-        public TextureUnit texUnit;
-
-        public static Dictionary<string, TextureUnit> MapTextureUnit = new() {
-            { "mpCustomPerMaterial.gDiffuseMap" , TextureUnit.Texture0 },
-            { "mpCustomPerMaterial.gMasksMap" ,   TextureUnit.Texture1 },
-            { "mpCustomPerMaterial.gNormalMap" ,  TextureUnit.Texture2 },
-            { "mpCustomPerMaterial.gDiffuse2Map" , TextureUnit.Texture3 },
-            { "mpCustomPerMaterial.gDetailDiffuseMap", TextureUnit.Texture4},
-            { "mpCustomPerMaterial.gDetailNormalMap", TextureUnit.Texture5}
-        };
-
-        public static Dictionary<string, int> MapTexUnitToSampler = new() {
-            { "mpCustomPerMaterial.gDiffuseMap" , 0 },
-            { "mpCustomPerMaterial.gMasksMap" ,   1 },
-            { "mpCustomPerMaterial.gNormalMap" ,  2 },
-            { "mpCustomPerMaterial.gDiffuse2Map" , 3 },
-            { "mpCustomPerMaterial.gDetailDiffuseMap", 4},
-            { "mpCustomPerMaterial.gDetailNormalMap", 5}
-        };
-
-        public MyTextureUnit(string sampler_name)
-        {
-            texUnit = MapTextureUnit[sampler_name];
-        }
-    }
-
     public class PaletteOpt
     {
         public string PaletteName;

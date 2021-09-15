@@ -15,12 +15,13 @@ namespace MVCore.Systems
         ACTION_SYSTEM,
         PHYSICS_SYSTEM,
         REGISTRY_SYSTEM,
-        SCENE_MANAGEMENT_SYSTEM
+        SCENE_MANAGEMENT_SYSTEM,
+        RESOURCE_MANAGEMENT_SYSTEM
     }
 
     public abstract class EngineSystem
     {
-        protected Engine engineRef = null;
+        protected Engine EngineRef = null;
         private string systemName = "";
         private EngineSystemEnum systemType = EngineSystemEnum.NULL;
 
@@ -44,12 +45,12 @@ namespace MVCore.Systems
 
         public void SetEngine(Engine e)
         {
-            engineRef = e;
+            EngineRef = e;
         }
 
         public Engine GetEngine()
         {
-            return engineRef;
+            return EngineRef;
         }
         
         public virtual void OnRenderUpdate(double dt)

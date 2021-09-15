@@ -5,8 +5,8 @@
 
 
 
-#include "/common.glsl"
-#include "/common_structs.glsl"
+#include "common.glsl"
+#include "common_structs.glsl"
 
 
 #define FXAA_SPAN_MAX 16.0

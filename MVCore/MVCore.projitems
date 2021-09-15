@@ -27,6 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Core\SceneGraphNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Sampler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Uniform.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\FileUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\ModelProcGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Palettes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Util.cs" />
@@ -75,7 +76,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Importer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Octree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\RenderSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Common\ResourceManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Systems\ResourceManagementSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\ShadowRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\ThreadRequest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\WorkThreadDispacher.cs" />
@@ -83,7 +84,6 @@
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Common\" />
     <Folder Include="$(MSBuildThisFileDirectory)Export\" />
-    <Folder Include="$(MSBuildThisFileDirectory)Import\NMS\" />
     <Folder Include="$(MSBuildThisFileDirectory)Renderers\" />
     <Folder Include="$(MSBuildThisFileDirectory)Input\" />
   </ItemGroup>

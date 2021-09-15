@@ -6,8 +6,8 @@
 //Tone Mapping shader
 
 //Includes
-#include "/common.glsl"
-#include "/common_structs.glsl"
+#include "common.glsl"
+#include "common_structs.glsl"
 
 //Diffuse Textures
 uniform sampler2D inTex;

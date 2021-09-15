@@ -35,8 +35,9 @@ namespace ImGUI_SDL_ModelViewer
                                            VersionMinor.ToString()});
 #if DEBUG
             return ver + " [DEBUG]";
-#endif
+#else
             return ver;
+#endif
         }
 
         //Update Status strip
@@ -101,8 +102,8 @@ namespace ImGUI_SDL_ModelViewer
             Assembly _assembly = Assembly.GetExecutingAssembly();
             string[] resources = _assembly.GetManifestResourceNames();
 
-            for (int i=0;i<resources.Length;i++)
-                Console.WriteLine((resources[i]));
+            //for (int i=0;i<resources.Length;i++)
+            //    Console.WriteLine((resources[i]));
             
             try
             {

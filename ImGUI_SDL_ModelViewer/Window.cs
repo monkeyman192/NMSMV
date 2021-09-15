@@ -94,9 +94,9 @@ namespace ImGUI_SDL_ModelViewer
 
             //Initialize Engine backend
             engine = new Engine(this);
+            RenderState.engineRef = engine; //Set reference to engine [Should do before initialization]
+            
             engine.init(Size.X, Size.Y); //Initialize Engine
-            RenderState.engineRef = engine; //Set reference to engine
-            RenderState.activeResMgr = engine.resMgr; //Set program reference to the resMgr of the engine
             
             //Populate GLControl
             SceneGraphNode sceneRoot = SceneGraphNode.CreateScene("SCENE ROOT");
@@ -116,7 +116,7 @@ namespace ImGUI_SDL_ModelViewer
             scene.AddNode(test1);
             scene.AddNode(test2);
             
-            engine.sceneManagementSys.SetActiveScene(scene);
+            engine.sceneMgmtSys.SetActiveScene(scene);
 
             //Request tranform update for the added nodes
             engine.transformSys.RequestEntityUpdate(sceneRoot);
@@ -124,7 +124,7 @@ namespace ImGUI_SDL_ModelViewer
             engine.transformSys.RequestEntityUpdate(test2);
 
             //Add default scene to the resource manager
-            RenderState.activeResMgr.GLScenes["DEFAULT_SCENE"] = sceneRoot;
+            RenderState.engineRef.resourceMgmtSys.GLScenes["DEFAULT_SCENE"] = sceneRoot;
 
             //Force rootobject
             RenderState.rootObject = sceneRoot;
@@ -146,7 +146,6 @@ namespace ImGUI_SDL_ModelViewer
             ThreadRequest rq = new();
             rq.arguments.Add("NMSmanifest");
             rq.arguments.Add(Path.Combine(RenderState.settings.GameDir, "PCBANKS"));
-            rq.arguments.Add(RenderState.activeResMgr);
             rq.type = THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES;
             requestHandler.AddRequest(ref rq); 
             workDispatcher.sendRequest(ref rq); //Generate worker
@@ -386,7 +385,7 @@ namespace ImGUI_SDL_ModelViewer
             if (node.HasComponent<TriggerActionComponent>())
             {
                 //Find SceneGraphNode
-                SceneGraphNode n = engine.sceneManagementSys.FindEntitySceneGraphNode(node);
+                SceneGraphNode n = engine.sceneMgmtSys.FindEntitySceneGraphNode(node);
                 engine.actionSys.Add(n);
             }
             

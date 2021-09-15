@@ -16,7 +16,7 @@ namespace ImGuiHelper
         public void Draw()
         {
             //Items
-            List<MeshMaterial> materialList = RenderState.activeResMgr.MaterialList;
+            List<MeshMaterial> materialList = RenderState.engineRef.resourceMgmtSys.MaterialList;
             string[] items = new string[materialList.Count];
             for (int i = 0; i < items.Length; i++)
                 items[i] = materialList[i].Name == "" ? "Material_" + i : materialList[i].Name; 
@@ -102,7 +102,7 @@ namespace ImGuiHelper
         public void SetMaterial(MeshMaterial mat)
         {
             _ActiveMaterial = mat;
-            List<MeshMaterial> materialList = RenderState.activeResMgr.MaterialList;
+            List<MeshMaterial> materialList = RenderState.engineRef.resourceMgmtSys.MaterialList;
             _SelectedId = materialList.IndexOf(mat);
         }
     }

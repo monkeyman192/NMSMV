@@ -12,8 +12,9 @@ using System.Windows.Input;
 
 namespace MVCore
 {
-    public abstract class Model : Entity, INotifyPropertyChanged
+    public abstract class Model : INotifyPropertyChanged
     {
+        public int ID;
         public bool renderable; //Used to toggle visibility from the UI
         public bool active; //Used internally
         public bool occluded; //Used by the occluder
@@ -169,27 +170,8 @@ namespace MVCore
 
         //TODO: Consider converting all such attributes using properties
         
-        public void init(float[] trans)
-        {
-            TransformData td = (GetComponent<TransformComponent>() as TransformComponent).Data;
-
-            td.TransX = trans[0];
-            td.TransY = trans[1];
-            td.TransZ = trans[2];
-            td.RotX = trans[3];
-            td.RotY = trans[4];
-            td.RotZ = trans[5];
-            td.ScaleX = trans[6];
-            td.ScaleY = trans[7];
-            td.ScaleZ = trans[8];
-            
-            //Set Original positions
-            td.StoreAsOldTransform();
-
-        }
-
         //Default Constructor
-        protected Model()
+        protected Model() : base()
         {
             renderable = true;
             active = true;
@@ -202,10 +184,7 @@ namespace MVCore
             Common.RenderState.itemCounter++;
             procFlag = false;    //This is used to define procgen usage
 
-            //Component Init
-
-            //Add TransformComponent
-            TransformationSystem.AddTransformComponentToEntity(this);
+            
         }
 
         private void catchPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -216,8 +195,6 @@ namespace MVCore
 
         public virtual void copyFrom(Model input)
         {
-            CopyFrom(input);
-            
             renderable = input.renderable; //Override Renderability
             debuggable = input.debuggable;
             selected = 0;

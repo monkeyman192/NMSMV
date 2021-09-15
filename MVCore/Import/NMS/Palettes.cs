@@ -105,7 +105,7 @@ namespace MVCore.Import.NMS
             return newPal;
         }
 
-        public static Dictionary<string, Dictionary<string, Vector4>> createPalettefromBasePalettes(ref ResourceManager resMgr)
+        public static Dictionary<string, Dictionary<string, Vector4>> createPalettefromBasePalettes()
         {
             Dictionary<string, Dictionary<string, Vector4>> newPal;
             newPal = new Dictionary<string, Dictionary<string, Vector4>>();
@@ -113,8 +113,7 @@ namespace MVCore.Import.NMS
             GcPaletteList template;
             
             
-             template = Util.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN",
-                ref resMgr) as GcPaletteList;
+             template = FileUtils.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN") as GcPaletteList;
 
              if (template == null)
              {
@@ -233,9 +232,9 @@ namespace MVCore.Import.NMS
             return new Vector4(col.R, col.G, col.B, col.A);
         }
 
-        public static void set_palleteColors(ref ResourceManager resMgr)
+        public static void set_palleteColors()
         {
-            paletteSel = createPalettefromBasePalettes(ref resMgr);
+            paletteSel = createPalettefromBasePalettes();
         }
 
     }

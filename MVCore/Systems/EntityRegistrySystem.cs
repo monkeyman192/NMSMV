@@ -51,7 +51,7 @@ namespace MVCore.Systems
             
             e.ID = NextID++;
             EntityMap[e.ID] = e;
-
+            EntityTypeList[e.Type].Add(e);
             return true;
         }
 

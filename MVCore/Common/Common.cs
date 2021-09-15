@@ -52,8 +52,6 @@ namespace MVCore.Common
 
         //Keep the main camera global
         public static Camera activeCam;
-        //Active ResourceManager
-        public static ResourceManager activeResMgr;
         //RootObject
         public static SceneGraphNode rootObject;
         //Item Counter
@@ -248,7 +246,7 @@ namespace MVCore.Common
             
             //Game is available only on windows :(
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                settings.GameDir = Import.NMS.Util.getGameInstallationDir();
+                settings.GameDir = Import.NMS.FileUtils.getGameInstallationDir();
             else
                 settings.GameDir = "";
             settings.unpackdir = settings.GameDir;

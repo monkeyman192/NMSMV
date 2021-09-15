@@ -190,7 +190,7 @@ namespace MVCore
         }
         */
 
-        public static void parse_procTexture(ref List<TkProceduralTexture> parts, TkProceduralTextureList template, ref ResourceManager resMgr)
+        public static void parse_procTexture(ref List<TkProceduralTexture> parts, TkProceduralTextureList template)
         {
             for (int i = 0; i < template.Layers.Length; i++)
             {

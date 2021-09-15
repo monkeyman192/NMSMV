@@ -112,7 +112,7 @@ namespace MVCore
 
         public List<Uniform> ActiveUniforms = new();
 
-        public MeshMaterial()
+        public MeshMaterial() : base(EntityType.Material)
         {
             Name = "NULL";
             Class = "NULL";
@@ -124,43 +124,8 @@ namespace MVCore
         }
 
         
-        public void init()
+        public void CompileShader(string vspath, string fspath)
         {
-            //Workaround for Procedurally Generated Samplers
-            //I need to check if the diffuse sampler is procgen and then force the maps
-            //on the other samplers with the appropriate names
-
-            foreach (Sampler s in Samplers)
-            {
-                //Check if the first sampler is procgen
-                if (s.isProcGen)
-                {
-                    string name = s.Map;
-
-                    //Properly assemble the mask and the normal map names
-
-                    string[] split = name.Split('.');
-                    string pre_ext_name = "";
-                    for (int i = 0; i < split.Length - 1; i++)
-                        pre_ext_name += split[i] + '.';
-
-                    if (SamplerMap.ContainsKey("mpCustomPerMaterial.gMasksMap"))
-                    {
-                        string new_name = pre_ext_name + "MASKS.DDS";
-                        SamplerMap["mpCustomPerMaterial.gMasksMap"].Map = new_name;
-                        SamplerMap["mpCustomPerMaterial.gMasksMap"].Tex = RenderState.activeResMgr.texMgr.GetTexture(new_name);
-                    }
-
-                    if (SamplerMap.ContainsKey("mpCustomPerMaterial.gNormalMap"))
-                    {
-                        string new_name = pre_ext_name + "NORMAL.DDS";
-                        SamplerMap["mpCustomPerMaterial.gNormalMap"].Map = new_name;
-                        SamplerMap["mpCustomPerMaterial.gNormalMap"].Tex = RenderState.activeResMgr.texMgr.GetTexture(new_name);;
-                    }
-                    break;
-                }
-            }
-
             //Calculate material hash
             List<string> includes = new();
             for (int i = 0; i < Flags.Count; i++)
@@ -170,23 +135,32 @@ namespace MVCore
             }
 
             int hash  = GLShaderHelper.calculateShaderHash(includes);
+            GLSLShaderConfig shader = RenderState.engineRef.GetShaderByHash(hash);
 
-            if (!RenderState.activeResMgr.ShaderExistsForMaterial(hash))
+            if (shader == null)
             {
                 try
                 {
                     compileMaterialShader(this);
 
                     //Load Active Uniforms to Material
+
                     foreach (Uniform un in Uniforms)
                     {
-                        if (Shader.uniformLocations.ContainsKey("mpCustomPerMaterial." + un.Name))
+                        if (Shader.uniformLocations.ContainsKey(un.Name))
                         {
-                            un.ShaderLoc = Shader.uniformLocations["mpCustomPerMaterial." + un.Name];
+                            un.ShaderLocation = Shader.uniformLocations[un.Name];
                             ActiveUniforms.Add(un);
                         }
                     }
 
+                    foreach (Sampler s in Samplers)
+                    {
+                        if (Shader.uniformLocations.ContainsKey(s.Name))
+                        {
+                            s.ShaderLocation = Shader.uniformLocations[s.Name];
+                        }
+                    }
                 } catch (Exception e)
                 {
                     Callbacks.Log("Error during material shader compilation: " + e.Message, Common.LogVerbosityLevel.ERROR);
@@ -194,11 +168,8 @@ namespace MVCore
             }
             else
             {
-                Shader = RenderState.activeResMgr.ShaderMap[hash];
+                Shader = shader;
             }
-            
-            //TODO: I dont like that, maybe add an AddMaterial method in the resource manager to do that shit
-            RenderState.activeResMgr.MaterialMeshMap[this] = new();
         }
 
         //Wrapper to support uberflags
@@ -284,8 +255,16 @@ namespace MVCore
                     includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
             }
 
-            GLSLShaderSource vs = RenderState.engineRef.GetShaderSourceByFilePath("Shaders/Simple_VS.glsl");
-            GLSLShaderSource fs = RenderState.engineRef.GetShaderSourceByFilePath("Shaders/Simple_FS.glsl");
+            string vs_path = "Shaders/Simple_VS.glsl";
+            vs_path = System.IO.Path.GetFullPath(vs_path);
+            vs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, vs_path);
+
+            string fs_path = "Shaders/Simple_FS.glsl";
+            fs_path = System.IO.Path.GetFullPath(fs_path);
+            fs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, fs_path);
+
+            GLSLShaderSource vs = RenderState.engineRef.GetShaderSourceByFilePath(vs_path);
+            GLSLShaderSource fs = RenderState.engineRef.GetShaderSourceByFilePath(fs_path);
             
             GLSLShaderConfig shader = GLShaderHelper.compileShader(vs, fs, null, null, null,
                 new(), includes, SHADER_TYPE.MATERIAL_SHADER, mode);
@@ -296,10 +275,6 @@ namespace MVCore
 
             //Save shader to the resource Manager
             mat.Shader = shader;
-            RenderState.activeResMgr.ShaderMap[shader.Hash] = shader;
-            RenderState.activeResMgr.ShaderMaterialMap[shader] = new();
-            RenderState.activeResMgr.ShaderMaterialMap[shader].Add(mat);
-            
         }
 
     }

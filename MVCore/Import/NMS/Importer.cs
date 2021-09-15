@@ -128,7 +128,7 @@ namespace MVCore.Import.NMS
         {
             //Load template
             //Try to use libMBIN to load the Material files
-            TkMaterialData template = Util.LoadNMSTemplate(path, ref Common.RenderState.activeResMgr) as TkMaterialData;
+            TkMaterialData template = FileUtils.LoadNMSTemplate(path) as TkMaterialData;
 #if DEBUG
             //Save NMSTemplate to exml
             template.WriteToExml("Temp\\" + template.Name + ".exml");
@@ -138,16 +138,18 @@ namespace MVCore.Import.NMS
             MeshMaterial mat = CreateMaterialFromStruct(template, input_texMgr);
             
             mat.texMgr = input_texMgr;
-            mat.init();
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
             return mat;
         }
 
         public static Sampler CreateSamplerFromStruct(TkMaterialSampler ms, TextureManager texMgr)
         {
+            //TODO fill sampler data from the tkmaterialsampler
             Sampler sam = new()
             {
                 
             };
+
             
             Util.PrepareSamplerTextures(sam, texMgr);
             return sam;
@@ -620,7 +622,7 @@ namespace MVCore.Import.NMS
         
         public static SceneGraphNode ImportScene(string path)
         {
-            TkSceneNodeData template = (TkSceneNodeData) Util.LoadNMSTemplate(path, ref Common.RenderState.activeResMgr);
+            TkSceneNodeData template = (TkSceneNodeData)FileUtils.LoadNMSTemplate(path);
             
             Console.WriteLine("Loading Objects from MBINFile");
 
@@ -633,21 +635,21 @@ namespace MVCore.Import.NMS
             
             //Get Geometry File
             //Parse geometry once
-            string geomfile = Util.parseNMSTemplateAttrib(template.Attributes, "GEOMETRY");
-            int num_lods = int.Parse(Util.parseNMSTemplateAttrib(template.Attributes, "NUMLODS"));
+            string geomfile = FileUtils.parseNMSTemplateAttrib(template.Attributes, "GEOMETRY");
+            int num_lods = int.Parse(FileUtils.parseNMSTemplateAttrib(template.Attributes, "NUMLODS"));
 
             GeomObject gobject;
-            if (RenderState.activeResMgr.GLgeoms.ContainsKey(geomfile))
+            if (RenderState.engineRef.resourceMgmtSys.GLgeoms.ContainsKey(geomfile))
             {
                 //Load from dict
-                gobject = RenderState.activeResMgr.GLgeoms[geomfile];
+                gobject = RenderState.engineRef.resourceMgmtSys.GLgeoms[geomfile];
 
             } else
             {
 
 #if DEBUG
                 //Use libMBIN to decompile the file
-                TkGeometryData geomdata = (TkGeometryData) Util.LoadNMSTemplate(geomfile + ".PC", ref Common.RenderState.activeResMgr);
+                TkGeometryData geomdata = (TkGeometryData)FileUtils.LoadNMSTemplate(geomfile + ".PC");
                 //Save NMSTemplate to exml
                 string xmlstring = EXmlFile.WriteTemplate(geomdata);
                 File.WriteAllText("Temp\\temp_geom.exml", xmlstring);
@@ -656,7 +658,7 @@ namespace MVCore.Import.NMS
 
                 Stream fs, gfs;
                 
-                fs = Util.LoadNMSFileStream(geomfile + ".PC", ref RenderState.activeResMgr);
+                fs = FileUtils.LoadNMSFileStream(geomfile + ".PC");
 
                 //Try to fetch the geometry.data.mbin file in order to fetch the geometry streams
                 string gstreamfile = "";
@@ -665,7 +667,7 @@ namespace MVCore.Import.NMS
                     gstreamfile += split[i] + ".";
                 gstreamfile += "DATA.MBIN.PC";
 
-                gfs = Util.LoadNMSFileStream(gstreamfile, ref Common.RenderState.activeResMgr);
+                gfs = FileUtils.LoadNMSFileStream(gstreamfile);
 
                 //FileStream gffs = new FileStream("testfilegeom.mbin", FileMode.Create);
                 //fs.CopyTo(gffs);
@@ -685,7 +687,7 @@ namespace MVCore.Import.NMS
                 }
 
                 gobject = ImportGeometry(ref fs, ref gfs);
-                RenderState.activeResMgr.GLgeoms[geomfile] = gobject;
+                RenderState.engineRef.resourceMgmtSys.GLgeoms[geomfile] = gobject;
                 Callbacks.Log(string.Format("Geometry file {0} successfully parsed",
                     geomfile + ".PC"), Common.LogVerbosityLevel.INFO);
                 
@@ -700,7 +702,7 @@ namespace MVCore.Import.NMS
             SceneGraphNode root = CreateNodeFromTemplate(template, gobject, null, null);
             
             //Save scene path to resourcemanager
-            RenderState.activeResMgr.GLScenes[path] = root; //Use input path
+            RenderState.engineRef.resourceMgmtSys.GLScenes[path] = root; //Use input path
             
             return root;
         }
@@ -741,11 +743,11 @@ namespace MVCore.Import.NMS
             so.ParentScene = parentScene;
             
             //For now fetch only one attachment
-            string attachment = Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "ATTACHMENT");
+            string attachment = FileUtils.parseNMSTemplateAttrib(node.Attributes, "ATTACHMENT");
             TkAttachmentData attachment_data = null;
             if (attachment != "")
             {
-                attachment_data = Import.NMS.Util.LoadNMSTemplate(attachment, ref Common.RenderState.activeResMgr) as TkAttachmentData;
+                attachment_data = FileUtils.LoadNMSTemplate(attachment) as TkAttachmentData;
             }
 
             //Process Attachments
@@ -753,33 +755,33 @@ namespace MVCore.Import.NMS
 
             if (typeEnum == SceneNodeType.MESH)
             {
-                Common.Callbacks.Log(string.Format("Parsing Mesh {0}", node.Name), 
-                    Common.LogVerbosityLevel.INFO);
+                Callbacks.Log(string.Format("Parsing Mesh {0}", node.Name), 
+                    LogVerbosityLevel.INFO);
 
                 //Add MeshComponent
                 MeshComponent mc = new()
                 {
                     MetaData = new()
                     {
-                        BatchStartPhysics = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTPHYSI")),
-                        VertrStartPhysics = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTPHYSI")),
-                        VertrEndPhysics = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "VERTRENDPHYSICS")),
-                        BatchStartGraphics = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTGRAPH")),
-                        BatchCount = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "BATCHCOUNT")),
-                        VertrStartGraphics = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTGRAPH")),
-                        VertrEndGraphics = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "VERTRENDGRAPHIC")),
-                        FirstSkinMat = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "FIRSTSKINMAT")),
-                        LastSkinMat = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "LASTSKINMAT")),
-                        LODLevel = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
-                        BoundHullStart = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
-                        BoundHullEnd = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
-                        AABBMIN = new Vector3(MathUtils.FloatParse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
-                                          MathUtils.FloatParse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "AABBMINY")),
-                                          MathUtils.FloatParse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "AABBMINZ"))),
-                        AABBMAX = new Vector3(MathUtils.FloatParse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
-                                          MathUtils.FloatParse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
-                                          MathUtils.FloatParse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
-                        Hash = ulong.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "HASH"))
+                        BatchStartPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTPHYSI")),
+                        VertrStartPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTPHYSI")),
+                        VertrEndPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDPHYSICS")),
+                        BatchStartGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTGRAPH")),
+                        BatchCount = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHCOUNT")),
+                        VertrStartGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTGRAPH")),
+                        VertrEndGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDGRAPHIC")),
+                        FirstSkinMat = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "FIRSTSKINMAT")),
+                        LastSkinMat = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LASTSKINMAT")),
+                        LODLevel = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
+                        BoundHullStart = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
+                        BoundHullEnd = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
+                        AABBMIN = new Vector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
+                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINY")),
+                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINZ"))),
+                        AABBMAX = new Vector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
+                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
+                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
+                        Hash = ulong.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "HASH"))
                     }
     
                 };
@@ -807,7 +809,7 @@ namespace MVCore.Import.NMS
                 }
 
                 //Get Material Name
-                string matname = Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "MATERIAL");
+                string matname = FileUtils.parseNMSTemplateAttrib(node.Attributes, "MATERIAL");
 
                 //Search for the material
                 MeshMaterial mat = RenderState.engineRef.GetMaterialByName(matname);
@@ -890,7 +892,7 @@ namespace MVCore.Import.NMS
                 //Create MeshComponent
                 MeshComponent mc = new()
                 {
-                    MeshVao = Common.RenderState.activeResMgr.GLPrimitiveMeshes["default_cross"],
+                    MeshVao = RenderState.engineRef.resourceMgmtSys.GLPrimitiveMeshes["default_cross"],
                     Material = RenderState.engineRef.GetMaterialByName("crossMat")
                 };
                 
@@ -899,10 +901,10 @@ namespace MVCore.Import.NMS
                 //Create SceneComponent
                 SceneComponent sc = new()
                 {
-                    NumLods = int.Parse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
+                    NumLods = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
                 };
                 
-                sc.TexManager.SetMasterTexManager(Common.RenderState.activeResMgr.texMgr);
+                sc.TexManager.SetMasterTexManager(RenderState.engineRef.resourceMgmtSys.texMgr);
                 localTexMgr = sc.TexManager;
 
                 so.AddComponent<SceneComponent>(sc);
@@ -910,7 +912,7 @@ namespace MVCore.Import.NMS
                 //Fetch extra LOD attributes
                 for (int i = 1; i < sc.NumLods; i++)
                 {
-                    float attr_val = MathUtils.FloatParse(Import.NMS.Util.parseNMSTemplateAttrib(node.Attributes, "LODDIST" + i));
+                    float attr_val = MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LODDIST" + i));
                     sc.LODDistances.Add(attr_val);
                 }
 

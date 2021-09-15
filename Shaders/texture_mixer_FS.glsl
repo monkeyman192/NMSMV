@@ -18,7 +18,7 @@ uniform int baseLayerIndex;
 in vec2 uv0;
 in vec3 color;
 
-#include "/common.glsl"
+#include "common.glsl"
 
 out vec4 fragColor;
 

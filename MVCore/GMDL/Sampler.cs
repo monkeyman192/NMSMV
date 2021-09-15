@@ -16,8 +16,10 @@ namespace MVCore
         public bool IsSRGB = true;
         public bool UseCompression = false;
         public bool UseMipMaps = false;
-        public MyTextureUnit texUnit;
-        public bool isProcGen = false;
+        public TextureUnit texUnit;
+        public int SamplerID; // Shader sampler ID
+        public int ShaderLocation = -1;
+        public bool isProcGen = false; //TODO : to be removed once we are done with the stupid proc gen texture parsing
 
         //Override Properties
         public Sampler()

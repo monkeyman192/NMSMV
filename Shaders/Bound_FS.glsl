@@ -4,7 +4,7 @@
  */
 
 //Includes
-#include "/common.glsl"
+#include "common.glsl"
 
 /* Copies incoming fragment color without change. */
 uniform vec3 color;

@@ -5,7 +5,7 @@ using MVCore.Common;
 
 namespace MVCore
 {
-    public class TextureManager : IBaseResourceManager
+    public class TextureManager
     {
         public Dictionary<string, Texture> GLtextures = new();
         private TextureManager masterTexManager;

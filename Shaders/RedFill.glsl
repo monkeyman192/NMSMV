@@ -6,8 +6,8 @@
 /* Fills the incoming geometry with red color. Used for testing. */
 
 //Includes
-#include "/common.glsl"
-#include "/common_structs.glsl"
+#include "common.glsl"
+#include "common_structs.glsl"
 
 //Uniform Blocks
 layout (std140, binding=0) uniform _COMMON_PER_FRAME

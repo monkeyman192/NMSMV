@@ -35,7 +35,7 @@ namespace MVCore
             {
                 try
                 {
-                    fs = Import.NMS.Util.LoadNMSFileStream(path, ref RenderState.activeResMgr);
+                    fs = Import.NMS.FileUtils.LoadNMSFileStream(path);
                 }
                 catch (FileNotFoundException)
                 {
@@ -82,7 +82,7 @@ namespace MVCore
             BitmapData oTextureData = bmpTexture.LockBits(rctImageBounds, ImageLockMode.ReadOnly,
                                                             System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-            Console.WriteLine(GL.GetError());
+            //Console.WriteLine(GL.GetError());
             //Generate PBO
             //pboID = GL.GenBuffer();
             //GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pboID);
@@ -102,16 +102,13 @@ namespace MVCore
             GL.TexParameter(target, TextureParameterName.TextureMinFilter, (float) TextureMinFilter.Linear);
             GL.TexParameter(target, TextureParameterName.TextureMagFilter, (float) TextureMagFilter.Linear);
 
-            Console.WriteLine(GL.GetError());
-
-
+            
             bmpTexture.UnlockBits(oTextureData);
 
             //Cleanup
             bmpTexture = null;
             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0); //Unbind texture PBO
 
-            Console.WriteLine(GL.GetError());
         }
 
         private void textureInitDDS(byte[] imageData, string _name)

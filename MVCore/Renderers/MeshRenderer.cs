@@ -194,7 +194,7 @@ namespace MVCore
             
             //Upload Custom Per Material Uniforms
             foreach (Uniform un in material.ActiveUniforms)
-                GL.Uniform4(un.ShaderLoc, un.Values);
+                GL.Uniform4(un.ShaderLocation, un.Values);
             
             //BIND TEXTURES
             //Diffuse Texture
@@ -202,8 +202,8 @@ namespace MVCore
             {
                 if (shader.uniformLocations.ContainsKey(s.Name) && s.Map != "")
                 {
-                    GL.Uniform1(shader.uniformLocations[s.Name], MyTextureUnit.MapTexUnitToSampler[s.Name]);
-                    GL.ActiveTexture(s.texUnit.texUnit);
+                    GL.Uniform1(shader.uniformLocations[s.Name], s.SamplerID);
+                    GL.ActiveTexture(s.texUnit);
                     GL.BindTexture(s.Tex.target, s.Tex.texID);
                 }
             }

@@ -39,9 +39,9 @@ namespace MVCore
         public Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
 
 
-        public Entity()
+        public Entity(EntityType typ)
         {
-
+            Type = typ;
         }
 
         public bool HasComponent<T>()
@@ -83,7 +83,7 @@ namespace MVCore
 
         public Entity Clone()
         {
-            Entity n = new();
+            Entity n = new(this.Type);
             n.CopyFrom(this);
             
             return n;

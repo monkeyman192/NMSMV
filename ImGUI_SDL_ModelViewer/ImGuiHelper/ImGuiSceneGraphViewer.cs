@@ -11,7 +11,6 @@ namespace ImGuiHelper
     class ImGuiSceneGraphViewer
     {
         private SceneGraphNode _root = null;
-        private Dictionary<long, SceneGraphNode> ModelMap = new();
         private SceneGraphNode _selected = null;
         private SceneGraphNode _clicked = null;
         private bool showctxmenu = false;
@@ -24,22 +23,14 @@ namespace ImGuiHelper
                
         }
         
-        private void AddModelToMap(SceneGraphNode n)
-        {
-            if (!ModelMap.ContainsKey(n.ID))
-                ModelMap[n.ID] = n;
-        }
-        
         public void Traverse_Init(SceneGraphNode m)
         {
-            AddModelToMap(m);
             foreach (SceneGraphNode child in m.Children)
                 Traverse_Init(child);
         }
         
         public void Clear()
         {
-            ModelMap.Clear();
             _root = null;
             _selected = null;
             _clicked = null;
@@ -54,19 +45,6 @@ namespace ImGuiHelper
             Traverse_Init(root);
         }
 
-        public bool AddChild(Model m, Model child)
-        {
-            if (!ModelMap.ContainsKey(m.ID))
-                return false;
-
-            if (!ModelMap.ContainsKey(child.ID))
-                return false;
-
-            AddChild(ModelMap[m.ID], ModelMap[child.ID]);
-
-            return true;
-        }
-        
         public void Draw()
         {
             DrawNode(_root);

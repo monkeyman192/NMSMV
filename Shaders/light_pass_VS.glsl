@@ -4,8 +4,8 @@
  */
  
 //Imports
-#include "/common.glsl"
-#include "/common_structs.glsl"
+#include "common.glsl"
+#include "common_structs.glsl"
 
 //Mesh Attributes
 layout(location=0) in vec4 vPosition;

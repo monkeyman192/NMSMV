@@ -60,7 +60,9 @@ namespace GLSLHelper {
 
     public class GLSLShaderSource : Entity
     {
-        private List<GLSLShaderSource> _textParts = new();
+        public string Name = "";
+        private List<GLSLShaderSource> _dynamicTextParts = new();
+        private List<string> _staticTextParts = new();
         public string SourceFilePath = "";
         public string SourceText = "";
         private List<string> _Directives = new();
@@ -80,23 +82,32 @@ namespace GLSLHelper {
         //Static random generator used in temp file name generation
         private static readonly Random rand_gen = new(999991);
 
-        public GLSLShaderSource()
+        //Default shader versions
+        public const string version = "#version 450\n #extension GL_ARB_explicit_uniform_location : enable\n" +
+                                       "#extension GL_ARB_separate_shader_objects : enable\n" +
+                                       "#extension GL_ARB_texture_query_lod : enable\n" +
+                                       "#extension GL_ARB_gpu_shader5 : enable\n";
+
+        public GLSLShaderSource() : base(EntityType.ShaderSource)
         {
             SourceType = ShaderSourceType.Static;
         }
 
-        public GLSLShaderSource(string text)
+        public GLSLShaderSource(string text) : base(EntityType.ShaderSource)
         {
             SourceType = ShaderSourceType.Static;
             SourceText = text;
+            Name = "Shader_" + RenderState.engineRef.GetShaderSourceCount();
             //Automatically register to engine
             RenderState.engineRef.RegisterEntity(this);
         }
 
-        public GLSLShaderSource(string filepath, bool watchFile)
+        public GLSLShaderSource(string filepath, bool watchFile) : base(EntityType.ShaderSource)
         {
             SourceType = ShaderSourceType.Dynamic;
-            SourceFilePath = filepath;
+            
+            SourceFilePath = Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, filepath);
+            SourceText = File.ReadAllText(filepath);
             if (watchFile)
             {
                 addFileWatcher(SourceFilePath);
@@ -130,7 +141,7 @@ namespace GLSLHelper {
             shader_object_id = GL.CreateShader(type);
             
             //Compile Shader
-            GL.ShaderSource(shader_object_id, ResolvedText);
+            GL.ShaderSource(shader_object_id, version + "\n\n" + ResolvedText);
             
             //Get resolved shader text
             GL.GetShaderSource(shader_object_id, 32768, out int actual_shader_length, out string actual_shader_source);
@@ -156,9 +167,12 @@ namespace GLSLHelper {
         {
             if (!Processed)
                 Process();
-            
+
+            if (Resolved)
+                return;
+
             ResolvedText = "";
-            
+
             //Add Directives
             foreach (string dir in _Directives)
                 ResolvedText += "#define " + dir + '\n';
@@ -169,11 +183,17 @@ namespace GLSLHelper {
             }
             else
             {
-                for (int i = 0; i < _textParts.Count; i++)
+                int dynamicPartId = 0;
+                for (int i = 0; i < _staticTextParts.Count; i++)
                 {
-                    if (!_textParts[i].Resolved)
-                        _textParts[i].Resolve();
-                    ResolvedText += _textParts[i].ResolvedText;
+                    if (_staticTextParts[i] == "[FETCH_DYNAMIC]")
+                    {
+                        if (!_dynamicTextParts[dynamicPartId].Resolved)
+                            _dynamicTextParts[dynamicPartId].Resolve();
+                        ResolvedText += _dynamicTextParts[dynamicPartId].ResolvedText;
+                        dynamicPartId++;
+                    } else
+                        ResolvedText += _staticTextParts[i];
                 }    
             }
 
@@ -182,15 +202,18 @@ namespace GLSLHelper {
         
         public void Process()
         {
-            _textParts.Clear();
+            _dynamicTextParts.Clear();
+            _staticTextParts.Clear();
             Resolved = false;
-            
+
             if (SourceType == ShaderSourceType.Static)
+            {
+                Processed = true;
                 return;
-            else //Dynamic Sources
+            } else //Dynamic Sources
             {
                 //Parse source file
-                StreamReader sr = new StreamReader(SourceFilePath);
+                StringReader sr = new StringReader(SourceText);
                 string dirpath = Path.GetDirectoryName(SourceFilePath);
                 string line;
                 string[] split;
@@ -206,7 +229,10 @@ namespace GLSLHelper {
                     {
                         //Save static part
                         if (staticpart != "")
-                            _textParts.Add(new(staticpart));
+                        {
+                            _staticTextParts.Add(staticpart);
+                            staticpart = "";
+                        }
                             
                         split = line.Split(' ');
 
@@ -223,10 +249,10 @@ namespace GLSLHelper {
                         {
                             ss = new GLSLShaderSource(npath, true);
                         }
-
                         if (!ss.Processed)
                             ss.Process();
-                        _textParts.Add(ss);
+                        _dynamicTextParts.Add(ss);
+                        _staticTextParts.Add("[FETCH_DYNAMIC]");
                     }
                     else
                     {
@@ -238,9 +264,11 @@ namespace GLSLHelper {
                 //Save last static part
                 if (staticpart != "")
                 {
-                    _textParts.Add(new GLSLShaderSource(staticpart));
+                    _staticTextParts.Add(staticpart);
                 }
             }
+
+            Processed = true;
         }
 
         private void file_changed(object sender, FileSystemEventArgs e)
@@ -248,6 +276,21 @@ namespace GLSLHelper {
             FileSystemWatcher fw = (FileSystemWatcher) sender;
             string path = Path.Combine(fw.Path, fw.Filter);
             Console.WriteLine("Reloading {0}", path);
+
+            while (true)
+            {
+                try
+                {
+                    FileStream fileStream = File.Open(SourceFilePath,
+                        FileMode.Open, FileAccess.Read, FileShare.None);
+                    break;
+                } catch
+                {
+                    continue;
+                }
+            }
+
+            SourceText = File.ReadAllText(SourceFilePath);
             
             Process();
             Resolve();
@@ -343,7 +386,7 @@ namespace GLSLHelper {
 
 
 
-    public class GLSLShaderConfig
+    public class GLSLShaderConfig : Entity
     {
         public string Name = "";
 
@@ -372,14 +415,8 @@ namespace GLSLHelper {
         //Keep active uniforms
         public Dictionary<string, int> uniformLocations = new Dictionary<string, int>();
 
-        //Default shader versions
-        public const string version = "#version 450\n #extension GL_ARB_explicit_uniform_location : enable\n" +
-                                       "#extension GL_ARB_separate_shader_objects : enable\n"+
-                                       "#extension GL_ARB_texture_query_lod : enable\n"+
-                                       "#extension GL_ARB_gpu_shader5 : enable\n";
-        
         public GLSLShaderConfig(SHADER_TYPE type, GLSLShaderSource vvs, 
-            GLSLShaderSource ffs, GLSLShaderSource ggs, GLSLShaderSource ttcs, GLSLShaderSource ttes, List<string> directives)
+            GLSLShaderSource ffs, GLSLShaderSource ggs, GLSLShaderSource ttcs, GLSLShaderSource ttes, List<string> directives) : base(EntityType.Shader)
         {
             shader_type = type; //Set my custom shader type for recognition
             

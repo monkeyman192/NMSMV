@@ -132,9 +132,10 @@ namespace MVCore.Text
 
             //Generate Sampler
             Sampler sampl = new Sampler();
+            //TODO: Remove NMS stuff from here
             sampl.Name = "mpCustomPerMaterial.gDiffuseMap";
-            sampl.texUnit = new MyTextureUnit(sampl.Name);
-            sampl.texUnit.texUnit = TextureUnit.Texture0;
+            sampl.SamplerID = 0;
+            sampl.texUnit = TextureUnit.Texture0;
             sampl.Tex = tex;
 
             //Generate Font Material
@@ -178,8 +179,8 @@ namespace MVCore.Text
             //Generate Sampler
             Sampler sampl = new Sampler();
             sampl.Name = "mpCustomPerMaterial.gDiffuseMap";
-            sampl.texUnit = new MyTextureUnit(sampl.Name);
-            sampl.texUnit.texUnit = TextureUnit.Texture0;
+            sampl.SamplerID = 0;
+            sampl.texUnit = TextureUnit.Texture0;
             sampl.Tex = tex;
 
             //Generate Font Material

@@ -212,17 +212,16 @@ namespace MVCore
 
         private void FetchAnimMetaData()
         {
-            if (Common.RenderState.activeResMgr.Animations.ContainsKey(Filename))
+            if (Common.RenderState.engineRef.resourceMgmtSys.Animations.ContainsKey(Filename))
             {
-                animMeta = Common.RenderState.activeResMgr.Animations[Filename];
+                animMeta = Common.RenderState.engineRef.resourceMgmtSys.Animations[Filename];
             }
             else
             {
-                TkAnimMetadata amd = Import.NMS.Util.LoadNMSTemplate(Filename,
-                    ref Common.RenderState.activeResMgr) as TkAnimMetadata;
+                TkAnimMetadata amd = Import.NMS.FileUtils.LoadNMSTemplate(Filename) as TkAnimMetadata;
                 animMeta = new AnimMetadata(amd);
                 animMeta.load(); //Load data as well
-                Common.RenderState.activeResMgr.Animations[Filename] = animMeta;
+                Common.RenderState.engineRef.resourceMgmtSys.Animations[Filename] = animMeta;
             }
             NotifyPropertyChanged("FrameCount");
         }
@@ -302,7 +301,7 @@ namespace MVCore
 
         //TODO: Use this new definition for animation blending
         //public void applyNodeTransform(model m, string node, out Quaternion q, out Vector3 p)
-        public void ApplyNodeTransform(Model m, string node)
+        public void ApplyNodeTransform(TransformController tc, string node)
         {
             //Fetch prevFrame stuff
             Quaternion prev_q = animMeta.anim_rotations[node][prevFrameIndex];
@@ -320,9 +319,7 @@ namespace MVCore
             Vector3 s = next_s * LERP_coeff + prev_s * (1.0f - LERP_coeff);
 
             //Convert transforms
-            TransformationSystem.SetEntityRotation(m, q);
-            TransformationSystem.SetEntityLocation(m, p);
-            TransformationSystem.SetEntityScale(m, s);
+            tc.AddFutureState(p, q, s);
         }
 
         public void GetCurrentTransform(ref Vector3 p, ref Vector3 s, ref Quaternion q, string node)

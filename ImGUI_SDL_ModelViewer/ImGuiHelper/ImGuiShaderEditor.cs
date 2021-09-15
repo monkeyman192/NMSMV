@@ -10,7 +10,7 @@ namespace ImGuiHelper
 {
     public class ImGuiShaderEditor
     {
-        private GLSLShaderConfig ActiveShader = null;
+        private GLSLShaderSource ActiveShaderSource = null;
         private int selectedId = -1;
 
         public ImGuiShaderEditor()
@@ -23,14 +23,17 @@ namespace ImGuiHelper
             //TODO: Make this static if possible or maybe maintain a list of shaders in the resource manager
             
             //Items
-            List<GLSLShaderConfig> shaderList = new();
-            shaderList = RenderState.activeResMgr.ShaderMap.Values.ToList();
-            string[] items = new string[shaderList.Count];
+            List<Entity> shaderSourceList = new();
+            shaderSourceList = RenderState.engineRef.GetEntityTypeList(EntityType.ShaderSource);
+            string[] items = new string[shaderSourceList.Count];
             for (int i = 0; i < items.Length; i++)
-                items[i] = shaderList[i].Name == "" ? "Shader_" + i : shaderList[i].Name; 
-
+            {
+                GLSLShaderSource ss = (GLSLShaderSource) shaderSourceList[i];
+                items[i] = ss.Name == "" ? "Shader_" + i : ss.Name;
+            }
+                
             if (ImGui.Combo("##1", ref selectedId, items, items.Length))
-                ActiveShader = shaderList[selectedId];
+                ActiveShaderSource = (GLSLShaderSource) shaderSourceList[selectedId];
             
             ImGui.SameLine();
 
@@ -44,28 +47,19 @@ namespace ImGuiHelper
                 Console.WriteLine("Todo Delete Shader");
             }
 
-            if (ImGui.CollapsingHeader("Vertex Shader"))
-            {
-                ImGui.InputTextMultiline("##2", ref ActiveShader.VSText.ResolvedText, 50000,
-                    new System.Numerics.Vector2(400, 400));
-            }
-            
-            if (ImGui.CollapsingHeader("Fragment Shader"))
-            {
-                ImGui.InputTextMultiline("##3", ref ActiveShader.FSText.ResolvedText, 50000,
-                    new System.Numerics.Vector2(400, 400));
-            }
-            
+            ImGui.InputTextMultiline("##2", ref ActiveShaderSource.SourceText, 50000,
+                new System.Numerics.Vector2(400, 400));
+
             if (ImGui.Button("Recompile Shader"))
             {
                 Console.WriteLine("Shader recompilation not supported yet");
             }
         }
 
-        public void SetShader(GLSLShaderConfig conf)
+        public void SetShader(GLSLShaderSource conf)
         {
-            ActiveShader = conf;
-            List<GLSLShaderConfig> shaderList = RenderState.activeResMgr.ShaderMap.Values.ToList();
+            ActiveShaderSource = conf;
+            List<Entity> shaderList = RenderState.engineRef.GetEntityTypeList(EntityType.ShaderSource);
             selectedId = shaderList.IndexOf(conf);
         }
     }

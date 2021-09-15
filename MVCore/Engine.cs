@@ -20,6 +20,7 @@ using libMBIN.NMS.Toolkit;
 
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Desktop;
+using System.IO;
 
 namespace MVCore
 {
@@ -33,17 +34,18 @@ namespace MVCore
 
     public class Engine : EngineSystem
     {
-        public ResourceManager resMgr;
-
         //Init Systems
         private EntityRegistrySystem registrySys;
         public TransformationSystem transformSys;
         public ActionSystem actionSys;
         public AnimationSystem animationSys;
-        public SceneManagementSystem sceneManagementSys;
+        public SceneManagementSystem sceneMgmtSys;
+        public ResourceManagementSystem resourceMgmtSys;
         public RenderingSystem renderSys; //TODO: Try to make it private. Noone should have a reason to access it
         private readonly RequestHandler reqHandler;
         private readonly NativeWindow windowHandler;
+
+        private Dictionary<EngineSystemEnum, EngineSystem> _engineSystemMap = new(); //TODO fill up
 
         //Rendering 
         public EngineRenderingState rt_State;
@@ -81,7 +83,7 @@ namespace MVCore
 
             //gpHandler = new PS4GamePadHandler(0); //TODO: Add support for PS4 controller
             reqHandler = new RequestHandler();
-
+            
             RenderState.activeGamepad = gpHandler;
 
             //Systems Init
@@ -90,24 +92,17 @@ namespace MVCore
             actionSys = new ActionSystem();
             animationSys = new AnimationSystem();
             transformSys = new TransformationSystem();
-            sceneManagementSys = new SceneManagementSystem();
-
+            sceneMgmtSys = new SceneManagementSystem();
+            resourceMgmtSys = new ResourceManagementSystem();
+            
+            
             renderSys.SetEngine(this);
             registrySys.SetEngine(this);
             actionSys.SetEngine(this);
             animationSys.SetEngine(this);
             transformSys.SetEngine(this);
-            sceneManagementSys.SetEngine(this);
-
-            //Initialize Resource Manager
-            resMgr = new ResourceManager();
-            InitializeResourceManager();
-
-            //Assign new palette to GLControl
-            //Todo get rid of palettes they have no place here
-            palette = Import.NMS.Palettes.createPalettefromBasePalettes(ref resMgr);
-
-
+            sceneMgmtSys.SetEngine(this);
+            resourceMgmtSys.SetEngine(this);
 
             //Set Start Status
             rt_State = EngineRenderingState.UNINITIALIZED;
@@ -132,14 +127,66 @@ namespace MVCore
 
         public Scene CreateScene()
         {
-            return sceneManagementSys.CreateScene();
+            return sceneMgmtSys.CreateScene();
         }
 
         #region ResourceManager
 
         public void InitializeResourceManager()
         {
+            AddDefaultShaders();
             AddDefaultMaterials();
+        }
+
+        private void AddDefaultShaders()
+        {
+            //Local function
+            void WalkDirectory(DirectoryInfo dir)
+            {
+                FileInfo[] files = dir.GetFiles("*.glsl");
+                DirectoryInfo[] subdirs = dir.GetDirectories();
+
+                if (subdirs.Length != 0)
+                {
+                    foreach (DirectoryInfo subdir in subdirs)
+                        WalkDirectory(subdir);
+                }
+
+                if (files.Length != 0)
+                {
+                    foreach (FileInfo file in files)
+                    {
+                        //Add source file
+                        Console.WriteLine("Working On {0}", file.FullName);
+                        if (GetShaderSourceByFilePath(file.FullName) == null)
+                        {
+                            //Construction includes registration
+                            GLSLShaderSource ss = new(file.FullName, true); 
+                        }
+                    }
+                }
+            }
+
+            DirectoryInfo dirInfo = new("Shaders");
+            WalkDirectory(dirInfo);
+
+            //Now that all sources are loaded we can start processing all of them
+            //Step 1: Process Shaders
+            List<Entity> sourceList = GetEntityTypeList(EntityType.ShaderSource);
+            int i = 0;
+            while (i < sourceList.Count) //This way can account for new entries 
+            {
+                ((GLSLShaderSource) sourceList[i]).Process();
+                i++;
+            }
+            
+            //Step 2: Resolve Shaders
+            i = 0;
+            while (i < sourceList.Count)
+            {
+                ((GLSLShaderSource) sourceList[i]).Resolve();
+                i++;
+            }
         }
 
         private void AddDefaultMaterials()
@@ -153,13 +200,13 @@ namespace MVCore
             mat.add_flag(MaterialFlagEnum._F21_VERTEXCOLOUR);
             Uniform uf = new()
             {
-                Name = "gMaterialColourVec4",
+                Name = "mpCustomPerMaterial.gMaterialColourVec4",
                 Values = new(1.0f, 1.0f, 1.0f, 1.0f)
             };
             mat.Uniforms.Add(uf);
-            mat.init();
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
             RegisterEntity(mat);
-
+            
             //Joint Material
             mat = new MeshMaterial
             {
@@ -168,10 +215,10 @@ namespace MVCore
             mat.add_flag(MaterialFlagEnum._F07_UNLIT);
 
             uf = new Uniform();
-            uf.Name = "gMaterialColourVec4";
+            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
             uf.Values = new(1.0f, 0.0f, 0.0f, 1.0f);
             mat.Uniforms.Add(uf);
-            mat.init();
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
             RegisterEntity(mat);
 
             //Light Material
@@ -182,10 +229,10 @@ namespace MVCore
             mat.add_flag(MaterialFlagEnum._F07_UNLIT);
 
             uf = new();
-            uf.Name = "gMaterialColourVec4";
+            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
             uf.Values = new(1.0f, 1.0f, 0.0f, 1.0f);
             mat.Uniforms.Add(uf);
-            mat.init();
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
             RegisterEntity(mat);
 
             //Collision Material
@@ -194,10 +241,10 @@ namespace MVCore
             mat.add_flag(MaterialFlagEnum._F07_UNLIT);
 
             uf = new();
-            uf.Name = "gMaterialColourVec4";
+            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
             uf.Values = new(0.8f, 0.8f, 0.2f, 1.0f);
             mat.Uniforms.Add(uf);
-            mat.init();
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
             RegisterEntity(mat);
 
         }
@@ -227,9 +274,31 @@ namespace MVCore
                 .Find(x => ((GLSLShaderSource)x).SourceFilePath == path) as GLSLShaderSource;
         }
 
+        public GLSLShaderConfig GetShaderByHash(int hash)
+        {
+            return registrySys.GetEntityTypeList(EntityType.Shader)
+                .Find(x => ((GLSLShaderConfig) x).Hash == hash) as GLSLShaderConfig;
+        }
+
+        public GLSLShaderConfig GetShaderByType(SHADER_TYPE typ)
+        {
+            return registrySys.GetEntityTypeList(EntityType.Shader)
+                .Find(x => ((GLSLShaderConfig)x).shader_type == typ) as GLSLShaderConfig;
+        }
+
+        public int GetEntityListCount(EntityType type)
+        {
+            return registrySys.GetEntityTypeList(type).Count;
+        }
+
+        public int GetShaderSourceCount()
+        {
+            return GetEntityListCount(EntityType.ShaderSource);
+        }
+
         public int GetLightCount()
         {
-            return registrySys.GetEntityTypeList(EntityType.LightComponent).Count;
+            return GetEntityListCount(EntityType.LightComponent);
         }
 
         public List<Entity> GetEntityTypeList(EntityType type)
@@ -239,16 +308,14 @@ namespace MVCore
         
     
 
-    public void init(int width, int height)
+        public void init(int width, int height)
         {
-            //Init Gizmos
-            //gizTranslate = new TranslationGizmo();
-            //activeGizmo = gizTranslate;
-            if (!resMgr.initialized)
-            {
-                throw new Exception("Resource Manager not initialized");
-                //resMgr.Init();
-            }
+            //Initialize Resource Manager
+            InitializeResourceManager();
+
+            //Assign new palette to GLControl
+            //Todo get rid of palettes they have no place here
+            palette = Import.NMS.Palettes.createPalettefromBasePalettes();
 
             //Add Camera
             Camera cam = new(90, -1, 0, true)
@@ -268,7 +335,7 @@ namespace MVCore
             tcontroller.AddFutureState(new Vector3(), Quaternion.FromEulerAngles(0.0f, -3.14f/2.0f, 0.0f), new Vector3(1.0f));
 
             //Initialize the render manager
-            renderSys.init(resMgr, width, height);
+            renderSys.init(width, height);
             rt_State = EngineRenderingState.ACTIVE;
 
             Log("Initialized", LogVerbosityLevel.INFO);
@@ -293,10 +360,6 @@ namespace MVCore
                             else
                                 req_status = THREAD_REQUEST_STATUS.FINISHED;
                                 //At this point the renderer is up and running
-                            break;
-                        case THREAD_REQUEST_TYPE.ENGINE_INIT_RESOURCE_MANAGER:
-                            resMgr.Init();
-                            req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_OPEN_NEW_SCENE:
                             rt_addRootScene((string)req.arguments[0]);
@@ -325,14 +388,8 @@ namespace MVCore
                             }));
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             */
-                            break;
                         case THREAD_REQUEST_TYPE.ENGINE_UPDATE_SCENE:
                             throw new Exception("Not Implemented Yet!");
-                            break;
-                        case THREAD_REQUEST_TYPE.ENGINE_COMPILE_ALL_SHADERS:
-                            resMgr.CompileMainShaders();
-                            req_status = THREAD_REQUEST_STATUS.FINISHED;
-                            break;
                         case THREAD_REQUEST_TYPE.ENGINE_MOUSEPOSITION_INFO:
                             Vector4[] t = (Vector4[])req.arguments[2];
                             renderSys.getMousePosInfo((int)req.arguments[0], (int)req.arguments[1],
@@ -350,10 +407,9 @@ namespace MVCore
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_GIZMO_PICKING:
                             throw new Exception("not yet implemented");
-                            break;
                         case THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER:
                             rt_State = EngineRenderingState.EXIT;
-                            resMgr.Cleanup(); //Free Resources
+                            CleanUp(); //Free Resources
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         case THREAD_REQUEST_TYPE.ENGINE_PAUSE_RENDER:
@@ -391,16 +447,14 @@ namespace MVCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            Import.NMS.Palettes.set_palleteColors(ref resMgr);
+            Import.NMS.Palettes.set_palleteColors();
 
             //Clear Systems
             actionSys.CleanUp();
             animationSys.CleanUp();
 
             //Clear Resources
-            resMgr.Cleanup();
-            resMgr.Init();
-            RenderState.activeResMgr = resMgr;
+            resourceMgmtSys.Cleanup();
             ModelProcGen.procDecisions.Clear();
 
             RenderState.rootObject = null;
@@ -508,7 +562,7 @@ namespace MVCore
             
             mc.MeshVao = new GLInstancedMesh(mc.MetaData);
             mc.MeshVao.type = SceneNodeType.MESH;
-            mc.MeshVao.vao = (new Primitives.Sphere(new Vector3(), 2.0f, 40)).getVAO();
+            mc.MeshVao.vao = (new Sphere(new Vector3(), 2.0f, 40)).getVAO();
             
             //Sphere Material
             MeshMaterial mat = new();
@@ -525,8 +579,8 @@ namespace MVCore
             //x: roughness
             //z: metallic
             mat.Uniforms.Add(uf);
-                
-            mat.init();
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+            
             RegisterEntity(mat);
             
             scene.Children.Add(sphere);
@@ -535,7 +589,7 @@ namespace MVCore
             scene.Children.Add(l);
 
             //Save scene path to resourcemanager
-            RenderState.activeResMgr.GLScenes["TEST_SCENE_1"] = scene; //Use input path
+            RenderState.engineRef.resourceMgmtSys.GLScenes["TEST_SCENE_1"] = scene; //Use input path
 
             //Populate RenderManager
             renderSys.populate(null);
@@ -570,16 +624,13 @@ namespace MVCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            Import.NMS.Palettes.set_palleteColors(ref resMgr);
+            Import.NMS.Palettes.set_palleteColors();
 
             //Clear Systems
             actionSys.CleanUp();
             animationSys.CleanUp();
 
             //Clear Resources
-            resMgr.Cleanup();
-            resMgr.Init();
-            RenderState.activeResMgr = resMgr;
             ModelProcGen.procDecisions.Clear();
             
             RenderState.rootObject = null;
@@ -635,7 +686,7 @@ namespace MVCore
 
             //Update systems
             transformSys.OnFrameUpdate(dt);
-            sceneManagementSys.OnFrameUpdate(dt);
+            sceneMgmtSys.OnFrameUpdate(dt);
             
             //Reset Stats
             RenderStats.occludedNum = 0;
@@ -665,7 +716,7 @@ namespace MVCore
         {
             //Per Frame System Updates
             transformSys.OnRenderUpdate(dt);
-            sceneManagementSys.OnRenderUpdate(dt);
+            sceneMgmtSys.OnRenderUpdate(dt);
 
             //Render Shit
             if (rt_State == EngineRenderingState.ACTIVE)

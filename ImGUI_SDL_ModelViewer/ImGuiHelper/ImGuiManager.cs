@@ -85,7 +85,6 @@ namespace ImGuiHelper
             {
                 MeshComponent mc = m.GetComponent<MeshComponent>() as MeshComponent;
                 MaterialEditor.SetMaterial(mc.Material);
-                SetActiveShader(mc.Material.Shader);
             }
         }
         
@@ -95,9 +94,9 @@ namespace ImGuiHelper
             ShaderEditor?.Draw();
         }
 
-        public static void SetActiveShader(GLSLHelper.GLSLShaderConfig conf)
+        public static void SetActiveShaderSource(GLSLHelper.GLSLShaderSource s)
         {
-            ShaderEditor.SetShader(conf);
+            ShaderEditor.SetShader(s);
         }
 
         //Object Viewer Related Methods
