@@ -279,6 +279,7 @@ namespace MVCore.Common
             string jsonstring = JsonConvert.SerializeObject(settings);
             File.WriteAllText("settings.json", jsonstring);
         }
+
     }
 
     public static class RenderStats
@@ -328,12 +329,36 @@ namespace MVCore.Common
         public static ShowErrorMsg showError = null;
         public static OpenAnimCallback openAnim = null;
         public static OpenPoseCallback openPose = null;
-        public static LogCallback Log = null;
+        public static LogCallback Log = Log;
         public static AssertCallback Assert = null;
         public static SendRequestCallback issueRequestToGLControl = null;
         public static GetResourceCallback getResource = null;
         public static GetBitMapResourceCallback getBitMapResource = null;
         public static GetTextResourceCallback getTextResource = null;
         public static GetResourceWithTypeCallback getResourceWithType = null;
+
+
+        public static void SetDefaultCallbacks()
+        {
+            Callbacks.Log = Callbacks.DefaultLog;
+            Callbacks.Assert = Callbacks.DefaultAssert;
+        }
+
+        //Default callbacks
+        public static void DefaultLog(string msg, LogVerbosityLevel lvl)
+        {
+            if (lvl >= RenderState.settings.LogVerbosity)
+            {
+                Console.WriteLine(msg);
+            }
+        }
+
+        public static void DefaultAssert(bool status, string msg)
+        {
+            if (!status)
+                Callbacks.Log(msg, LogVerbosityLevel.ERROR);
+            System.Diagnostics.Trace.Assert(status);
+        }
+
     }
 }

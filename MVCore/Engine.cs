@@ -315,8 +315,8 @@ namespace MVCore
 
             //Assign new palette to GLControl
             //Todo get rid of palettes they have no place here
-            palette = Import.NMS.Palettes.createPalettefromBasePalettes();
-
+            //palette = Import.NMS.Palettes.createPalettefromBasePalettes();
+            
             //Add Camera
             Camera cam = new(90, -1, 0, true)
             {
