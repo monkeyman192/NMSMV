@@ -11,7 +11,13 @@
 </div>
 
 
-No Man's Model Viewer is an application developed to preview No Man's Sky 3D assets. It also supports animation playback and also a custom proc-gen procedure which tries to emulate the game's behavior during the procedural asset creation process. Experimental features allow the live editing of MBIN files. 
+No Man's Model Viewer is an application that **was** primarity developed to preview No Man's Sky 3D assets. After years of tinkering with rendering methods, lighting systems, animation playback and more the viewer ended up supporting so much functionality that literally transformed it into a game engine. Therefore I took the decision to stop updating the app for a while, re-design it top-to-bottom and transform it in such a way that its primarily a game engine that can be used to preview NMS assets (and who knows what else in the future).
+
+The engine - **Nibble Engine** - does not have to offer something more compared to other open/closed source engine projects out there. However, its a personal endeavor of mine to upgrade it continously and make it as good as I can make it. There is not a better way to understand complicated rendering mechanisms and data management without getting your hands dirty :D :D :D
+
+Right now the engine is shipped together with the app that it used to preview NMS assets but as development continues the engine will have its separate repository. Functionality is not there yet to ship it independently but that is the goal for the future of the engine.
+
+
 
 ## **Repo Version** ##
 
