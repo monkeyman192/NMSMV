@@ -8,7 +8,7 @@ using MVCore.Utils;
 
 namespace MVCore.Primitives
 {
-    public class Primitive
+    public class Primitive : IDisposable
     {
         internal float[] verts;
         internal float[] normals;
@@ -17,7 +17,8 @@ namespace MVCore.Primitives
         internal int[] indices;
 
         internal GeomObject geom;
-        
+        private bool disposedValue;
+
         public void applyTransform(Matrix4 transform)
         {
             for (int i = 0; i < verts.Length / 3; i++)
@@ -37,9 +38,10 @@ namespace MVCore.Primitives
 
         }
 
-        public virtual GeomObject getGeom()
+        public virtual GeomObject getGeom(string name="")
         {
             GeomObject geom = new();
+            geom.Name = name;
 
             //Set main Geometry Info
             geom.vertCount = verts.Length / 3;
@@ -111,6 +113,29 @@ namespace MVCore.Primitives
                 p.indices[i] += (p1.verts.Length / 3);
             
             return p;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                    geom.Dispose();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 
@@ -889,7 +914,7 @@ namespace MVCore.Primitives
             //Indices
             indices = new Int32[2 * 3] { 0, 1, 2, 3, 4, 5 };
 
-            geom = getGeom();
+            geom = getGeom("Quad");
         }
 
         //RenderQuad Constructor

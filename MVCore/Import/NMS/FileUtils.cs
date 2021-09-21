@@ -8,6 +8,8 @@ using Microsoft.Win32;
 using System.Reflection;
 using libMBIN.NMS;
 
+
+
 namespace MVCore.Import.NMS
 {
     public class FileUtils
@@ -321,6 +323,7 @@ namespace MVCore.Import.NMS
             NMSSceneFilesList.Clear();
         }
 
+#pragma warning disable CA1416 // Validate platform compatibility
         public static string getGameInstallationDir()
         {
             //Registry keys
@@ -344,7 +347,9 @@ namespace MVCore.Import.NMS
                 Callbacks.Log("Unable to find Steam Version: ", LogVerbosityLevel.INFO);
 
             //Check GOG32
+
             val = Registry.GetValue(gog32_keyname, gog32_keyval, "") as string;
+
             if (val != null)
             {
                 Callbacks.Log("Found GOG32 Version: " + val, LogVerbosityLevel.INFO);
@@ -352,7 +357,6 @@ namespace MVCore.Import.NMS
             }
             else
                 Callbacks.Log("Unable to find GOG32 Version: " + val, LogVerbosityLevel.INFO);
-
 
             //Check GOG64
             val = Registry.GetValue(gog64_keyname, gog64_keyval, "") as string;
@@ -366,6 +370,7 @@ namespace MVCore.Import.NMS
 
             return "";
         }
+
 
         private static string fetchSteamGameInstallationDir()
         {
@@ -443,6 +448,7 @@ namespace MVCore.Import.NMS
             return null;
         }
 
+#pragma warning restore CA1416 // Validate platform compatibility
         private static FieldInfo getField<T>(T item, string fieldName)
         {
             return item.GetType().GetField(fieldName);

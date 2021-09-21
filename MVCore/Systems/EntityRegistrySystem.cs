@@ -52,6 +52,18 @@ namespace MVCore.Systems
             e.ID = NextID++;
             EntityMap[e.ID] = e;
             EntityTypeList[e.Type].Add(e);
+
+            //Explicitly handle ScenenodeTypes
+            switch (e.Type)
+            {
+                case EntityType.SceneNodeLight:
+                case EntityType.SceneNodeJoint:
+                case EntityType.SceneNodeMesh:
+                case EntityType.SceneNodeModel:
+                    EntityTypeList[EntityType.SceneNode].Add(e);
+                    break;
+            }
+
             return true;
         }
 
@@ -87,6 +99,23 @@ namespace MVCore.Systems
             return false;
         }
 
+        
+        public override void OnRenderUpdate(double dt)
+        {
+            //Won't be used
+            throw new NotImplementedException();
+        }
 
+        public override void OnFrameUpdate(double dt)
+        {
+            //Won't be used
+            throw new NotImplementedException();
+        }
+
+        public override void CleanUp()
+        {
+            EntityMap.Clear();
+            EntityTypeList.Clear();
+        }
     }
 }

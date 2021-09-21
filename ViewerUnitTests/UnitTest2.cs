@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using OpenTK;
+using OpenTK.Mathematics;
 using MathNet.Numerics.LinearAlgebra;
 using System.Diagnostics;
 

@@ -1,24 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using Newtonsoft.Json;
-using OpenTK.Graphics.OpenGL4;
-using System.Drawing;
-using Newtonsoft.Json.Linq;
-using OpenTK.Audio.OpenAL;
-using OpenTK;
-using MVCore.Primitives;
-using libMBIN.NMS.Toolkit;
-using Microsoft.SqlServer.Server;
-using System.Linq;
+using MVCore.Text;
 
-namespace MVCore.Text
+namespace MVCore.Managers
 {
     public class FontManager
     {
-        public Dictionary<string, Font> fonts = new Dictionary<string, Font>();
-        
+        public Dictionary<string, Font> FontMap = new();
+
         public FontManager()
         {
             
@@ -26,9 +15,9 @@ namespace MVCore.Text
 
         public void addFont(Font f)
         {
-            if (fonts.ContainsKey(f.Name))
-                fonts[f.Name].Dispose();
-            fonts[f.Name] = f;
+            if (FontMap.ContainsKey(f.Name))
+                FontMap[f.Name].Dispose();
+            FontMap[f.Name] = f;
         }
             
 
@@ -41,25 +30,25 @@ namespace MVCore.Text
             //https://evanw.github.io/font-texture-generator/
 
             Font f = new Font(fontPath, 1);
-            fonts[f.Name] = f;
+            FontMap[f.Name] = f;
         }
 
         public Font getFont(string fontName)
         {
-            if (!fonts.ContainsKey(fontName))
+            if (!FontMap.ContainsKey(fontName))
             {
                 Console.WriteLine("FontManager does not contain font");
                 return null;
             }
 
-            return fonts[fontName];
+            return FontMap[fontName];
         }
 
         public void cleanup()
         {
-            foreach (Font f in fonts.Values)
+            foreach (Font f in FontMap.Values)
                 f.Dispose();
-            fonts.Clear();
+            FontMap.Clear();
         }
 
     }

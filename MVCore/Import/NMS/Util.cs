@@ -176,7 +176,7 @@ namespace MVCore.Import.NMS
                 tex.palOpt = new PaletteOpt(false);
                 tex.procColor = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
                 //At this point this should be a common texture. Store it to the master texture manager
-                RenderState.engineRef.resourceMgmtSys.texMgr.AddTexture(tex);
+                RenderState.engineRef.AddTexture(tex);
                 sampler.Tex = tex;
             }
         }

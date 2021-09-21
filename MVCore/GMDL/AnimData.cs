@@ -212,16 +212,16 @@ namespace MVCore
 
         private void FetchAnimMetaData()
         {
-            if (Common.RenderState.engineRef.resourceMgmtSys.Animations.ContainsKey(Filename))
+            if (Common.RenderState.engineRef.animationSys.Animations.ContainsKey(Filename))
             {
-                animMeta = Common.RenderState.engineRef.resourceMgmtSys.Animations[Filename];
+                animMeta = Common.RenderState.engineRef.animationSys.Animations[Filename];
             }
             else
             {
                 TkAnimMetadata amd = Import.NMS.FileUtils.LoadNMSTemplate(Filename) as TkAnimMetadata;
                 animMeta = new AnimMetadata(amd);
                 animMeta.load(); //Load data as well
-                Common.RenderState.engineRef.resourceMgmtSys.Animations[Filename] = animMeta;
+                Common.RenderState.engineRef.animationSys.Animations[Filename] = animMeta;
             }
             NotifyPropertyChanged("FrameCount");
         }

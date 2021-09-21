@@ -60,8 +60,9 @@ namespace MVCore
         public byte[] is_buffer;
     }
 
-    public class GeomObject : IDisposable
+    public class GeomObject : Entity
     {
+        public string Name;
         public string mesh_descr;
         public string small_mesh_descr;
 
@@ -109,6 +110,13 @@ namespace MVCore
         //Dictionary to index 
         private readonly Dictionary<ulong, Dictionary<string, GLInstancedMesh>> GLMeshVaos = new();
 
+        private bool disposed = false;
+        private Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
+
+        public GeomObject() : base(EntityType.GeometryObject)
+        {
+
+        }
 
 
         public static Vector3 get_vec3_half(BinaryReader br)
@@ -137,9 +145,6 @@ namespace MVCore
             temp.Y = Utils.Half.decompress(val2);
             return temp;
         }
-
-
-
 
 
         //Fetch Meshvao from dictionary
@@ -371,60 +376,61 @@ namespace MVCore
 
 
 #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (disposed)
             {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                    ibuffer = null;
-                    vbuffer = null;
-                    small_vbuffer = null;
-                    offsets = null;
-                    small_offsets = null;
-                    boneRemap = null;
-                    invBMats = null;
+                return;
+            }
+
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects).
+                ibuffer = null;
+                vbuffer = null;
+                small_vbuffer = null;
+                offsets = null;
+                small_offsets = null;
+                boneRemap = null;
+                invBMats = null;
                     
-                    bIndices.Clear();
-                    bWeights.Clear();
-                    bufInfo.Clear();
-                    bboxes.Clear();
-                    bhullverts.Clear();
-                    vstarts.Clear();
-                    jointData.Clear();
+                bIndices.Clear();
+                bWeights.Clear();
+                bufInfo.Clear();
+                bboxes.Clear();
+                bhullverts.Clear();
+                vstarts.Clear();
+                jointData.Clear();
 
-                    //Clear buffers
-                    foreach (KeyValuePair<ulong, geomMeshMetaData> pair in meshMetaDataDict)
-                        meshDataDict[pair.Key] = null;
+                //Clear buffers
+                foreach (KeyValuePair<ulong, geomMeshMetaData> pair in meshMetaDataDict)
+                    meshDataDict[pair.Key] = null;
 
-                    meshDataDict.Clear();
-                    meshMetaDataDict.Clear();
+                meshDataDict.Clear();
+                meshMetaDataDict.Clear();
 
-                    //Clear Vaos
-                    foreach (GLVao p in GLVaos.Values)
-                        p.Dispose();
-                    GLVaos.Clear();
+                //Clear Vaos
+                foreach (GLVao p in GLVaos.Values)
+                    p.Dispose();
+                GLVaos.Clear();
 
-                    //Dispose GLmeshes
-                    foreach (Dictionary<string, GLInstancedMesh> p in GLMeshVaos.Values)
-                    {
-                        foreach (GLInstancedMesh m in p.Values)
-                            m.Dispose(); 
-                        p.Clear();
-                        //Materials are stored globally
-                    }
-                
+                //Dispose GLmeshes
+                foreach (Dictionary<string, GLInstancedMesh> p in GLMeshVaos.Values)
+                {
+                    foreach (GLInstancedMesh m in p.Values)
+                        m.Dispose(); 
+                    p.Clear();
+                    //Materials are stored globally
                 }
 
-                disposedValue = true;
+                handle.Dispose();
             }
+
+            disposed = true;
+
+            base.Dispose(disposing);
         }
 
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose() => Dispose(true);
         #endregion
 
 

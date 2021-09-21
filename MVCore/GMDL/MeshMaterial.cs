@@ -112,6 +112,10 @@ namespace MVCore
 
         public List<Uniform> ActiveUniforms = new();
 
+        //Disposable Stuff
+        private bool disposed = false;
+        private Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
+
         public MeshMaterial() : base(EntityType.Material)
         {
             Name = "NULL";
@@ -141,7 +145,8 @@ namespace MVCore
             {
                 try
                 {
-                    compileMaterialShader(this);
+                    Shader = compileMaterialShader(this);
+                    RenderState.engineRef.RegisterEntity(Shader);
 
                     //Load Active Uniforms to Material
 
@@ -232,7 +237,7 @@ namespace MVCore
             return hash.GetHashCode();
         }
 
-        public static void compileMaterialShader(MeshMaterial mat)
+        public static GLSLShaderConfig compileMaterialShader(MeshMaterial mat)
         {
             SHADER_MODE mode = SHADER_MODE.DEFFERED;
             
@@ -274,7 +279,7 @@ namespace MVCore
             GLShaderHelper.attachSSBOToShaderBindingPoint(shader, "_COMMON_PER_MESH", 1);
 
             //Save shader to the resource Manager
-            mat.Shader = shader;
+            return shader;
         }
 
     }

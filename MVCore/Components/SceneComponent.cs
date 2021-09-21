@@ -12,8 +12,6 @@ namespace MVCore
         public GeomObject Gobject;
         public readonly List<float> LODDistances = new();
 
-        //TODO: Remove that shit from here it doesn't feel rights
-        public readonly TextureManager TexManager; 
         //Keep reference of all the animation Joints of the scene and the skinmatrices
         public readonly float[] skinMats; //Final Matrices
         public readonly Dictionary<string, SceneGraphNode> jointDict;
@@ -21,7 +19,6 @@ namespace MVCore
 
         public SceneComponent()
         {
-            TexManager = new TextureManager();
             //Init Animation Stuff
             skinMats = new float[256 * 16];
             jointDict = new();

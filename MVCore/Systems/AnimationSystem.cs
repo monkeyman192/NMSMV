@@ -9,6 +9,7 @@ namespace MVCore.Systems
     public class AnimationSystem : EngineSystem
     {
         public List<Entity> AnimScenes = new();
+        public Dictionary<string, AnimMetadata> Animations = new();
         public Dictionary<Entity, List<AnimData>> AnimQueues = new();
         
         public AnimationSystem() : base(EngineSystemEnum.ANIMATION_SYSTEM)
@@ -20,6 +21,12 @@ namespace MVCore.Systems
         {
             AnimScenes.Clear();
             AnimQueues.Clear();
+            Animations.Clear();
+        }
+
+        public override void OnRenderUpdate(double dt)
+        {
+            throw new NotImplementedException();
         }
 
         public override void OnFrameUpdate(double dt)
@@ -194,5 +201,7 @@ namespace MVCore.Systems
         {
             AnimScenes.Add(m);
         }
+
+        
     }
 }

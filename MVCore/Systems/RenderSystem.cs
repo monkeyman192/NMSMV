@@ -6,10 +6,11 @@ using GLSLHelper;
 using libMBIN.NMS.Toolkit;
 using MVCore;
 using MVCore.Common;
+using MVCore.Managers;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
-
+using MVCore.Text;
 
 namespace MVCore.Systems
 {
@@ -69,13 +70,15 @@ namespace MVCore.Systems
         readonly List<GLInstancedMesh> locatorMeshList = new();
         readonly List<GLInstancedMesh> jointMeshList = new();
         readonly List<GLInstancedMesh> lightMeshList = new();
+        readonly List<SceneGraphNode> LightList = new();
         readonly List<GLInstancedMesh> lightVolumeMeshList = new();
 
-        //Shader lists and dictionaries\
-        private readonly List<GLSLShaderConfig> GLDeferredShaders = new();
-        private readonly List<GLSLShaderConfig> GLForwardTransparentShaders = new();
-        private readonly List<GLSLShaderConfig> GLDeferredDecalShaders = new();
-
+        //Entity Managers used by the rendering system
+        public readonly MaterialManager MaterialMgr = new();
+        public readonly GeometryManager GeometryMgr = new();
+        public readonly TextureManager TextureMgr = new();
+        public readonly ShaderManager ShaderMgr = new();
+        public readonly FontManager FontMgr = new();
 
         public ShadowRenderer shdwRenderer; //Shadow Renderer instance
         //Control Font and Text Objects
@@ -96,12 +99,6 @@ namespace MVCore.Systems
         private int multiBufferActiveId;
         private readonly List<int> multiBufferSSBOs = new(4);
         private readonly List<IntPtr> multiBufferSyncStatuses = new(4);
-
-        //Renderer Resources
-        private readonly Dictionary<SHADER_TYPE, GLSLShaderConfig> GenericShaders = new(); //Generic Shader Map
-        private readonly Dictionary<int, GLSLShaderConfig> ShaderMap = new();
-        private readonly Dictionary<MeshMaterial, List<GLInstancedMesh>> MaterialMeshMap = new();
-        private readonly Dictionary<GLSLShaderConfig, List<MeshMaterial>> ShaderMaterialMap = new();
 
         //Octree Structure
         private Octree octree;
@@ -142,6 +139,14 @@ namespace MVCore.Systems
 
             //Setup Shadow Renderer
             shdwRenderer = new ShadowRenderer();
+
+            //Add default rendering resources
+            CompileMainShaders();
+            AddDefaultPrimitives();
+            AddDefaultMaterials();
+            AddDefaultTextures();
+            AddDefaultLights();
+            AddDefaultFonts();
 
             //Setup per Frame UBOs
             setupFrameUBO();
@@ -223,36 +228,16 @@ namespace MVCore.Systems
             lightMeshList.Clear();
             lightVolumeMeshList.Clear();
             octree.clear();
-            //Shader Cleanup
-            ShaderMaterialMap.Clear();
-            MaterialMeshMap.Clear();
-            ShaderMap.Clear();
-            GLDeferredShaders.Clear();
-            GLForwardTransparentShaders.Clear();
-            GLDeferredDecalShaders.Clear();
+            //Manager Cleanups
+            TextureMgr.Cleanup();
+            MaterialMgr.CleanUp();
+            ShaderMgr.CleanUp();
+            
         }
 
-        public void IdentifyActiveShaders()
-        {
-            GLDeferredShaders.Clear();
-            GLDeferredDecalShaders.Clear();
-            GLForwardTransparentShaders.Clear();
+        
 
-            foreach (GLSLShaderConfig conf in ShaderMap.Values)
-            {
-                if ((conf.ShaderMode & SHADER_MODE.FORWARD) == SHADER_MODE.FORWARD)
-                    GLForwardTransparentShaders.Add(conf);
-                else if ((conf.ShaderMode & SHADER_MODE.DECAL) == SHADER_MODE.DECAL)
-                    GLDeferredDecalShaders.Add(conf);
-                else
-                    GLDeferredShaders.Add(conf);
-            }
-        }
-
-        public bool ShaderExistsForMaterial(int shaderHash)
-        {
-            return ShaderMap.ContainsKey(shaderHash);
-        }
+        
 
         private void CompileMainShaders()
         {
@@ -296,7 +281,8 @@ namespace MVCore.Systems
 
             //Attach UBO binding Points
             GLShaderHelper.attachUBOToShaderBindingPoint(shader_conf, "_COMMON_PER_FRAME", 0);
-            GenericShaders[SHADER_TYPE.GIZMO_SHADER] = shader_conf;
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.GIZMO_SHADER);
 
 
 #if DEBUG
@@ -321,9 +307,8 @@ namespace MVCore.Systems
             GLSLShaderSource texture_mixing_shader_fs = new("Shaders/texture_mixer_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(texture_mixing_shader_vs, texture_mixing_shader_fs, null, null, null,
                             new(), new(), GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER, SHADER_MODE.DEFAULT);
-
-            GenericShaders[GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER] = shader_conf;
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.TEXTURE_MIX_SHADER);
 
 
             //GBuffer Shaders
@@ -332,7 +317,8 @@ namespace MVCore.Systems
             GLSLShaderSource gbuffer_shader_fs = new("Shaders/Gbuffer_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.GBUFFER_SHADER, SHADER_MODE.DEFAULT);
-            GenericShaders[SHADER_TYPE.GBUFFER_SHADER] = shader_conf;
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.GBUFFER_SHADER);
 
             //Light Pass Shaders
 
@@ -341,7 +327,9 @@ namespace MVCore.Systems
             GLSLShaderSource lpass_shader_fs = new("Shaders/light_pass_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(lpass_shader_vs, lpass_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.LIGHT_PASS_UNLIT_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.LIGHT_PASS_UNLIT_SHADER] = shader_conf;
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.LIGHT_PASS_UNLIT_SHADER);
+
 
             //LIT
             lpass_shader_vs = new("Shaders/light_pass_VS.glsl");
@@ -349,73 +337,80 @@ namespace MVCore.Systems
             lpass_shader_fs.AddDirective("_D_LIGHTING");
             shader_conf = GLShaderHelper.compileShader(lpass_shader_vs, lpass_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.LIGHT_PASS_LIT_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.LIGHT_PASS_LIT_SHADER] = shader_conf;
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.LIGHT_PASS_LIT_SHADER);
 
             //GAUSSIAN HORIZONTAL BLUR SHADER
             GLSLShaderSource gaussian_blur_shader_fs = new("Shaders/gaussian_horizontalBlur_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gaussian_blur_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER] = shader_conf;
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER);
+            
 
             //GAUSSIAN VERTICAL BLUR SHADER
             gaussian_blur_shader_fs = new("Shaders/gaussian_verticalBlur_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gaussian_blur_shader_fs, null, null, null,
                             new(), new(),
                             SHADER_TYPE.GAUSSIAN_VERTICAL_BLUR_SHADER, SHADER_MODE.DEFAULT);
-            GenericShaders[SHADER_TYPE.GAUSSIAN_VERTICAL_BLUR_SHADER] = shader_conf;
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.GAUSSIAN_HORIZONTAL_BLUR_SHADER);
+            
             //BRIGHTNESS EXTRACTION SHADER
             gbuffer_shader_fs = new("Shaders/brightness_extract_shader_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             new(), new(),
                             SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER] = shader_conf;
-
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.BRIGHTNESS_EXTRACT_SHADER);
+            
             //ADDITIVE BLEND
             gbuffer_shader_fs = new("Shaders/additive_blend_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             new(), new(),
                             SHADER_TYPE.ADDITIVE_BLEND_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.ADDITIVE_BLEND_SHADER] = shader_conf;
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.ADDITIVE_BLEND_SHADER);
 
             //FXAA
             gbuffer_shader_fs = new("Shaders/fxaa_shader_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                 new(), new(), SHADER_TYPE.FXAA_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.FXAA_SHADER] = shader_conf;
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.FXAA_SHADER);
+            
             //TONE MAPPING + GAMMA CORRECTION
             gbuffer_shader_fs = new("Shaders/tone_mapping_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                 new(), new(), SHADER_TYPE.TONE_MAPPING, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.TONE_MAPPING] = shader_conf;
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.TONE_MAPPING);
 
             //INV TONE MAPPING + GAMMA CORRECTION
             gbuffer_shader_fs = new("Shaders/inv_tone_mapping_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.INV_TONE_MAPPING, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.INV_TONE_MAPPING] = shader_conf;
-
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.INV_TONE_MAPPING);
+            
             //BWOIT SHADER
             gbuffer_shader_fs = new("Shaders/bwoit_shader_fs.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, gbuffer_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.BWOIT_COMPOSITE_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.BWOIT_COMPOSITE_SHADER] = shader_conf;
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.BWOIT_COMPOSITE_SHADER);
+            
             //Text Shaders
             GLSLShaderSource text_shader_vs = new("Shaders/Text_VS.glsl");
             GLSLShaderSource text_shader_fs = new("Shaders/Text_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(text_shader_vs, text_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.TEXT_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.TEXT_SHADER] = shader_conf;
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.TEXT_SHADER);
+            
             //Camera Shaders
             //TODO: Add Camera Shaders if required
-            GenericShaders[GLSLHelper.SHADER_TYPE.CAMERA_SHADER] = null;
+            
 
             //FILTERS - EFFECTS
 
@@ -423,8 +418,9 @@ namespace MVCore.Systems
             GLSLShaderSource passthrough_shader_fs = new("Shaders/PassThrough_FS.glsl");
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, passthrough_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.PASSTHROUGH_SHADER, SHADER_MODE.FORWARD);
-            GenericShaders[SHADER_TYPE.PASSTHROUGH_SHADER] = shader_conf;
-
+            EngineRef.RegisterEntity(shader_conf);
+            ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.PASSTHROUGH_SHADER);
+            
             /*
              * TESTING
              * 
@@ -448,6 +444,277 @@ namespace MVCore.Systems
 
         }
 
+        private void AddDefaultFonts()
+        {
+            Font f;
+            //Droid Sans
+            f = new Font(Callbacks.getResource("droid.fnt"),
+                         Callbacks.getBitMapResource("droid.png"), 1);
+            FontMgr.addFont(f);
+
+            //Segoe
+            f = new Font(Callbacks.getResource("segoe.fnt"),
+                         Callbacks.getBitMapResource("segoe.png"), 1);
+            FontMgr.addFont(f);
+        }
+
+        private void AddDefaultTextures()
+        {
+            //Add Default textures
+            //White tex
+            string texpath = "default.dds";
+            Texture tex = new();
+            tex.textureInit(Callbacks.getResource("default.dds"), texpath); //Manually load data
+
+            TextureMgr.AddTexture(tex);
+
+            //Transparent Mask
+            texpath = "default_mask.dds";
+            tex = new();
+            tex.textureInit(Callbacks.getResource("default_mask.dds"), texpath);
+            TextureMgr.AddTexture(tex);
+        }
+
+        private void AddDefaultLights()
+        {
+            SceneGraphNode light = SceneGraphNode.CreateLight("Default Light", 200.0f, ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
+            TransformationSystem.SetEntityLocation(light, new Vector3(100.0f, 100.0f, 100.0f));
+            
+            EngineRef.RegisterEntity(light);
+            LightList.Add(light);
+        }
+
+        private void AddDefaultPrimitives()
+        {
+            //Setup Primitive Vaos
+
+            //Default quad
+            Primitives.Quad q = new(1.0f, 1.0f);
+
+            GLVao def_quad = q.getVAO();
+            GLInstancedMesh def_quad_mesh = new();
+            def_quad_mesh.Name = "default_quad";
+            def_quad_mesh.vao = def_quad;
+
+            EngineRef.RegisterEntity(def_quad_mesh);
+            GeometryMgr.AddPrimitiveMesh(def_quad_mesh);
+
+            //Default render quad
+            q = new Primitives.Quad();
+            GLInstancedMesh def_render_quad = new();
+            def_render_quad.Name = "default_renderquad";
+            def_render_quad.vao = q.getVAO();
+            EngineRef.RegisterEntity(def_render_quad);
+            GeometryMgr.AddPrimitiveMesh(def_render_quad);
+
+            //Default cross
+            Primitives.Cross c = new(0.1f, true);
+            
+            GLInstancedMesh def_cross = new()
+            {
+                Name = "default_cross",
+                type = SceneNodeType.GIZMO,
+                vao = c.getVAO(),
+                MetaData = new()
+                {
+                    BatchCount = c.geom.indicesCount,
+                    AABBMIN = new Vector3(-0.1f),
+                    AABBMAX = new Vector3(0.1f),
+                    IndicesLength = DrawElementsType.UnsignedInt,
+                }
+            };
+
+            EngineRef.RegisterEntity(def_cross);
+            GeometryMgr.AddPrimitiveMesh(def_cross);
+
+
+
+            //Default cube
+            Primitives.Box bx = new(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true);
+
+            GLInstancedMesh def_box = new()
+            {
+                Name = "default_box",
+                vao = bx.getVAO()
+            };
+            
+            EngineRef.RegisterEntity(def_box);
+            GeometryMgr.AddPrimitiveMesh(def_box);
+
+            //Default sphere
+            Primitives.Sphere sph = new(new Vector3(0.0f, 0.0f, 0.0f), 100.0f);
+
+            GLInstancedMesh def_sph = new()
+            {
+                Name = "default_sphere",
+                vao = sph.getVAO()
+            };
+
+            EngineRef.RegisterEntity(def_sph);
+            GeometryMgr.AddPrimitiveMesh(def_sph);
+
+            //Light Sphere Mesh
+            Primitives.Sphere lsph = new(new Vector3(0.0f, 0.0f, 0.0f), 1.0f);
+            GLInstancedMesh def_lsph = new()
+            {
+                Name = "default_light_sphere",
+                MetaData = new()
+                {
+                    BatchStartGraphics = 0,
+                    VertrStartGraphics = 0,
+                    VertrEndGraphics = 11 * 11 - 1,
+                    BatchCount = 10 * 10 * 6,
+                    AABBMIN = new(-0.1f),
+                    AABBMAX = new(0.1f),
+                    IndicesLength = DrawElementsType.UnsignedInt
+                },
+                type = SceneNodeType.LIGHTVOLUME,
+                vao = lsph.getVAO()
+            };
+
+            EngineRef.RegisterEntity(def_lsph);
+            GeometryMgr.AddPrimitiveMesh(def_lsph);
+            
+            GenerateGizmoParts();
+        }
+
+        private void AddDefaultMaterials()
+        {
+            //Cross Material
+            MeshMaterial mat;
+
+            mat = new();
+            mat.Name = "crossMat";
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+            mat.add_flag(MaterialFlagEnum._F21_VERTEXCOLOUR);
+            Uniform uf = new()
+            {
+                Name = "mpCustomPerMaterial.gMaterialColourVec4",
+                Values = new(1.0f, 1.0f, 1.0f, 1.0f)
+            };
+            mat.Uniforms.Add(uf);
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+
+            EngineRef.RegisterEntity(mat);
+            MaterialMgr.AddMaterial(mat);
+            
+            //Joint Material
+            mat = new MeshMaterial
+            {
+                Name = "jointMat"
+            };
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+
+            uf = new Uniform();
+            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
+            uf.Values = new(1.0f, 0.0f, 0.0f, 1.0f);
+            mat.Uniforms.Add(uf);
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+
+            EngineRef.RegisterEntity(mat);
+            MaterialMgr.AddMaterial(mat);
+
+            //Light Material
+            mat = new()
+            {
+                Name = "lightMat"
+            };
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+
+            uf = new();
+            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
+            uf.Values = new(1.0f, 1.0f, 0.0f, 1.0f);
+            mat.Uniforms.Add(uf);
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+
+            EngineRef.RegisterEntity(mat);
+            MaterialMgr.AddMaterial(mat);
+
+            //Collision Material
+            mat = new();
+            mat.Name = "collisionMat";
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+
+            uf = new();
+            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
+            uf.Values = new(0.8f, 0.8f, 0.2f, 1.0f);
+            mat.Uniforms.Add(uf);
+            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+
+            EngineRef.RegisterEntity(mat);
+            MaterialMgr.AddMaterial(mat);
+
+        }
+
+        private void GenerateGizmoParts()
+        {
+            //Translation Gizmo
+            Primitives.Arrow translation_x_axis = new(0.015f, 0.25f, new Vector3(1.0f, 0.0f, 0.0f), false, 20);
+            //Move arrowhead up in place
+            Matrix4 t = Matrix4.CreateRotationZ(Utils.MathUtils.radians(90));
+            translation_x_axis.applyTransform(t);
+
+            Primitives.Arrow translation_y_axis = new(0.015f, 0.25f, new Vector3(0.0f, 1.0f, 0.0f), false, 20);
+            Primitives.Arrow translation_z_axis = new(0.015f, 0.25f, new Vector3(0.0f, 0.0f, 1.0f), false, 20);
+            t = Matrix4.CreateRotationX(Utils.MathUtils.radians(90));
+            translation_z_axis.applyTransform(t);
+
+            //Generate Geom objects
+            translation_x_axis.geom = translation_x_axis.getGeom();
+            translation_y_axis.geom = translation_y_axis.getGeom();
+            translation_z_axis.geom = translation_z_axis.getGeom();
+
+
+            GLVao x_axis_vao = translation_x_axis.getVAO();
+            GLVao y_axis_vao = translation_y_axis.getVAO();
+            GLVao z_axis_vao = translation_z_axis.getVAO();
+
+
+            //Generate PrimitiveMeshVaos
+            for (int i = 0; i < 3; i++)
+            {
+                string name = "";
+                Primitives.Primitive arr = null;
+                GLVao vao = null;
+                switch (i)
+                {
+                    case 0:
+                        arr = translation_x_axis;
+                        name = "default_translation_gizmo_x_axis";
+                        vao = x_axis_vao;
+                        break;
+                    case 1:
+                        arr = translation_y_axis;
+                        name = "default_translation_gizmo_y_axis";
+                        vao = y_axis_vao;
+                        break;
+                    case 2:
+                        arr = translation_z_axis;
+                        name = "default_translation_gizmo_z_axis";
+                        vao = z_axis_vao;
+                        break;
+                }
+
+                GLInstancedMesh temp = new()
+                {
+                    Name = name,
+                    type = SceneNodeType.GIZMOPART,
+                    vao = vao,
+                    MetaData = new()
+                    {
+                        BatchCount = arr.geom.indicesCount,
+                        IndicesLength = DrawElementsType.UnsignedInt,
+                    }
+                };
+
+                
+                GeometryMgr.AddPrimitiveMesh(temp);
+
+                //TODO: Probably I should generate SceneGraphNodes with Meshcomponents in order to attach materials
+                //GLPrimitiveMeshes[name].material = GLmaterials["crossMat"];
+            }
+
+        }
 
 
         public void populate(Scene s)
@@ -469,7 +736,7 @@ namespace MVCore.Systems
             mc = light.GetComponent<MeshComponent>() as MeshComponent;
             process_model(mc);
             
-            IdentifyActiveShaders();
+            ShaderMgr.IdentifyActiveShaders();
 
         }
 
@@ -507,27 +774,26 @@ namespace MVCore.Systems
                 default:
                     {
                         //Add mesh to the corresponding material meshlist
-                        if (!MaterialMeshMap[m.Material].Contains(m.MeshVao))
-                            MaterialMeshMap[m.Material].Add(m.MeshVao);
+                        if (!MaterialMgr.MaterialContainsMesh(m.Material, m.MeshVao))
+                            MaterialMgr.AddMeshToMaterial(m.Material, m.MeshVao);
                         break;
                     }
             }
 
             //Check if the shader has been registered to the rendering system
-            if (!ShaderMap.ContainsKey(m.Material.Shader.Hash))
+            if (!ShaderMgr.ShaderExists(m.Material.Shader.ID))
             {
-                ShaderMap[m.Material.Shader.Hash] = m.Material.Shader;
-                ShaderMaterialMap[m.Material.Shader] = new();
-                ShaderMaterialMap[m.Material.Shader].Add(m.Material);
+                ShaderMgr.AddShader(m.Material.Shader);
+                ShaderMgr.AddMaterialToShader(m.Material);
             }
                 
             //Add all meshes to the global meshlist
             if (!globalMeshList.Contains(m.MeshVao))
                 globalMeshList.Add(m.MeshVao);
-            
+
             //Add meshes to their associated material meshlist
-            if (!MaterialMeshMap[m.Material].Contains(m.MeshVao))
-                MaterialMeshMap[m.Material].Add(m.MeshVao);
+            if (!MaterialMgr.MaterialContainsMesh(m.Material, m.MeshVao))
+                MaterialMgr.AddMeshToMaterial(m.Material, m.MeshVao);
             
         }
 
@@ -1045,13 +1311,13 @@ namespace MVCore.Systems
             //Set polygon mode
             GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.renderSettings.RENDERMODE);
             
-            foreach (GLSLShaderConfig shader in GLDeferredShaders)
+            foreach (GLSLShaderConfig shader in ShaderMgr.GLDeferredShaders)
             {
                 GL.UseProgram(shader.ProgramID); //Set Program
 
-                foreach (MeshMaterial mat in ShaderMaterialMap[shader])
+                foreach (MeshMaterial mat in ShaderMgr.GetShaderMaterials(shader))
                 {
-                    foreach (GLInstancedMesh mesh in MaterialMeshMap[mat])
+                    foreach (GLInstancedMesh mesh in MaterialMgr.GetMaterialMeshes(mat))
                     {
                         if (mesh.RenderedInstanceCount == 0 || mesh.UBO_aligned_size == 0)
                             continue;
@@ -1130,7 +1396,7 @@ namespace MVCore.Systems
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
             
-            foreach (GLSLShaderConfig shader in GLDeferredDecalShaders)
+            foreach (GLSLShaderConfig shader in ShaderMgr.GLDeferredDecalShaders)
             {
                 GL.UseProgram(shader.ProgramID);
                 //Upload depth texture to the shader
@@ -1140,9 +1406,9 @@ namespace MVCore.Systems
                 GL.ActiveTexture(TextureUnit.Texture6);
                 GL.BindTexture(TextureTarget.Texture2D, gbuf.depth);
 
-                foreach (MeshMaterial mat in ShaderMaterialMap[shader])
+                foreach (MeshMaterial mat in ShaderMgr.GetShaderMaterials(shader))
                 {
-                    foreach (GLInstancedMesh mesh in MaterialMeshMap[mat])
+                    foreach (GLInstancedMesh mesh in MaterialMgr.GetMaterialMeshes(mat))
                     {
                         if (mesh.RenderedInstanceCount == 0 || mesh.UBO_aligned_size == 0)
                             continue;
@@ -1185,13 +1451,13 @@ namespace MVCore.Systems
             //Set polygon mode
             GL.PolygonMode(MaterialFace.FrontAndBack, RenderState.settings.renderSettings.RENDERMODE);
 
-            foreach (GLSLShaderConfig shader in GLForwardTransparentShaders)
+            foreach (GLSLShaderConfig shader in ShaderMgr.GLForwardTransparentShaders)
             {
                 GL.UseProgram(shader.ProgramID); //Set Program
 
-                foreach (MeshMaterial mat in ShaderMaterialMap[shader])
+                foreach (MeshMaterial mat in ShaderMgr.GetShaderMaterials(shader))
                 {
-                    foreach (GLInstancedMesh mesh in MaterialMeshMap[mat])
+                    foreach (GLInstancedMesh mesh in MaterialMgr.GetMaterialMeshes(mat))
                     {
                         if (mesh.RenderedInstanceCount == 0 || mesh.UBO_aligned_size == 0)
                             continue;
@@ -1210,7 +1476,7 @@ namespace MVCore.Systems
             GL.DepthMask(true); //Re-enable depth buffer
             
             //Composite Step
-            GLSLShaderConfig bwoit_composite_shader = GenericShaders[SHADER_TYPE.BWOIT_COMPOSITE_SHADER]; 
+            GLSLShaderConfig bwoit_composite_shader = ShaderMgr.GetGenericShader(SHADER_TYPE.BWOIT_COMPOSITE_SHADER); 
             
             //Draw to main color channel
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, pbuf.fbo);
@@ -1365,7 +1631,7 @@ namespace MVCore.Systems
 
         private void render_quad(string[] uniforms, float[] uniform_values, string[] sampler_names, TextureTarget[] sampler_targets, int[] texture_ids, GLSLHelper.GLSLShaderConfig shaderConf)
         {
-            int quad_vao = EngineRef.resourceMgmtSys.GLPrimitiveVaos["default_renderquad"].vao_id;
+            int quad_vao = GeometryMgr.GetPrimitiveMesh("default_renderquad").vao.vao_id;
 
             GL.UseProgram(shaderConf.ProgramID);
             GL.BindVertexArray(quad_vao);
@@ -1488,7 +1754,7 @@ namespace MVCore.Systems
             //inv_tone_mapping(); //Apply tone mapping pbuf.color shoud be ready
             
             //Load Programs
-            GLSLShaderConfig fxaa_program = GenericShaders[SHADER_TYPE.FXAA_SHADER];
+            GLSLShaderConfig fxaa_program = ShaderMgr.GetGenericShader(SHADER_TYPE.FXAA_SHADER);
 
             //Copy Color to first channel
             FBO.copyChannel(pbuf.fbo, pbuf.fbo, pbuf.size[0], pbuf.size[1], pbuf.size[0], pbuf.size[1],
@@ -1508,7 +1774,7 @@ namespace MVCore.Systems
         private void tone_mapping()
         {
             //Load Programs
-            GLSLShaderConfig tone_mapping_program = GenericShaders[SHADER_TYPE.TONE_MAPPING];
+            GLSLShaderConfig tone_mapping_program = ShaderMgr.GetGenericShader(SHADER_TYPE.TONE_MAPPING);
 
             //Copy Color to first channel
             pass_tex(pbuf.fbo, DrawBufferMode.ColorAttachment1, pbuf.color, pbuf.size); //LOOKS OK!
@@ -1524,7 +1790,7 @@ namespace MVCore.Systems
         private void inv_tone_mapping()
         {
             //Load Programs
-            GLSLShaderConfig inv_tone_mapping_program = GenericShaders[SHADER_TYPE.INV_TONE_MAPPING];
+            GLSLShaderConfig inv_tone_mapping_program = ShaderMgr.GetGenericShader(SHADER_TYPE.INV_TONE_MAPPING);
 
             //Copy Color to first channel
             pass_tex(pbuf.fbo, DrawBufferMode.ColorAttachment1, pbuf.color, pbuf.size); //LOOKS OK!
@@ -1593,7 +1859,7 @@ namespace MVCore.Systems
             */
 
             //Render Light volume
-            GLSLShaderConfig shader_conf = GenericShaders[SHADER_TYPE.LIGHT_PASS_LIT_SHADER];
+            GLSLShaderConfig shader_conf = ShaderMgr.GetGenericShader(SHADER_TYPE.LIGHT_PASS_LIT_SHADER);
 
 
             //At first blit the albedo (gbuf 0) -> channel 0 of the pbuf
@@ -1620,7 +1886,7 @@ namespace MVCore.Systems
             GL.Disable(EnableCap.DepthTest);
 
             
-            GLInstancedLightMesh mesh = EngineRef.resourceMgmtSys.GLPrimitiveMeshes["default_light_sphere"] as GLInstancedLightMesh;
+            GLInstancedLightMesh mesh = GeometryMgr.GetPrimitiveMesh("default_light_sphere") as GLInstancedLightMesh;
 
             GL.UseProgram(shader_conf.ProgramID);
 
@@ -1674,7 +1940,17 @@ namespace MVCore.Systems
             // TODO: uncomment the following line if the finalizer is overridden above.
             // GC.SuppressFinalize(this);
         }
-#endregion
+
+        public override void OnRenderUpdate(double dt)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnFrameUpdate(double dt)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
 
     }
 

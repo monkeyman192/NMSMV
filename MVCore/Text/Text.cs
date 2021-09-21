@@ -186,11 +186,12 @@ namespace MVCore.Text
             System.Buffer.BlockCopy(uvs, 0, geom.vbuffer, 4 * verts.Length, 4 * uvs.Length); //UVs
         }
 
-        public override GeomObject getGeom()
+        public override GeomObject getGeom(string name="")
         {
             GeomObject geom = new();
 
             //Set main Geometry Info
+            geom.Name = name;
             geom.vertCount = verts.Length / 3;
             geom.indicesCount = indices.Length;
             geom.indicesLength = 0x4;

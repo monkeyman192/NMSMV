@@ -175,5 +175,13 @@ namespace MVCore.Systems
             return (e.GetComponent<TransformComponent>() as TransformComponent).Data;
         }
 
+        public override void CleanUp()
+        {
+            _Data.Clear();
+            EntityControllerMap.Clear();
+            EntityDataMap.Clear();
+            UpdatedEntities.Clear();
+            DynamicEntities.Clear();
+        }        
     }
 }

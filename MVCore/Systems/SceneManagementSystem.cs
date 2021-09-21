@@ -8,7 +8,7 @@ namespace MVCore.Systems
     {
         private Dictionary<long, Scene> _SceneMap = new(); //Maps entities to scenes
         private int SceneCount;
-        public int ActiveScene = -1;
+        public Scene ActiveScene = null;
 
         public SceneManagementSystem() : base(EngineSystemEnum.SCENE_MANAGEMENT_SYSTEM)
         {
@@ -47,7 +47,7 @@ namespace MVCore.Systems
         public void SetActiveScene(int id)
         {
             if (_SceneMap.ContainsKey(id))
-                ActiveScene = id;
+                ActiveScene = _SceneMap[id];
             else
                 Log(string.Format("Invalid Scene ID {0}", id), 
                     Common.LogVerbosityLevel.WARNING);
@@ -55,7 +55,7 @@ namespace MVCore.Systems
 
         public void UpdateActiveScene()
         {
-            _SceneMap[ActiveScene].Update();
+            ActiveScene.Update();
         }
 
         public void UpdateAllScenes()
@@ -69,5 +69,14 @@ namespace MVCore.Systems
             UpdateActiveScene();
         }
 
+        public override void OnRenderUpdate(double dt)
+        {
+            
+        }
+
+        public override void CleanUp()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

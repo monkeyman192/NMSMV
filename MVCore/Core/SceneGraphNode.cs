@@ -30,11 +30,14 @@ namespace MVCore
         public string Name = "";
         public bool IsRenderable = true;
         public bool IsOpen = false;
-        public SceneGraphNode ParentScene = null;
+        //public SceneGraphNode ParentScene = null; //Is this useful at all?
         public List<float> LODDistances = new();
         public SceneGraphNode Parent = null;
         public List<SceneGraphNode> Children = new();
-        
+
+        //Disposable Stuff
+        private bool disposed = false;
+        private Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
 
         public SceneGraphNode(SceneNodeType type) : base(EntityType.SceneNode)
         {
@@ -46,6 +49,9 @@ namespace MVCore
                     break;
                 case SceneNodeType.MODEL:
                     base.Type = EntityType.SceneNodeModel;
+                    break;
+                case SceneNodeType.LOCATOR:
+                    base.Type = EntityType.SceneNode; // Not sure if this should be any different
                     break;
                 case SceneNodeType.JOINT:
                     base.Type = EntityType.SceneNodeJoint;
@@ -148,7 +154,7 @@ namespace MVCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                MeshVao = Common.RenderState.engineRef.resourceMgmtSys.GLPrimitiveMeshes["default_cross"],
+                MeshVao = Common.RenderState.engineRef.GetPrimitiveMesh("default_cross"),
                 Material = Common.RenderState.engineRef.GetMaterialByName("crossMat")
             };
             
@@ -179,7 +185,7 @@ namespace MVCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                MeshVao = Common.RenderState.engineRef.resourceMgmtSys.GLPrimitiveMeshes["default_cross"],
+                MeshVao = Common.RenderState.engineRef.GetPrimitiveMesh("default_cross"),
                 Material = Common.RenderState.engineRef.GetMaterialByName("crossMat")
             };
             

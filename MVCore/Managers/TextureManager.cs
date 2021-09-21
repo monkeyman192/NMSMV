@@ -8,7 +8,8 @@ namespace MVCore
     public class TextureManager
     {
         public Dictionary<string, Texture> GLtextures = new();
-        private TextureManager masterTexManager;
+        
+
 
         public TextureManager()
         {
@@ -35,11 +36,7 @@ namespace MVCore
 
         public bool HasTexture(string name)
         {
-            //Search on the masterTextureManager first
-            if (masterTexManager != null && masterTexManager.HasTexture(name))
-                return true;
-            else
-                return GLtextures.ContainsKey(name);
+            return GLtextures.ContainsKey(name);
         }
 
         public void AddTexture(Texture t)
@@ -49,17 +46,9 @@ namespace MVCore
 
         public Texture GetTexture(string name)
         {
-            //Fetches the textures from the masterTexture Manager if it exists
-            if (masterTexManager != null && masterTexManager.HasTexture(name))
-                return masterTexManager.GetTexture(name);
-            else
-                return GLtextures[name];
+            return GLtextures[name];
         }
 
-        public void SetMasterTexManager(TextureManager mtMgr)
-        {
-            masterTexManager = mtMgr;
-        }
 
     }
 }

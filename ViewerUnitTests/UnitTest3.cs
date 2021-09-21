@@ -25,7 +25,7 @@ namespace Viewer_Unit_Tests
                 NMSTemplate template = mbinf.GetData();
                 mbinf.Dispose();
                 Console.WriteLine("All Good Loading");
-            } catch (Exception ex)
+            } catch
             {
                 Console.WriteLine("Something Went Wrong");
                 Assert.Fail();

@@ -37,11 +37,7 @@ namespace ImGUI_SDL_ModelViewer
         private Vector2i SceneViewSize = new();
         private bool isSceneViewActive = false;
         private bool firstDockSetup = true;
-        private uint dockSpaceID = 0;
-        uint dockSpaceMain = 0;
-        uint dockSpaceRightUp = 0;
-        uint dockSpaceRightDown = 0;
-
+        
         static private bool open_file_enabled = false;
 
         public Window() : base(GameWindowSettings.Default, 
@@ -112,7 +108,9 @@ namespace ImGUI_SDL_ModelViewer
 
             //Create Render Scene
             Scene scene = engine.CreateScene();
-            scene.AddNode(sceneRoot, true);
+            scene.Name = "DEFAULT_SCENE";
+            scene.AddNode(sceneRoot);
+            scene.SetRoot(sceneRoot);
             scene.AddNode(test1);
             scene.AddNode(test2);
             
@@ -123,15 +121,11 @@ namespace ImGUI_SDL_ModelViewer
             engine.transformSys.RequestEntityUpdate(test1);
             engine.transformSys.RequestEntityUpdate(test2);
 
-            //Add default scene to the resource manager
-            RenderState.engineRef.resourceMgmtSys.GLScenes["DEFAULT_SCENE"] = sceneRoot;
-
             //Force rootobject
-            RenderState.rootObject = sceneRoot;
             engine.renderSys.populate(scene);
 
             //Populate SceneGraphView
-            ImGuiManager.PopulateSceneGraph(sceneRoot);
+            ImGuiManager.PopulateSceneGraph(scene);
 
             //Check if Temp folder exists
 #if DEBUG
@@ -237,8 +231,6 @@ namespace ImGUI_SDL_ModelViewer
 
             waitForRequest(ref req);
 
-            RenderState.rootObject?.Dispose();
-
             if (testScene)
                 AddTestScene(testSceneID);
             else
@@ -247,7 +239,7 @@ namespace ImGUI_SDL_ModelViewer
             //Populate 
             Util.setStatus("Creating SceneGraph...");
 
-            ImGuiManager.PopulateSceneGraph(RenderState.rootObject);
+            ImGuiManager.PopulateSceneGraph(RenderState.engineRef.sceneMgmtSys.ActiveScene);
 
             //Add to UI
             Util.setStatus("Ready");
@@ -344,8 +336,8 @@ namespace ImGUI_SDL_ModelViewer
             waitForRequest(ref req1);
 
             //find Animation Capable nodes
-            findAnimScenes(RenderState.rootObject); //Repopulate animScenes
-            findActionScenes(RenderState.rootObject); //Re-populate actionSystem
+            findAnimScenes(RenderState.engineRef.sceneMgmtSys.ActiveScene.Root); //Repopulate animScenes
+            findActionScenes(RenderState.engineRef.sceneMgmtSys.ActiveScene.Root); //Re-populate actionSystem
 
         }
 
@@ -365,8 +357,8 @@ namespace ImGUI_SDL_ModelViewer
             waitForRequest(ref req1);
             
             //find Animation Capable nodes
-            findAnimScenes(RenderState.rootObject); //Repopulate animScenes
-            findActionScenes(RenderState.rootObject); //Re-populate actionSystem
+            findAnimScenes(RenderState.engineRef.sceneMgmtSys.ActiveScene.Root); //Repopulate animScenes
+            findActionScenes(RenderState.engineRef.sceneMgmtSys.ActiveScene.Root); //Re-populate actionSystem
         }
         
         public void findAnimScenes(SceneGraphNode node)
@@ -441,10 +433,10 @@ namespace ImGUI_SDL_ModelViewer
                         null, &temp);
                     dockSpaceID = temp; //Temp holds the main view
                     
-                    dockSpaceRightDown =
+                    uint dockSpaceRightDown =
                         ImGuiNative.igDockBuilderSplitNode(dockSpaceRight, ImGuiDir.Down, 
                             0.5f, null, &dockSpaceRight);
-                    dockSpaceRightUp = dockSpaceRight;
+                    uint dockSpaceRightUp = dockSpaceRight;
                     
                     uint dockSpaceLeftDown = ImGuiNative.igDockBuilderSplitNode(dockSpaceID, ImGuiDir.Down, 0.1f,
                         null, &temp);

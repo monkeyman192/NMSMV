@@ -31,6 +31,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\ModelProcGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Palettes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Util.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Managers\EntityManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Managers\GeometryManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Managers\MaterialManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Managers\ShaderManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\MeshRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\RequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\ActionSystem.cs" />
@@ -59,11 +63,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\TextureMixer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLMeshBufferManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Common\TextureManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Managers\TextureManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\Font.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Text\FontManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Managers\FontManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\Text.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Text\TextManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Managers\TextManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\FileUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\GamepadHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Gbuffer.cs" />
@@ -76,7 +80,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Importer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Octree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\RenderSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Systems\ResourceManagementSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\ShadowRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\ThreadRequest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\WorkThreadDispacher.cs" />

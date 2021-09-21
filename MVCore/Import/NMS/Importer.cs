@@ -70,10 +70,15 @@ namespace MVCore.Import.NMS
             {
                 string filepath = component.LODModel[i].LODModel.Filename;
                 Console.WriteLine("Loading LOD " + filepath);
-                SceneGraphNode so = ImportScene(filepath);
-                so.SetParent(node);
+                Scene so = ImportScene(filepath);
                 //Create LOD Resource
-                LODModelResource lodres = new(component.LODModel[i]);
+                LODModelResource lodres = new()
+                {
+                    FileName = component.LODModel[i].LODModel.Filename,
+                    SceneRef = so,
+                    CrossFadeoverlap = component.LODModel[i].CrossFadeOverlap,
+                    CrossFadeTime = component.LODModel[i].CrossFadeTime
+                };
                 lodmdlcomp.Resources.Add(lodres);
             }
             
@@ -620,7 +625,7 @@ namespace MVCore.Import.NMS
 
         }
         
-        public static SceneGraphNode ImportScene(string path)
+        public static Scene ImportScene(string path)
         {
             TkSceneNodeData template = (TkSceneNodeData)FileUtils.LoadNMSTemplate(path);
             
@@ -639,10 +644,10 @@ namespace MVCore.Import.NMS
             int num_lods = int.Parse(FileUtils.parseNMSTemplateAttrib(template.Attributes, "NUMLODS"));
 
             GeomObject gobject;
-            if (RenderState.engineRef.resourceMgmtSys.GLgeoms.ContainsKey(geomfile))
+            if (RenderState.engineRef.renderSys.GeometryMgr.HasGeom(geomfile))
             {
                 //Load from dict
-                gobject = RenderState.engineRef.resourceMgmtSys.GLgeoms[geomfile];
+                gobject = RenderState.engineRef.renderSys.GeometryMgr.GetGeom(geomfile);
 
             } else
             {
@@ -683,11 +688,12 @@ namespace MVCore.Import.NMS
                     {
                         Name = "DUMMY_SCENE"
                     };
-                    return dummy;
+                    return null;
                 }
 
                 gobject = ImportGeometry(ref fs, ref gfs);
-                RenderState.engineRef.resourceMgmtSys.GLgeoms[geomfile] = gobject;
+                gobject.Name = geomfile;
+                RenderState.engineRef.renderSys.GeometryMgr.AddGeom(gobject);
                 Callbacks.Log(string.Format("Geometry file {0} successfully parsed",
                     geomfile + ".PC"), Common.LogVerbosityLevel.INFO);
                 
@@ -698,17 +704,19 @@ namespace MVCore.Import.NMS
             //Random Generetor for colors
             Random randgen = new();
 
+            //Create SCene
+            Scene scn = RenderState.engineRef.sceneMgmtSys.CreateScene();
+            scn.Name = path;
+            
             //Parse root scene
-            SceneGraphNode root = CreateNodeFromTemplate(template, gobject, null, null);
+            SceneGraphNode root = CreateNodeFromTemplate(template, gobject, null, scn);
+            scn.SetRoot(root);
             
-            //Save scene path to resourcemanager
-            RenderState.engineRef.resourceMgmtSys.GLScenes[path] = root; //Use input path
-            
-            return root;
+            return scn;
         }
 
         private static SceneGraphNode CreateNodeFromTemplate(TkSceneNodeData node, 
-            GeomObject gobject, SceneGraphNode parent, SceneGraphNode parentScene)
+            GeomObject gobject, SceneGraphNode parent, Scene parentScene)
         {
             Callbacks.Log(string.Format("Importing Node {0}", node.Name), 
                 Common.LogVerbosityLevel.INFO);
@@ -723,6 +731,8 @@ namespace MVCore.Import.NMS
                 NameHash = node.NameHash,
                 ID = Common.RenderState.itemCounter++
             };
+
+            parentScene.AddNode(so); //Add node to the scene
             
             //Add Transform Component
             TransformData td = new(node.Transform.TransX,
@@ -740,7 +750,6 @@ namespace MVCore.Import.NMS
             //Set Parent after the transform component has been initialized
             if (parent != null)
                 so.SetParent(parent);
-            so.ParentScene = parentScene;
             
             //For now fetch only one attachment
             string attachment = FileUtils.parseNMSTemplateAttrib(node.Attributes, "ATTACHMENT");
@@ -892,7 +901,7 @@ namespace MVCore.Import.NMS
                 //Create MeshComponent
                 MeshComponent mc = new()
                 {
-                    MeshVao = RenderState.engineRef.resourceMgmtSys.GLPrimitiveMeshes["default_cross"],
+                    MeshVao = RenderState.engineRef.GetPrimitiveMesh("default_cross"),
                     Material = RenderState.engineRef.GetMaterialByName("crossMat")
                 };
                 
@@ -904,9 +913,6 @@ namespace MVCore.Import.NMS
                     NumLods = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
                 };
                 
-                sc.TexManager.SetMasterTexManager(RenderState.engineRef.resourceMgmtSys.texMgr);
-                localTexMgr = sc.TexManager;
-
                 so.AddComponent<SceneComponent>(sc);
 
                 //Fetch extra LOD attributes

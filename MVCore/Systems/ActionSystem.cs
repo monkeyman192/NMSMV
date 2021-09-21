@@ -212,5 +212,10 @@ namespace MVCore.Systems
                 ActionsExecutedInState[scn.ID] = new();
             }
         }
+
+        public override void OnRenderUpdate(double dt)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

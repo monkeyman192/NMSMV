@@ -11,6 +11,7 @@ namespace MVCore
         SceneNodeLight,
         SceneNodeJoint,
         SceneNodeMesh,
+        SceneNodeLocator,
         SceneNodeModel,
         MeshComponent,
         AnimationComponent,
@@ -21,8 +22,12 @@ namespace MVCore
         GeometryObject,
         Camera,
         Script,
+        Asset,
         ShaderSource,
-        Shader
+        Shader,
+        Mesh,
+        InstancedMesh,
+        LightInstancedMesh
     }
     public class Entity : IDisposable
     {
@@ -35,9 +40,7 @@ namespace MVCore
         private readonly Dictionary<Type, Component> _componentMap = new();
 
         //Disposable Stuff
-        public bool disposed = false;
-        public Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
-
+        private bool disposedValue;
 
         public Entity(EntityType typ)
         {
@@ -104,36 +107,26 @@ namespace MVCore
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-#if DEBUG
-            GC.SuppressFinalize(this);
-#endif
-        }
-
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
-                return;
-
-            if (disposing)
+            if (!disposedValue)
             {
-                handle.Dispose();
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
             }
-
-            //Free unmanaged resources
-            disposed = true;
         }
 
-#if DEBUG
-        ~Entity()
+        public void Dispose()
         {
-            // If this finalizer runs, someone somewhere failed to
-            // call Dispose, which means we've failed to leave
-            // a monitor!
-            System.Diagnostics.Debug.Fail("Undisposed lock. Object Type " + Type.ToString());
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
-#endif
     }
 }

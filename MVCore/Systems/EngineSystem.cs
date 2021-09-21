@@ -52,21 +52,10 @@ namespace MVCore.Systems
         {
             return EngineRef;
         }
-        
-        public virtual void OnRenderUpdate(double dt)
-        {
 
-        }
-
-        public virtual void OnFrameUpdate(double dt)
-        {
-
-        }
-
-        public virtual void CleanUp()
-        {
-
-        }
+        public abstract void OnRenderUpdate(double dt);
+        public abstract void OnFrameUpdate(double dt);
+        public abstract void CleanUp();
         
     }
 }

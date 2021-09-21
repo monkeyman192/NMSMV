@@ -8,8 +8,9 @@ namespace MVCore
     public class Scene
     {
         public int ID = -1;
+        public string Name = "";
         private readonly List<long> _entityIDList;
-        private SceneGraphNode root = null;
+        public SceneGraphNode Root = null;
         private readonly List<SceneGraphNode> _Nodes = new();
         private readonly List<SceneGraphNode> _MeshNodes = new();
 
@@ -26,9 +27,14 @@ namespace MVCore
             return _MeshNodes;
         }
 
-        public void AddNode(SceneGraphNode n, bool Isroot = false)
+        public bool HasNode(SceneGraphNode n)
         {
-            if (_entityIDList.Contains(n.ID))
+            return _entityIDList.Contains(n.ID);
+        }
+
+        public void AddNode(SceneGraphNode n)
+        {
+            if (HasNode(n))
             {
                 Common.Callbacks.Log(string.Format("Node {0} already belongs to scene {1}", n.ID, ID),
                     Common.LogVerbosityLevel.WARNING);
@@ -41,9 +47,14 @@ namespace MVCore
             if (n.HasComponent<MeshComponent>())
                 _MeshNodes.Add(n);
 
-            if (Isroot)
-                root = n;
+            
 
+        }
+
+        public void SetRoot(SceneGraphNode n)
+        {
+            if (HasNode(n))
+                Root = n;
         }
 
         public void Clear()
@@ -51,7 +62,7 @@ namespace MVCore
             _Nodes.Clear();
             _MeshNodes.Clear();
             _entityIDList.Clear();
-            root = null;
+            Root = null;
         }
 
         public void Update()
@@ -94,7 +105,7 @@ namespace MVCore
 
             //Fetch root SceneGraphNode
             SceneGraphNode res = null;
-            root.findNodeByID(e.ID, ref res);
+            Root.findNodeByID(e.ID, ref res);
 
             return res;
         }

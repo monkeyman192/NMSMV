@@ -51,7 +51,6 @@ namespace SimpleTextureRenderer
             texture_id = tex.texID;
 
 
-            string log = "";
             //Compile Necessary Shaders
 
             string vs_path = "Shaders/Gbuffer_VS.glsl";

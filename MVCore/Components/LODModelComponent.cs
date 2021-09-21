@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using libMBIN.NMS.Toolkit;
 
 namespace MVCore
 {
@@ -20,6 +19,7 @@ namespace MVCore
         public override Component Clone()
         {
             LODModelComponent lmc = new LODModelComponent();
+            lmc.CopyFrom(this);
             return lmc;
         }
 
@@ -31,24 +31,9 @@ namespace MVCore
 
     public class LODModelResource
     {
-        private string _filename;
-        private float _crossFadeTime;
-        private float _crossFadeoverlap;
-
-        //Properties
-        public string Filename
-        {
-            get
-            {
-                return _filename;
-            }
-        }
-
-        public LODModelResource(TkLODModelResource res)
-        {
-            _filename = res.LODModel.Filename;
-            _crossFadeTime = res.CrossFadeTime;
-            _crossFadeoverlap = res.CrossFadeOverlap;
-        }
+        public string FileName;
+        public Scene SceneRef = null;
+        public float CrossFadeTime;
+        public float CrossFadeoverlap;
     }
 }

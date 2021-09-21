@@ -52,8 +52,6 @@ namespace MVCore.Common
 
         //Keep the main camera global
         public static Camera activeCam;
-        //RootObject
-        public static SceneGraphNode rootObject;
         //Item Counter
         public static int itemCounter = 0;
         //Status
@@ -180,7 +178,7 @@ namespace MVCore.Common
         public ViewSettings viewSettings = new ViewSettings(31);
         
         //Private Settings
-        private int forceProcGen;
+        //private int forceProcGen;
         private string gamedir;
         private string unpackdir;
         private LogVerbosityLevel _logVerbosity;
@@ -329,7 +327,7 @@ namespace MVCore.Common
         public static ShowErrorMsg showError = null;
         public static OpenAnimCallback openAnim = null;
         public static OpenPoseCallback openPose = null;
-        public static LogCallback Log = Log;
+        public static LogCallback Log = null;
         public static AssertCallback Assert = null;
         public static SendRequestCallback issueRequestToGLControl = null;
         public static GetResourceCallback getResource = null;
@@ -340,8 +338,8 @@ namespace MVCore.Common
 
         public static void SetDefaultCallbacks()
         {
-            Callbacks.Log = Callbacks.DefaultLog;
-            Callbacks.Assert = Callbacks.DefaultAssert;
+            Log = DefaultLog;
+            Assert = DefaultAssert;
         }
 
         //Default callbacks

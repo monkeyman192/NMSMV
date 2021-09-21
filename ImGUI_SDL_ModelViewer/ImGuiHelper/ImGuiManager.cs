@@ -120,9 +120,9 @@ namespace ImGuiHelper
             SceneGraphViewer?.Draw();
         }
 
-        public static void PopulateSceneGraph(SceneGraphNode m)
+        public static void PopulateSceneGraph(Scene scn)
         {
-            SceneGraphViewer.Init(m);
+            SceneGraphViewer.Init(scn.Root);
         }
 
         public static void ClearSceneGraph()

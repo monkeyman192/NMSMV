@@ -11,10 +11,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TextureMixer</RootNamespace>
     <AssemblyName>TextureMixer</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>net5.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
+    <TargetFrameworkProfile/>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -118,94 +118,8 @@
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="..\Model Viewer\Resources\camera.frag">
-      <Link>Resources\camera.frag</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\camera.vert">
-      <Link>Resources\camera.vert</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\joint.frag">
-      <Link>Resources\joint.frag</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\joint.vert">
-      <Link>Resources\joint.vert</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\light.frag">
-      <Link>Resources\light.frag</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\light.vert">
-      <Link>Resources\light.vert</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\locator.frag">
-      <Link>Resources\locator.frag</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\locator.vert">
-      <Link>Resources\locator.vert</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\pick.frag">
-      <Link>Resources\pick.frag</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\pick.vert">
-      <Link>Resources\pick.vert</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\tess.tcs">
-      <Link>Resources\tess.tcs</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\tess.tes">
-      <Link>Resources\tess.tes</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\tess_tcs">
-      <Link>Resources\tess_tcs</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\text.frag">
-      <Link>Resources\text.frag</Link>
-    </None>
-    <None Include="..\Model Viewer\Resources\text.vert">
-      <Link>Resources\text.vert</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\common.glsl">
-      <Link>Shaders\common.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\decal_FS.glsl">
-      <Link>Shaders\decal_FS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\decal_VS.glsl">
-      <Link>Shaders\decal_VS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Gbuffer_FS.glsl">
-      <Link>Shaders\Gbuffer_FS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Gbuffer_VS.glsl">
-      <Link>Shaders\Gbuffer_VS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\pass_FS.glsl">
-      <Link>Shaders\pass_FS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\pass_VS.glsl">
-      <Link>Shaders\pass_VS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Simple_FS.glsl">
-      <Link>Shaders\Simple_FS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Simple_FSEmpty.glsl">
-      <Link>Shaders\Simple_FSEmpty.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Simple_FS_backup.glsl">
-      <Link>Shaders\Simple_FS_backup.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Simple_GS.glsl">
-      <Link>Shaders\Simple_GS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Simple_VS.glsl">
-      <Link>Shaders\Simple_VS.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Simple_VSEmpty.glsl">
-      <Link>Shaders\Simple_VSEmpty.glsl</Link>
-    </None>
-    <None Include="..\Model Viewer\Shaders\Simple_VS_backup.glsl">
-      <Link>Shaders\Simple_VS_backup.glsl</Link>
-    </None>
-    <None Include="OpenTK.dll.config" />
+    
+	<None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

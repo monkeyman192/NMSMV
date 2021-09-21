@@ -6,7 +6,6 @@ using OpenTK;
 using OpenTK.Input;
 using OpenTK.Graphics;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common.Input;
 using OpenTK.Graphics.OpenGL4;
 using MVCore;
 using MVCore.Systems;
@@ -40,7 +39,6 @@ namespace MVCore
         public ActionSystem actionSys;
         public AnimationSystem animationSys;
         public SceneManagementSystem sceneMgmtSys;
-        public ResourceManagementSystem resourceMgmtSys;
         public RenderingSystem renderSys; //TODO: Try to make it private. Noone should have a reason to access it
         private readonly RequestHandler reqHandler;
         private readonly NativeWindow windowHandler;
@@ -69,9 +67,6 @@ namespace MVCore
         public float light_intensity = 1.0f;
         public float scale = 1.0f;
 
-        //Palette
-        Dictionary<string, Dictionary<string, Vector4>> palette;
-
         public Engine(NativeWindow win) : base(EngineSystemEnum.CORE_SYSTEM)
         {
             //Store Window handler
@@ -93,7 +88,6 @@ namespace MVCore
             animationSys = new AnimationSystem();
             transformSys = new TransformationSystem();
             sceneMgmtSys = new SceneManagementSystem();
-            resourceMgmtSys = new ResourceManagementSystem();
             
             
             renderSys.SetEngine(this);
@@ -102,12 +96,11 @@ namespace MVCore
             animationSys.SetEngine(this);
             transformSys.SetEngine(this);
             sceneMgmtSys.SetEngine(this);
-            resourceMgmtSys.SetEngine(this);
-
+            
             //Set Start Status
             rt_State = EngineRenderingState.UNINITIALIZED;
         }
-
+        
         ~Engine()
         {
             Log("Goodbye!", LogVerbosityLevel.INFO);
@@ -132,10 +125,9 @@ namespace MVCore
 
         #region ResourceManager
 
-        public void InitializeResourceManager()
+        public void InitializeResources()
         {
             AddDefaultShaders();
-            AddDefaultMaterials();
         }
 
         private void AddDefaultShaders()
@@ -189,73 +181,28 @@ namespace MVCore
             }
         }
 
-        private void AddDefaultMaterials()
-        {
-            //Cross Material
-            MeshMaterial mat;
-
-            mat = new();
-            mat.Name = "crossMat";
-            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-            mat.add_flag(MaterialFlagEnum._F21_VERTEXCOLOUR);
-            Uniform uf = new()
-            {
-                Name = "mpCustomPerMaterial.gMaterialColourVec4",
-                Values = new(1.0f, 1.0f, 1.0f, 1.0f)
-            };
-            mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
-            RegisterEntity(mat);
-            
-            //Joint Material
-            mat = new MeshMaterial
-            {
-                Name = "jointMat"
-            };
-            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-
-            uf = new Uniform();
-            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
-            uf.Values = new(1.0f, 0.0f, 0.0f, 1.0f);
-            mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
-            RegisterEntity(mat);
-
-            //Light Material
-            mat = new()
-            {
-                Name = "lightMat"
-            };
-            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-
-            uf = new();
-            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
-            uf.Values = new(1.0f, 1.0f, 0.0f, 1.0f);
-            mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
-            RegisterEntity(mat);
-
-            //Collision Material
-            mat = new();
-            mat.Name = "collisionMat";
-            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-
-            uf = new();
-            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
-            uf.Values = new(0.8f, 0.8f, 0.2f, 1.0f);
-            mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
-            RegisterEntity(mat);
-
-        }
-
-
         #endregion
 
+        //Asset Setters
+        public void AddTexture(Texture tex)
+        {
+            renderSys.TextureMgr.AddTexture(tex);
+        }
+
         //Asset Getter
+        public Texture GetTexture(string name)
+        {
+            return renderSys.TextureMgr.GetTexture(name);
+        }
+
+        public GLInstancedMesh GetPrimitiveMesh(string name)
+        {
+            return renderSys.GeometryMgr.GetPrimitiveMesh(name);
+        }
+
         public MeshMaterial GetMaterialByName(string name)
         {
-            return registrySys.GetEntityTypeList(EntityType.Material).Find(x => ((MeshMaterial) x).Name == name) as MeshMaterial;
+            return renderSys.MaterialMgr.GetByName(name);
         }
 
         public SceneGraphNode GetSceneNodeByName(string name)
@@ -265,23 +212,42 @@ namespace MVCore
         
         public SceneGraphNode GetSceneNodeByNameType(SceneNodeType type, string name)
         {
-            return registrySys.GetEntityTypeList(EntityType.SceneNode).Find(x=>((SceneGraphNode) x).Name == name && ((SceneGraphNode) x).Type == type) as SceneGraphNode;
+            EntityType etype = EntityType.SceneNode;
+            switch (type)
+            {
+                case SceneNodeType.LOCATOR:
+                    etype = EntityType.SceneNodeLocator;
+                    break;
+                case SceneNodeType.MODEL:
+                    etype = EntityType.SceneNodeModel;
+                    break;
+                case SceneNodeType.MESH:
+                    etype = EntityType.SceneNodeMesh;
+                    break;
+                case SceneNodeType.LIGHT:
+                    etype = EntityType.SceneNodeLight;
+                    break;
+            }
+            return registrySys.GetEntityTypeList(etype).Find(x=>((SceneGraphNode) x).Name == name && ((SceneGraphNode) x).Type == type) as SceneGraphNode;
         }
 
         public GLSLShaderSource GetShaderSourceByFilePath(string path)
         {
+            //TODO use renderSystem for quicker access
             return registrySys.GetEntityTypeList(EntityType.ShaderSource)
                 .Find(x => ((GLSLShaderSource)x).SourceFilePath == path) as GLSLShaderSource;
         }
 
         public GLSLShaderConfig GetShaderByHash(int hash)
         {
+            //TODO use renderSystem for quicker access
             return registrySys.GetEntityTypeList(EntityType.Shader)
                 .Find(x => ((GLSLShaderConfig) x).Hash == hash) as GLSLShaderConfig;
         }
 
         public GLSLShaderConfig GetShaderByType(SHADER_TYPE typ)
         {
+            //TODO use renderSystem for quicker access
             return registrySys.GetEntityTypeList(EntityType.Shader)
                 .Find(x => ((GLSLShaderConfig)x).shader_type == typ) as GLSLShaderConfig;
         }
@@ -311,7 +277,7 @@ namespace MVCore
         public void init(int width, int height)
         {
             //Initialize Resource Manager
-            InitializeResourceManager();
+            InitializeResources();
 
             //Assign new palette to GLControl
             //Todo get rid of palettes they have no place here
@@ -454,10 +420,8 @@ namespace MVCore
             animationSys.CleanUp();
 
             //Clear Resources
-            resourceMgmtSys.Cleanup();
             ModelProcGen.procDecisions.Clear();
 
-            RenderState.rootObject = null;
             RenderState.activeModel = null;
             
             //Clear RenderStats
@@ -588,14 +552,10 @@ namespace MVCore
             //Explicitly add default light to the rootObject
             scene.Children.Add(l);
 
-            //Save scene path to resourcemanager
-            RenderState.engineRef.resourceMgmtSys.GLScenes["TEST_SCENE_1"] = scene; //Use input path
-
             //Populate RenderManager
             renderSys.populate(null);
 
             scene.IsSelected = true;
-            RenderState.rootObject = scene;
             //RenderState.activeModel = root; //Set the new scene as the new activeModel
 
             //Restart anim worker if it was active
@@ -633,7 +593,6 @@ namespace MVCore
             //Clear Resources
             ModelProcGen.procDecisions.Clear();
             
-            RenderState.rootObject = null;
             RenderState.itemCounter = 0;
             RenderState.activeModel = null;
             
@@ -645,11 +604,10 @@ namespace MVCore
             RenderState.settings.renderSettings.ToggleAnimations = false;
             
             //Setup new object
-            SceneGraphNode root = Import.NMS.Importer.ImportScene(filename);
+            Scene scn = Import.NMS.Importer.ImportScene(filename);
 
             //Explicitly add default light to the rootObject
             //TODO: add default light
-            
             
             //Todo make that through the systems update functions
 
@@ -659,14 +617,6 @@ namespace MVCore
             //Populate RenderManager
             renderSys.populate(null);
 
-            //Clear Instances
-            //renderSys.clearInstances();
-            //root.updateMeshInfo(); //Update all mesh info
-
-            root.IsSelected = true;
-            RenderState.rootObject = root;
-            //RenderState.activeModel = root; //Set the new scene as the new activeModel
-            
             //Restart anim worker if it was active
             RenderState.settings.renderSettings.ToggleAnimations = animToggleStatus;
         
@@ -826,6 +776,20 @@ namespace MVCore
             }
 
             prevMousePos = mouseState.Position;
+
+        }
+
+        public override void CleanUp()
+        {
+            throw new NotImplementedException();
+            //TODO I should probably call the system cleanup functions here
+            actionSys.CleanUp();
+            animationSys.CleanUp();
+            transformSys.CleanUp();
+            
+            renderSys.CleanUp();
+            sceneMgmtSys.CleanUp();
+            registrySys.CleanUp();
 
         }
 

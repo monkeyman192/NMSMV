@@ -166,7 +166,7 @@ namespace MVCore
                         tex.palOpt = palOpt;
                         tex.procColor = palColor;
                         //Store to master texture manager
-                        RenderState.engineRef.resourceMgmtSys.texMgr.AddTexture(tex);
+                        texMgr.AddTexture(tex);
 
                         //Save Texture to material
                         difftextures[i] = tex;
@@ -203,7 +203,7 @@ namespace MVCore
                     {
                         Texture texmask = new Texture(partNameMask);
                         //Store to master texture manager
-                        RenderState.engineRef.resourceMgmtSys.texMgr.AddTexture(texmask);
+                        texMgr.AddTexture(texmask);
                         //Store Texture to material
                         masktextures[i] = texmask;
                         alphaLayersUsed[i] = 0.0f;
@@ -238,7 +238,7 @@ namespace MVCore
                     {
                         Texture texnormal = new Texture(partNameNormal);
                         //Store to master texture manager
-                        RenderState.engineRef.resourceMgmtSys.texMgr.AddTexture(texnormal);
+                        texMgr.AddTexture(texnormal);
                         //Store Texture to material
                         normaltextures[i] = texnormal;
                     }
@@ -321,8 +321,8 @@ namespace MVCore
             Texture tex;
             int loc;
 
-            Texture dMask = RenderState.engineRef.resourceMgmtSys.texMgr.GetTexture("default_mask.dds");
-            Texture dDiff = RenderState.engineRef.resourceMgmtSys.texMgr.GetTexture("default.dds");
+            Texture dMask = RenderState.engineRef.GetTexture("default_mask.dds");
+            Texture dDiff = RenderState.engineRef.GetTexture("default.dds");
 
             //USE PROGRAM
             GLSLHelper.GLSLShaderConfig shader = RenderState.engineRef.GetShaderByType(GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER);
@@ -401,7 +401,7 @@ namespace MVCore
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindVertexArray(RenderState.engineRef.resourceMgmtSys.GLPrimitiveVaos["default_renderquad"].vao_id);
+            GL.BindVertexArray(RenderState.engineRef.GetPrimitiveMesh("default_renderquad").vao.vao_id);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
@@ -443,8 +443,8 @@ namespace MVCore
             Texture tex;
             int loc;
 
-            Texture dMask = RenderState.engineRef.resourceMgmtSys.texMgr.GetTexture("default_mask.dds");
-            Texture dDiff = RenderState.engineRef.resourceMgmtSys.texMgr.GetTexture("default.dds");
+            Texture dMask = RenderState.engineRef.GetTexture("default_mask.dds");
+            Texture dDiff = RenderState.engineRef.GetTexture("default.dds");
 
             //USE PROGRAM
             GLSLHelper.GLSLShaderConfig shader = RenderState.engineRef.GetShaderByType(GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER);
@@ -525,7 +525,7 @@ namespace MVCore
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindVertexArray(RenderState.engineRef.resourceMgmtSys.GLPrimitiveVaos["default_renderquad"].vao_id);
+            GL.BindVertexArray(RenderState.engineRef.GetPrimitiveMesh("default_renderquad").vao.vao_id);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
@@ -565,8 +565,8 @@ namespace MVCore
             Texture tex;
             int loc;
 
-            Texture dMask = RenderState.engineRef.resourceMgmtSys.texMgr.GetTexture("default_mask.dds");
-            Texture dDiff = RenderState.engineRef.resourceMgmtSys.texMgr.GetTexture("default.dds");
+            Texture dMask = RenderState.engineRef.GetTexture("default_mask.dds");
+            Texture dDiff = RenderState.engineRef.GetTexture("default.dds");
 
             //USE PROGRAM
             GLSLHelper.GLSLShaderConfig shader = RenderState.engineRef.GetShaderByType(GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER);
@@ -647,7 +647,7 @@ namespace MVCore
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindVertexArray(RenderState.engineRef.resourceMgmtSys.GLPrimitiveVaos["default_renderquad"].vao_id);
+            GL.BindVertexArray(RenderState.engineRef.GetPrimitiveMesh("default_renderquad").vao.vao_id);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero);
 

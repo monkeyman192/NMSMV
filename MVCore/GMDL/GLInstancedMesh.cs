@@ -14,11 +14,10 @@ using System.Linq;
 
 namespace MVCore
 {
-    public class GLInstancedMesh: IDisposable
+    public class GLInstancedMesh: Entity
     {
         //Class static properties
-        public const int MAX_INSTANCES = 512;
-        
+        public string Name;
         public GLVao vao;
         public GLVao bHullVao;
         public MeshMetaData MetaData;
@@ -49,13 +48,15 @@ namespace MVCore
         public int instanceBoneMatricesTex;
         public int instanceBoneMatricesTexTBO;
 
-        public GLInstancedMesh()
+        public const int MAX_INSTANCES = 512;
+
+        public GLInstancedMesh() : base(EntityType.Mesh)
         {
             vao = new GLVao();
             MetaData = new MeshMetaData();
         }
 
-        public GLInstancedMesh(MeshMetaData MD)
+        public GLInstancedMesh(MeshMetaData MD) : base(EntityType.Mesh)
         {
             vao = new GLVao();
             MetaData = new MeshMetaData(MD); //Copy MetaData
@@ -117,13 +118,12 @@ namespace MVCore
 
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool disposed = false;
+        private Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
 
-
-
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!disposed)
             {
                 if (disposing)
                 {
@@ -131,37 +131,22 @@ namespace MVCore
                     BoneRemapIndices = null;
                     instanceBoneMatrices = null;
 
-                    vao?.Dispose();
-
-                    if (instanceBoneMatricesTex > 0)
-                    {
-                        GL.DeleteTexture(instanceBoneMatricesTex);
-                        GL.DeleteBuffer(instanceBoneMatricesTexTBO);
-                    }
+                    
+                    handle?.Dispose();
                 }
 
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
+                vao?.Dispose();
 
-                disposedValue = true;
+                if (instanceBoneMatricesTex > 0)
+                {
+                    GL.DeleteTexture(instanceBoneMatricesTex);
+                    GL.DeleteBuffer(instanceBoneMatricesTexTBO);
+                }
+
+                disposed = true;
             }
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~mainGLVao()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
         #endregion
 
 
