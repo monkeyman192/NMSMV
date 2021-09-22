@@ -68,6 +68,7 @@ namespace GLSLHelper {
         private List<string> _Directives = new();
         private FileSystemWatcher _watcher;
         public string ResolvedText = ""; //Full shader text after resolving
+        public string ActualShaderSource = "";
         public int shader_object_id = -1;
         public bool Resolved = false;
         public bool Processed = false;
@@ -132,7 +133,7 @@ namespace GLSLHelper {
             _Directives.Add(s);
         }
         
-        public void Compile(ShaderType type)
+        public void Compile(ShaderType type, string append_text = "")
         {
             if (!Resolved)
                 Resolve();
@@ -141,24 +142,26 @@ namespace GLSLHelper {
             shader_object_id = GL.CreateShader(type);
             
             //Compile Shader
-            GL.ShaderSource(shader_object_id, version + "\n\n" + ResolvedText);
+            GL.ShaderSource(shader_object_id, version + "\n" + append_text + "\n" + ResolvedText);
             
             //Get resolved shader text
-            GL.GetShaderSource(shader_object_id, 32768, out int actual_shader_length, out string actual_shader_source);
+            GL.GetShaderSource(shader_object_id, 32768, out int actual_shader_length, out ActualShaderSource);
             
             GL.CompileShader(shader_object_id);
             GL.GetShaderInfoLog(shader_object_id, out string info);
 
+            CompilationLog += GLShaderHelper.NumberLines(ActualShaderSource) + "\n";
             CompilationLog += info + "\n";
+                
             GL.GetShader(shader_object_id, ShaderParameter.CompileStatus, out int status_code);
             if (status_code != 1)
             {
-                Console.WriteLine(GLShaderHelper.NumberLines(actual_shader_source));
+                Console.WriteLine(GLShaderHelper.NumberLines(ActualShaderSource));
                 
                 Callbacks.showError("Failed to compile shader for the model. Contact Dev",
                     "Shader Compilation Error");
                 GLShaderHelper.throwCompilationError(CompilationLog +
-                    GLShaderHelper.NumberLines(actual_shader_source) + "\n" + info);
+                    GLShaderHelper.NumberLines(ActualShaderSource) + "\n" + info);
             }
                 
         }
@@ -585,38 +588,35 @@ namespace GLSLHelper {
             if (!((config.TCSText == null) & (config.TESText == null))) tsflag = true;
 
             //Convert directives array to string
-            string directivestring = string.Join('\n', config.directives.ToArray());
+            string directivestring = "";
+            foreach (string dir in config.directives)
+                directivestring += "#define " + dir + '\n';
             
             //Compile vertex shader
             
             if (config.VSText != null)
             {
-                config.VSText.Compile(ShaderType.VertexShader);
-                config.CompilationLog += NumberLines(directivestring + '\n' + config.VSText.ResolvedText) + "\n";
+                config.VSText.Compile(ShaderType.VertexShader, directivestring);
             }
 
             if (config.FSText != null)
             {
-                config.FSText.Compile(ShaderType.FragmentShader);
-                config.CompilationLog += NumberLines(directivestring + '\n' + config.FSText.ResolvedText) + "\n";
+                config.FSText.Compile(ShaderType.FragmentShader, directivestring);
             }
 
             if (config.GSText != null)
             {
                 config.GSText.Compile(ShaderType.GeometryShader);
-                config.CompilationLog += NumberLines(directivestring + '\n' + config.GSText.ResolvedText) + "\n";
             }
 
             if (config.TESText != null)
             {
                 config.TESText.Compile(ShaderType.TessEvaluationShader);
-                config.CompilationLog += NumberLines(directivestring + '\n' + config.TESText.ResolvedText) + "\n";
             }
 
             if (config.TCSText != null)
             {
                 config.TCSText.Compile(ShaderType.TessControlShader);
-                config.CompilationLog += NumberLines(directivestring + '\n' + config.TCSText.ResolvedText) + "\n";
             }
             
             //Create new program
@@ -638,11 +638,9 @@ namespace GLSLHelper {
             GL.LinkProgram(config.ProgramID);
 
             //Check Linking
-            if (RenderState.enableShaderCompilationLog)
-            {
-                GL.GetProgramInfoLog(config.ProgramID, out string info);
-                config.CompilationLog += info + "\n";
-            }
+            GL.GetProgramInfoLog(config.ProgramID, out string info);
+            config.CompilationLog += info + "\n";
+            
                 
             GL.GetProgram(config.ProgramID, GetProgramParameterName.LinkStatus, out int status_code);
             if (status_code != 1)

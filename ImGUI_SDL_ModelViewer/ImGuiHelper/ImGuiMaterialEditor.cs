@@ -4,6 +4,7 @@ using MVCore.Common;
 using ImGuiNET;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace ImGuiHelper
 {
@@ -95,6 +96,30 @@ namespace ImGuiHelper
             if (ImGui.Button("-"))
             {
                 Console.WriteLine("Removing Sampler");   
+            }
+            //Uniforms
+            ImGui.NextColumn();
+            ImGui.Text("Uniforms");
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+            List<string> uniforms = new();
+            for (int i = 0; i < _ActiveMaterial.Uniforms.Count; i++)
+            {
+                Uniform un = _ActiveMaterial.Uniforms[i];
+                ImGui.Text(un.Name);
+                ImGui.NextColumn();
+                Vector4 val = new Vector4();
+                val.X = un.Values.X;
+                val.Y = un.Values.Y;
+                val.Z = un.Values.Z;
+                val.W = un.Values.W;
+                if (ImGui.InputFloat4("", ref val))
+                {
+                    un.Values.X = val.X;
+                    un.Values.Y = val.Y;
+                    un.Values.Z = val.Z;
+                    un.Values.W = val.W;
+                }
             }
             ImGui.Columns(1);
         }

@@ -359,7 +359,7 @@ namespace MVCore
             {
                 if (this.bufInfo[i] == null) continue;
                 bufInfo buf = this.bufInfo[i];
-                GL.VertexAttribPointer(i, buf.count, buf.type, false, buf.stride, buf.offset);
+                GL.VertexAttribPointer(i, buf.count, buf.type, buf.normalize, buf.stride, buf.offset);
                 GL.EnableVertexAttribArray(i);
             }
 

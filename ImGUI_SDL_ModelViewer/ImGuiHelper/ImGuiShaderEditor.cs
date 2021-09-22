@@ -47,13 +47,18 @@ namespace ImGuiHelper
                 Console.WriteLine("Todo Delete Shader");
             }
 
-            ImGui.InputTextMultiline("##2", ref ActiveShaderSource.SourceText, 50000,
-                new System.Numerics.Vector2(400, 400));
-
-            if (ImGui.Button("Recompile Shader"))
+            if (ActiveShaderSource != null)
             {
-                Console.WriteLine("Shader recompilation not supported yet");
+                ImGui.InputTextMultiline("##2", ref ActiveShaderSource.SourceText, 50000,
+                    new System.Numerics.Vector2(400, 400));
+
+                if (ImGui.Button("Recompile Shader"))
+                {
+                    Console.WriteLine("Shader recompilation not supported yet");
+                }    
             }
+            
+            
         }
 
         public void SetShader(GLSLShaderSource conf)

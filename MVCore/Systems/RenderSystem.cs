@@ -216,11 +216,8 @@ namespace MVCore.Systems
             gfTime += dt;
         }
 
-        public override void CleanUp()
+        private void CleanUpGeometry()
         {
-            //Just cleanup the queues
-            //The resource manager will handle the cleanup of the buffers and shit
-
             globalMeshList.Clear();
             collisionMeshList.Clear();
             locatorMeshList.Clear();
@@ -228,6 +225,13 @@ namespace MVCore.Systems
             lightMeshList.Clear();
             lightVolumeMeshList.Clear();
             octree.clear();
+        }
+
+        public override void CleanUp()
+        {
+            //Just cleanup the queues
+            //The resource manager will handle the cleanup of the buffers and shit
+            CleanUpGeometry();
             //Manager Cleanups
             TextureMgr.Cleanup();
             MaterialMgr.CleanUp();
@@ -332,8 +336,8 @@ namespace MVCore.Systems
 
 
             //LIT
-            lpass_shader_vs = new("Shaders/light_pass_VS.glsl");
-            lpass_shader_fs = new("Shaders/light_pass_FS.glsl");
+            lpass_shader_vs = new("Shaders/light_pass_VS.glsl", true);
+            lpass_shader_fs = new("Shaders/light_pass_FS.glsl", true);
             lpass_shader_fs.AddDirective("_D_LIGHTING");
             shader_conf = GLShaderHelper.compileShader(lpass_shader_vs, lpass_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.LIGHT_PASS_LIT_SHADER, SHADER_MODE.FORWARD);
@@ -401,8 +405,8 @@ namespace MVCore.Systems
             ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.BWOIT_COMPOSITE_SHADER);
             
             //Text Shaders
-            GLSLShaderSource text_shader_vs = new("Shaders/Text_VS.glsl");
-            GLSLShaderSource text_shader_fs = new("Shaders/Text_FS.glsl");
+            GLSLShaderSource text_shader_vs = new("Shaders/Text_VS.glsl", true);
+            GLSLShaderSource text_shader_fs = new("Shaders/Text_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(text_shader_vs, text_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.TEXT_SHADER, SHADER_MODE.FORWARD);
             EngineRef.RegisterEntity(shader_conf);
@@ -415,7 +419,7 @@ namespace MVCore.Systems
             //FILTERS - EFFECTS
 
             //Pass Shader
-            GLSLShaderSource passthrough_shader_fs = new("Shaders/PassThrough_FS.glsl");
+            GLSLShaderSource passthrough_shader_fs = new("Shaders/PassThrough_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(gbuffer_shader_vs, passthrough_shader_fs, null, null, null,
                             new(), new(), SHADER_TYPE.PASSTHROUGH_SHADER, SHADER_MODE.FORWARD);
             EngineRef.RegisterEntity(shader_conf);
@@ -555,7 +559,7 @@ namespace MVCore.Systems
 
             //Light Sphere Mesh
             Primitives.Sphere lsph = new(new Vector3(0.0f, 0.0f, 0.0f), 1.0f);
-            GLInstancedMesh def_lsph = new()
+            GLInstancedLightMesh def_lsph = new()
             {
                 Name = "default_light_sphere",
                 MetaData = new()
@@ -719,7 +723,7 @@ namespace MVCore.Systems
 
         public void populate(Scene s)
         {
-            CleanUp();
+            CleanUpGeometry();
 
             //Populate octree
             //octree.insert(root);

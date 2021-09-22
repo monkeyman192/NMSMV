@@ -259,7 +259,7 @@ namespace MVCore
                 if (supported_flags.Contains(mat.Flags[i]))
                     includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
             }
-
+            
             string vs_path = "Shaders/Simple_VS.glsl";
             vs_path = System.IO.Path.GetFullPath(vs_path);
             vs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, vs_path);
