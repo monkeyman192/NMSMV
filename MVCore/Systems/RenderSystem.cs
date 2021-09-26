@@ -238,11 +238,9 @@ namespace MVCore.Systems
             ShaderMgr.CleanUp();
             
         }
-
         
-
         
-
+    
         private void CompileMainShaders()
         {
 

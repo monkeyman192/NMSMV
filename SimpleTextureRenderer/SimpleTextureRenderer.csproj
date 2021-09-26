@@ -28,6 +28,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="resources\default.dds" />
+    <EmbeddedResource Include="resources\default_mask.dds" />
+    <EmbeddedResource Include="resources\droid.fnt" />
+    <EmbeddedResource Include="resources\droid.png" />
+    <EmbeddedResource Include="resources\ianm32logo_border.png" />
+    <EmbeddedResource Include="resources\segoe.fnt" />
+    <EmbeddedResource Include="resources\segoe.png" />
+  </ItemGroup>
+  
+  
+  <ItemGroup>
     <Reference Include="ImGui.NET">
       <HintPath>..\lib\ImGui.NET.dll</HintPath>
     </Reference>

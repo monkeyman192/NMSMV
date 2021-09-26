@@ -1,7 +1,11 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using MVCore;
 using OpenTK;
 using GLSLHelper;
+using MVCore.Common;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 
@@ -10,6 +14,8 @@ namespace SimpleTextureRenderer
     public class TextureRenderer : OpenTK.Windowing.Desktop.GameWindow
     {
         private int texture_id;
+        private int mipmap_id = 0;
+        private int depth_id = 0;
         private GLSLShaderConfig shader_conf;
         private int quad_vao_id;
 
@@ -19,7 +25,7 @@ namespace SimpleTextureRenderer
             VSync = VSyncMode.On;
             RenderFrequency = 60;
         }
-
+        
         public void compileShader(GLSLShaderConfig config)
         {
             if (config.ProgramID != -1)
@@ -32,7 +38,7 @@ namespace SimpleTextureRenderer
         {
             base.OnLoad();
 
-            MVCore.Common.Callbacks.SetDefaultCallbacks();
+            Callbacks.SetDefaultCallbacks();
 
             //Initialize Engine
             Engine e = new Engine(this);
@@ -45,7 +51,8 @@ namespace SimpleTextureRenderer
             //Setup Texture
             //string texturepath = "E:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\TEXTURES\\PLANETS\\BIOMES\\WEIRD\\BEAMSTONE\\BEAMGRADIENT.DDS";
             //string texturepath = "E:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\TEXTURES\\PLANETS\\BIOMES\\WEIRD\\BEAMSTONE\\SCROLLINGCLOUD.DDS";
-            string texturepath = "E:\\SSD_SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\TEXTURES\\COMMON\\ROBOTS\\QUADRUPED.DDS";
+            //string texturepath = "E:\\SSD_SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\TEXTURES\\COMMON\\ROBOTS\\QUADRUPED.DDS";
+            string texturepath = "TILEMAP.DDS";
             Texture tex = new Texture(texturepath, true);
 
             texture_id = tex.texID;
@@ -57,7 +64,7 @@ namespace SimpleTextureRenderer
             vs_path = System.IO.Path.GetFullPath(vs_path);
             vs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, vs_path);
 
-            string fs_path = "Shaders/PassThrough_FS.glsl";
+            string fs_path = "Shaders/texture_shader_fs.glsl";
             fs_path = System.IO.Path.GetFullPath(fs_path);
             fs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, fs_path);
 

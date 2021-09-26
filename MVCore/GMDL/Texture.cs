@@ -15,8 +15,10 @@ namespace MVCore
         public int pboID = -1;
         public TextureTarget target;
         public string name;
-        public int width;
-        public int height;
+        public int Width;
+        public int Height;
+        public int Depth;
+        public int MipMapCount;
         public InternalFormat pif;
         public PaletteOpt palOpt;
         public Vector4 procColor;
@@ -120,8 +122,8 @@ namespace MVCore
             RenderStats.texturesNum += 1; //Accumulate settings
 
             Console.WriteLine("Sampler Name Path " + name + " Width {0} Height {1}", ddsImage.header.dwWidth, ddsImage.header.dwHeight);
-            width = ddsImage.header.dwWidth;
-            height = ddsImage.header.dwHeight;
+            Width = ddsImage.header.dwWidth;
+            Height = ddsImage.header.dwHeight;
             int blocksize = 16;
             switch (ddsImage.header.ddspf.dwFourCC)
             {
@@ -156,12 +158,15 @@ namespace MVCore
             }
 
             //Temp Variables
-            int w = width;
-            int h = height;
+            int w = Width;
+            int h = Height;
             int mm_count = Math.Max(1, ddsImage.header.dwMipMapCount); //Fix the counter to 1 to handle textures with single mipmaps
             int depth_count = Math.Max(1, ddsImage.header.dwDepth); //Fix the counter to 1 to fit the texture in a 3D container
             int temp_size = ddsImage.header.dwPitchOrLinearSize;
 
+            MipMapCount = mm_count;
+            Depth = depth_count;
+            
             //Generate PBO
             pboID = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pboID);
@@ -205,7 +210,7 @@ namespace MVCore
             GL.GetTexParameter(target, GetTextureParameter.TextureMaxLevel, out int max_level);
             GL.GetTexParameter(target, GetTextureParameter.TextureBaseLevel, out int base_level);
 
-            int maxsize = Math.Max(height, width);
+            int maxsize = Math.Max(Height, Width);
             int p = (int)Math.Floor(Math.Log(maxsize, 2)) + base_level;
             int q = Math.Min(p, max_level);
 

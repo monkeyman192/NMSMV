@@ -16,6 +16,7 @@ using System.Resources;
 using System.Reflection;
 using System.IO;
 using System.Drawing;
+using System.Linq;
 
 namespace MVCore.Common
 {
@@ -340,6 +341,9 @@ namespace MVCore.Common
         {
             Log = DefaultLog;
             Assert = DefaultAssert;
+            getResource = DefaultGetResource;
+            getTextResource = DefaultGetTextResource;
+            getBitMapResource = DefaultGetBitMapResource;
         }
 
         //Default callbacks
@@ -358,5 +362,61 @@ namespace MVCore.Common
             System.Diagnostics.Trace.Assert(status);
         }
 
+        //Resource Handler
+        public static byte[] DefaultGetResource(string resource_name)
+        {
+            byte[] data = null; //output data
+
+            // Determine path
+            var assembly = Assembly.GetExecutingAssembly();
+            string resourcePath = resource_name;
+
+            Assembly _assembly = Assembly.GetExecutingAssembly();
+            string[] resources = _assembly.GetManifestResourceNames();
+
+            //for (int i=0;i<resources.Length;i++)
+            //    Console.WriteLine((resources[i]));
+            
+            try
+            {
+                string res_name = resources.First(s => s.EndsWith(resource_name));
+                BinaryReader _textStreamReader = new(_assembly.GetManifestResourceStream(res_name));
+                data = _textStreamReader.ReadBytes((int) _textStreamReader.BaseStream.Length);
+            } catch
+            {
+                Callbacks.Log(string.Format("Unable to Fetch Resource {0}", resource_name), 
+                    LogVerbosityLevel.ERROR);
+            }
+            
+            return data;
+        }
+
+        public static Bitmap DefaultGetBitMapResource(string resource_name)
+        {
+            byte[] data = DefaultGetResource(resource_name);
+
+            if (data != null)
+            {
+                MemoryStream ms = new(data);
+                Bitmap im = new(ms);
+                return im;
+            }
+
+            return null;
+        }
+
+        public static string DefaultGetTextResource(string resource_name)
+        {
+            byte[] data = DefaultGetResource(resource_name);
+
+            if (data != null)
+            {
+                MemoryStream ms = new(data);
+                StreamReader tr = new(ms);
+                return tr.ReadToEnd();
+            }
+
+            return "";
+        }
     }
 }

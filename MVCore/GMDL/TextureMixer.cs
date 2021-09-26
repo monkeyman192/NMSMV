@@ -264,8 +264,8 @@ namespace MVCore
             {
                 if (difftextures[i] != null)
                 {
-                    texHeight = difftextures[i].height;
-                    texWidth = difftextures[i].width;
+                    texHeight = difftextures[i].Height;
+                    texWidth = difftextures[i].Width;
                     break;
                 }
             }
@@ -423,8 +423,8 @@ namespace MVCore
 
             //Store Diffuse Texture to material
             Texture new_tex = new Texture();
-            new_tex.width = texWidth;
-            new_tex.height = texHeight;
+            new_tex.Width = texWidth;
+            new_tex.Height = texHeight;
             new_tex.texID = out_tex_2darray_diffuse;
             new_tex.target = TextureTarget.Texture2DArray;
 
