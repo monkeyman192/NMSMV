@@ -27,6 +27,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)Core\SceneGraphNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Sampler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Uniform.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiMaterialEditor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiObjectViewer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiSceneGraphViewer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiShader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiShaderEditor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiTexture.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiUtil.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\FileUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\ModelProcGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Palettes.cs" />

@@ -7,7 +7,7 @@ using libMBIN.NMS.Toolkit;
 using Microsoft.Win32;
 using System.Reflection;
 using libMBIN.NMS;
-
+using Gameloop.Vdf;
 
 
 namespace MVCore.Import.NMS
@@ -407,32 +407,20 @@ namespace MVCore.Import.NMS
             Callbacks.Log("NMS not found in default folders. Searching Steam Libraries...", LogVerbosityLevel.INFO);
 
             //If that did't work try to load the libraryfolders.vdf
-            StreamReader sr = new StreamReader(Path.Combine(steam_path, @"steamapps\libraryfolders.vdf"));
-            List<string> libraryPaths = new List<string>();
-
-            int line_count = 0;
-            while (!sr.EndOfStream)
+            dynamic libraryfolders = VdfConvert.Deserialize(File.ReadAllText(Path.Combine(steam_path, @"steamapps\libraryfolders.vdf")));
+            List<string> LibraryPaths = new();
+            
+            foreach (dynamic token in libraryfolders.Value.Children())
             {
-                string line = sr.ReadLine();
-                if (line_count < 4)
-                {
-                    line_count++;
-                    continue;
-                }
-
-                if (!line.StartsWith("\t"))
+                if (token.Key == "contentstatsid")
                     continue;
 
-                string[] split = line.Split('\t');
-                string path = split[split.Length - 1];
-                path = path.Trim('\"');
-                path = path.Replace("\\\\", "\\");
-                libraryPaths.Add(Path.Combine(path, "steamapps"));
+                //The rest entries should be library paths
+                LibraryPaths.Add(Path.Combine((string) token.Value["path"].Value, "steamapps"));
             }
 
             //Check all library paths for the acf file
-
-            foreach (string path in libraryPaths)
+            foreach (string path in LibraryPaths)
             {
                 foreach (string filepath in Directory.GetFiles(path))
                 {

@@ -781,7 +781,6 @@ namespace MVCore
 
         public override void CleanUp()
         {
-            throw new NotImplementedException();
             //TODO I should probably call the system cleanup functions here
             actionSys.CleanUp();
             animationSys.CleanUp();

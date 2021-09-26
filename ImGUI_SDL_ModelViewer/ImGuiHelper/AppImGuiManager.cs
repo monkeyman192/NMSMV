@@ -7,130 +7,63 @@ using ImGUI_SDL_ModelViewer;
 
 namespace ImGuiHelper
 {
-    static class ImGuiManager
+    class AppImGuiManager : ImGuiManager
     {
         //ImGui Variables
-        static private ImGuiObjectViewer ObjectViewer = new ImGuiObjectViewer();
-        static private ImGuiSceneGraphViewer SceneGraphViewer = new();
-        static private ImGuiPakBrowser PakBrowser  = new ImGuiPakBrowser();
-        static private ImGuiMaterialEditor MaterialEditor = new ImGuiMaterialEditor();
-        static private ImGuiShaderEditor ShaderEditor = new();
-        static private ImGuiAboutWindow AboutWindow = new ImGuiAboutWindow();
-        static private ImGuiSettingsWindow SettingsWindow = new ImGuiSettingsWindow();
-        static private bool show_open_file_dialog = false;
-        static private bool show_open_file_dialog_pak = false;
-        static private bool show_update_libmbin_dialog = false;
-        static private bool show_settings_window = false;
-        static private bool show_about_window = false;
-        static private bool show_test_components = false;
-        static private string libMbinOnlineVersion = null;
-        static private string libMbinLocalVersion = null;
-        static private Window windowRef = null;
-
-        //ImguiPalette Colors
-        //Blue
-        public static System.Numerics.Vector4 DarkBlue = new(0.04f, 0.2f, 0.96f, 1.0f);
-
+        private readonly ImGuiObjectViewer ObjectViewer = new();
+        private readonly ImGuiSceneGraphViewer SceneGraphViewer;
+        private readonly ImGuiPakBrowser PakBrowser  = new();
+        private readonly ImGuiMaterialEditor MaterialEditor = new();
+        private readonly ImGuiShaderEditor ShaderEditor = new();
+        private readonly ImGuiAboutWindow AboutWindow = new();
+        private readonly ImGuiSettingsWindow SettingsWindow = new();
+        private bool show_open_file_dialog = false;
+        private bool show_open_file_dialog_pak = false;
+        private bool show_update_libmbin_dialog = false;
+        private bool show_settings_window = false;
+        private bool show_about_window = false;
+        private bool show_test_components = false;
+        private string libMbinOnlineVersion = null;
+        private string libMbinLocalVersion = null;
         
-        public static void InitImGUI()
+        public AppImGuiManager(Window win) : base(win)
         {
-            ImGuiIOPtr io = ImGui.GetIO();
-            io.ConfigFlags |= ImGuiConfigFlags.DockingEnable; //Enable Docking
+            SceneGraphViewer = new(this);
         }
 
-        public static void SetWindowRef(Window win)
-        {
-            windowRef = win;
-        }
-
-        public static void ShowSettingsWindow()
+        public void ShowSettingsWindow()
         {
             show_settings_window = true;
         }
 
-        public static void ShowAboutWindow()
+        public void ShowAboutWindow()
         {
             show_about_window = true;
         }
 
-        public static void ShowTestComponents()
+        public void ShowTestComponents()
         {
             show_test_components = true;
         }
 
-        public static void ShowOpenFileDialog()
+        public void ShowOpenFileDialog()
         {
             show_open_file_dialog = true;
         }
 
-        public static void ShowOpenFileDialogPak()
+        public void ShowOpenFileDialogPak()
         {
             show_open_file_dialog_pak = true;
         }
 
-        public static void ShowUpdateLibMBINDialog()
+        public void ShowUpdateLibMBINDialog()
         {
             show_update_libmbin_dialog = true;
         }
         
-        //Material Viewer Related Methods
-        public static void DrawMaterialEditor()
-        {
-            MaterialEditor?.Draw();
-        }
-
-        public static void SetActiveMaterial(Entity m)
-        {
-            if (m.HasComponent<MeshComponent>())
-            {
-                MeshComponent mc = m.GetComponent<MeshComponent>() as MeshComponent;
-                MaterialEditor.SetMaterial(mc.Material);
-            }
-        }
-        
-        //Shader Editor Related Methods
-        public static void DrawShaderEditor()
-        {
-            ShaderEditor?.Draw();
-        }
-
-        public static void SetActiveShaderSource(GLSLHelper.GLSLShaderSource s)
-        {
-            ShaderEditor.SetShader(s);
-        }
-
-        //Object Viewer Related Methods
-
-        public static void DrawObjectInfoViewer()
-        {
-            ObjectViewer?.Draw();
-        }
-
-        
-
-        public static void SetObjectReference(SceneGraphNode m)
-        {
-            ObjectViewer.SetModel(m);
-        }
-
         //SceneGraph Related Methods
 
-        public static void DrawSceneGraph()
-        {
-            SceneGraphViewer?.Draw();
-        }
-
-        public static void PopulateSceneGraph(Scene scn)
-        {
-            SceneGraphViewer.Init(scn.Root);
-        }
-
-        public static void ClearSceneGraph()
-        {
-            SceneGraphViewer.Clear();
-        }
-
-        public static void ProcessModals(GameWindow win, string current_file_path)
+        public override void ProcessModals(GameWindow win, string current_file_path)
         {
             //Functionality
 
@@ -190,7 +123,7 @@ namespace ImGuiHelper
                     req.type = THREAD_REQUEST_TYPE.WINDOW_OPEN_FILE;
                     req.arguments.Add(filename);
                     
-                    windowRef.SendRequest(ref req);
+                    (WindowRef as Window).SendRequest(ref req);
                 }
                 else
                 {

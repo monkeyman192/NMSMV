@@ -14,13 +14,14 @@ namespace ImGuiHelper
         private SceneGraphNode _selected = null;
         private SceneGraphNode _clicked = null;
         private bool showctxmenu = false;
+        private ImGuiManager _manager = null;
 
         //Inline AddChild Function
         private static void AddChild(SceneGraphNode m, SceneGraphNode n) => m.Children.Add(n);
 
-        public ImGuiSceneGraphViewer()
+        public ImGuiSceneGraphViewer(ImGuiManager manager)
         {
-               
+            _manager = manager;
         }
         
         public void Traverse_Init(SceneGraphNode m)
@@ -70,12 +71,12 @@ namespace ImGuiHelper
             bool node_open = ImGui.TreeNodeEx(n.Name, base_flags);
             
             n.IsOpen = node_open;
-            System.Numerics.Vector2 ctxPos = Vector2.Zero;
+            Vector2 ctxPos = Vector2.Zero;
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
                 _clicked = n;
-                ImGuiManager.SetObjectReference(n);
-                ImGuiManager.SetActiveMaterial(n);
+                _manager.SetObjectReference(n);
+                _manager.SetActiveMaterial(n);
                 ImGui.CloseCurrentPopup();
             } 
             if (ImGui.BeginPopupContextItem()) // <-- use last item id as popup id

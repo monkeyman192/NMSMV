@@ -18,8 +18,9 @@ namespace ImGUI_SDL_ModelViewer
 {
     public class Window : GameWindow
     {
-        ImGuiController _controller;
-        
+        //ImGuiController _controller;
+        AppImGuiManager _ImGuiManager;
+
         //Parameters
         private readonly string current_file_path = Environment.CurrentDirectory;
         
@@ -50,17 +51,14 @@ namespace ImGUI_SDL_ModelViewer
             Util.loggingSr = new StreamWriter("log.out");
 
             //SETUP THE Callbacks FOR THE MVCORE ENVIRONMENT
+            Callbacks.SetDefaultCallbacks();
             Callbacks.updateStatus = Util.setStatus;
             Callbacks.showInfo = Util.showInfo;
             Callbacks.showError = Util.showError;
             Callbacks.Log = Util.Log;
             Callbacks.Assert = Util.Assert;
-            Callbacks.getResource = Util.getResource;
-            Callbacks.getBitMapResource = Util.getBitMapResource;
-            Callbacks.getTextResource = Util.getTextResource;
-            
+
             SceneViewSize = Size;
-            
             
             //Start worker thread
             workDispatcher.Start();
@@ -70,17 +68,15 @@ namespace ImGUI_SDL_ModelViewer
         protected override void OnLoad()
         {
             base.OnLoad();
+            _ImGuiManager = new(this);
             
-            _controller = new ImGuiController(ClientSize.X, ClientSize.Y);
-
-            ImGuiManager.SetWindowRef(this);
 
             //OVERRIDE SETTINGS
             //FileUtils.dirpath = "I:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\PCBANKS";
 
             //Load Settings
             if (!File.Exists("settings.json"))
-                ImGuiManager.ShowSettingsWindow();
+                _ImGuiManager.ShowSettingsWindow();
             
             RenderState.settings = Settings.loadFromDisk();
 
@@ -125,7 +121,7 @@ namespace ImGUI_SDL_ModelViewer
             engine.renderSys.populate(scene);
 
             //Populate SceneGraphView
-            ImGuiManager.PopulateSceneGraph(scene);
+            _ImGuiManager.PopulateSceneGraph(scene);
 
             //Check if Temp folder exists
 #if DEBUG
@@ -144,17 +140,14 @@ namespace ImGUI_SDL_ModelViewer
             requestHandler.AddRequest(ref rq); 
             workDispatcher.sendRequest(ref rq); //Generate worker
             
-            //Basic Initialization of ImGui
-            ImGuiManager.InitImGUI();
-    
         }
 
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-            
+
             // Tell ImGui of the new size
-            _controller.WindowResized(ClientSize.X, ClientSize.Y);
+            _ImGuiManager.Resize(ClientSize.X, ClientSize.Y);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -188,10 +181,10 @@ namespace ImGUI_SDL_ModelViewer
         {
             base.OnRenderFrame(e);
             
-            _controller.Update(this, (float) e.Time);
             Camera.UpdateCameraDirectionalVectors(RenderState.activeCam);
 
             engine.OnRenderUpdate(e.Time);
+            _ImGuiManager.Update(e.Time);
 
             //Bind Default Framebuffer
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
@@ -200,7 +193,7 @@ namespace ImGUI_SDL_ModelViewer
             //UI
             DrawUI();
             //ImGui.ShowDemoWindow();
-            _controller.Render();
+            _ImGuiManager.Render();
 
             //ImGuiUtil.CheckGLError("End of frame");
 
@@ -211,7 +204,7 @@ namespace ImGUI_SDL_ModelViewer
         protected override void OnTextInput(TextInputEventArgs e)
         {
             base.OnTextInput(e);
-            _controller.PressChar((char)e.Unicode);
+            _ImGuiManager.SendChar((char) e.Unicode);
         }
             
         private void OpenFile(string filename, bool testScene, int testSceneID)
@@ -239,7 +232,7 @@ namespace ImGUI_SDL_ModelViewer
             //Populate 
             Util.setStatus("Creating SceneGraph...");
 
-            ImGuiManager.PopulateSceneGraph(RenderState.engineRef.sceneMgmtSys.ActiveScene);
+            _ImGuiManager.PopulateSceneGraph(RenderState.engineRef.sceneMgmtSys.ActiveScene);
 
             //Add to UI
             Util.setStatus("Ready");
@@ -469,22 +462,22 @@ namespace ImGUI_SDL_ModelViewer
                 {
                     if (ImGui.MenuItem("Open", "Ctrl + O", false, open_file_enabled))
                     {
-                        ImGuiManager.ShowOpenFileDialog();
+                        _ImGuiManager.ShowOpenFileDialog();
                     }
 
                     if (ImGui.MenuItem("Open from PAK", "", false, open_file_enabled))
                     {
-                        ImGuiManager.ShowOpenFileDialogPak();
+                        _ImGuiManager.ShowOpenFileDialogPak();
                     }
 
                     if (ImGui.MenuItem("Update LibMBIN"))
                     {
-                        ImGuiManager.ShowUpdateLibMBINDialog();
+                        _ImGuiManager.ShowUpdateLibMBINDialog();
                     }
 
                     if (ImGui.MenuItem("Settings"))
                     {
-                        ImGuiManager.ShowSettingsWindow();
+                        _ImGuiManager.ShowSettingsWindow();
                     }
 
                     if (ImGui.MenuItem("Close", "Ctrl + Q"))
@@ -506,7 +499,7 @@ namespace ImGUI_SDL_ModelViewer
 
                 if (ImGui.MenuItem("About"))
                 {
-                    ImGuiManager.ShowAboutWindow();
+                    _ImGuiManager.ShowAboutWindow();
                 }
 
                 ImGui.EndMenuBar();
@@ -577,25 +570,25 @@ namespace ImGUI_SDL_ModelViewer
             
             if (ImGui.Begin("SceneGraph", ImGuiWindowFlags.NoCollapse))
             {
-                ImGuiManager.DrawSceneGraph();
+                _ImGuiManager.DrawSceneGraph();
                 ImGui.End();
             }
             
             if (ImGui.Begin("Node Editor", ImGuiWindowFlags.NoCollapse))
             {
-                ImGuiManager.DrawObjectInfoViewer();
+                _ImGuiManager.DrawObjectInfoViewer();
                 ImGui.End();
             }
 
             if (ImGui.Begin("Material Editor", ImGuiWindowFlags.NoCollapse))
             {
-                ImGuiManager.DrawMaterialEditor();
+                _ImGuiManager.DrawMaterialEditor();
                 ImGui.End();
             }
             
             if (ImGui.Begin("Shader Editor", ImGuiWindowFlags.NoCollapse))
             {
-                ImGuiManager.DrawShaderEditor();
+                _ImGuiManager.DrawShaderEditor();
                 ImGui.End();
             }
 
@@ -703,7 +696,7 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.End();
             }
             
-            ImGuiManager.ProcessModals(this, current_file_path);
+            _ImGuiManager.ProcessModals(this, current_file_path);
 
             //Debugging Information
             if (ImGui.Begin("Statistics"))

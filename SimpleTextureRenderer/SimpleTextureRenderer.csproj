@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	<LangVersion>9.0</LangVersion>
 	<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	<BaseOutputPath>..\bin</BaseOutputPath>
@@ -20,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="AssimpNet" Version="4.1.0" />
+    <PackageReference Include="Gameloop.Vdf" Version="0.6.1" />
     <PackageReference Include="MathNet.Numerics" Version="4.15.0" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -28,13 +30,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="resources\default.dds" />
-    <EmbeddedResource Include="resources\default_mask.dds" />
-    <EmbeddedResource Include="resources\droid.fnt" />
-    <EmbeddedResource Include="resources\droid.png" />
-    <EmbeddedResource Include="resources\ianm32logo_border.png" />
-    <EmbeddedResource Include="resources\segoe.fnt" />
-    <EmbeddedResource Include="resources\segoe.png" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\default.dds" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\default_mask.dds" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\droid.fnt" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\droid.png" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\ianm32logo_border.png" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\segoe.fnt" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\segoe.png" />
   </ItemGroup>
   
   
@@ -54,10 +56,19 @@
 	<ShaderFiles Include="$(SolutionDir)Shaders\**\*.glsl" />
   </ItemGroup>
 
-
+  
   <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
 	<Copy SourceFiles="@(ShaderFiles)" DestinationFolder="$(TargetDir)Shaders" />
   </Target>
+
+	<ItemGroup>
+		<Content Include="..\lib\cimgui\cimgui.dll" Condition=" '$(OS)' == 'Windows_NT' ">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="..\lib\cimgui\cimgui.so" Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' ">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 	
 	
 </Project>
