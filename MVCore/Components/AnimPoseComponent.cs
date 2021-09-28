@@ -49,10 +49,6 @@ namespace MVCore
         {
             if (c is not AnimPoseComponent)
                 return;
-            
-            //TODO: Copy stuff
-
-            
         }
     }
 }

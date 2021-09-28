@@ -15,7 +15,8 @@ namespace SimpleTextureRenderer
 {
     public class TextureRenderer : OpenTK.Windowing.Desktop.GameWindow
     {
-        private Texture texture;
+        private Texture _texture;
+        private DDSImage _ddsImage;
         private int mipmap_id = 0;
         private int depth_id = 0;
         private GLSLShaderConfig shader_conf;
@@ -25,7 +26,7 @@ namespace SimpleTextureRenderer
         public TextureRenderer(): base(OpenTK.Windowing.Desktop.GameWindowSettings.Default,
             OpenTK.Windowing.Desktop.NativeWindowSettings.Default)
         {
-            Title = "Texture Viewer v1.0";
+            Title = "DDS Texture Viewer v1.0";
             VSync = VSyncMode.On;
             RenderFrequency = 60;
             _ImGuiManager = new(this);
@@ -65,7 +66,7 @@ namespace SimpleTextureRenderer
             string texturepath = "D:\\Downloads\\TILEMAP.DDS";
             //string texturepath = "D:\\Downloads\\TILEMAP.HSV.DDS";
             //string texturepath = "D:\\Downloads\\TILEMAP.NORMAL.DDS";
-            texture = new Texture(texturepath, true);
+            _texture = new Texture(texturepath, true);
             
             //Compile Necessary Shaders
 
@@ -119,7 +120,7 @@ namespace SimpleTextureRenderer
             //Upload texture
             GL.Uniform1(shader_conf.uniformLocations["InTex"], 0);
             GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.Texture2DArray, texture.texID);
+            GL.BindTexture(TextureTarget.Texture2DArray, _texture.texID);
 
             //Upload Uniforms
             GL.Uniform1(shader_conf.uniformLocations["texture_depth"], (float)depth_id);
@@ -156,13 +157,13 @@ namespace SimpleTextureRenderer
                 ImGui.Text("MipMapCount");
                 ImGui.Text("Format");
                 ImGui.NextColumn();
-                ImGui.Text(texture.Width.ToString());
-                ImGui.Text(texture.Height.ToString());
-                ImGui.Text(texture.Depth.ToString());
-                ImGui.Text(texture.MipMapCount.ToString());
+                ImGui.Text(_texture.Width.ToString());
+                ImGui.Text(_texture.Height.ToString());
+                ImGui.Text(_texture.Depth.ToString());
+                ImGui.Text(_texture.MipMapCount.ToString());
 
                 //Make format output a bit friendlier
-                switch (texture.pif)
+                switch (_texture.pif)
                 {
                     case InternalFormat.CompressedSrgbAlphaS3tcDxt5Ext:
                         ImGui.Text("DXT5");
@@ -188,21 +189,20 @@ namespace SimpleTextureRenderer
                 ImGui.NextColumn();
                 
                 
-                string[] opts = new string[texture.Depth];
+                string[] opts = new string[_texture.Depth];
                 for (int i = 0; i < opts.Length; i++)
                     opts[i] = i.ToString();
-                ImGui.Combo("##0", ref depth_id, opts, texture.Depth, 12);
+                ImGui.Combo("##0", ref depth_id, opts, _texture.Depth, 12);
 
                 ImGui.NextColumn();
                 ImGui.Text("Active Mipmap:");
 
-                opts = new string[texture.MipMapCount];
+                opts = new string[_texture.MipMapCount];
                 for (int i = 0; i < opts.Length; i++)
                     opts[i] = i.ToString();
                 
                 ImGui.NextColumn();
-                ImGui.Combo("##1", ref mipmap_id, opts, texture.MipMapCount, 12);
-
+                ImGui.Combo("##1", ref mipmap_id, opts, _texture.MipMapCount, 12);
 
                 ImGui.Columns(1);
                 ImGui.End();

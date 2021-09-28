@@ -233,23 +233,19 @@ namespace MVCore
 
         public GLSLShaderSource GetShaderSourceByFilePath(string path)
         {
-            //TODO use renderSystem for quicker access
             return registrySys.GetEntityTypeList(EntityType.ShaderSource)
                 .Find(x => ((GLSLShaderSource)x).SourceFilePath == path) as GLSLShaderSource;
         }
 
         public GLSLShaderConfig GetShaderByHash(int hash)
         {
-            //TODO use renderSystem for quicker access
             return registrySys.GetEntityTypeList(EntityType.Shader)
                 .Find(x => ((GLSLShaderConfig) x).Hash == hash) as GLSLShaderConfig;
         }
 
         public GLSLShaderConfig GetShaderByType(SHADER_TYPE typ)
         {
-            //TODO use renderSystem for quicker access
-            return registrySys.GetEntityTypeList(EntityType.Shader)
-                .Find(x => ((GLSLShaderConfig)x).shader_type == typ) as GLSLShaderConfig;
+            return renderSys.ShaderMgr.GetGenericShader(typ);
         }
 
         public int GetEntityListCount(EntityType type)
@@ -279,10 +275,6 @@ namespace MVCore
             //Initialize Resource Manager
             InitializeResources();
 
-            //Assign new palette to GLControl
-            //Todo get rid of palettes they have no place here
-            //palette = Import.NMS.Palettes.createPalettefromBasePalettes();
-            
             //Add Camera
             Camera cam = new(90, -1, 0, true)
             {
@@ -439,62 +431,29 @@ namespace MVCore
             };
 
             //Add Lights
-            SceneGraphNode l = new(SceneNodeType.LIGHT)
-            {
-                Name = "Light 1",
-                IsRenderable = true
-            };
-
-            //TODO add Light Component with the following properties
-            //Color = new Vector3(1.0f, 1.0f, 1.0f),
-            //Intensity = 100.0f,
-            //Falloff = ATTENUATION_TYPE.QUADRATIC
-
+            SceneGraphNode l = SceneGraphNode.CreateLight("Light 1", 100.0f,
+                ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
             TransformationSystem.SetEntityLocation(l, new Vector3(0.2f, 0.2f, -2.0f));
             RegisterEntity(l);
             scene.Children.Add(l);
 
-            SceneGraphNode l1 = new(SceneNodeType.LIGHT)
-            {
-                Name = "Light 2",
-                IsRenderable = true
-            };
-
-            //TODO add Light Component with the following properties
-            //Color = new Vector3(1.0f, 1.0f, 1.0f),
-            //Intensity = 100.0f,
-            //Falloff = ATTENUATION_TYPE.QUADRATIC
+            SceneGraphNode l1 = SceneGraphNode.CreateLight("Light 2", 100.0f,
+                ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
             TransformationSystem.SetEntityLocation(l1, new Vector3(0.2f, -0.2f, -2.0f));
             RegisterEntity(l1);
             scene.Children.Add(l1);
 
-            SceneGraphNode l2 = new(SceneNodeType.LIGHT)
-            {
-                Name = "Light 3",
-                IsRenderable = true
-            };
-
-            //TODO add Light Component with the following properties
-            //Color = new Vector3(1.0f, 1.0f, 1.0f),
-            //Intensity = 100.0f,
-            //Falloff = ATTENUATION_TYPE.QUADRATIC
+            SceneGraphNode l2 = SceneGraphNode.CreateLight("Light 3", 100.0f,
+                ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
             TransformationSystem.SetEntityLocation(l2, new Vector3(-0.2f, 0.2f, -2.0f));
             RegisterEntity(l2);
             scene.Children.Add(l2);
 
-            SceneGraphNode l3 = new(SceneNodeType.LIGHT)
-            {
-                Name = "Light 4",
-                IsRenderable = true
-            };
-
-            //TODO add Light Component with the following properties
-            //Color = new Vector3(1.0f, 1.0f, 1.0f),
-            //Intensity = 100.0f,
-            //Falloff = ATTENUATION_TYPE.QUADRATIC
+            SceneGraphNode l3 = SceneGraphNode.CreateLight("Light 4", 100.0f,
+                ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
             TransformationSystem.SetEntityLocation(l3, new Vector3(-0.2f, -0.2f, -2.0f));
             RegisterEntity(l3);
@@ -607,9 +566,8 @@ namespace MVCore
             Scene scn = Import.NMS.Importer.ImportScene(filename);
 
             //Explicitly add default light to the rootObject
-            //TODO: add default light
-            
-            //Todo make that through the systems update functions
+            SceneGraphNode l = SceneGraphNode.CreateLight();
+            scn.AddNode(l);
 
             //root.update(); //Refresh all transforms
             //root.setupSkinMatrixArrays();
@@ -781,7 +739,6 @@ namespace MVCore
 
         public override void CleanUp()
         {
-            //TODO I should probably call the system cleanup functions here
             actionSys.CleanUp();
             animationSys.CleanUp();
             transformSys.CleanUp();

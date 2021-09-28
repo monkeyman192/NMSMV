@@ -131,11 +131,6 @@ namespace MVCore.Import.NMS
             filepath = filepath.Replace('\\', '/');
             string effective_filepath = filepath;
 
-            //Checks to prevent malformed paths from further processing
-            //TODO: Why do we need this?????
-            //if (filepath.Contains(' '))
-            //    return null;
-
             string exmlpath = Path.ChangeExtension(filepath, "exml");
             exmlpath = exmlpath.ToUpper(); //Make upper case
 
@@ -415,23 +410,17 @@ namespace MVCore.Import.NMS
                 if (token.Key == "contentstatsid")
                     continue;
 
-                //The rest entries should be library paths
-                LibraryPaths.Add(Path.Combine((string) token.Value["path"].Value, "steamapps"));
-            }
 
-            //Check all library paths for the acf file
-            foreach (string path in LibraryPaths)
-            {
-                foreach (string filepath in Directory.GetFiles(path))
+                foreach (dynamic ctoken in token.Value["apps"].Children())
                 {
-                    if (!filepath.EndsWith(".acf"))
-                        continue;
-
-                    if (filepath.Contains(nms_id))
-                        return Path.Combine(path, @"common\No Man's Sky\GAMEDATA");
+                    if (ctoken.Key == nms_id)
+                    {
+                        string librarypath = Path.Combine(token.Value["path"].Value as string, "steamapps");
+                        return Path.Combine(librarypath, @"common\No Man's Sky\GAMEDATA");
+                    }
                 }
             }
-
+            
             Callbacks.Log("Unable to locate Steam Installation...", LogVerbosityLevel.INFO);
             return null;
         }

@@ -12,7 +12,6 @@ namespace MVCore
     {
         private bool disposed = false;
         public int texID = -1;
-        public int pboID = -1;
         public TextureTarget target;
         public string name;
         public int Width;
@@ -113,6 +112,13 @@ namespace MVCore
 
         }
 
+        public void SubTextureData(byte[] data, int mipmap_id, int depth_id)
+        {
+
+
+        }
+
+        
         private void textureInitDDS(byte[] imageData, string _name)
         {
             DDSImage ddsImage;
@@ -168,9 +174,7 @@ namespace MVCore
             Depth = depth_count;
             
             //Generate PBO
-            pboID = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pboID);
-            GL.BufferData(BufferTarget.PixelUnpackBuffer, ddsImage.bdata.Length, ddsImage.bdata, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.PixelUnpackBuffer, ddsImage.Data.Length, ddsImage.Data, BufferUsageHint.StaticDraw);
             //GL.BufferSubData(BufferTarget.PixelUnpackBuffer, IntPtr.Zero, ddsImage.bdata.Length, ddsImage.bdata);
 
             //Upload to GPU
@@ -185,7 +189,9 @@ namespace MVCore
             int offset = 0;
             for (int i = 0; i < mm_count; i++)
             {
-                GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, IntPtr.Zero + offset);
+                byte[] temp_data = new byte[temp_size * depth_count];
+                System.Buffer.BlockCopy(ddsImage.Data, offset, temp_data, 0, temp_size * depth_count);
+                GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, temp_data);
                 offset += temp_size * depth_count;
 
                 w = Math.Max(w >> 1, 1);
@@ -277,8 +283,6 @@ namespace MVCore
             {
                 //Free other resources here
                 if (texID != -1) GL.DeleteTexture(texID);
-                GL.DeleteBuffer(pboID);
-
             }
 
             //Free unmanaged resources

@@ -410,10 +410,6 @@ namespace MVCore.Systems
             EngineRef.RegisterEntity(shader_conf);
             ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.TEXT_SHADER);
             
-            //Camera Shaders
-            //TODO: Add Camera Shaders if required
-            
-
             //FILTERS - EFFECTS
 
             //Pass Shader
@@ -712,8 +708,6 @@ namespace MVCore.Systems
                 
                 GeometryMgr.AddPrimitiveMesh(temp);
 
-                //TODO: Probably I should generate SceneGraphNodes with Meshcomponents in order to attach materials
-                //GLPrimitiveMeshes[name].material = GLmaterials["crossMat"];
             }
 
         }

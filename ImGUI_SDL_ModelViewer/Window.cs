@@ -167,7 +167,7 @@ namespace ImGUI_SDL_ModelViewer
                 engine.UpdateInput(e.Time, isSceneViewActive);
 
                 //TODO: Move these two lines in the engine and retrieve the sceneviewsize from the rendersystem
-                RenderState.activeCam.aspect = (float)SceneViewSize.X / SceneViewSize.Y;
+                RenderState.activeCam.aspect = (float) SceneViewSize.X / SceneViewSize.Y;
                 RenderState.activeCam.updateViewMatrix();
 
                 //Execute Engine On Frame Update

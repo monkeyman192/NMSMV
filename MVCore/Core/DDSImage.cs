@@ -8,7 +8,13 @@ using System.Text;
 
 namespace MVCore {
 
-	public class DDSImage {
+	public abstract class ImageData
+    {
+		public byte[] Data;
+    }
+
+
+	public class DDSImage : ImageData {
 		private const int DDPF_ALPHAPIXELS = 0x00000001;
 		private const int DDPF_ALPHA = 0x00000002;
 		private const int DDPF_FOURCC = 0x00000004;
@@ -23,9 +29,9 @@ namespace MVCore {
 		public int dwMagic;
 		public DDS_HEADER header = new DDS_HEADER();
 		public DDS_HEADER_DXT10 header10 = null;//If the DDS_PIXELFORMAT dwFlags is set to DDPF_FOURCC and dwFourCC is set to "DX10"
-		public byte[] bdata;//pointer to an array of bytes that contains all mipmap data. 
-		public byte[] bdata2;//pointer to an array of bytes that contains the remaining surfaces such as; mipmap levels, faces in a cube map, depths in a volume texture.
+		//public byte[] bdata2;//pointer to an array of bytes that contains the remaining surfaces such as; mipmap levels, faces in a cube map, depths in a volume texture.
 	    public List<byte[]> mipMaps = new List<byte[]>(); //TODO load and upload them separately.
+		public int blockSize = 16;
 
 	    public DDSImage(byte[] rawdata) {
             using MemoryStream ms = new MemoryStream(rawdata); using (BinaryReader r = new BinaryReader(ms))
@@ -58,17 +64,16 @@ namespace MVCore {
                     mipMapCount = header.dwMipMapCount;
 
                 if (header.dwPitchOrLinearSize == 0)
-                    System.Diagnostics.Debug.Fail("0 size texture data, check what is going on");
+                    Debug.Fail("0 size texture data, check what is going on");
 
-                bdata = r.ReadBytes((int)(r.BaseStream.Length - r.BaseStream.Position)); //Read everything
+                Data = r.ReadBytes((int)(r.BaseStream.Length - r.BaseStream.Position)); //Read everything
                                                                                          //I don't need decoded images
                                                                                          //images = new Bitmap[mipMapCount];
                                                                                          //for (int i = 0; i < mipMapCount; ++i) {
                                                                                          //	// Version .2 changes <AmaroK86>
                                                                                          //	int w = (int)(header.dwWidth / Math.Pow(2, i));
                                                                                          //	int h = (int)(header.dwHeight / Math.Pow(2, i));
-
-                //	if ((header.ddspf.dwFlags & DDPF_RGB) != 0) {
+				//	if ((header.ddspf.dwFlags & DDPF_RGB) != 0) {
                 //		images[i]= readLinearImage(bdata, w, h);
                 //	} else if ((header.ddspf.dwFlags & DDPF_FOURCC) != 0) {
                 //		images[i] = readBlockImage(bdata, w, h);
@@ -340,12 +345,79 @@ namespace MVCore {
 			p.dwSize = r.ReadInt32();
 			p.dwFlags = r.ReadInt32();
 			p.dwFourCC = r.ReadInt32();
+
+			switch (p.dwFourCC)
+			{
+				//DXT1
+				case (0x31545844):
+					blockSize = 8;
+					break;
+				default:
+					blockSize = 16;
+					break;
+			}
+
 			p.dwRGBBitCount = r.ReadInt32();
 			p.dwRBitMask = r.ReadInt32();
 			p.dwGBitMask = r.ReadInt32();
 			p.dwBBitMask = r.ReadInt32();
 			p.dwABitMask = r.ReadInt32();
 		}
+	
+		public byte[] GetMipMapData(int depth, int mip_id)
+        {
+			//Calculate mipmap_size
+			int offset = 0;
+			int temp_size = header.dwPitchOrLinearSize;
+			int w = header.dwWidth;
+			int h = header.dwHeight;
+			for (int i = 0; i < mip_id; i++)
+			{
+				//GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, IntPtr.Zero + offset);
+				offset += temp_size * header.dwDepth;
+
+				w = Math.Max(w >> 1, 1);
+				h = Math.Max(h >> 1, 1);
+
+				temp_size = Math.Max(1, (w + 3) / 4) * Math.Max(1, (h + 3) / 4) * blockSize;
+				//This works only for square textures
+				//temp_size = Math.Max(temp_size/4, blocksize);
+			}
+
+			byte[] temp_data = new byte[temp_size];
+			Buffer.BlockCopy(Data, offset, temp_data, 0, temp_size);
+
+			return temp_data;
+        }
+
+		public bool SetMipMapData(int depth, int mip_id, byte[] data)
+		{
+			//Calculate mipmap_size
+			int offset = 0;
+			int temp_size = header.dwPitchOrLinearSize;
+			int w = header.dwWidth;
+			int h = header.dwHeight;
+			for (int i = 0; i < mip_id; i++)
+			{
+				//GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, IntPtr.Zero + offset);
+				offset += temp_size * header.dwDepth;
+
+				w = Math.Max(w >> 1, 1);
+				h = Math.Max(h >> 1, 1);
+
+				temp_size = Math.Max(1, (w + 3) / 4) * Math.Max(1, (h + 3) / 4) * blockSize;
+				//This works only for square textures
+				//temp_size = Math.Max(temp_size/4, blocksize);
+			}
+
+			//Check input data integrity
+			if (data.Length != temp_size)
+				return false;
+
+			Buffer.BlockCopy(data, 0, Data, offset, temp_size);
+			return true;
+		}
+
 	}
 
 	public class DDS_HEADER {

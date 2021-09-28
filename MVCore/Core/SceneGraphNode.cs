@@ -254,7 +254,6 @@ namespace MVCore
             n.AddComponent<MeshComponent>(mc);
 
             //Add Light Component
-
             LightComponent lc = new()
             {
                 Intensity = intensity,
