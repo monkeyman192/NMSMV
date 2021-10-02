@@ -725,8 +725,8 @@ namespace GLSLHelper {
             string log_file = "shader_compilation_log.out";
 
             if (!File.Exists(log_file))
-                File.Create(log_file);
-
+                File.Create(log_file).Close();
+            
             while (!FileUtils.IsFileReady(log_file))
             {
                 Console.WriteLine("Log File not ready yet");

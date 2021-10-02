@@ -16,12 +16,16 @@ namespace SimpleTextureRenderer
     public class TextureRenderer : OpenTK.Windowing.Desktop.GameWindow
     {
         private Texture _texture;
+        private Engine _engine;
         private DDSImage _ddsImage;
         private int mipmap_id = 0;
         private int depth_id = 0;
         private GLSLShaderConfig shader_conf;
         private int quad_vao_id;
-        ImGuiManager _ImGuiManager;
+        AppImGuiManager _ImGuiManager;
+
+        //Imgui stuff
+        private bool IsOpenFileDialogOpen = false;
         
         public TextureRenderer(): base(OpenTK.Windowing.Desktop.GameWindowSettings.Default,
             OpenTK.Windowing.Desktop.NativeWindowSettings.Default)
@@ -46,15 +50,24 @@ namespace SimpleTextureRenderer
             base.OnResize(e);
         }
 
+        private void OpenFile(string filepath)
+        {
+
+            if (_texture != null)
+                _texture.Dispose();
+            
+            _texture = new Texture(filepath, true);
+        }
+
         protected override void OnLoad()
         {
             base.OnLoad();
             Callbacks.SetDefaultCallbacks();
 
             //Initialize Engine
-            Engine e = new Engine(this);
-            RenderState.engineRef = e;
-            e.init(ClientSize.X, ClientSize.Y);
+            _engine = new Engine(this);
+            RenderState.engineRef = _engine;
+            _engine.init(ClientSize.X, ClientSize.Y);
 
             GL.ClearColor(0.1f, 0.2f, 0.5f, 0.0f);
             //GL.Enable(EnableCap.DepthTest);
@@ -63,10 +76,12 @@ namespace SimpleTextureRenderer
             //string texturepath = "E:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\TEXTURES\\PLANETS\\BIOMES\\WEIRD\\BEAMSTONE\\BEAMGRADIENT.DDS";
             //string texturepath = "E:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\TEXTURES\\PLANETS\\BIOMES\\WEIRD\\BEAMSTONE\\SCROLLINGCLOUD.DDS";
             //string texturepath = "E:\\SSD_SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\TEXTURES\\COMMON\\ROBOTS\\QUADRUPED.DDS";
-            string texturepath = "D:\\Downloads\\TILEMAP.DDS";
+            //string texturepath = "D:\\Downloads\\TILEMAP.DDS";
             //string texturepath = "D:\\Downloads\\TILEMAP.HSV.DDS";
             //string texturepath = "D:\\Downloads\\TILEMAP.NORMAL.DDS";
-            _texture = new Texture(texturepath, true);
+
+            _texture = new Texture(Callbacks.getResource("default.dds"), 
+                                   true, "default");
             
             //Compile Necessary Shaders
 
@@ -147,66 +162,144 @@ namespace SimpleTextureRenderer
 
         private void DrawUI()
         {
-            if (ImGui.Begin("Texture Properties"))
+            //Draw Main MenuBar
+            if (ImGui.BeginMainMenuBar())
             {
-                ImGui.Text("Info:");
-                ImGui.Columns(2);
-                ImGui.Text("Width");
-                ImGui.Text("Height");
-                ImGui.Text("Depth");
-                ImGui.Text("MipMapCount");
-                ImGui.Text("Format");
-                ImGui.NextColumn();
-                ImGui.Text(_texture.Width.ToString());
-                ImGui.Text(_texture.Height.ToString());
-                ImGui.Text(_texture.Depth.ToString());
-                ImGui.Text(_texture.MipMapCount.ToString());
-
-                //Make format output a bit friendlier
-                switch (_texture.pif)
+                if (ImGui.BeginMenu("File"))
                 {
-                    case InternalFormat.CompressedSrgbAlphaS3tcDxt5Ext:
-                        ImGui.Text("DXT5");
-                        break;
-                    case InternalFormat.CompressedSrgbAlphaS3tcDxt1Ext:
-                        ImGui.Text("DXT1");
-                        break;
-                    case InternalFormat.CompressedRgRgtc2:
-                        ImGui.Text("ATI2A2XY");
-                        break;
-                    case InternalFormat.CompressedSrgbAlphaBptcUnorm:
-                        ImGui.Text("BC7 (DX10 Header)");
-                        break;
-                    default:
-                        ImGui.Text("UNKNOWN");
-                        break;
+                    if (ImGui.MenuItem("Open"))
+                    {
+                        _ImGuiManager.ShowOpenFileDialog();
+                        IsOpenFileDialogOpen = true;
+                    }
+
+                    if (ImGui.MenuItem("Close"))
+                    {
+                        //Dispose stuff and close
+                        _texture.Dispose();
+                        _engine.CleanUp();
+                        Close();
+                    }
+                    ImGui.EndMenu();
                 }
 
-                ImGui.NextColumn();
-                ImGui.Separator();
-                //Prepare depth options
-                ImGui.Text("Active Depth:");
+                ImGui.EndMainMenuBar();
+            }
+
+
+            if (_texture != null) {
+
+                if (ImGui.Begin("Texture Properties"))
+                {
+                    ImGui.Text("Info:");
+                    ImGui.Columns(2);
+                    ImGui.Text("Width");
+                    ImGui.Text("Height");
+                    ImGui.Text("Depth");
+                    ImGui.Text("MipMapCount");
+                    ImGui.Text("Format");
+                    ImGui.NextColumn();
+                    ImGui.Text(_texture.Width.ToString());
+                    ImGui.Text(_texture.Height.ToString());
+                    ImGui.Text(_texture.Depth.ToString());
+                    ImGui.Text(_texture.MipMapCount.ToString());
+
+                    //Make format output a bit friendlier
+                    switch (_texture.pif)
+                    {
+                        case InternalFormat.CompressedSrgbAlphaS3tcDxt5Ext:
+                            ImGui.Text("DXT5");
+                            break;
+                        case InternalFormat.CompressedSrgbAlphaS3tcDxt1Ext:
+                            ImGui.Text("DXT1");
+                            break;
+                        case InternalFormat.CompressedRgRgtc2:
+                            ImGui.Text("ATI2A2XY");
+                            break;
+                        case InternalFormat.CompressedSrgbAlphaBptcUnorm:
+                            ImGui.Text("BC7 (DX10 Header)");
+                            break;
+                        default:
+                            ImGui.Text("UNKNOWN");
+                            break;
+                    }
+
+                    ImGui.NextColumn();
+                    ImGui.Separator();
+                    //Prepare depth options
+                    ImGui.Text("Active Depth:");
+                    ImGui.NextColumn();
+
+
+                    string[] opts = new string[_texture.Depth];
+                    for (int i = 0; i < opts.Length; i++)
+                        opts[i] = i.ToString();
+                    ImGui.Combo("##0", ref depth_id, opts, _texture.Depth, 12);
+
+                    ImGui.NextColumn();
+                    ImGui.Text("Active Mipmap:");
+
+                    opts = new string[_texture.MipMapCount];
+                    for (int i = 0; i < opts.Length; i++)
+                        opts[i] = i.ToString();
+
+                    ImGui.NextColumn();
+                    ImGui.Combo("##1", ref mipmap_id, opts, _texture.MipMapCount, 12);
+
+                    ImGui.Columns(1);
+                    ImGui.End();
+                }
+
+            }
+
+            //Main StatusBar
+            float textHeight = ImGui.GetTextLineHeight();
+            ImGuiViewportPtr vp = ImGui.GetMainViewport();
+            ImGui.SetNextWindowPos(new System.Numerics.Vector2(0, vp.Size.Y - 1.4f * textHeight));
+            ImGui.SetNextWindowSize(new System.Numerics.Vector2(vp.Size.X, 1.6f * textHeight));
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new System.Numerics.Vector2(0.0f));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new System.Numerics.Vector2(0f, 0f));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1.0f);
+
+            ImGuiWindowFlags sbarFlags = ImGuiWindowFlags.NoResize |
+                                         ImGuiWindowFlags.NoScrollbar |     
+                                         ImGuiWindowFlags.NoTitleBar;
+            bool sbar_open = true;
+
+            if (ImGui.Begin("##TestWindow", ref sbar_open, sbarFlags))
+            {
+                //StatusBar Texts
+                string statusText = "Ready";
+                string copyrightText = "Created by gregkwaste©";
+                ImGui.Columns(2, "#statusbar", false);
+                ImGui.SetCursorPosY(2.0f);
+                ImGui.Text(statusText);
                 ImGui.NextColumn();
                 
-                
-                string[] opts = new string[_texture.Depth];
-                for (int i = 0; i < opts.Length; i++)
-                    opts[i] = i.ToString();
-                ImGui.Combo("##0", ref depth_id, opts, _texture.Depth, 12);
-
-                ImGui.NextColumn();
-                ImGui.Text("Active Mipmap:");
-
-                opts = new string[_texture.MipMapCount];
-                for (int i = 0; i < opts.Length; i++)
-                    opts[i] = i.ToString();
-                
-                ImGui.NextColumn();
-                ImGui.Combo("##1", ref mipmap_id, opts, _texture.MipMapCount, 12);
-
+                ImGui.SetColumnOffset(ImGui.GetColumnIndex(), vp.Size.X - ImGui.CalcTextSize(copyrightText).X);
+                ImGui.SetCursorPosY(2.0f);
+                ImGui.Text("Made by gregkwaste");
                 ImGui.Columns(1);
                 ImGui.End();
             }
+
+            ImGui.PopStyleVar(4);
+
+
+            //Process Modals
+            bool oldOpenDialogStatus = IsOpenFileDialogOpen;
+            string filePath = "";
+            _ImGuiManager.ProcessModals(this, ref filePath, ref IsOpenFileDialogOpen);
+
+            if (oldOpenDialogStatus == true && IsOpenFileDialogOpen == false)
+            {
+                //Open File
+                OpenFile(filePath);
+            }
+
+
+
         }
 
         [STAThread]

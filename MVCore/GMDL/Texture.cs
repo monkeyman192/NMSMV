@@ -26,6 +26,18 @@ namespace MVCore
         //Empty Initializer
         public Texture() { }
         //Path Initializer
+
+        public Texture(byte[] data, bool isDDS, string name)
+        {
+            if (isDDS)
+            {
+                textureInitDDS(data, name);
+            } else
+            {
+                textureInit(data, "temp");
+            }
+        }
+
         public Texture(string path, bool isCustom = false)
         {
             Stream fs;
@@ -59,7 +71,7 @@ namespace MVCore
             }
             else
             {
-                data_length = (int)fs.Length;
+                data_length = (int) fs.Length;
                 image_data = new byte[data_length];
             }
 

@@ -22,7 +22,7 @@ namespace ImGUI_SDL_ModelViewer
         AppImGuiManager _ImGuiManager;
 
         //Parameters
-        private readonly string current_file_path = Environment.CurrentDirectory;
+        private string current_file_path = Environment.CurrentDirectory;
         
         //Mouse Pos
         private readonly MouseMovementState mouseState = new();
@@ -40,6 +40,7 @@ namespace ImGUI_SDL_ModelViewer
         private bool firstDockSetup = true;
         
         static private bool open_file_enabled = false;
+        static private bool IsOpenFileDialogOpen = false;
 
         public Window() : base(GameWindowSettings.Default, 
             new NativeWindowSettings() { Size = new Vector2i(800, 600), APIVersion = new Version(4, 5) })
@@ -696,7 +697,8 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.End();
             }
             
-            _ImGuiManager.ProcessModals(this, current_file_path);
+
+            _ImGuiManager.ProcessModals(this, ref current_file_path, ref IsOpenFileDialogOpen);
 
             //Debugging Information
             if (ImGui.Begin("Statistics"))

@@ -3,9 +3,9 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 using System;
 using MVCore;
-using ImGUI_SDL_ModelViewer;
+using ImGuiHelper;
 
-namespace ImGuiHelper
+namespace ImGUI_SDL_ModelViewer
 {
     class AppImGuiManager : ImGuiManager
     {
@@ -63,7 +63,7 @@ namespace ImGuiHelper
         
         //SceneGraph Related Methods
 
-        public override void ProcessModals(GameWindow win, string current_file_path)
+        public override void ProcessModals(GameWindow win, ref string current_file_path, ref bool OpenFileDialogFinished)
         {
             //Functionality
 

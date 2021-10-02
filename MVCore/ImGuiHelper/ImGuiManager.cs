@@ -112,7 +112,7 @@ namespace ImGuiHelper
             SceneGraphViewer.Clear();
         }
 
-        public virtual void ProcessModals(GameWindow win, string current_file_path)
+        public virtual void ProcessModals(GameWindow win, ref string current_file_path, ref bool closed)
         {
             //Override to provide modal processing
             throw new Exception("Not Implented!");

@@ -28,6 +28,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Sampler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Uniform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiFilePicker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiMaterialEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiObjectViewer.cs" />

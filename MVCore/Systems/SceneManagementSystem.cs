@@ -76,7 +76,8 @@ namespace MVCore.Systems
 
         public override void CleanUp()
         {
-            throw new NotImplementedException();
+            //TODO : Check if more has to be cleaned up or if the registry system will handle everything
+            _SceneMap.Clear();
         }
     }
 }
