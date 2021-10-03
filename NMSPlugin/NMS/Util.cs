@@ -168,7 +168,7 @@ namespace MVCore.Import.NMS
             //Try to load the texture
             if (texMgr.HasTexture(sampler.Map))
             {
-                sampler.Tex = texMgr.GetTexture(sampler.Map);
+                sampler.Tex = texMgr.Get(sampler.Map);
             }
             else
             {
@@ -206,13 +206,13 @@ namespace MVCore.Import.NMS
                     {
                         string new_name = pre_ext_name + "MASKS.DDS";
                         mat.SamplerMap["mpCustomPerMaterial.gMasksMap"].Map = new_name;
-                        mat.SamplerMap["mpCustomPerMaterial.gMasksMap"].Tex = texMgr.GetTexture(new_name);
+                        mat.SamplerMap["mpCustomPerMaterial.gMasksMap"].Tex = texMgr.Get(new_name);
                     }
                     else if (mat.SamplerMap.ContainsKey("mpCustomPerMaterial.gNormalMap"))
                     {
                         string new_name = pre_ext_name + "NORMAL.DDS";
                         mat.SamplerMap["mpCustomPerMaterial.gNormalMap"].Map = new_name;
-                        mat.SamplerMap["mpCustomPerMaterial.gNormalMap"].Tex = texMgr.GetTexture(new_name); ;
+                        mat.SamplerMap["mpCustomPerMaterial.gNormalMap"].Tex = texMgr.Get(new_name); ;
                     }
                     break;
                 }

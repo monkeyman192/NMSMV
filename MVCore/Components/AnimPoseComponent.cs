@@ -28,18 +28,6 @@ namespace MVCore
 
         }
 
-        public AnimPoseComponent(TkAnimPoseComponentData apcd)
-        {
-            _poseFrameData = (TkAnimMetadata) Import.NMS.FileUtils.LoadNMSTemplate(apcd.Filename);
-
-            //Load PoseAnims
-            for (int i = 0; i < apcd.PoseAnims.Count; i++)
-            {
-                AnimPoseData my_apd = new(apcd.PoseAnims[i]);
-                poseData.Add(my_apd);
-            }
-        }
-
         public override Component Clone()
         {
             return new AnimPoseComponent();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace MVCore
@@ -45,6 +46,7 @@ namespace MVCore
     public class ThreadRequest :IDisposable
     {
         public List<object> arguments;
+        public MethodInfo method;
         public THREAD_REQUEST_TYPE type;
         public THREAD_REQUEST_STATUS status;
         public THREAD_REQUEST_OWNER owner;
@@ -57,6 +59,7 @@ namespace MVCore
             owner = THREAD_REQUEST_OWNER.NULL;
             status = THREAD_REQUEST_STATUS.NULL;
             arguments = new List<object>();
+            method = null;
             response = 0;
         }
 

@@ -8,6 +8,7 @@ using ImGuiHelper;
 using OpenTK.Windowing.Common;
 using MVCore;
 using MVCore.Common;
+using MVCore.Plugins;
 using MVCore.Utils;
 using System.Collections.Generic;
 using MVCore.Text;
@@ -38,6 +39,7 @@ namespace ImGUI_SDL_ModelViewer
         private Vector2i SceneViewSize = new();
         private bool isSceneViewActive = false;
         private bool firstDockSetup = true;
+        private float scrolly = 0.0f;
         
         static private bool open_file_enabled = false;
         static private bool IsOpenFileDialogOpen = false;
@@ -131,16 +133,6 @@ namespace ImGUI_SDL_ModelViewer
             //Set active Components
             Util.activeWindow = this;
 
-            Callbacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
-            
-            //Issue work request 
-            ThreadRequest rq = new();
-            rq.arguments.Add("NMSmanifest");
-            rq.arguments.Add(Path.Combine(RenderState.settings.GameDir, "PCBANKS"));
-            rq.type = THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES;
-            requestHandler.AddRequest(ref rq); 
-            workDispatcher.sendRequest(ref rq); //Generate worker
-            
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -185,8 +177,9 @@ namespace ImGUI_SDL_ModelViewer
             Camera.UpdateCameraDirectionalVectors(RenderState.activeCam);
 
             engine.OnRenderUpdate(e.Time);
-            _ImGuiManager.Update(e.Time);
-
+            _ImGuiManager.Update(e.Time, scrolly);
+            scrolly = 0.0f;
+            
             //Bind Default Framebuffer
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
@@ -450,31 +443,45 @@ namespace ImGUI_SDL_ModelViewer
                     ImGui.DockBuilderDockWindow("Node Editor", dockSpaceRightDown);
                     ImGui.DockBuilderDockWindow("Shader Editor", dockSpaceRightDown);
                     ImGui.DockBuilderDockWindow("Material Editor", dockSpaceRightDown);
-                    
+                    ImGui.DockBuilderDockWindow("Texture Editor", dockSpaceRightDown);
+
                     ImGuiNative.igDockBuilderFinish(dockSpaceID);
                 }
             }
-            
-            
+
+
+            Scene new_scene = null;
+            bool import_new_scene = true;
+
             //Main Menu
             if (ImGui.BeginMainMenuBar())
             {
                 if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.MenuItem("Open", "Ctrl + O", false, open_file_enabled))
+                    if (ImGui.MenuItem("New", "Ctrl + N"))
                     {
-                        _ImGuiManager.ShowOpenFileDialog();
+                        Log("Create new scene not implemented yet", LogVerbosityLevel.INFO);
                     }
 
-                    if (ImGui.MenuItem("Open from PAK", "", false, open_file_enabled))
+                    if (ImGui.MenuItem("Open", "Ctrl + O"))
                     {
-                        _ImGuiManager.ShowOpenFileDialogPak();
+                        Log("Open scene not implemented yet", LogVerbosityLevel.INFO);
                     }
 
-                    if (ImGui.MenuItem("Update LibMBIN"))
+                    foreach (PluginBase plugin in engine.Plugins)
                     {
-                        _ImGuiManager.ShowUpdateLibMBINDialog();
+                        plugin.DrawImporters(ref new_scene);
+                        if (new_scene != null)
+                        {
+                            import_new_scene = true;
+                            break;
+                        }
                     }
+
+                    //Todo for all plugins 
+
+
+
 
                     if (ImGui.MenuItem("Settings"))
                     {
@@ -590,6 +597,12 @@ namespace ImGUI_SDL_ModelViewer
             if (ImGui.Begin("Shader Editor", ImGuiWindowFlags.NoCollapse))
             {
                 _ImGuiManager.DrawShaderEditor();
+                ImGui.End();
+            }
+
+            if (ImGui.Begin("Texture Editor", ImGuiWindowFlags.NoCollapse))
+            {
+                _ImGuiManager.DrawTextureEditor();
                 ImGui.End();
             }
 

@@ -4,14 +4,16 @@ using System.ComponentModel;
 using System.Text;
 //using System.Windows.Forms;
 //using System.Windows.Media.Animation;
-using libMBIN.NMS.Toolkit;
 using MVCore.Utils;
 using MVCore.Systems;
 using OpenTK;
 using OpenTK.Mathematics;
+using libMBIN.NMS.Toolkit;
+
 
 namespace MVCore
 {
+    //TODO Remove the libmbin dependency
     public class AnimData : TkAnimationData, INotifyPropertyChanged
     {
         public AnimMetadata animMeta;
@@ -45,60 +47,7 @@ namespace MVCore
 
         }
 
-        public Assimp.Animation AssimpExport(ref Assimp.Scene scn)
-        {
-            Assimp.Animation asAnim = new();
-            asAnim.Name = Anim;
-
-
-            //Make sure keyframe data is loaded from the files
-            if (!loaded)
-            {
-                FetchAnimMetaData();
-                loaded = true;
-            }
-
-
-
-            asAnim.TicksPerSecond = 60;
-            asAnim.DurationInTicks = animMeta.FrameCount;
-            float time_interval = 1.0f / (float)asAnim.TicksPerSecond;
-
-
-            //Add Node-Bone Channels
-            for (int i = 0; i < animMeta.NodeCount; i++)
-            {
-                string name = animMeta.NodeData[i].Node;
-                Assimp.NodeAnimationChannel mChannel = new();
-                mChannel.NodeName = name;
-
-                //mChannel.PostState = Assimp.AnimationBehaviour.Linear;
-                //mChannel.PreState = Assimp.AnimationBehaviour.Linear;
-
-
-                //Export Keyframe Data
-                for (int j = 0; j < animMeta.FrameCount; j++)
-                {
-
-                    //Position
-                    Assimp.VectorKey vk = new(j * time_interval, MathUtils.convertVector(animMeta.anim_positions[name][j]));
-                    mChannel.PositionKeys.Add(vk);
-                    //Rotation
-                    Assimp.QuaternionKey qk = new(j * time_interval, MathUtils.convertQuaternion(animMeta.anim_rotations[name][j]));
-                    mChannel.RotationKeys.Add(qk);
-                    //Scale
-                    Assimp.VectorKey sk = new(j * time_interval, MathUtils.convertVector(animMeta.anim_scales[name][j]));
-                    mChannel.ScalingKeys.Add(sk);
-
-                }
-
-                asAnim.NodeAnimationChannels.Add(mChannel);
-
-            }
-
-            return asAnim;
-
-        }
+        
 
         public AnimData Clone()
         {
@@ -218,10 +167,12 @@ namespace MVCore
             }
             else
             {
-                TkAnimMetadata amd = Import.NMS.FileUtils.LoadNMSTemplate(Filename) as TkAnimMetadata;
-                animMeta = new AnimMetadata(amd);
-                animMeta.load(); //Load data as well
-                Common.RenderState.engineRef.animationSys.Animations[Filename] = animMeta;
+                //TODO: REDO get rid of libmbin
+                
+                //TkAnimMetadata amd = Import.NMS.FileUtils.LoadNMSTemplate(Filename) as TkAnimMetadata;
+                //animMeta = new AnimMetadata(amd);
+                //animMeta.load(); //Load data as well
+                //Common.RenderState.engineRef.animationSys.Animations[Filename] = animMeta;
             }
             NotifyPropertyChanged("FrameCount");
         }

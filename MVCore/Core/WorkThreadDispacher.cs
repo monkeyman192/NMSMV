@@ -46,19 +46,15 @@ namespace MVCore
 
             //Create and start Thread
             Thread t = null;
-            switch (tr.type)
-            {
-                case THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES:
-                    string gameDir = (string) tr.arguments[0];
-                    Common.Callbacks.Log("* Issuing PAK Loading Work Thread", Common.LogVerbosityLevel.INFO);
-                    t = new Thread(() => Import.NMS.FileUtils.loadNMSArchives(gameDir, ref tk.thread_request.response));
-                    break;
-                default:
-                    Console.WriteLine("");
-                    Common.Callbacks.Log("* DISPATCHER : Unsupported Thread Request", Common.LogVerbosityLevel.WARNING);
-                    break;
-            }
+
+            object[] args = new object[tr.arguments.Count];
             
+            for (int i=0;i<tr.arguments.Count;i++)
+                args[i] = tr.arguments[i];
+
+            t = new Thread(() => tr.method.Invoke(null, args));
+            Common.Callbacks.Log("* Issuing Requested Method", Common.LogVerbosityLevel.INFO);
+
             tk.thread = t;
             tk.thread.IsBackground = true;
             tk.thread.Start();

@@ -13,10 +13,9 @@ using MVCore.Common;
 using MVCore.Input;
 using MVCore.Primitives;
 using MVCore.Utils;
+using MVCore.Plugins;
 using System.Timers;
 using GLSLHelper;
-using libMBIN.NMS.Toolkit;
-
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Desktop;
 using System.IO;
@@ -59,6 +58,8 @@ namespace MVCore
         public CameraPos targetCameraPos;
         public Vector2 prevMousePos;
 
+        //Plugin List
+        public List<PluginBase> Plugins = new();
 
         //Use public variables for now because getters/setters are so not worth it for our purpose
         public float light_angle_y = 0.0f;
@@ -192,7 +193,7 @@ namespace MVCore
         //Asset Getter
         public Texture GetTexture(string name)
         {
-            return renderSys.TextureMgr.GetTexture(name);
+            return renderSys.TextureMgr.Get(name);
         }
 
         public GLInstancedMesh GetPrimitiveMesh(string name)
@@ -405,14 +406,14 @@ namespace MVCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            Import.NMS.Palettes.set_palleteColors();
+            //Import.NMS.Palettes.set_palleteColors();
 
             //Clear Systems
             actionSys.CleanUp();
             animationSys.CleanUp();
 
             //Clear Resources
-            ModelProcGen.procDecisions.Clear();
+            //ModelProcGen.procDecisions.Clear();
 
             RenderState.activeModel = null;
             
@@ -543,14 +544,14 @@ namespace MVCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            Import.NMS.Palettes.set_palleteColors();
+            //Import.NMS.Palettes.set_palleteColors();
 
             //Clear Systems
             actionSys.CleanUp();
             animationSys.CleanUp();
 
             //Clear Resources
-            ModelProcGen.procDecisions.Clear();
+            //ModelProcGen.procDecisions.Clear();
             
             RenderState.itemCounter = 0;
             RenderState.activeModel = null;

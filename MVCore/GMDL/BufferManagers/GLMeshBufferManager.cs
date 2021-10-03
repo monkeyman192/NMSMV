@@ -1,5 +1,4 @@
 ﻿using System;
-using Assimp;
 using OpenTK;
 using OpenTK.Mathematics;
 using MVCore.Utils;

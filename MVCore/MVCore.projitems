@@ -17,11 +17,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\TransformData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\DDSImage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Scene.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Export\NMS\Exporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedLightMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLVao.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\MeshMetaData.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Export\AssimpExporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\MeshComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\SceneGraphNode.cs" />
@@ -30,6 +28,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiFilePicker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiTextureEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiMaterialEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiObjectViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiSceneGraphViewer.cs" />
@@ -37,14 +36,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiShaderEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiTexture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiUtil.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\FileUtils.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\ModelProcGen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Palettes.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Util.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\EntityManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\GeometryManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\MaterialManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\ShaderManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\PluginBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Plugins\PluginSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\MeshRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\RequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\ActionSystem.cs" />
@@ -87,7 +84,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Input\KeyboardHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\HTMLUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\MathUtils.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Import\NMS\Importer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Octree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\RenderSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\ShadowRenderer.cs" />
@@ -96,7 +92,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Common\" />
-    <Folder Include="$(MSBuildThisFileDirectory)Export\" />
     <Folder Include="$(MSBuildThisFileDirectory)Renderers\" />
     <Folder Include="$(MSBuildThisFileDirectory)Input\" />
   </ItemGroup>

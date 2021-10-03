@@ -17,6 +17,7 @@ using System.Reflection;
 using System.IO;
 using System.Drawing;
 using System.Linq;
+using MVCore.Plugins;
 
 namespace MVCore.Common
 {
@@ -177,46 +178,13 @@ namespace MVCore.Common
         //Public Settings
         public RenderSettings renderSettings = new RenderSettings();
         public ViewSettings viewSettings = new ViewSettings(31);
-        
+
+        //Store Plugin Settings
+        public List<PluginSettings> pluginSettings = new();
+
         //Private Settings
-        //private int forceProcGen;
-        private string gamedir;
-        private string unpackdir;
+        
         private LogVerbosityLevel _logVerbosity;
-
-        public string GameDir
-        {
-            get
-            {
-                return gamedir;
-            }
-
-            set
-            {
-                gamedir = value;
-                NotifyPropertyChanged("GameDir");
-            }
-        }
-
-        public string UnpackDir
-        {
-
-            get
-            {
-                return unpackdir;
-            }
-
-            set
-            {
-                unpackdir = value;
-                NotifyPropertyChanged("UnpackDir");
-            }
-
-        }
-
-        public int ProcGenWinNum;
-
-        public bool ForceProcGen;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -242,14 +210,14 @@ namespace MVCore.Common
         public static Settings generateDefaultSettings()
         {
             Settings settings = new Settings();
-            
-            //Game is available only on windows :(
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                settings.GameDir = Import.NMS.FileUtils.getGameInstallationDir();
-            else
-                settings.GameDir = "";
-            settings.unpackdir = settings.GameDir;
 
+            settings.pluginSettings.Clear();
+            
+            foreach (PluginBase plugin in RenderState.engineRef.Plugins)
+            {
+                settings.pluginSettings.Add(plugin.Settings.GenerateDefaultSettings());
+            }
+            
             return settings;
         }
 

@@ -52,7 +52,7 @@ namespace MVCore.Managers
             return EntityMap[id];
         }
 
-        public void CleanUp()
+        public virtual void CleanUp()
         {
             EntityMap.Clear();
             Entities.Clear();

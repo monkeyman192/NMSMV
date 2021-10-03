@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using libMBIN.NMS.Toolkit;
 
 namespace MVCore
 {
@@ -43,36 +42,6 @@ namespace MVCore
             }
                 
             return animList;
-        }
-
-
-        public void AssimpExport(ref Assimp.Scene scn)
-        {
-            foreach (AnimData ad in Animations)
-            {
-                Assimp.Animation anim = ad.AssimpExport(ref scn);
-                scn.Animations.Add(anim);
-            }
-        }
-
-        public AnimComponent(TkAnimationComponentData data)
-        {
-            //Load Animations
-            if (data.Idle.Anim != "")
-            {
-                _animations.Add(new AnimData(data.Idle)); //Add Idle Animation
-                _animDict[data.Idle.Anim] = _animations[0];
-            }
-                
-
-            for (int i = 0; i < data.Anims.Count; i++)
-            {
-                //Check if the animation is already loaded
-                AnimData my_ad = new(data.Anims[i]);
-                _animations.Add(my_ad);
-                _animDict[my_ad.PName] = my_ad;
-            }
-
         }
 
         public void copyFrom(AnimComponent input)

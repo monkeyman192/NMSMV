@@ -38,15 +38,54 @@ namespace MVCore.Import.NMS
         private static void ProcessAnimPoseComponent(SceneGraphNode node, TkAnimPoseComponentData component)
         {
             //Load PoseFile
-            AnimPoseComponent apc = new(component);
+            AnimPoseComponent apc = CreateAnimPoseComponentFromStruct(component);
             apc.ref_object = node; //Set referenced animScene
             node.AddComponent<AnimPoseComponent>(apc);
         }
 
+        private static AnimPoseComponent CreateAnimPoseComponentFromStruct(TkAnimPoseComponentData apcd)
+        {
+            AnimPoseComponent apc = new AnimPoseComponent();
+
+            apc._poseFrameData = (TkAnimMetadata) FileUtils.LoadNMSTemplate(apcd.Filename);
+
+            //Load PoseAnims
+            for (int i = 0; i < apcd.PoseAnims.Count; i++)
+            {
+                AnimPoseData my_apd = new(apcd.PoseAnims[i]);
+                apc.poseData.Add(my_apd);
+            }
+
+            return apc;
+        }
+
         private static void ProcessAnimationComponent(SceneGraphNode node, TkAnimationComponentData component)
         {
-            AnimComponent ac = new(component);
+            AnimComponent ac = CreateAnimComponentFromStruct(component);
             node.AddComponent<AnimComponent>(ac);
+        }
+
+        private static AnimComponent CreateAnimComponentFromStruct(TkAnimationComponentData data)
+        {
+            AnimComponent ac = new AnimComponent();
+            
+            //Load Animations
+            if (data.Idle.Anim != "")
+            {
+                ac._animations.Add(new AnimData(data.Idle)); //Add Idle Animation
+                ac._animDict[data.Idle.Anim] = ac._animations[0];
+            }
+
+
+            for (int i = 0; i < data.Anims.Count; i++)
+            {
+                //Check if the animation is already loaded
+                AnimData my_ad = new(data.Anims[i]);
+                ac._animations.Add(my_ad);
+                ac._animDict[my_ad.PName] = my_ad;
+            }
+
+            return ac;
         }
 
         private static void ProcessPhysicsComponent(SceneGraphNode node, TkPhysicsComponentData component)

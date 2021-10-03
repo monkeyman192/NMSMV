@@ -28,7 +28,7 @@ namespace ImGuiHelper
         private int _windowHeight;
 
         private System.Numerics.Vector2 _scaleFactor = System.Numerics.Vector2.One;
-
+        private float _scrollFactor = 0.5f;
         /// <summary>
         /// Constructs a new ImGuiController.
         /// </summary>
@@ -157,7 +157,7 @@ void main()
         /// <summary>
         /// Updates ImGui input and IO configuration state.
         /// </summary>
-        public void Update(GameWindow wnd, float deltaSeconds)
+        public void Update(GameWindow wnd, float deltaSeconds, float scrolly)
         {
             if (_frameBegun)
             {
@@ -165,7 +165,7 @@ void main()
             }
 
             SetPerFrameImGuiData(deltaSeconds);
-            UpdateImGuiInput(wnd);
+            UpdateImGuiInput(wnd, scrolly);
 
             _frameBegun = true;
             ImGui.NewFrame();
@@ -187,7 +187,7 @@ void main()
 
         readonly List<char> PressedChars = new List<char>();
 
-        private void UpdateImGuiInput(GameWindow wnd)
+        private void UpdateImGuiInput(GameWindow wnd, float scrolly)
         {
             ImGuiIOPtr io = ImGui.GetIO();
 
@@ -197,6 +197,8 @@ void main()
             io.MouseDown[0] = MouseState[MouseButton.Left];
             io.MouseDown[1] = MouseState[MouseButton.Right];
             io.MouseDown[2] = MouseState[MouseButton.Middle];
+            //io.MouseWheelH = MouseState.Scroll.X / wnd.ClientSize.X;
+            io.MouseWheel += _scrollFactor * scrolly;
 
             var screenPoint = new Vector2i((int)MouseState.X, (int)MouseState.Y);
             var point = screenPoint;//wnd.PointToClient(screenPoint);

@@ -8,12 +8,12 @@ using System.Drawing.Imaging;
 
 namespace MVCore
 {
-    public class Texture : IDisposable
+    public class Texture : Entity
     {
-        private bool disposed = false;
         public int texID = -1;
+        private bool disposed = false;
         public TextureTarget target;
-        public string name;
+        public string Name;
         public int Width;
         public int Height;
         public int Depth;
@@ -24,10 +24,10 @@ namespace MVCore
         public Vector3 avgColor;
 
         //Empty Initializer
-        public Texture() { }
+        public Texture() :base(EntityType.Texture) { }
         //Path Initializer
 
-        public Texture(byte[] data, bool isDDS, string name)
+        public Texture(byte[] data, bool isDDS, string name) : base(EntityType.Texture)
         {
             if (isDDS)
             {
@@ -38,7 +38,7 @@ namespace MVCore
             }
         }
 
-        public Texture(string path, bool isCustom = false)
+        public Texture(string path, bool isCustom = false) : base(EntityType.Texture)
         {
             Stream fs;
             byte[] image_data;
@@ -134,12 +134,13 @@ namespace MVCore
         private void textureInitDDS(byte[] imageData, string _name)
         {
             DDSImage ddsImage;
-            name = _name;
+            Name = _name;
 
             ddsImage = new DDSImage(imageData);
             RenderStats.texturesNum += 1; //Accumulate settings
 
-            Console.WriteLine("Sampler Name Path " + name + " Width {0} Height {1}", ddsImage.header.dwWidth, ddsImage.header.dwHeight);
+            Console.WriteLine("Sampler Name Path " + Name + " Width {0} Height {1}", 
+                ddsImage.header.dwWidth, ddsImage.header.dwHeight);
             Width = ddsImage.header.dwWidth;
             Height = ddsImage.header.dwHeight;
             int blocksize = 16;
@@ -280,13 +281,7 @@ namespace MVCore
 
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (disposed)
                 return;

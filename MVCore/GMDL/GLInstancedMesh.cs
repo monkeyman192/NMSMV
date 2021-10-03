@@ -4,13 +4,8 @@ using System.Text;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
-using GLSLHelper;
-using System.IO;
-using MVCore.Common;
-using MVCore.Systems;
 using MVCore.Utils;
-using libMBIN.NMS.Toolkit;
-using System.Linq;
+
 
 namespace MVCore
 {

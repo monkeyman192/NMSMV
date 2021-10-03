@@ -31,10 +31,12 @@ namespace SimpleTextureRenderer
                 show_open_file_dialog = false;
             }
 
-            if (ImGui.BeginPopupModal("open-file", ref isDialogOpen, ImGuiWindowFlags.NoTitleBar))
+            var winsize = new System.Numerics.Vector2(500, 250);
+            ImGui.SetNextWindowSize(winsize);
+            if (ImGui.BeginPopupModal("open-file", ref isDialogOpen, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize))
             {
                 var picker = FilePicker.GetFilePicker(win, current_file_path, ".DDS");
-                if (picker.Draw())
+                if (picker.Draw(new System.Numerics.Vector2(winsize.X - 15, winsize.Y - 60)))
                 {
                     Console.WriteLine(picker.SelectedFile);
                     current_file_path = picker.SelectedFile;

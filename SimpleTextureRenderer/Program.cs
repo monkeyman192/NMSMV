@@ -23,6 +23,7 @@ namespace SimpleTextureRenderer
         private GLSLShaderConfig shader_conf;
         private int quad_vao_id;
         AppImGuiManager _ImGuiManager;
+        private float scroll_delta_y = 0f;
 
         //Imgui stuff
         private bool IsOpenFileDialogOpen = false;
@@ -114,13 +115,20 @@ namespace SimpleTextureRenderer
             base.OnUpdateFrame(e);
         }
 
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            scroll_delta_y += e.OffsetY;
+        }
+
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             
             base.OnRenderFrame(e);
             //Update Imgui
-            _ImGuiManager.Update(e.Time);
-
+            //TODO: maybe group mouse data to a struct and pass that one instead
+            _ImGuiManager.Update(e.Time, scroll_delta_y); 
+            scroll_delta_y = 0.0f; //Reset Scroll delta from frame to frame
+            
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             //GL.ClearColor(0.1f, 0.2f, 0.5f, 0.0f);

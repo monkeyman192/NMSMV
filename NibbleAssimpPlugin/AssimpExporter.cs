@@ -4,6 +4,7 @@ using Assimp;
 using MVCore;
 using MVCore.Systems;
 using MVCore.Utils;
+using OpenTK.Mathematics;
 
 namespace MVCore.Export
 {
@@ -287,24 +288,111 @@ namespace MVCore.Export
             return node;
         }
     
-
-
-
-
-
-     
-     
-     
-     
-     
-     
-     
-     
      * 
      */
 
     public class AssimpExporter
     {
+        public static Assimp.Matrix4x4 convertMatrix(Matrix4 localMat)
+        {
+            Assimp.Matrix4x4 mat = new()
+            {
+                A1 = localMat.Column0.X,
+                A2 = localMat.Column0.Y,
+                A3 = localMat.Column0.Z,
+                A4 = localMat.Column0.W,
+                B1 = localMat.Column1.X,
+                B2 = localMat.Column1.Y,
+                B3 = localMat.Column1.Z,
+                B4 = localMat.Column1.W,
+                C1 = localMat.Column2.X,
+                C2 = localMat.Column2.Y,
+                C3 = localMat.Column2.Z,
+                C4 = localMat.Column2.W,
+                D1 = localMat.Column3.X,
+                D2 = localMat.Column3.Y,
+                D3 = localMat.Column3.Z,
+                D4 = localMat.Column3.W
+            };
+
+            return mat;
+        }
+
+        public static Assimp.Vector3D convertVector(Vector3 localVec)
+        {
+            Assimp.Vector3D vec = new();
+            vec.X = localVec.X;
+            vec.Y = localVec.Y;
+            vec.Z = localVec.Z;
+            return vec;
+        }
+
+        public static Assimp.Quaternion convertQuaternion(OpenTK.Mathematics.Quaternion localQuat)
+        {
+            Assimp.Quaternion q = new();
+            q.X = localQuat.X;
+            q.Y = localQuat.Y;
+            q.Z = localQuat.Z;
+            q.W = localQuat.W;
+            return q;
+        }
+
+        
+        //public static Animation AssimpExport(ref Assimp.Scene scn)
+        //{
+        //    Animation asAnim = new();
+        //    asAnim.Name = Anim;
+
+
+        //    //Make sure keyframe data is loaded from the files
+        //    if (!loaded)
+        //    {
+        //        FetchAnimMetaData();
+        //        loaded = true;
+        //    }
+
+
+
+        //    asAnim.TicksPerSecond = 60;
+        //    asAnim.DurationInTicks = animMeta.FrameCount;
+        //    float time_interval = 1.0f / (float)asAnim.TicksPerSecond;
+
+
+        //    //Add Node-Bone Channels
+        //    for (int i = 0; i < animMeta.NodeCount; i++)
+        //    {
+        //        string name = animMeta.NodeData[i].Node;
+        //        Assimp.NodeAnimationChannel mChannel = new();
+        //        mChannel.NodeName = name;
+
+        //        //mChannel.PostState = Assimp.AnimationBehaviour.Linear;
+        //        //mChannel.PreState = Assimp.AnimationBehaviour.Linear;
+
+
+        //        //Export Keyframe Data
+        //        for (int j = 0; j < animMeta.FrameCount; j++)
+        //        {
+
+        //            //Position
+        //            Assimp.VectorKey vk = new(j * time_interval, convertVector(animMeta.anim_positions[name][j]));
+        //            mChannel.PositionKeys.Add(vk);
+        //            //Rotation
+        //            Assimp.QuaternionKey qk = new(j * time_interval, convertQuaternion(animMeta.anim_rotations[name][j]));
+        //            mChannel.RotationKeys.Add(qk);
+        //            //Scale
+        //            Assimp.VectorKey sk = new(j * time_interval, convertVector(animMeta.anim_scales[name][j]));
+        //            mChannel.ScalingKeys.Add(sk);
+
+        //        }
+
+        //        asAnim.NodeAnimationChannels.Add(mChannel);
+
+        //    }
+
+        //    return asAnim;
+
+        //}
+
         public static Node assimpExport(SceneGraphNode m, ref Assimp.Scene scn, ref Dictionary<int, int> meshImportStatus)
         {
 

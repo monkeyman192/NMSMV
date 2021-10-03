@@ -623,28 +623,29 @@ namespace MVCore
             anim_positions = new Dictionary<string, Vector3[]>();
             anim_scales = new Dictionary<string, Vector3[]>();
 
-            loadData();
+            //loadData(); //TODO: Fix function
         }
 
-        private void loadData()
-        {
-            for (int j = 0; j < NodeCount; j++)
-            {
-                TkAnimNodeData node = NodeData[j];
-                //Init dictionary entries
+        //TODO: REDO
+        //private void loadData()
+        //{
+        //    for (int j = 0; j < NodeCount; j++)
+        //    {
+        //        TkAnimNodeData node = NodeData[j];
+        //        //Init dictionary entries
 
-                anim_rotations[node.Node] = new Quaternion[FrameCount];
-                anim_positions[node.Node] = new Vector3[FrameCount];
-                anim_scales[node.Node] = new Vector3[FrameCount];
+        //        anim_rotations[node.Node] = new Quaternion[FrameCount];
+        //        anim_positions[node.Node] = new Vector3[FrameCount];
+        //        anim_scales[node.Node] = new Vector3[FrameCount];
 
-                for (int i = 0; i < FrameCount; i++)
-                {
-                    Import.NMS.Util.fetchRotQuaternion(node, this, i, ref anim_rotations[node.Node][i]); //use Ref
-                    Import.NMS.Util.fetchTransVector(node, this, i, ref anim_positions[node.Node][i]); //use Ref
-                    Import.NMS.Util.fetchScaleVector(node, this, i, ref anim_scales[node.Node][i]); //use Ref
-                }
-            }
-        }
+        //        for (int i = 0; i < FrameCount; i++)
+        //        {
+        //            Import.NMS.Util.fetchRotQuaternion(node, this, i, ref anim_rotations[node.Node][i]); //use Ref
+        //            Import.NMS.Util.fetchTransVector(node, this, i, ref anim_positions[node.Node][i]); //use Ref
+        //            Import.NMS.Util.fetchScaleVector(node, this, i, ref anim_scales[node.Node][i]); //use Ref
+        //        }
+        //    }
+        //}
     }
 
     

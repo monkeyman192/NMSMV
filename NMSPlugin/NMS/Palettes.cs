@@ -16,7 +16,7 @@ using MVCore;
 using MVCore.Common;
 using MVCore.Utils;
 
-namespace MVCore.Import.NMS
+namespace NMSPLugin
 {
     public static class Palettes
     {
@@ -113,19 +113,19 @@ namespace MVCore.Import.NMS
             GcPaletteList template;
             
             
-             template = FileUtils.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN") as GcPaletteList;
+            template = FileUtils.LoadNMSTemplate("METADATA\\SIMULATION\\SOLARSYSTEM\\COLOURS\\BASECOLOURPALETTES.MBIN") as GcPaletteList;
 
-             if (template == null)
-             {
-                 Callbacks.Log("Using Default Palettes", LogVerbosityLevel.WARNING);
-                 return createPalette();
-             }
+            if (template == null)
+            {
+                Callbacks.Log("Using Default Palettes", LogVerbosityLevel.WARNING);
+                return createPalette();
+            }
             
-             TkPaletteTexture tkpt = new TkPaletteTexture();
-             GcPaletteData gcpd = new GcPaletteData();
+            TkPaletteTexture tkpt = new TkPaletteTexture();
+            GcPaletteData gcpd = new GcPaletteData();
             
-             for (int i = 0; i < template.Palettes.Length; i++)
-             {
+            for (int i = 0; i < template.Palettes.Length; i++)
+            {
                 string pal_name = ((TkPaletteTexture.PaletteEnum) i).ToString();
                 Callbacks.Log(string.Format("Palette {0} NumColors {1}", pal_name, template.Palettes[i].NumColours),
                     LogVerbosityLevel.INFO);

@@ -10,7 +10,7 @@ using libMBIN.NMS;
 using Gameloop.Vdf;
 
 
-namespace MVCore.Import.NMS
+namespace NMSPLugin
 {
     public class FileUtils
     {

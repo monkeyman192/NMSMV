@@ -233,7 +233,7 @@ namespace MVCore.Systems
             //The resource manager will handle the cleanup of the buffers and shit
             CleanUpGeometry();
             //Manager Cleanups
-            TextureMgr.Cleanup();
+            TextureMgr.CleanUp();
             MaterialMgr.CleanUp();
             ShaderMgr.CleanUp();
             

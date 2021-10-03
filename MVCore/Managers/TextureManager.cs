@@ -1,52 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using MVCore.Common;
+using MVCore.Managers;
 
 namespace MVCore
 {
-    public class TextureManager
+    public class TextureManager : EntityManager<Texture>
     {
-        public Dictionary<string, Texture> GLtextures = new();
+        Dictionary<string, Texture> TextureMap = new();
         
-
-
         public TextureManager()
         {
 
         }
 
-        public void Cleanup()
+        public override void CleanUp()
         {
             DeleteTextures();
-            RemoveTextures();
+            base.CleanUp();
         }
 
         public void DeleteTextures()
         {
-            foreach (Texture p in GLtextures.Values)
+            foreach (Texture p in Entities)
                 p.Dispose();
-        }
-
-        public void RemoveTextures()
-        {
-            //Warning does not free the textures. Use wisely
-            GLtextures.Clear();
         }
 
         public bool HasTexture(string name)
         {
-            return GLtextures.ContainsKey(name);
+            return TextureMap.ContainsKey(name);
         }
 
-        public void AddTexture(Texture t)
+        public bool AddTexture(Texture t)
         {
-            GLtextures[t.name] = t;
+            if (!HasTexture(t.Name))
+            {
+                TextureMap[t.Name] = t;
+                return Add(t);
+            }
+            else
+                return false;
+            
         }
 
-        public Texture GetTexture(string name)
+        public Texture Get(string name)
         {
-            return GLtextures[name];
+            return TextureMap[name];
         }
 
 

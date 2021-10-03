@@ -73,13 +73,13 @@ namespace MVCore
             }
 
             Texture diffTex = mixDiffuseTextures(tex_width, tex_height);
-            diffTex.name = temp + "DDS";
+            diffTex.Name = temp + "DDS";
 
             Texture maskTex = mixMaskTextures(tex_width, tex_height);
-            maskTex.name = temp + "MASKS.DDS";
+            maskTex.Name = temp + "MASKS.DDS";
 
             Texture normalTex = mixNormalTextures(tex_width, tex_height);
-            normalTex.name = temp + "NORMAL.DDS";
+            normalTex.Name = temp + "NORMAL.DDS";
 
             revertFrameBuffer(fbo, fbo_tex);
 
@@ -184,7 +184,7 @@ namespace MVCore
                 else
                 //Load texture from dict
                 {
-                    Texture tex = texMgr.GetTexture(partNameDiff);
+                    Texture tex = texMgr.Get(partNameDiff);
                     //Save Texture to material
                     difftextures[i] = tex;
                     baseLayersUsed[i] = 1.0f;
@@ -219,7 +219,7 @@ namespace MVCore
                 else
                 //Load texture from dict
                 {
-                    Texture tex = texMgr.GetTexture(partNameMask);
+                    Texture tex = texMgr.Get(partNameMask);
                     //Store Texture to material
                     masktextures[i] = tex;
                     alphaLayersUsed[i] = 1.0f;
@@ -251,7 +251,7 @@ namespace MVCore
                 else
                 //Load texture from dict
                 {
-                    Texture tex = texMgr.GetTexture(partNameNormal);
+                    Texture tex = texMgr.Get(partNameNormal);
                     //Store Texture to material
                     normaltextures[i] = tex;
                 }

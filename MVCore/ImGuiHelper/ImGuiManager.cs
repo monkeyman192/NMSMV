@@ -12,6 +12,7 @@ namespace ImGuiHelper
         private readonly ImGuiObjectViewer ObjectViewer;
         private readonly ImGuiSceneGraphViewer SceneGraphViewer;
         private readonly ImGuiMaterialEditor MaterialEditor;
+        private readonly ImGuiTextureEditor TextureEditor;
         private readonly ImGuiShaderEditor ShaderEditor;
         private ImGuiController _controller;
         public GameWindow WindowRef = null;
@@ -42,9 +43,9 @@ namespace ImGuiHelper
             _controller.WindowResized(x, y);
         }
 
-        public virtual void Update(double dt)
+        public virtual void Update(double dt, float scrolly)
         {
-            _controller.Update(WindowRef, (float) dt);
+            _controller.Update(WindowRef, (float) dt, scrolly);
         }
 
         public virtual void Render()
@@ -55,6 +56,17 @@ namespace ImGuiHelper
         public virtual void SendChar(char e)
         {
             _controller.PressChar(e);
+        }
+
+        //Texture Viewer Related Methods
+        public virtual void DrawTextureEditor()
+        {
+            TextureEditor?.Draw();
+        }
+
+        public virtual void SetActiveTexture(Texture t)
+        {
+            TextureEditor.SetTexture(t);
         }
 
         //Material Viewer Related Methods

@@ -90,31 +90,41 @@ namespace ImGuiHelper
 			return result;
 		}
 
-		public bool Draw()
+		public bool Draw(System.Numerics.Vector2 winsize)
 		{
 			if (CurrentFolder == null)
             {
-				ImGui.Text("Current Folder: My Computer");
-				//Draw Drives
-				var driveList = DriveInfo.GetDrives();
-				foreach (var de in driveList)
+				ImGui.Text("My Computer");
+				if (ImGui.BeginChildFrame(1, winsize))
 				{
-					if (Directory.Exists(de.RootDirectory.FullName))
+					//Draw Drives
+					var driveList = DriveInfo.GetDrives();
+					foreach (var de in driveList)
 					{
-						var name = de.RootDirectory.FullName;
-						ImGui.PushStyleColor(ImGuiCol.Text, YELLOW_TEXT_COLOR);
-						if (ImGui.Selectable(name, false, ImGuiSelectableFlags.DontClosePopups))
-							CurrentFolder = de.RootDirectory.FullName;
-						ImGui.PopStyleColor();
+						if (Directory.Exists(de.RootDirectory.FullName))
+						{
+							var name = de.RootDirectory.FullName;
+							ImGui.PushStyleColor(ImGuiCol.Text, YELLOW_TEXT_COLOR);
+							if (ImGui.Selectable(name, false, ImGuiSelectableFlags.DontClosePopups))
+								CurrentFolder = de.RootDirectory.FullName;
+							ImGui.PopStyleColor();
+						}
 					}
+					ImGui.EndChildFrame();
 				}
+
+				if (ImGui.Button("Cancel"))
+				{
+					ImGui.CloseCurrentPopup();
+				}
+
 				return false;
 			}
 
 			ImGui.Text("Current Folder: " + CurrentFolder);
 			bool result = false;
 
-			if (ImGui.BeginChildFrame(1, new Num.Vector2(400, 400)))
+			if (ImGui.BeginChildFrame(1, winsize))
 			{
 				var di = new DirectoryInfo(CurrentFolder);
 				if (di.Exists)
