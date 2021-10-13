@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using MVCore.Common;
 using libMBIN;
 using libMBIN.NMS.Toolkit;
 using Microsoft.Win32;
@@ -9,69 +9,16 @@ using System.Reflection;
 using libMBIN.NMS;
 using Gameloop.Vdf;
 
-
-namespace NMSPLugin
+namespace NMSPlugin
 {
     public class FileUtils
     {
-        
         //Global NMS File Archive handles
         public static readonly Dictionary<string, libPSARC.PSARC.Archive> NMSFileToArchiveMap = new();
         public static readonly List<string> NMSSceneFilesList = new();
         public static readonly SortedDictionary<string, libPSARC.PSARC.Archive> NMSArchiveMap = new();
-
+        
         //Load Game Archive Handles
-        public static NMSTemplate LoadNMSFileOLD(string filepath)
-        {
-            int load_mode = 0;
-            NMSTemplate template;
-
-            string exmlpath = Path.ChangeExtension(filepath, "exml");
-            exmlpath = exmlpath.ToUpper(); //Make upper case
-
-            if (File.Exists(exmlpath))
-                load_mode = 0;
-            else
-                load_mode = 1;
-
-
-            //Load Exml
-            try
-            {
-                if (load_mode == 0)
-                {
-                    string xml = File.ReadAllText(exmlpath);
-                    template = EXmlFile.ReadTemplateFromString(xml);
-                }
-                else
-                {
-                    if (!File.Exists(filepath))
-                        throw new FileNotFoundException("File not found\n " + filepath);
-                    libMBIN.MBINFile mbinf = new libMBIN.MBINFile(filepath);
-                    mbinf.Load();
-                    template = mbinf.GetData();
-                    mbinf.Dispose();
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex is System.IO.DirectoryNotFoundException || ex is System.IO.FileNotFoundException)
-                {
-                    Callbacks.showError("File " + filepath + " Not Found...", "Error");
-
-
-                }
-                else if (ex is System.Reflection.TargetInvocationException)
-                {
-                    Callbacks.showError("libMBIN failed to decompile the file. Try to update the libMBIN.dll (File->updateLibMBIN). If the issue persists contact the developer", "Error");
-                }
-                return null;
-
-            }
-
-            return template;
-        }
-
         public static Stream LoadNMSFileStream(string filepath)
         {
             int load_mode = 0;
@@ -83,9 +30,9 @@ namespace NMSPLugin
             string exmlpath = Path.ChangeExtension(filepath, "exml");
             exmlpath = exmlpath.ToUpper(); //Make upper case
 
-            if (File.Exists(Path.Combine(RenderState.settings.UnpackDir, exmlpath)))
+            if (File.Exists(Path.Combine(PluginState.Settings.UnpackDir, exmlpath)))
                 load_mode = 0; //Load Exml
-            else if (File.Exists(Path.Combine(RenderState.settings.UnpackDir, filepath)))
+            else if (File.Exists(Path.Combine(PluginState.Settings.UnpackDir, filepath)))
                 load_mode = 1; //Load MBIN from file
             else if (NMSFileToArchiveMap.ContainsKey(filepath))
                 load_mode = 2; //Extract file from archive
@@ -96,23 +43,23 @@ namespace NMSPLugin
             }
             else
             {
-                Callbacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", LogVerbosityLevel.ERROR);
-                Callbacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
+                MVCore.Common.Callbacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", MVCore.Common.LogVerbosityLevel.ERROR);
+                MVCore.Common.Callbacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
                 throw new FileNotFoundException("File not found\n " + filepath);
             }
             switch (load_mode)
             {
                 case 0: //Load EXML
-                    return new FileStream(Path.Combine(RenderState.settings.UnpackDir, exmlpath), FileMode.Open);
+                    return new FileStream(Path.Combine(PluginState.Settings.UnpackDir, exmlpath), FileMode.Open);
                 case 1: //Load MBIN
-                    return new FileStream(Path.Combine(RenderState.settings.UnpackDir, filepath), FileMode.Open);
+                    return new FileStream(Path.Combine(PluginState.Settings.UnpackDir, filepath), FileMode.Open);
                 case 2: //Load File from Archive
                     {
-                        Callbacks.Log("Trying to export File" + effective_filepath, LogVerbosityLevel.INFO);
+                        MVCore.Common.Callbacks.Log("Trying to export File" + effective_filepath, MVCore.Common.LogVerbosityLevel.INFO);
                         if (NMSFileToArchiveMap.ContainsKey(effective_filepath))
                         {
-                            Callbacks.Log("File was found in archives. File Index: " + NMSFileToArchiveMap[effective_filepath].GetFileIndex(effective_filepath),
-                                LogVerbosityLevel.INFO);
+                            MVCore.Common.Callbacks.Log("File was found in archives. File Index: " + NMSFileToArchiveMap[effective_filepath].GetFileIndex(effective_filepath),
+                                MVCore.Common.LogVerbosityLevel.INFO);
                         }
 
                         int fileIndex = NMSFileToArchiveMap[effective_filepath].GetFileIndex(effective_filepath);
@@ -134,9 +81,9 @@ namespace NMSPLugin
             string exmlpath = Path.ChangeExtension(filepath, "exml");
             exmlpath = exmlpath.ToUpper(); //Make upper case
 
-            if (File.Exists(Path.Combine(RenderState.settings.UnpackDir, exmlpath)))
+            if (File.Exists(Path.Combine(PluginState.Settings.UnpackDir, exmlpath)))
                 load_mode = 0; //Load Exml
-            else if (File.Exists(Path.Combine(RenderState.settings.UnpackDir, filepath)))
+            else if (File.Exists(Path.Combine(PluginState.Settings.UnpackDir, filepath)))
                 load_mode = 1; //Load MBIN from file
             else if (NMSFileToArchiveMap.ContainsKey(filepath))
                 load_mode = 2; //Extract file from archive
@@ -147,8 +94,8 @@ namespace NMSPLugin
             }
             else
             {
-                Callbacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", LogVerbosityLevel.ERROR);
-                Callbacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
+                MVCore.Common.Callbacks.Log("File: " + filepath + " Not found in PAKs or local folders. ", MVCore.Common.LogVerbosityLevel.ERROR);
+                MVCore.Common.Callbacks.showError("File: " + filepath + " Not found in PAKs or local folders. ", "Error");
                 return null;
             }
 
@@ -158,13 +105,13 @@ namespace NMSPLugin
                 {
                     case 0: //Load EXML
                         {
-                            string xml = File.ReadAllText(Path.Combine(RenderState.settings.UnpackDir, exmlpath));
+                            string xml = File.ReadAllText(Path.Combine(PluginState.Settings.UnpackDir, exmlpath));
                             template = EXmlFile.ReadTemplateFromString(xml);
                             break;
                         }
                     case 1: //Load MBIN
                         {
-                            string eff_path = Path.Combine(RenderState.settings.UnpackDir, filepath);
+                            string eff_path = Path.Combine(PluginState.Settings.UnpackDir, filepath);
                             MBINFile mbinf = new MBINFile(eff_path);
                             mbinf.Load();
                             template = mbinf.GetData();
@@ -185,17 +132,17 @@ namespace NMSPLugin
             catch (Exception ex)
             {
                 if (ex is DirectoryNotFoundException || ex is FileNotFoundException)
-                    Callbacks.showError("File " + effective_filepath + " Not Found...", "Error");
+                    MVCore.Common.Callbacks.showError("File " + effective_filepath + " Not Found...", "Error");
                 else if (ex is IOException)
-                    Callbacks.showError("File " + effective_filepath + " problem...", "Error");
+                    MVCore.Common.Callbacks.showError("File " + effective_filepath + " problem...", "Error");
                 else if (ex is TargetInvocationException)
                 {
-                    Callbacks.showError("libMBIN failed to decompile file. If this is a vanilla file, contact the MbinCompiler developer",
+                    MVCore.Common.Callbacks.showError("libMBIN failed to decompile file. If this is a vanilla file, contact the MbinCompiler developer",
                     "Error");
                 }
                 else
                 {
-                    Callbacks.showError("Unhandled Exception " + ex.Message, "Error");
+                    MVCore.Common.Callbacks.showError("Unhandled Exception " + ex.Message, "Error");
                 }
                 return null;
 
@@ -212,10 +159,10 @@ namespace NMSPLugin
         }
         public static void loadNMSArchives(string gameDir, ref int status)
         {
-            Callbacks.Log("Trying to load PAK files from " + gameDir, LogVerbosityLevel.INFO);
+            MVCore.Common.Callbacks.Log("Trying to load PAK files from " + gameDir, MVCore.Common.LogVerbosityLevel.INFO);
             if (!Directory.Exists(gameDir))
             {
-                Callbacks.showError("Unable to locate game Directory. PAK files (Vanilla + Mods) not loaded. You can still work using unpacked files", "Info");
+                MVCore.Common.Callbacks.showError("Unable to locate game Directory. PAK files (Vanilla + Mods) not loaded. You can still work using unpacked files", "Info");
                 status = -1;
                 return;
             }
@@ -226,7 +173,7 @@ namespace NMSPLugin
             string[] pak_files = Directory.GetFiles(gameDir);
             NMSArchiveMap.Clear();
 
-            Callbacks.updateStatus("Loading Vanilla NMS Archives...");
+            MVCore.Common.Callbacks.updateStatus("Loading Vanilla NMS Archives...");
 
             foreach (string pak_path in pak_files)
             {
@@ -237,21 +184,21 @@ namespace NMSPLugin
                 {
                     FileStream arc_stream = new FileStream(pak_path, FileMode.Open);
                     libPSARC.PSARC.Archive psarc = new libPSARC.PSARC.Archive(arc_stream, true);
-                    Callbacks.Log("Loaded :" + pak_path, LogVerbosityLevel.INFO);
+                    MVCore.Common.Callbacks.Log("Loaded :" + pak_path, MVCore.Common.LogVerbosityLevel.INFO);
                     NMSArchiveMap[pak_path] = psarc;
                 }
                 catch (Exception ex)
                 {
-                    Callbacks.showError("An Error Occured : " + ex.Message, "Error");
-                    Callbacks.Log("Pak file " + pak_path + " failed to load", LogVerbosityLevel.ERROR);
-                    Callbacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, LogVerbosityLevel.ERROR);
+                    MVCore.Common.Callbacks.showError("An Error Occured : " + ex.Message, "Error");
+                    MVCore.Common.Callbacks.Log("Pak file " + pak_path + " failed to load", MVCore.Common.LogVerbosityLevel.ERROR);
+                    MVCore.Common.Callbacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, MVCore.Common.LogVerbosityLevel.ERROR);
                 }
             }
 
             if (Directory.Exists(Path.Combine(gameDir, "MODS")))
             {
                 pak_files = Directory.GetFiles(Path.Combine(gameDir, "MODS"));
-                Callbacks.updateStatus("Loading Modded NMS Archives...");
+                MVCore.Common.Callbacks.updateStatus("Loading Modded NMS Archives...");
                 foreach (string pak_path in pak_files)
                 {
                     if (pak_path.Contains("CUSTOMMODELS"))
@@ -268,21 +215,22 @@ namespace NMSPLugin
                     }
                     catch (Exception ex)
                     {
-                        Callbacks.showError("An Error Occured : " + ex.Message, "Error");
-                        Callbacks.Log("Pak file " + pak_path + " failed to load", LogVerbosityLevel.ERROR);
-                        Callbacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, LogVerbosityLevel.ERROR);
+                        MVCore.Common.Callbacks.showError("An Error Occured : " + ex.Message, "Error");
+                        MVCore.Common.Callbacks.Log("Pak file " + pak_path + " failed to load", MVCore.Common.LogVerbosityLevel.ERROR);
+                        MVCore.Common.Callbacks.Log("Error : " + ex.GetType().Name + " " + ex.Message, MVCore.Common.LogVerbosityLevel.ERROR);
                     }
                 }
             }
 
             if (NMSArchiveMap.Keys.Count == 0)
             {
-                Callbacks.Log("No pak files found. Not creating/reading manifest file.", LogVerbosityLevel.WARNING);
+                MVCore.Common.Callbacks.Log("No pak files found. Not creating/reading manifest file.", 
+                    MVCore.Common.LogVerbosityLevel.WARNING);
                 return;
             }
 
             //Populate resource manager with the files
-            Callbacks.updateStatus("Populating Resource Manager...");
+            MVCore.Common.Callbacks.updateStatus("Populating Resource Manager...");
             foreach (string arc_path in NMSArchiveMap.Keys)
             {
                 libPSARC.PSARC.Archive arc = NMSArchiveMap[arc_path];
@@ -304,7 +252,7 @@ namespace NMSPLugin
 
 
             status = 0; // All good
-            Callbacks.updateStatus("Ready");
+            MVCore.Common.Callbacks.updateStatus("Ready");
         }
 
         public static void unloadNMSArchives()
@@ -335,11 +283,11 @@ namespace NMSPLugin
             val = fetchSteamGameInstallationDir() as string;
             if (val != null)
             {
-                Callbacks.Log("Found Steam Version: " + val, LogVerbosityLevel.INFO);
+                MVCore.Common.Callbacks.Log("Found Steam Version: " + val, MVCore.Common.LogVerbosityLevel.INFO);
                 return val;
             }
             else
-                Callbacks.Log("Unable to find Steam Version: ", LogVerbosityLevel.INFO);
+                MVCore.Common.Callbacks.Log("Unable to find Steam Version: ", MVCore.Common.LogVerbosityLevel.INFO);
 
             //Check GOG32
 
@@ -347,21 +295,21 @@ namespace NMSPLugin
 
             if (val != null)
             {
-                Callbacks.Log("Found GOG32 Version: " + val, LogVerbosityLevel.INFO);
+                MVCore.Common.Callbacks.Log("Found GOG32 Version: " + val, MVCore.Common.LogVerbosityLevel.INFO);
                 return val;
             }
             else
-                Callbacks.Log("Unable to find GOG32 Version: " + val, LogVerbosityLevel.INFO);
+                MVCore.Common.Callbacks.Log("Unable to find GOG32 Version: " + val, MVCore.Common.LogVerbosityLevel.INFO);
 
             //Check GOG64
             val = Registry.GetValue(gog64_keyname, gog64_keyval, "") as string;
             if (val != null)
             {
-                Callbacks.Log("Found GOG64 Version: " + val, LogVerbosityLevel.INFO);
+                MVCore.Common.Callbacks.Log("Found GOG64 Version: " + val, MVCore.Common.LogVerbosityLevel.INFO);
                 return val;
             }
             else
-                Callbacks.Log("Unable to find GOG64 Version: " + val, LogVerbosityLevel.INFO);
+                MVCore.Common.Callbacks.Log("Unable to find GOG64 Version: " + val, MVCore.Common.LogVerbosityLevel.INFO);
 
             return "";
         }
@@ -382,12 +330,12 @@ namespace NMSPLugin
 
             if (steam_path is null)
             {
-                Callbacks.Log("Failed to find Steam Installation: ", LogVerbosityLevel.INFO);
+                MVCore.Common.Callbacks.Log("Failed to find Steam Installation: ", MVCore.Common.LogVerbosityLevel.INFO);
                 return null;
             }
 
-            Callbacks.Log("Found Steam Installation: " + steam_path, LogVerbosityLevel.INFO);
-            Callbacks.Log("Searching for NMS in the default steam directory...", LogVerbosityLevel.INFO);
+            MVCore.Common.Callbacks.Log("Found Steam Installation: " + steam_path, MVCore.Common.LogVerbosityLevel.INFO);
+            MVCore.Common.Callbacks.Log("Searching for NMS in the default steam directory...", MVCore.Common.LogVerbosityLevel.INFO);
 
             //At first try to find acf entries in steam installation dir
             foreach (string path in Directory.GetFiles(Path.Combine(steam_path, "steamapps")))
@@ -399,7 +347,7 @@ namespace NMSPLugin
                     return Path.Combine(steam_path, @"steamapps\common\No Man's Sky\GAMEDATA");
             }
 
-            Callbacks.Log("NMS not found in default folders. Searching Steam Libraries...", LogVerbosityLevel.INFO);
+            MVCore.Common.Callbacks.Log("NMS not found in default folders. Searching Steam Libraries...", MVCore.Common.LogVerbosityLevel.INFO);
 
             //If that did't work try to load the libraryfolders.vdf
             dynamic libraryfolders = VdfConvert.Deserialize(File.ReadAllText(Path.Combine(steam_path, @"steamapps\libraryfolders.vdf")));
@@ -421,7 +369,7 @@ namespace NMSPLugin
                 }
             }
             
-            Callbacks.Log("Unable to locate Steam Installation...", LogVerbosityLevel.INFO);
+            MVCore.Common.Callbacks.Log("Unable to locate Steam Installation...", MVCore.Common.LogVerbosityLevel.INFO);
             return null;
         }
 
@@ -458,5 +406,59 @@ namespace NMSPLugin
             return "";
         }
 
+        //Convert Path to EXML
+        public static string getExmlPath(string path)
+        {
+            //Fix Path incase of reference
+            path = path.Replace('/', '\\');
+            string[] split = path.Split('.');
+            string newpath = "";
+            //for (int i = 0; i < split.Length - 1; i++)
+            //    newpath += split[i]+ "." ;
+            //Get main name
+            string[] pathsplit = split[0].Split('\\');
+            newpath = pathsplit[pathsplit.Length - 1] + "." + split[split.Length - 2] + ".exml";
+
+            return "Temp\\" + newpath;
+        }
+
+        public static string getFullExmlPath(string dirpath, string path)
+        {
+            //Get Relative path again
+            string tpath = path.Replace(dirpath, "").TrimStart('\\');
+
+            //Fix Path incase of reference
+            tpath = tpath.Replace('/', '\\');
+            string[] split = tpath.Split('\\');
+            string filename = split[split.Length - 1];
+
+            string[] f_name_split = filename.Split('.');
+            //Assemble new f_name
+            string newfilename = "";
+            for (int i = 0; i < f_name_split.Length - 1; i++)
+            {
+                newfilename += f_name_split[i] + ".";
+            }
+            newfilename += "exml";
+
+            string newpath = "";
+            //Get main name
+            for (int i = 0; i < split.Length - 1; i++)
+                newpath += split[i] + "_";
+
+            newpath += newfilename;
+
+            return "Temp\\" + newpath;
+        }
+        //MbinCompiler Caller
+        public static void MbinToExml(string path, string output)
+        {
+            Process proc = new System.Diagnostics.Process();
+            proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            proc.StartInfo.FileName = "MBINCompiler.exe";
+            proc.StartInfo.Arguments = " \"" + path + "\" " + " \"" + output + "\" ";
+            proc.Start();
+            proc.WaitForExit();
+        }
     }
 }

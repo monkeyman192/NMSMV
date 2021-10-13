@@ -11,17 +11,15 @@ using OpenTK.Graphics.OpenGL4;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Path = System.IO.Path;
-using MVCore.Common;
+using MVCore;
 using System.Windows;
 using System.Reflection;
 using libMBIN.NMS;
 
-namespace MVCore.Import.NMS
+namespace NMSPlugin
 {
     public static class Util
     {
-        
-
         public static Dictionary<string, TextureUnit> MapTextureUnit = new()
         {
             { "mpCustomPerMaterial.gDiffuseMap", TextureUnit.Texture0 },
@@ -160,7 +158,7 @@ namespace MVCore.Import.NMS
 
         //Texture Utilities
         
-        private static void loadSamplerTexture(Sampler sampler, TextureManager texMgr)
+        public static void loadSamplerTexture(Sampler sampler, TextureManager texMgr)
         {
             if (sampler.Map == "")
                 return;
@@ -175,8 +173,6 @@ namespace MVCore.Import.NMS
                 Texture tex = new Texture(sampler.Map);
                 tex.palOpt = new PaletteOpt(false);
                 tex.procColor = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
-                //At this point this should be a common texture. Store it to the master texture manager
-                RenderState.engineRef.AddTexture(tex);
                 sampler.Tex = tex;
             }
         }
@@ -219,47 +215,7 @@ namespace MVCore.Import.NMS
             }
         }
 
-        public static void PrepareSamplerTextures(Sampler sampler, TextureManager texMgr)
-        {
-            //Save texture to material
-            switch (sampler.Name)
-            {
-                case "mpCustomPerMaterial.gDiffuseMap":
-                case "mpCustomPerMaterial.gDiffuse2Map":
-                case "mpCustomPerMaterial.gMasksMap":
-                case "mpCustomPerMaterial.gNormalMap":
-                    sampler.texUnit = MapTextureUnit[sampler.Name];
-                    sampler.SamplerID = MapTexUnitToSampler[sampler.Name];
-                    break;
-                default:
-                    Callbacks.Log("Not sure how to handle Sampler " + sampler.Name, LogVerbosityLevel.WARNING);
-                    return;
-            }
-            
-            string[] split = sampler.Map.Split('.');
-            
-            string temp = "";
-            if (sampler.Name == "mpCustomPerMaterial.gDiffuseMap")
-            {
-                //Check if the sampler describes a proc gen texture
-                temp = split[0];
-                //Construct main filename
-                
-                string texMbin = temp + ".TEXTURE.MBIN";
-                
-                //Detect Procedural Texture
-                if (FileUtils.NMSFileToArchiveMap.Keys.Contains(texMbin))
-                {
-                    TextureMixer.combineTextures(sampler.Map, Palettes.paletteSel, ref texMgr);
-                    //Override Map
-                    sampler.Map = temp + "DDS";
-                    sampler.isProcGen = true;
-                }
-            }
-
-            //Load the texture to the sampler
-            loadSamplerTexture(sampler, texMgr);
-        }
+        
         
     }
 }

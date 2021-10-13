@@ -1,15 +1,52 @@
 ﻿using System;
-
+using System.IO;
 using MVCore;
+using MVCore.Common;
 using MVCore.Plugins;
 using ImGuiHelper;
 using ImGuiNET;
-
+using Newtonsoft.Json;
 
 namespace NMSPlugin
 {
+    public class NMSPluginSettings : PluginSettings
+    {
+        public string GameDir;
+        public string UnpackDir;
+        
+        public static PluginSettings GenerateDefaultSettings()
+        {
+            NMSPluginSettings settings = new()
+            {
+                GameDir = "",
+                UnpackDir = ""
+            };
+            return settings;
+        }
+
+        public override void Draw()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void DrawModals()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    //Shared state across the NMSPlugin domain
+    public static class PluginState
+    {
+        public static NMSPluginSettings Settings = null;
+        
+        //Add a random generator just for the procgen procedures
+        public static Random Randgen = new Random();
+    }
+    
     public class NMSPlugin : PluginBase
     {
+        private static string SettingsFileName = "nms_plugin.ini";
         private readonly ImGuiPakBrowser PakBrowser = new();
         private bool show_open_file_dialog_pak = false;
         private bool open_file_enabled = false;
@@ -117,13 +154,27 @@ namespace NMSPlugin
         {
             Callbacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
 
+            //Load Plugin Settings
+            if (File.Exists(SettingsFileName))
+            {
+                string filedata = File.ReadAllText(SettingsFileName);
+                Settings = JsonConvert.DeserializeObject<NMSPluginSettings>(filedata);
+            }
+            else
+            {
+                Settings = NMSPluginSettings.GenerateDefaultSettings();
+            }
+            
+            NMSPluginSettings cSettings = Settings as NMSPluginSettings;
+            PluginState.Settings = cSettings;
+
             //Issue work request 
             ThreadRequest rq = new();
-            rq.arguments.Add("NMSmanifest");
-            rq.arguments.Add(Path.Combine(RenderState.settings.GameDir, "PCBANKS"));
-            rq.type = THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES;
-            requestHandler.AddRequest(ref rq);
-            workDispatcher.sendRequest(ref rq); //Generate worker
+            rq.Data = (System.IO.Path.Combine(cSettings.GameDir, "PCBANKS"));
+            rq.Type = THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES;
+            
+            //TODO: Send Request to Engine
+            
         }
 
         public override void Import(string filepath)

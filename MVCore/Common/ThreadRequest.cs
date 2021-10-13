@@ -45,22 +45,24 @@ namespace MVCore
 
     public class ThreadRequest :IDisposable
     {
-        public List<object> arguments;
-        public MethodInfo method;
-        public THREAD_REQUEST_TYPE type;
-        public THREAD_REQUEST_STATUS status;
-        public THREAD_REQUEST_OWNER owner;
-        public int response;
+        public object Data;
+        public MethodInfo Method;
+        public THREAD_REQUEST_TYPE Type;
+        public THREAD_REQUEST_STATUS Status;
+        public THREAD_REQUEST_OWNER Owner;
+        public int ResponseCode;
+        public object ResponseData;
         private bool disposedValue;
-
+        
         public ThreadRequest()
         {
-            type = THREAD_REQUEST_TYPE.NULL;
-            owner = THREAD_REQUEST_OWNER.NULL;
-            status = THREAD_REQUEST_STATUS.NULL;
-            arguments = new List<object>();
-            method = null;
-            response = 0;
+            Type = THREAD_REQUEST_TYPE.NULL;
+            Owner = THREAD_REQUEST_OWNER.NULL;
+            Status = THREAD_REQUEST_STATUS.NULL;
+            Data = null;
+            Method = null;
+            ResponseCode = -1;
+            ResponseData = null;
         }
 
         protected virtual void Dispose(bool disposing)

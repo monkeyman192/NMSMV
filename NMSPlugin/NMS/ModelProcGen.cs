@@ -10,10 +10,9 @@ using OpenTK.Graphics.OpenGL4;
 using System.Reflection;
 using System.IO;
 using libMBIN.NMS.Toolkit;
-using MVCore.Utils;
-using System.Collections.ObjectModel;
+using MVCore;
 
-namespace MVCore
+namespace NMSPlugin
 {
     public class ModelProcGen
     {
@@ -206,7 +205,7 @@ namespace MVCore
                 if (textures.Count > 0)
                 {
                     //Select one descriptor at random
-                    sel = Common.RenderState.randgen.Next(0, textures.Count);
+                    sel = PluginState.Randgen.Next(0, textures.Count);
 
                     TkProceduralTexture texture = textures[sel];
                     string partName = texture.Diffuse;

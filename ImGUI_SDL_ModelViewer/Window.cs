@@ -209,10 +209,9 @@ namespace ImGUI_SDL_ModelViewer
             //Pause renderer
             req = new()
             {
-                type = THREAD_REQUEST_TYPE.ENGINE_PAUSE_RENDER
+                Type = THREAD_REQUEST_TYPE.ENGINE_PAUSE_RENDER
             };
-            req.arguments.Clear();
-
+            
             //Send request to engine
             engine.SendRequest(ref req);
 
@@ -234,7 +233,7 @@ namespace ImGUI_SDL_ModelViewer
             //Generate Request for resuming rendering
             ThreadRequest req2 = new()
             {
-                type = THREAD_REQUEST_TYPE.ENGINE_RESUME_RENDER
+                Type = THREAD_REQUEST_TYPE.ENGINE_RESUME_RENDER
             };
 
             engine.SendRequest(ref req2);
@@ -256,30 +255,30 @@ namespace ImGUI_SDL_ModelViewer
             if (requestHandler.HasOpenRequests())
             {
                 ThreadRequest req = requestHandler.Peek();
-                Log("Peeking Request " + req.type, LogVerbosityLevel.HIDEBUG);
+                Log("Peeking Request " + req.Type, LogVerbosityLevel.HIDEBUG);
                 
                 //Do stuff with requests that need extra work to get started
-                if (req.status == THREAD_REQUEST_STATUS.NULL)
+                if (req.Status == THREAD_REQUEST_STATUS.NULL)
                 {
-                    switch (req.type)
+                    switch (req.Type)
                     {
                         case THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES:
                             workDispatcher.sendRequest(ref req);
                             break;
                         case THREAD_REQUEST_TYPE.WINDOW_OPEN_FILE:
-                            string filename = req.arguments[0] as string;
+                            string filename = req.Data as string;
                             OpenFile(filename, false, 0);
-                            req.status = THREAD_REQUEST_STATUS.FINISHED;
+                            req.Status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         default:
                             break; 
                     }
                 }
-                else if (req.status != THREAD_REQUEST_STATUS.FINISHED)
+                else if (req.Status != THREAD_REQUEST_STATUS.FINISHED)
                     return;
                 
                 //Finalize finished requests
-                switch (req.type)
+                switch (req.Type)
                 {
                     case THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES:
                         open_file_enabled = true;
@@ -301,7 +300,7 @@ namespace ImGUI_SDL_ModelViewer
                 engine.handleRequests(); //Force engine to handle requests
                 lock (req)
                 {
-                    if (req.status == THREAD_REQUEST_STATUS.FINISHED)
+                    if (req.Status == THREAD_REQUEST_STATUS.FINISHED)
                         return;
                 }
             }
@@ -313,9 +312,9 @@ namespace ImGUI_SDL_ModelViewer
             //Generate Request for rendering thread
             ThreadRequest req1 = new()
             {
-                type = THREAD_REQUEST_TYPE.ENGINE_OPEN_TEST_SCENE
+                Type = THREAD_REQUEST_TYPE.ENGINE_OPEN_TEST_SCENE
             };
-            req1.arguments.Add(sceneID);
+            req1.Data = sceneID;
 
             engine.SendRequest(ref req1);
 
@@ -333,11 +332,10 @@ namespace ImGUI_SDL_ModelViewer
             //Generate Request for rendering thread
             ThreadRequest req1 = new()
             {
-                type = THREAD_REQUEST_TYPE.ENGINE_OPEN_NEW_SCENE
+                Type = THREAD_REQUEST_TYPE.ENGINE_OPEN_NEW_SCENE
             };
-            req1.arguments.Clear();
-            req1.arguments.Add(filename);
-
+            req1.Data = filename;
+            
             engine.SendRequest(ref req1);
             
             //Wait for requests to finish before return
@@ -492,12 +490,12 @@ namespace ImGUI_SDL_ModelViewer
                     {
                         //Stop the renderer
                         ThreadRequest req = new();
-                        req.type = THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER;
+                        req.Type = THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER;
                         engine.SendRequest(ref req);
 
                         //Send event to close the window
                         ThreadRequest req1 = new();
-                        req1.type = THREAD_REQUEST_TYPE.WINDOW_CLOSE;
+                        req1.Type = THREAD_REQUEST_TYPE.WINDOW_CLOSE;
                         requestHandler.AddRequest(ref req1);
                         
                     }

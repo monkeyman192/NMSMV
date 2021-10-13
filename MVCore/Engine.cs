@@ -58,6 +58,9 @@ namespace MVCore
         public CameraPos targetCameraPos;
         public Vector2 prevMousePos;
 
+        //Event Handlers
+        public event EventHandler<AddSceneEventData> AddSceneEventHandler;
+    
         //Plugin List
         public List<PluginBase> Plugins = new();
 
@@ -119,6 +122,13 @@ namespace MVCore
             }
         }
 
+        public void RegisterSceneGraph(SceneGraphNode node)
+        {
+            RegisterEntity(node);
+            foreach (SceneGraphNode child in node.Children)
+                RegisterSceneGraph(child);
+        }
+        
         public Scene CreateScene()
         {
             return sceneMgmtSys.CreateScene();
@@ -299,6 +309,8 @@ namespace MVCore
 
             Log("Initialized", LogVerbosityLevel.INFO);
         }
+        
+        
 
         public void handleRequests()
         {
@@ -307,11 +319,11 @@ namespace MVCore
             {
                 ThreadRequest req = reqHandler.Fetch();
                 THREAD_REQUEST_STATUS req_status = THREAD_REQUEST_STATUS.FINISHED;
-                Log("Handling Request " + req.type, LogVerbosityLevel.HIDEBUG);
+                Log("Handling Request " + req.Type, LogVerbosityLevel.HIDEBUG);
 
                 lock (req)
                 {
-                    switch (req.type)
+                    switch (req.Type)
                     {
                         case THREAD_REQUEST_TYPE.ENGINE_QUERY_GLCONTROL_STATUS:
                             if (rt_State == EngineRenderingState.UNINITIALIZED)
@@ -320,15 +332,8 @@ namespace MVCore
                                 req_status = THREAD_REQUEST_STATUS.FINISHED;
                                 //At this point the renderer is up and running
                             break;
-                        case THREAD_REQUEST_TYPE.ENGINE_OPEN_NEW_SCENE:
-                            rt_addRootScene((string)req.arguments[0]);
-                            req_status = THREAD_REQUEST_STATUS.FINISHED;
-                            break;
 #if DEBUG               
-                        case THREAD_REQUEST_TYPE.ENGINE_OPEN_TEST_SCENE:
-                            rt_addTestScene((int)req.arguments[0]);
-                            req_status = THREAD_REQUEST_STATUS.FINISHED;
-                            break;
+                        
 #endif
                         case THREAD_REQUEST_TYPE.ENGINE_CHANGE_MODEL_PARENT:
                             throw new Exception("Not Implemented");
@@ -346,7 +351,6 @@ namespace MVCore
                                 target.Children.Add(source);
                             }));
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
-                            */
                         case THREAD_REQUEST_TYPE.ENGINE_UPDATE_SCENE:
                             throw new Exception("Not Implemented Yet!");
                         case THREAD_REQUEST_TYPE.ENGINE_MOUSEPOSITION_INFO:
@@ -364,6 +368,8 @@ namespace MVCore
                                          (GLSLShaderSource) req.arguments[1]);
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
+                        */
+
                         case THREAD_REQUEST_TYPE.ENGINE_GIZMO_PICKING:
                             throw new Exception("not yet implemented");
                         case THREAD_REQUEST_TYPE.ENGINE_TERMINATE_RENDER:
@@ -383,12 +389,12 @@ namespace MVCore
                             req_status = THREAD_REQUEST_STATUS.FINISHED;
                             break;
                         default:
-                            Log(string.Format("Not supported Request {0}", req.type), LogVerbosityLevel.HIDEBUG);
+                            Log(string.Format("Not supported Request {0}", req.Type), LogVerbosityLevel.HIDEBUG);
                             break;
                     }
                 }
 
-                req.status = req_status;
+                req.Status = req_status;
                 Log("Request Handled", LogVerbosityLevel.HIDEBUG);
             }
         }
@@ -540,7 +546,7 @@ namespace MVCore
 
 #endif
 
-        private void rt_addRootScene(string filename)
+        private void rt_addScene(SceneGraphNode node)
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
@@ -563,13 +569,14 @@ namespace MVCore
             bool animToggleStatus = RenderState.settings.renderSettings.ToggleAnimations;
             RenderState.settings.renderSettings.ToggleAnimations = false;
             
-            //Setup new object
-            Scene scn = Import.NMS.Importer.ImportScene(filename);
-
+            //Register Scene to Entity Registry
+            
             //Explicitly add default light to the rootObject
             SceneGraphNode l = SceneGraphNode.CreateLight();
-            scn.AddNode(l);
-
+            node.AddChild(l);
+            
+            RegisterSceneGraph(node);
+            
             //root.update(); //Refresh all transforms
             //root.setupSkinMatrixArrays();
 
@@ -578,6 +585,12 @@ namespace MVCore
 
             //Restart anim worker if it was active
             RenderState.settings.renderSettings.ToggleAnimations = animToggleStatus;
+        }
+        
+        
+        private void rt_addRootScene(string filename)
+        {
+            
         
         }
         

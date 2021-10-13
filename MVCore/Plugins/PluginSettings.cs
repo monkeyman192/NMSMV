@@ -9,7 +9,10 @@ namespace MVCore.Plugins
     {
         public string PluginName = "";
 
-        public abstract PluginSettings GenerateDefaultSettings();
+        public static PluginSettings GenerateDefaultSettings()
+        {
+            return null;
+        }
 
         public abstract void Draw(); //Imgui Panel for controlling Plugin Settings
         public abstract void DrawModals(); //Imgui draw modals and popups

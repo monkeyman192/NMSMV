@@ -92,60 +92,7 @@ namespace MVCore.Utils
             }
         }
 
-        //Convert Path to EXML
-        public static string getExmlPath(string path)
-        {
-            //Fix Path incase of reference
-            path = path.Replace('/', '\\');
-            string[] split = path.Split('.');
-            string newpath = "";
-            //for (int i = 0; i < split.Length - 1; i++)
-            //    newpath += split[i]+ "." ;
-            //Get main name
-            string[] pathsplit = split[0].Split('\\');
-            newpath = pathsplit[pathsplit.Length - 1] + "." + split[split.Length - 2] + ".exml";
-
-            return "Temp\\" + newpath;
-        }
-
-        public static string getFullExmlPath(string dirpath, string path)
-        {
-            //Get Relative path again
-            string tpath = path.Replace(dirpath, "").TrimStart('\\');
-
-            //Fix Path incase of reference
-            tpath = tpath.Replace('/', '\\');
-            string[] split = tpath.Split('\\');
-            string filename = split[split.Length - 1];
-
-            string[] f_name_split = filename.Split('.');
-            //Assemble new f_name
-            string newfilename = "";
-            for (int i = 0; i < f_name_split.Length - 1; i++)
-            {
-                newfilename += f_name_split[i] + ".";
-            }
-            newfilename += "exml";
-
-            string newpath = "";
-            //Get main name
-            for (int i = 0; i < split.Length - 1; i++)
-                newpath += split[i] + "_";
-
-            newpath += newfilename;
-
-            return "Temp\\" + newpath;
-        }
-        //MbinCompiler Caller
-        public static void MbinToExml(string path, string output)
-        {
-            Process proc = new System.Diagnostics.Process();
-            proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-            proc.StartInfo.FileName = "MBINCompiler.exe";
-            proc.StartInfo.Arguments = " \"" + path + "\" " + " \"" + output + "\" ";
-            proc.Start();
-            proc.WaitForExit();
-        }
+        
 
         //Endianess Manipulators
         public static uint swapEndianess(uint val)

@@ -41,18 +41,13 @@ namespace MVCore
 
             lock (tr)
             {
-                tr.status = THREAD_REQUEST_STATUS.ACTIVE;
+                tr.Status = THREAD_REQUEST_STATUS.ACTIVE;
             }
 
             //Create and start Thread
             Thread t = null;
 
-            object[] args = new object[tr.arguments.Count];
-            
-            for (int i=0;i<tr.arguments.Count;i++)
-                args[i] = tr.arguments[i];
-
-            t = new Thread(() => tr.method.Invoke(null, args));
+            t = new Thread(() => tr.Method.Invoke(null, (object?[]) tr.Data));
             Common.Callbacks.Log("* Issuing Requested Method", Common.LogVerbosityLevel.INFO);
 
             tk.thread = t;
@@ -76,7 +71,7 @@ namespace MVCore
                 {
                     lock (tk.thread_request)
                     {
-                        tk.thread_request.status = THREAD_REQUEST_STATUS.FINISHED;
+                        tk.thread_request.Status = THREAD_REQUEST_STATUS.FINISHED;
                     }
                     tasks.RemoveAt(i);
                     continue;

@@ -16,7 +16,7 @@ using MVCore;
 using MVCore.Common;
 using MVCore.Utils;
 
-namespace NMSPLugin
+namespace NMSPlugin
 {
     public static class Palettes
     {
@@ -57,7 +57,7 @@ namespace NMSPLugin
             newPal = new Dictionary<string, Dictionary<string, Vector4>>();
 
             //ColourAlt ids
-            int primary = MVCore.Common.RenderState.randgen.Next(0, 64);
+            int primary = PluginState.Randgen.Next(0, 64);
             int alternative1 = (primary + 1) % 64;
             int alternative2 = (alternative1 + 1) % 64;
             int alternative3 = (alternative2 + 1) % 64;
@@ -224,7 +224,7 @@ namespace NMSPLugin
 
         private static int get_active_palette_index(int grouping)
         {
-            return MVCore.Common.RenderState.randgen.Next(0, 64 / grouping) * grouping;
+            return PluginState.Randgen.Next(0, 64 / grouping) * grouping;
         }
 
         private static Vector4 colour_to_vec4(Colour col)

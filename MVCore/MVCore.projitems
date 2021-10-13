@@ -17,6 +17,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\TransformData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\DDSImage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Scene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Events\EventData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedLightMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLVao.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\MeshMetaData.cs" />
@@ -68,7 +69,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Texture.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\TextureMixer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLMeshBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\TextureManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\Font.cs" />

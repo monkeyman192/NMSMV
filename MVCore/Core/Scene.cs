@@ -13,7 +13,7 @@ namespace MVCore
         public SceneGraphNode Root = null;
         private readonly List<SceneGraphNode> _Nodes = new();
         private readonly List<SceneGraphNode> _MeshNodes = new();
-
+        
         public Scene(int id)
         {
             ID = id;
@@ -46,8 +46,7 @@ namespace MVCore
 
             if (n.HasComponent<MeshComponent>())
                 _MeshNodes.Add(n);
-
-            
+                
 
         }
 

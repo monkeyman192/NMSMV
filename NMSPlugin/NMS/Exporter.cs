@@ -1,6 +1,9 @@
 using libMBIN.NMS.Toolkit;
+using MVCore;
+using MVCore.Common;
 
-namespace MVCore.Export.NMS
+
+namespace NMSPlugin
 {
     public static class NMSExporter
     {
@@ -12,7 +15,7 @@ namespace MVCore.Export.NMS
             {
                 string filename = template.Name.Value.ToUpper() + ".SCENE.EXML";
                 template.WriteToExml(filename);
-                Common.Callbacks.showInfo("Scene successfully exported to " + filename, "Info");
+                Callbacks.showInfo("Scene successfully exported to " + filename, "Info");
             }
         }
         
@@ -24,7 +27,7 @@ namespace MVCore.Export.NMS
             {
                 string filename = template.Name.Value.ToUpper() + ".SCENE.MBIN";
                 template.WriteToMbin(filename);
-                Common.Callbacks.showInfo("Scene successfully exported to " + filename, "Info");
+                Callbacks.showInfo("Scene successfully exported to " + filename, "Info");
             }
         }
         

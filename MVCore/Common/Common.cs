@@ -37,9 +37,6 @@ namespace MVCore.Common
 
     public static class RenderState
     {
-        //Add a random generator just for the procgen procedures
-        public static Random randgen = new Random();
-
         //Keep the view rotation Matrix
         public static Matrix4 rotMat = Matrix4.Identity;
 
@@ -211,13 +208,6 @@ namespace MVCore.Common
         {
             Settings settings = new Settings();
 
-            settings.pluginSettings.Clear();
-            
-            foreach (PluginBase plugin in RenderState.engineRef.Plugins)
-            {
-                settings.pluginSettings.Add(plugin.Settings.GenerateDefaultSettings());
-            }
-            
             return settings;
         }
 

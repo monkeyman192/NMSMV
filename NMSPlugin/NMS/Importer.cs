@@ -15,11 +15,10 @@ using Console = System.Console;
 using MVCore.Utils;
 using libMBIN.NMS.GameComponents;
 using libMBIN.NMS;
-using System.CodeDom;
 using MVCore.Common;
 
 
-namespace MVCore.Import.NMS
+namespace NMSPlugin
 {
     public static class Importer
     {
@@ -43,6 +42,7 @@ namespace MVCore.Import.NMS
             node.AddComponent<AnimPoseComponent>(apc);
         }
 
+        
         private static AnimPoseComponent CreateAnimPoseComponentFromStruct(TkAnimPoseComponentData apcd)
         {
             AnimPoseComponent apc = new AnimPoseComponent();
@@ -188,14 +188,49 @@ namespace MVCore.Import.NMS
 
         public static Sampler CreateSamplerFromStruct(TkMaterialSampler ms, TextureManager texMgr)
         {
-            //TODO fill sampler data from the tkmaterialsampler
-            Sampler sam = new()
-            {
-                
-            };
-
+            Sampler sam = new Sampler();
             
-            Util.PrepareSamplerTextures(sam, texMgr);
+            switch (ms.Name)
+            {
+                case "gDiffuseMap":
+                case "gNormalMap":
+                case "gDiffuse2Map":
+                case "gMaskMap":
+                    sam.Name = "mpCustomPerMaterial." + ms.Name;
+                    sam.texUnit = Util.MapTextureUnit[sam.Name];
+                    sam.SamplerID = Util.MapTexUnitToSampler[sam.Name];
+                    break;
+                default:
+                    Callbacks.Log("Not sure how to handle Sampler " + sam.Name, LogVerbosityLevel.WARNING);
+                    return null;
+            }
+            
+            //Save texture to material
+            string[] split = ms.Map.Value.Split('.');
+            
+            string temp = "";
+            if (sam.Name == "mpCustomPerMaterial.gDiffuseMap")
+            {
+                //Check if the sampler describes a proc gen texture
+                temp = split[0];
+                //Construct main filename
+                
+                string texMbin = temp + ".TEXTURE.MBIN";
+                
+                //Detect Procedural Texture
+                if (FileUtils.NMSFileToArchiveMap.Keys.Contains(texMbin))
+                {
+                    TextureMixer.combineTextures(sam.Map, Palettes.paletteSel, ref texMgr);
+                    //Override Map
+                    sam.isProcGen = true;
+                }
+            }
+
+            //Load the texture to the sampler
+            
+            Util.loadSamplerTexture(sam, texMgr);
+            
+            
             return sam;
         }   
         
@@ -671,11 +706,11 @@ namespace MVCore.Import.NMS
             Console.WriteLine("Loading Objects from MBINFile");
 
             string sceneName = template.Name;
-            Callbacks.Log(string.Format("Trying to load Scene {0}", sceneName), Common.LogVerbosityLevel.INFO);
+            Callbacks.Log(string.Format("Trying to load Scene {0}", sceneName), LogVerbosityLevel.INFO);
             string[] split = sceneName.Split('\\');
             string scnName = split[^1];
             Callbacks.updateStatus("Importing Scene: " + scnName);
-            Callbacks.Log(string.Format("Importing Scene: {0}", scnName), Common.LogVerbosityLevel.INFO);
+            Callbacks.Log(string.Format("Importing Scene: {0}", scnName), LogVerbosityLevel.INFO);
             
             //Get Geometry File
             //Parse geometry once
@@ -720,7 +755,7 @@ namespace MVCore.Import.NMS
                 if (fs is null)
                 {
                     Callbacks.showError("Could not find geometry file " + geomfile + ".PC", "Error");
-                    Callbacks.Log(string.Format("Could not find geometry file {0} ", geomfile + ".PC"), Common.LogVerbosityLevel.ERROR);
+                    Callbacks.Log(string.Format("Could not find geometry file {0} ", geomfile + ".PC"), LogVerbosityLevel.ERROR);
 
                     //Create Dummy Scene
                     SceneGraphNode dummy = new(SceneNodeType.MODEL)
@@ -734,7 +769,7 @@ namespace MVCore.Import.NMS
                 gobject.Name = geomfile;
                 RenderState.engineRef.renderSys.GeometryMgr.AddGeom(gobject);
                 Callbacks.Log(string.Format("Geometry file {0} successfully parsed",
-                    geomfile + ".PC"), Common.LogVerbosityLevel.INFO);
+                    geomfile + ".PC"), LogVerbosityLevel.INFO);
                 
                 fs.Close();
                 gfs.Close();
@@ -758,7 +793,7 @@ namespace MVCore.Import.NMS
             GeomObject gobject, SceneGraphNode parent, Scene parentScene)
         {
             Callbacks.Log(string.Format("Importing Node {0}", node.Name), 
-                Common.LogVerbosityLevel.INFO);
+                LogVerbosityLevel.INFO);
             Callbacks.updateStatus("Importing Part: " + node.Name);
 
             if (!Enum.TryParse(node.Type, out SceneNodeType typeEnum))
@@ -767,8 +802,7 @@ namespace MVCore.Import.NMS
             SceneGraphNode so = new(typeEnum)
             {
                 Name = node.Name,
-                NameHash = node.NameHash,
-                ID = Common.RenderState.itemCounter++
+                NameHash = node.NameHash
             };
 
             parentScene.AddNode(so); //Add node to the scene
@@ -835,10 +869,10 @@ namespace MVCore.Import.NMS
                 };
 
                 //Common.Callbacks.Log(string.Format("Randomized Object Color {0}, {1}, {2}", so.color[0], so.color[1], so.color[2]), Common.LogVerbosityLevel.INFO);
-                Common.Callbacks.Log(string.Format("Batch Physics Start {0} Count {1} Vertex Physics {2} - {3} Vertex Graphics {4} - {5} SkinMats {6}-{7}",
+                Callbacks.Log(string.Format("Batch Physics Start {0} Count {1} Vertex Physics {2} - {3} Vertex Graphics {4} - {5} SkinMats {6}-{7}",
                     mc.MetaData.BatchStartPhysics, mc.MetaData.BatchCount, mc.MetaData.VertrStartPhysics,
                     mc.MetaData.VertrEndPhysics, mc.MetaData.VertrStartGraphics, mc.MetaData.VertrEndGraphics,
-                    mc.MetaData.FirstSkinMat, mc.MetaData.LastSkinMat), Common.LogVerbosityLevel.INFO);
+                    mc.MetaData.FirstSkinMat, mc.MetaData.LastSkinMat), LogVerbosityLevel.INFO);
 
                 Console.WriteLine("Object {0}, Number of skinmatrices required: {1}", so.Name, 
                     mc.MetaData.LastSkinMat - mc.MetaData.FirstSkinMat);
@@ -925,7 +959,7 @@ namespace MVCore.Import.NMS
                     }
                     catch (Exception)
                     {
-                        Common.Callbacks.Log("Error while fetching bHull Collision Mesh", Common.LogVerbosityLevel.ERROR);
+                        Callbacks.Log("Error while fetching bHull Collision Mesh", LogVerbosityLevel.ERROR);
                         meshVao.bHullVao = null;
                     }
 
@@ -987,7 +1021,7 @@ namespace MVCore.Import.NMS
                 throw new Exception("Not Implemented Yet!");
             } else
             {
-                Common.Callbacks.Log("Unknown scenenode type. Please contant the developer", Common.LogVerbosityLevel.WARNING);
+                Callbacks.Log("Unknown scenenode type. Please contant the developer", LogVerbosityLevel.WARNING);
             }
 
             //Console.WriteLine("Children Count {0}", childs.ChildNodes.Count);

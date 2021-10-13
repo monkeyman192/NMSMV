@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using ImGuiNET;
 using MVCore.Common;
 
-namespace ImGuiHelper
+namespace NMSPlugin
 {
     unsafe public class ImGuiPakBrowser
     {
@@ -29,7 +29,7 @@ namespace ImGuiHelper
                             new System.Numerics.Vector2(ImGui.GetWindowSize().X, 250),
                             true))
             {
-                foreach (var line in MVCore.Import.NMS.FileUtils.NMSSceneFilesList)
+                foreach (var line in FileUtils.NMSSceneFilesList)
                 {
                     if (_filter.PassFilter(line))
                     {

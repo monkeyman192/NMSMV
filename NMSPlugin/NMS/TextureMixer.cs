@@ -1,15 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
+using MVCore;
 using MVCore.Common;
 using MVCore.Utils;
 using libMBIN.NMS.Toolkit;
 using System.Diagnostics;
 
-namespace MVCore
+namespace NMSPlugin
 {
     public static class TextureMixer
     {
@@ -97,7 +98,7 @@ namespace MVCore
             Console.WriteLine("Procedural Texture Detected: " + path);
             Callbacks.Log(string.Format("Parsing Procedural Texture"), LogVerbosityLevel.INFO);
 
-            TkProceduralTextureList template = Import.NMS.FileUtils.LoadNMSTemplate(path) as TkProceduralTextureList;
+            TkProceduralTextureList template = FileUtils.LoadNMSTemplate(path) as TkProceduralTextureList;
 
             List<TkProceduralTexture> texList = new List<TkProceduralTexture>(8);
             for (int i = 0; i < 8; i++) texList.Add(null);

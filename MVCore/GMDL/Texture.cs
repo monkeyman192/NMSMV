@@ -44,21 +44,7 @@ namespace MVCore
             byte[] image_data;
             int data_length;
 
-            if (!isCustom)
-            {
-                try
-                {
-                    fs = Import.NMS.FileUtils.LoadNMSFileStream(path);
-                }
-                catch (FileNotFoundException)
-                {
-                    //FileNotFoundExceptions during texture loading, are caught so that default textures are loaded
-                    fs = null;
-                }
-            }
-            else
-                fs = new FileStream(path, FileMode.Open);
-
+            fs = new FileStream(path, FileMode.Open);
 
             if (fs == null)
             {
