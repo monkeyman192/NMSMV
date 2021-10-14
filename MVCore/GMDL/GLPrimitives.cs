@@ -570,7 +570,7 @@ namespace MVCore.Primitives
             return p;
         }
 
-        public new GeomObject getGeom()
+        public GeomObject getGeom()
         {
             GeomObject geom = new();
 
