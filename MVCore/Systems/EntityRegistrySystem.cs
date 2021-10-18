@@ -27,7 +27,7 @@ namespace MVCore.Systems
         
         public Entity GetEntity(EntityType type, long ID)
         {
-            return EntityTypeList[type].Find(x=> x.ID == ID);
+            return EntityTypeList[type].Find(x=> x.GetID() == ID);
         }
 
         public List<Entity> GetEntityTypeList(EntityType type)
@@ -37,7 +37,7 @@ namespace MVCore.Systems
         
         public bool RegisterEntity(Entity e)
         {
-            if (e.ID > 0)
+            if (e.GetID() != (0xFFFFFFFF))
             {
                 Log("Entity has no default ID, probably already registered", Common.LogVerbosityLevel.INFO);
                 return false;
@@ -49,8 +49,10 @@ namespace MVCore.Systems
                 return false;
             }
             
-            e.ID = NextID++;
-            EntityMap[e.ID] = e;
+            GUIDComponent gc = e.GetComponent<GUIDComponent>() as GUIDComponent;
+            gc.ID = NextID++;
+            gc.Initialized = true;
+            EntityMap[gc.ID] = e;
             EntityTypeList[e.Type].Add(e);
 
             //Explicitly handle ScenenodeTypes
@@ -74,8 +76,7 @@ namespace MVCore.Systems
                 Log("Entity not registered. Nothing to do", LogVerbosityLevel.INFO);
                 return false;
             }
-
-            EntityMap.Remove(e.ID);
+            EntityMap.Remove(e.GetID());
             EntityTypeList[e.Type].Remove(e);
             
             //Dispose entity lets hope that the overrides will work and we won't have to cast
@@ -94,7 +95,8 @@ namespace MVCore.Systems
 
         public bool IsRegistered(Entity e)
         {
-            if (EntityMap.ContainsKey(e.ID))
+            
+            if (EntityMap.ContainsKey(e.GetID()))
                 return true;
             return false;
         }

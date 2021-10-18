@@ -438,28 +438,28 @@ namespace MVCore
             };
 
             //Add Lights
-            SceneGraphNode l = SceneGraphNode.CreateLight("Light 1", 100.0f,
+            SceneGraphNode l = CreateLightNode("Light 1", 100.0f,
                 ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
             TransformationSystem.SetEntityLocation(l, new Vector3(0.2f, 0.2f, -2.0f));
             RegisterEntity(l);
             scene.Children.Add(l);
 
-            SceneGraphNode l1 = SceneGraphNode.CreateLight("Light 2", 100.0f,
+            SceneGraphNode l1 = CreateLightNode("Light 2", 100.0f,
                 ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
             TransformationSystem.SetEntityLocation(l1, new Vector3(0.2f, -0.2f, -2.0f));
             RegisterEntity(l1);
             scene.Children.Add(l1);
 
-            SceneGraphNode l2 = SceneGraphNode.CreateLight("Light 3", 100.0f,
+            SceneGraphNode l2 = CreateLightNode("Light 3", 100.0f,
                 ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
             TransformationSystem.SetEntityLocation(l2, new Vector3(-0.2f, 0.2f, -2.0f));
             RegisterEntity(l2);
             scene.Children.Add(l2);
 
-            SceneGraphNode l3 = SceneGraphNode.CreateLight("Light 4", 100.0f,
+            SceneGraphNode l3 = CreateLightNode("Light 4", 100.0f,
                 ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
             TransformationSystem.SetEntityLocation(l3, new Vector3(-0.2f, -0.2f, -2.0f));
@@ -572,7 +572,7 @@ namespace MVCore
             //Register Scene to Entity Registry
             
             //Explicitly add default light to the rootObject
-            SceneGraphNode l = SceneGraphNode.CreateLight();
+            SceneGraphNode l = CreateLightNode();
             node.AddChild(l);
             
             RegisterSceneGraph(node);
@@ -588,11 +588,7 @@ namespace MVCore
         }
         
         
-        private void rt_addRootScene(string filename)
-        {
-            
         
-        }
         
         public void SendRequest(ref ThreadRequest r)
         {
@@ -765,5 +761,151 @@ namespace MVCore
 
 
         #endregion
+        
+        
+        //API
+        //The following static methods should be used to expose
+        //functionality to the user abstracted from engine systems and other
+        //iternals. The idea is to pass a reference to an instantiated
+        //engine object (whenever needed) and let the method do the rest
+        
+        #region NodeGenerators
+
+        public SceneGraphNode CreateLocatorNode(string name)
+        {
+            SceneGraphNode n = new(SceneNodeType.LOCATOR)
+            {
+                Name = name
+            };
+
+            //Add Transform Component
+            TransformData td = new();
+            TransformComponent tc = new(td);
+            n.AddComponent<TransformComponent>(tc);
+
+            //Create MeshComponent
+            MeshComponent mc = new()
+            {
+                MeshVao = GetPrimitiveMesh("default_cross"),
+                Material = GetMaterialByName("crossMat")
+            };
+            
+            //Register new instance in the meshVao
+            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
+
+            n.AddComponent<MeshComponent>(mc);
+
+            return n;
+        }
+        
+        public SceneGraphNode CreateSceneNode(string name)
+        {
+            SceneGraphNode n = new(SceneNodeType.MODEL)
+            {
+                Name = name
+            };
+
+            //Add Transform Component
+            TransformData td = new();
+            TransformComponent tc = new(td);
+            n.AddComponent<TransformComponent>(tc);
+
+            //Create MeshComponent
+            MeshComponent mc = new()
+            {
+                MeshVao = GetPrimitiveMesh("default_cross"),
+                Material = GetMaterialByName("crossMat")
+            };
+            
+            //Register new instance in the meshVao
+            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
+            
+            n.AddComponent<MeshComponent>(mc);
+
+            //Create SceneComponent
+            SceneComponent sc = new();
+            n.AddComponent<SceneComponent>(sc);
+
+            return n;
+        }
+
+        public static SceneGraphNode CreateJointNode()
+        {
+            SceneGraphNode n = new(SceneNodeType.JOINT);
+            
+            //Add Transform Component
+            TransformData td = new();
+            TransformComponent tc = new(td);
+            n.AddComponent<TransformComponent>(tc);
+
+            //Add Mesh Component
+            MeshComponent mc = new();
+            mc.MeshVao = new()
+            {
+                type = SceneNodeType.JOINT
+            };
+
+            mc.MeshVao.vao = new Primitives.LineSegment(n.Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
+            mc.Material = Common.RenderState.engineRef.GetMaterialByName("jointMat");
+
+            //Add Joint Component
+            JointComponent jc = new();
+            n.AddComponent<JointComponent>(jc);
+            
+            return n;
+        }
+
+        
+        public SceneGraphNode CreateLightNode(string name="default light", float intensity=1.0f, 
+                                                ATTENUATION_TYPE attenuation=ATTENUATION_TYPE.QUADRATIC,
+                                                LIGHT_TYPE lighttype = LIGHT_TYPE.POINT)
+        {
+            SceneGraphNode n = new(SceneNodeType.LIGHT)
+            {
+                Name = name
+            };
+            
+            //Add Transform Component
+            TransformData td = new();
+            TransformComponent tc = new(td);
+            n.AddComponent<TransformComponent>(tc);
+
+            //Add Mesh Component
+            LineSegment ls = new LineSegment(n.Children.Count, new Vector3(1.0f, 0.0f, 0.0f));
+            MeshComponent mc = new()
+            {
+                MeshVao = new()
+                {
+                    type = SceneNodeType.LIGHT,
+                    vao = ls.getVAO(),
+                    MetaData = new()
+                    {
+                        BatchCount = 2
+                    },
+                },
+                Material = GetMaterialByName("lightMat")
+            };
+            
+            n.AddComponent<MeshComponent>(mc);
+            ls.Dispose();
+            
+            //Add Light Component
+            LightComponent lc = new()
+            {
+                Intensity = intensity,
+                Falloff = attenuation,
+                LightType = lighttype
+            };
+            n.AddComponent<LightComponent>(lc);
+
+            return n;
+        }
+
+        
+        #endregion
+        
+        
+        
+        
     }
 }

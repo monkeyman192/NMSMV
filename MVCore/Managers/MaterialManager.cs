@@ -13,8 +13,9 @@ namespace MVCore.Managers
             
             if (Add(mat))
             {
+                GUIDComponent gc = mat.GetComponent<GUIDComponent>() as GUIDComponent;
                 MaterialNameMap[mat.Name] = mat;
-                MaterialMeshMap[mat.ID] = new();
+                MaterialMeshMap[gc.ID] = new();
                 return true;
             }
             return false;
@@ -27,28 +28,28 @@ namespace MVCore.Managers
 
         public List<GLInstancedMesh> GetMaterialMeshes(MeshMaterial mat)
         {
-            return MaterialMeshMap[mat.ID];
+            return MaterialMeshMap[mat.GetID()];
         }
 
         public bool AddMeshToMaterial(MeshMaterial mat, GLInstancedMesh mesh)
         {
-            if (MaterialMeshMap[mat.ID].Contains(mesh))
+            if (MaterialMeshMap[mat.GetID()].Contains(mesh))
                 return false;
-            MaterialMeshMap[mat.ID].Add(mesh);
+            MaterialMeshMap[mat.GetID()].Add(mesh);
             return true;
         }
 
         public bool RemoveMeshFromMaterial(MeshMaterial mat, GLInstancedMesh mesh)
         {
-            if (!MaterialMeshMap[mat.ID].Contains(mesh))
+            if (!MaterialMeshMap[mat.GetID()].Contains(mesh))
                 return false;
-            MaterialMeshMap[mat.ID].Add(mesh);
+            MaterialMeshMap[mat.GetID()].Remove(mesh);
             return true;
         }
 
         public bool MaterialContainsMesh(MeshMaterial mat, GLInstancedMesh mesh)
         {
-            return MaterialMeshMap[mat.ID].Contains(mesh);
+            return MaterialMeshMap[mat.GetID()].Contains(mesh);
         }
 
 

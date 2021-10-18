@@ -34,7 +34,7 @@ namespace SimpleTextureRenderer
             Title = "DDS Texture Viewer v1.0";
             VSync = VSyncMode.On;
             RenderFrequency = 60;
-            _ImGuiManager = new(this);
+            
         }
         
         public void compileShader(GLSLShaderConfig config)
@@ -69,6 +69,7 @@ namespace SimpleTextureRenderer
             _engine = new Engine(this);
             RenderState.engineRef = _engine;
             _engine.init(ClientSize.X, ClientSize.Y);
+            _ImGuiManager = new(this, _engine);
 
             GL.ClearColor(0.1f, 0.2f, 0.5f, 0.0f);
             //GL.Enable(EnableCap.DepthTest);

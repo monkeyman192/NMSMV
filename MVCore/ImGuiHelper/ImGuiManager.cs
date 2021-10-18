@@ -16,14 +16,17 @@ namespace ImGuiHelper
         private readonly ImGuiShaderEditor ShaderEditor;
         private ImGuiController _controller;
         public GameWindow WindowRef = null;
+        public Engine EngineRef = null;
+        
 
         //ImguiPalette Colors
         //Blue
         public static System.Numerics.Vector4 DarkBlue = new(0.04f, 0.2f, 0.96f, 1.0f);
 
-        public ImGuiManager(GameWindow win)
+        public ImGuiManager(GameWindow win, Engine engine)
         {
             WindowRef = win;
+            EngineRef = engine;
             _controller = new ImGuiController(win.ClientSize.X, win.ClientSize.Y); //Init with a start size
             
             //Enable docking by default

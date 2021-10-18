@@ -72,7 +72,9 @@ namespace MVCore
         {
             //Set fov on init
             fov = angle;
-            vao = (new Primitives.Box(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true)).getVAO();
+            Primitives.Box _box = new Primitives.Box(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true);
+            vao = _box.getVAO();
+            _box.Dispose();
             this.program = program;
             type = mode;
             culling = cull;

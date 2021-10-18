@@ -385,6 +385,22 @@ namespace GLSLHelper {
             return text;
         }
 
+        private bool disposed = false;
+        protected override void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects).
+                    _dynamicTextParts.Clear();
+                    _staticTextParts.Clear();
+                }
+
+                disposed = true;
+                base.Dispose(disposing);
+            }
+        }
     }
 
 

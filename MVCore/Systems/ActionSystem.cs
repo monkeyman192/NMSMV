@@ -41,8 +41,9 @@ namespace MVCore.Systems
             
             foreach (SceneGraphNode m in ActionSceneNodes)
             {
+                GUIDComponent gc = m.GetComponent<GUIDComponent>() as GUIDComponent;
                 TriggerActionComponent tac = m.GetComponent<TriggerActionComponent>() as TriggerActionComponent;
-                ActionTriggerState activeState = tac.StateMap[ActionSceneStateMap[m.ID]];
+                ActionTriggerState activeState = tac.StateMap[ActionSceneStateMap[gc.ID]];
                 
                 //Apply Actions of state
                 Console.WriteLine("Current State {0}", activeState.StateID);
@@ -57,7 +58,7 @@ namespace MVCore.Systems
                         //Execute actions
                         foreach (Action a in at.Actions)
                         {
-                            if (!ActionsExecutedInState[m.ID].Contains(a))
+                            if (!ActionsExecutedInState[gc.ID].Contains(a))
                                 ExecuteAction(m, a);
                         }
                     }   
@@ -148,17 +149,19 @@ namespace MVCore.Systems
 
         private void ExecuteGoToStateAction(SceneGraphNode m, GoToStateAction action)
         {
+            GUIDComponent gc = m.GetComponent<GUIDComponent>() as GUIDComponent;
+            
             //Change State
-            PrevActionSceneStateMap[m.ID] = ActionSceneStateMap[m.ID];
-            ActionSceneStateMap[m.ID] = action.State;
-            ActionsExecutedInState[m.ID] = new List<Action>(); //Reset executed actions 
+            PrevActionSceneStateMap[gc.ID] = ActionSceneStateMap[gc.ID];
+            ActionSceneStateMap[gc.ID] = action.State;
+            ActionsExecutedInState[gc.ID] = new List<Action>(); //Reset executed actions 
         }
 
         private void ExecutePlayAnimAction(SceneGraphNode m, PlayAnimAction action)
         {
             AnimationSystem.StopActiveLoopAnimations(m); //Not sure if this is correct
             AnimationSystem.StartAnimation(m, action.Anim);
-            ActionsExecutedInState[m.ID].Add(action);
+            ActionsExecutedInState[m.GetID()].Add(action);
         }
 
         private void ExecuteNodeActivationAction(SceneGraphNode m, NodeActivationAction action)
@@ -207,9 +210,9 @@ namespace MVCore.Systems
             if (scn.HasComponent<TriggerActionComponent>())
             {
                 ActionSceneNodes.Add(scn);
-                ActionSceneStateMap[scn.ID] = "BOOT"; //Add Default State
-                PrevActionSceneStateMap[scn.ID] = "NONE"; //Add Default State
-                ActionsExecutedInState[scn.ID] = new();
+                ActionSceneStateMap[scn.GetID()] = "BOOT"; //Add Default State
+                PrevActionSceneStateMap[scn.GetID()] = "NONE"; //Add Default State
+                ActionsExecutedInState[scn.GetID()] = new();
             }
         }
 

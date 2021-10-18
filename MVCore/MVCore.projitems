@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Components\CollisionComponent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Components\GUIDComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\JointComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\LightComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\ReferenceComponent.cs" />
@@ -29,6 +30,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiFilePicker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiPanel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiTextureEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiMaterialEditor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ImGuiHelper\ImGuiObjectViewer.cs" />

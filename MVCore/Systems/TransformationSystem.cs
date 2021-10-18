@@ -33,7 +33,7 @@ namespace MVCore.Systems
 
         public void RegisterEntity(Entity e, bool createController, bool isDynamic)
         {
-            if (EntityDataMap.ContainsKey(e.ID))
+            if (EntityDataMap.ContainsKey(e.GetID()))
             {
                 Log("Entity Already Registered", Common.LogVerbosityLevel.INFO);
                 return;
@@ -41,18 +41,18 @@ namespace MVCore.Systems
 
             if (!e.HasComponent<TransformComponent>())
             {
-                Log(string.Format("Entity {0} should have a transform component", e.ID), Common.LogVerbosityLevel.INFO);
+                Log(string.Format("Entity {0} should have a transform component", e.GetID()), Common.LogVerbosityLevel.INFO);
                 return;
             }
             
             TransformComponent tc = e.GetComponent<TransformComponent>() as TransformComponent;
             
             //Insert to Maps
-            EntityDataMap[e.ID] = tc;
+            EntityDataMap[e.GetID()] = tc;
             _Data.Add(tc.Data); //Add ref to TransformData list
             
             if (createController)
-                EntityControllerMap[e.ID] = new TransformController(tc.Data);
+                EntityControllerMap[e.GetID()] = new TransformController(tc.Data);
 
             if (isDynamic)
                 AddDynamicEntity(e);
@@ -96,13 +96,13 @@ namespace MVCore.Systems
 
         public void AddDynamicEntity(Entity e)
         {
-            if (EntityDataMap.ContainsKey(e.ID) && !DynamicEntities.Contains(e))
+            if (EntityDataMap.ContainsKey(e.GetID()) && !DynamicEntities.Contains(e))
                 DynamicEntities.Add(e);
         }
 
         public void RequestEntityUpdate(Entity e)
         {
-            if (EntityDataMap.ContainsKey(e.ID))
+            if (EntityDataMap.ContainsKey(e.GetID()))
                 UpdatedEntities.Enqueue(e);
             else
                 Log("Entity not registered to the transformation system", 
@@ -116,8 +116,8 @@ namespace MVCore.Systems
 
         public TransformController GetEntityTransformController(Entity e)
         {
-            if (EntityControllerMap.ContainsKey(e.ID))
-                return EntityControllerMap[e.ID];
+            if (EntityControllerMap.ContainsKey(e.GetID()))
+                return EntityControllerMap[e.GetID()];
             return null;
         }
 

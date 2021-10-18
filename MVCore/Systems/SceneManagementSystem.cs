@@ -15,16 +15,6 @@ namespace MVCore.Systems
             
         }
 
-        public SceneGraphNode FindEntitySceneGraphNode(Entity e)
-        {
-            foreach (Scene s in _SceneMap.Values){
-                SceneGraphNode n = s.FindSceneGraphNodeFromEntity(e);
-                if (n != null)
-                    return n;
-            }
-            return null;
-        }
-
         //For now I think one Scene is enough
         public Scene CreateScene()
         {

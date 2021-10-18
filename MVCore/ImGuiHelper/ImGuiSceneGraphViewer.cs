@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using ImGuiNET;
 using MVCore;
+using MVCore.Common;
 
 
 namespace ImGuiHelper
@@ -85,7 +86,16 @@ namespace ImGuiHelper
                 {
                     if (ImGui.MenuItem("Add Locator"))
                     {
-                        Console.WriteLine("Add new locator node as a child to selected node");
+                        SceneGraphNode parent = n;
+                        
+                        //Create and register locator node
+                        SceneGraphNode new_locator = _manager.EngineRef.CreateLocatorNode("Locator#1");
+                        Callbacks.Log("Creating Locator node", LogVerbosityLevel.INFO);
+                        //Register new locator node to engine
+                        _manager.EngineRef.RegisterEntity(new_locator);
+                        
+                        //Set parent
+                        new_locator.SetParent(n);
                     }
                     
                     if (ImGui.MenuItem("Add Light"))

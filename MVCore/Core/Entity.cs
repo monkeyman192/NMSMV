@@ -32,7 +32,6 @@ namespace MVCore
     public class Entity : IDisposable
     {
         //Public
-        public long ID; //unique entity identifier
         public ulong NameHash;
         public EntityType Type;
         
@@ -45,8 +44,19 @@ namespace MVCore
         public Entity(EntityType typ)
         {
             Type = typ;
+            
+            //Add GUID Component by default to all entities
+            GUIDComponent c = new GUIDComponent();
+            AddComponent<GUIDComponent>(c);
         }
 
+        public long GetID()
+        {
+            GUIDComponent gc = GetComponent<GUIDComponent>() as GUIDComponent;
+            return gc.ID;
+        }
+        
+        
         public bool HasComponent<T>()
         {
             return _componentMap.ContainsKey(typeof(T));
@@ -96,8 +106,7 @@ namespace MVCore
         {
             //Copy data from e
             Type = e.Type;
-            ID = e.ID;
-
+            
             //Clone components
             
             foreach (KeyValuePair<Type, Component> kp in _componentMap)
@@ -114,6 +123,10 @@ namespace MVCore
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects)
+                    foreach (var kp in _componentMap){
+                        _componentMap[kp.Key].Dispose();
+                    }
+                    _componentMap.Clear();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer

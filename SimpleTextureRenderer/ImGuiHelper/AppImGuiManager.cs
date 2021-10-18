@@ -2,6 +2,7 @@
 using System;
 using ImGuiHelper;
 using ImGuiNET;
+using MVCore;
 
 
 namespace SimpleTextureRenderer
@@ -11,7 +12,7 @@ namespace SimpleTextureRenderer
         private bool show_open_file_dialog = false;
         private string current_file_path = "";
 
-        public AppImGuiManager(GameWindow win) : base(win)
+        public AppImGuiManager(GameWindow win, Engine engine) : base(win, engine)
         {
 
         }

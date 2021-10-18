@@ -22,7 +22,7 @@ namespace ImGUI_SDL_ModelViewer
         private bool show_test_components = false;
         
         
-        public AppImGuiManager(Window win) : base(win)
+        public AppImGuiManager(Window win, Engine engine) : base(win, engine)
         {
             SceneGraphViewer = new(this);
         }

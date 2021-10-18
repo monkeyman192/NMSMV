@@ -59,14 +59,15 @@ namespace ImGuiHelper
 
         private void DrawModel()
         {
+            GUIDComponent gc = _model.GetComponent<GUIDComponent>() as GUIDComponent;
             //Name
             ImGui.Columns(2);
-            ImGui.Text("ID");
+            ImGui.Text("GUID");
             ImGui.Text("Type");
             ImGui.Text("LOD");
 
             ImGui.NextColumn();
-            ImGui.Text(_model.ID.ToString());
+            ImGui.Text(gc.ID.ToString());
             ImGui.Text(_model.Type.ToString());
             ImGui.Text("TODO");
 

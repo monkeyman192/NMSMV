@@ -33,6 +33,7 @@ namespace MVCore
         //public SceneGraphNode ParentScene = null; //Is this useful at all?
         public List<float> LODDistances = new();
         public SceneGraphNode Parent = null;
+        public Scene SceneRef = null;
         public List<SceneGraphNode> Children = new();
 
         //Disposable Stuff
@@ -106,7 +107,8 @@ namespace MVCore
 
         public void findNodeByID(long id, ref SceneGraphNode m)
         {
-            if (ID == id)
+            GUIDComponent gc = m.GetComponent<GUIDComponent>() as GUIDComponent;
+            if (gc.ID == id)
             {
                 m = this;
                 return;
@@ -136,133 +138,6 @@ namespace MVCore
         {
             TransformData td = TransformationSystem.GetEntityTransformData(this);
             td.ResetTransform();
-        }
-
-        //Static Methods for node generation
-        public static SceneGraphNode CreateScene(string name)
-        {
-            SceneGraphNode n = new(SceneNodeType.MODEL)
-            {
-                Name = name
-            };
-
-            //Add Transform Component
-            TransformData td = new();
-            TransformComponent tc = new(td);
-            n.AddComponent<TransformComponent>(tc);
-
-            //Create MeshComponent
-            MeshComponent mc = new()
-            {
-                MeshVao = Common.RenderState.engineRef.GetPrimitiveMesh("default_cross"),
-                Material = Common.RenderState.engineRef.GetMaterialByName("crossMat")
-            };
-            
-            //Register new instance in the meshVao
-            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
-            
-            n.AddComponent<MeshComponent>(mc);
-
-            //Create SceneComponent
-            SceneComponent sc = new();
-            n.AddComponent<SceneComponent>(sc);
-
-            return n;
-        }
-
-        public static SceneGraphNode CreateLocator(string name)
-        {
-            SceneGraphNode n = new(SceneNodeType.LOCATOR)
-            {
-                Name = name
-            };
-
-            //Add Transform Component
-            TransformData td = new();
-            TransformComponent tc = new(td);
-            n.AddComponent<TransformComponent>(tc);
-
-            //Create MeshComponent
-            MeshComponent mc = new()
-            {
-                MeshVao = Common.RenderState.engineRef.GetPrimitiveMesh("default_cross"),
-                Material = Common.RenderState.engineRef.GetMaterialByName("crossMat")
-            };
-            
-            //Register new instance in the meshVao
-            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
-
-            n.AddComponent<MeshComponent>(mc);
-
-            return n;
-        }
-
-        public static SceneGraphNode CreateJoint()
-        {
-            SceneGraphNode n = new(SceneNodeType.JOINT);
-            
-            //Add Transform Component
-            TransformData td = new();
-            TransformComponent tc = new(td);
-            n.AddComponent<TransformComponent>(tc);
-
-            //Add Mesh Component
-            MeshComponent mc = new();
-            mc.MeshVao = new()
-            {
-                type = SceneNodeType.JOINT
-            };
-
-            mc.MeshVao.vao = new Primitives.LineSegment(n.Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
-            mc.Material = Common.RenderState.engineRef.GetMaterialByName("jointMat");
-
-            //Add Joint Component
-            JointComponent jc = new();
-            n.AddComponent<JointComponent>(jc);
-            
-            return n;
-        }
-
-        public static SceneGraphNode CreateLight(string name="default light", float intensity=1.0f, 
-                                                ATTENUATION_TYPE attenuation=ATTENUATION_TYPE.QUADRATIC,
-                                                LIGHT_TYPE lighttype = LIGHT_TYPE.POINT)
-        {
-            SceneGraphNode n = new(SceneNodeType.LIGHT)
-            {
-                Name = name
-            };
-            
-            //Add Transform Component
-            TransformData td = new();
-            TransformComponent tc = new(td);
-            n.AddComponent<TransformComponent>(tc);
-
-            //Add Mesh Component
-            MeshComponent mc = new()
-            {
-                MeshVao = new()
-                {
-                    type = SceneNodeType.LIGHT,
-                    vao = new Primitives.LineSegment(n.Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO(),
-                    MetaData = new()
-                    {
-                        BatchCount = 2
-                    },
-                },
-                Material = Common.RenderState.engineRef.GetMaterialByName("lightMat")
-            };
-            n.AddComponent<MeshComponent>(mc);
-
-            //Add Light Component
-            LightComponent lc = new()
-            {
-                Intensity = intensity,
-                Falloff = attenuation,
-                LightType = lighttype
-            };
-            n.AddComponent<LightComponent>(lc);
-
-            return n;
         }
 
         protected override void Dispose(bool disposing)

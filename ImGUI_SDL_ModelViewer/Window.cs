@@ -71,9 +71,7 @@ namespace ImGUI_SDL_ModelViewer
         protected override void OnLoad()
         {
             base.OnLoad();
-            _ImGuiManager = new(this);
             
-
             //OVERRIDE SETTINGS
             //FileUtils.dirpath = "I:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\PCBANKS";
 
@@ -93,11 +91,14 @@ namespace ImGUI_SDL_ModelViewer
             
             engine.init(Size.X, Size.Y); //Initialize Engine
             
+            //Initialize ImGuiManager
+            _ImGuiManager = new(this, engine);
+            
             //Populate GLControl
-            SceneGraphNode sceneRoot = SceneGraphNode.CreateScene("SCENE ROOT");
-            SceneGraphNode test1 = SceneGraphNode.CreateLocator("Test Locator 1");
+            SceneGraphNode sceneRoot = engine.CreateSceneNode("SCENE ROOT");
+            SceneGraphNode test1 = engine.CreateLocatorNode("Test Locator 1");
             sceneRoot.AddChild(test1);
-            SceneGraphNode test2 = SceneGraphNode.CreateLocator("Test Locator 2");
+            SceneGraphNode test2 = engine.CreateLocatorNode("Test Locator 2");
             sceneRoot.AddChild(test2);
 
             //Register Entities
@@ -361,9 +362,7 @@ namespace ImGUI_SDL_ModelViewer
         {
             if (node.HasComponent<TriggerActionComponent>())
             {
-                //Find SceneGraphNode
-                SceneGraphNode n = engine.sceneMgmtSys.FindEntitySceneGraphNode(node);
-                engine.actionSys.Add(n);
+                engine.actionSys.Add(node);
             }
             
             foreach (SceneGraphNode child in node.Children)

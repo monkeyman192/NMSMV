@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using MVCore.Common;
 
 namespace MVCore
 {
@@ -9,7 +10,6 @@ namespace MVCore
     {
         public int ID = -1;
         public string Name = "";
-        private readonly List<long> _entityIDList;
         public SceneGraphNode Root = null;
         private readonly List<SceneGraphNode> _Nodes = new();
         private readonly List<SceneGraphNode> _MeshNodes = new();
@@ -17,7 +17,6 @@ namespace MVCore
         public Scene(int id)
         {
             ID = id;
-            _entityIDList = new();
             _Nodes = new();
             _MeshNodes = new();
         }
@@ -29,25 +28,40 @@ namespace MVCore
 
         public bool HasNode(SceneGraphNode n)
         {
-            return _entityIDList.Contains(n.ID);
+            return _Nodes.Contains(n);
         }
 
         public void AddNode(SceneGraphNode n)
         {
+            //I should not chekck for registration status of n here
+            //This should allow for node generation from the plugins
+            //And then try to register the entire scene once its ready
+            //to the entity registry
+            
             if (HasNode(n))
             {
-                Common.Callbacks.Log(string.Format("Node {0} already belongs to scene {1}", n.ID, ID),
-                    Common.LogVerbosityLevel.WARNING);
+                Callbacks.Log(string.Format("Node {0} already belongs to scene {1}", n.Name, ID),
+                    LogVerbosityLevel.WARNING);
                 return;
             }
-
-            _entityIDList.Add(n.ID);
+            
             _Nodes.Add(n);
 
             if (n.HasComponent<MeshComponent>())
                 _MeshNodes.Add(n);
-                
+        }
 
+        public void CacheUninitializedNodes()
+        {
+            foreach (SceneGraphNode n in _Nodes)
+            {
+                GUIDComponent gc = n.GetComponent<GUIDComponent>() as GUIDComponent;
+
+                if (!gc.Initialized)
+                {
+                    
+                }
+            }
         }
 
         public void SetRoot(SceneGraphNode n)
@@ -60,7 +74,6 @@ namespace MVCore
         {
             _Nodes.Clear();
             _MeshNodes.Clear();
-            _entityIDList.Clear();
             Root = null;
         }
 
@@ -93,21 +106,6 @@ namespace MVCore
             }
         }
 
-        //TODO: I think search by entity is not that useful.
-        public SceneGraphNode FindSceneGraphNodeFromEntity(Entity e)
-        {
-            //At first find the scene that e belongs
-            if (!_entityIDList.Contains(e.ID))
-            {
-                return null;
-            }
-
-            //Fetch root SceneGraphNode
-            SceneGraphNode res = null;
-            Root.findNodeByID(e.ID, ref res);
-
-            return res;
-        }
 
     }
 }

@@ -275,6 +275,9 @@ namespace MVCore.Systems
             shader_conf = GLShaderHelper.compileShader(geometry_shader_vs, geometry_shader_fs, geometry_shader_gs, null, null,
                             new(), new(), SHADER_TYPE.DEBUG_MESH_SHADER, SHADER_MODE.DEFFERED);
 
+            shader_conf.GetComponent<GUIDComponent>().Dispose();
+            shader_conf.Dispose();
+            
             //Compile Object Shaders
             GLSLShaderSource gizmo_shader_vs = new("Shaders/Gizmo_VS.glsl", true);
             GLSLShaderSource gizmo_shader_fs = new("Shaders/Gizmo_FS.glsl", true);
@@ -302,7 +305,7 @@ namespace MVCore.Systems
 
             shader_conf = GLShaderHelper.compileShader(bbox_shader_vs, bbox_shader_fs, null, null, null,
                 new(), new(), GLSLHelper.SHADER_TYPE.BBOX_SHADER, SHADER_MODE.DEFFERED);
-
+            shader_conf.Dispose();
 
             //Texture Mixing Shader
             GLSLShaderSource texture_mixing_shader_vs = new("Shaders/texture_mixer_VS.glsl", true);
@@ -475,7 +478,7 @@ namespace MVCore.Systems
 
         private void AddDefaultLights()
         {
-            SceneGraphNode light = SceneGraphNode.CreateLight("Default Light", 200.0f, ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
+            SceneGraphNode light = EngineRef.CreateLightNode("Default Light", 200.0f, ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
             TransformationSystem.SetEntityLocation(light, new Vector3(100.0f, 100.0f, 100.0f));
             
             EngineRef.RegisterEntity(light);
@@ -496,6 +499,7 @@ namespace MVCore.Systems
 
             EngineRef.RegisterEntity(def_quad_mesh);
             GeometryMgr.AddPrimitiveMesh(def_quad_mesh);
+            q.Dispose();
 
             //Default render quad
             q = new Primitives.Quad();
@@ -504,7 +508,8 @@ namespace MVCore.Systems
             def_render_quad.vao = q.getVAO();
             EngineRef.RegisterEntity(def_render_quad);
             GeometryMgr.AddPrimitiveMesh(def_render_quad);
-
+            q.Dispose();
+            
             //Default cross
             Primitives.Cross c = new(0.1f, true);
             
@@ -524,7 +529,7 @@ namespace MVCore.Systems
 
             EngineRef.RegisterEntity(def_cross);
             GeometryMgr.AddPrimitiveMesh(def_cross);
-
+            c.Dispose();
 
 
             //Default cube
@@ -538,7 +543,8 @@ namespace MVCore.Systems
             
             EngineRef.RegisterEntity(def_box);
             GeometryMgr.AddPrimitiveMesh(def_box);
-
+            bx.Dispose();
+            
             //Default sphere
             Primitives.Sphere sph = new(new Vector3(0.0f, 0.0f, 0.0f), 100.0f);
 
@@ -547,9 +553,10 @@ namespace MVCore.Systems
                 Name = "default_sphere",
                 vao = sph.getVAO()
             };
-
+            
             EngineRef.RegisterEntity(def_sph);
             GeometryMgr.AddPrimitiveMesh(def_sph);
+            sph.Dispose();
 
             //Light Sphere Mesh
             Primitives.Sphere lsph = new(new Vector3(0.0f, 0.0f, 0.0f), 1.0f);
@@ -572,6 +579,7 @@ namespace MVCore.Systems
 
             EngineRef.RegisterEntity(def_lsph);
             GeometryMgr.AddPrimitiveMesh(def_lsph);
+            lsph.Dispose();
             
             GenerateGizmoParts();
         }
@@ -706,7 +714,9 @@ namespace MVCore.Systems
                 };
 
                 
-                GeometryMgr.AddPrimitiveMesh(temp);
+                if (!GeometryMgr.AddPrimitiveMesh(temp))
+                    temp.Dispose();
+                arr.Dispose();
 
             }
 
@@ -777,7 +787,7 @@ namespace MVCore.Systems
             }
 
             //Check if the shader has been registered to the rendering system
-            if (!ShaderMgr.ShaderExists(m.Material.Shader.ID))
+            if (!ShaderMgr.ShaderExists(m.Material.Shader.GetID()))
             {
                 ShaderMgr.AddShader(m.Material.Shader);
                 ShaderMgr.AddMaterialToShader(m.Material);

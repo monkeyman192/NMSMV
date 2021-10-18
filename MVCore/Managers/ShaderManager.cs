@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using GLSLHelper;
+using OpenTK.Graphics.OpenGL;
 
 namespace MVCore.Managers
 {
@@ -38,9 +39,10 @@ namespace MVCore.Managers
         {
             if (Add(shader))
             {
-                ShaderMap[shader.ID] = shader;
+                GUIDComponent gc = shader.GetComponent<GUIDComponent>() as GUIDComponent;
+                ShaderMap[gc.ID] = shader;
                 ShaderHashMap[shader.Hash] = shader;
-                ShaderMaterialMap[shader.ID] = new();
+                ShaderMaterialMap[gc.ID] = new();
                 return true;
             }
             return false;
@@ -68,12 +70,12 @@ namespace MVCore.Managers
 
         public void AddMaterialToShader(MeshMaterial mat)
         {
-            ShaderMaterialMap[mat.Shader.ID].Add(mat);
+            ShaderMaterialMap[mat.Shader.GetID()].Add(mat);
         }
 
         public List<MeshMaterial> GetShaderMaterials(GLSLShaderConfig shader)
         {
-            return ShaderMaterialMap[shader.ID];
+            return ShaderMaterialMap[shader.GetID()];
         }
 
         public new void CleanUp()

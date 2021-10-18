@@ -18,16 +18,27 @@ namespace MVCore.Managers
 
         public virtual bool Exists(Entity item)
         {
-            return EntityMap.ContainsKey(item.ID);
+            GUIDComponent gc = item.GetComponent<GUIDComponent>() as GUIDComponent;
+            return EntityMap.ContainsKey(gc.ID);
+        }
+
+        private bool _IsEntityRegistered(Entity e)
+        {
+            GUIDComponent gc = e.GetComponent<GUIDComponent>() as GUIDComponent;
+            return gc.Initialized;
         }
             
         public virtual bool Add(T item)
         {
             Entity e = _CheckEntity(item);
+
+            if (!_IsEntityRegistered(e))
+                return false;
+            
             if (!Exists(e))
             {
                 Entities.Add(item);
-                EntityMap[e.ID] = e;
+                EntityMap[(e.GetComponent<GUIDComponent>() as GUIDComponent).ID] = e;
                 EntityCount++;
                 return true;
             }
@@ -40,7 +51,7 @@ namespace MVCore.Managers
             if (Exists(e))
             {
                 Entities.Remove(item);
-                EntityMap.Remove(e.ID);
+                EntityMap.Remove((e.GetComponent<GUIDComponent>() as GUIDComponent).ID);
                 EntityCount--;
                 return true;
             }

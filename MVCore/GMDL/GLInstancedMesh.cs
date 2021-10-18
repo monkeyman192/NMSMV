@@ -137,8 +137,9 @@ namespace MVCore
                     GL.DeleteTexture(instanceBoneMatricesTex);
                     GL.DeleteBuffer(instanceBoneMatricesTexTBO);
                 }
-
+                
                 disposed = true;
+                base.Dispose(disposing);
             }
         }
 
