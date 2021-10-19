@@ -5,7 +5,7 @@ namespace MVCore
     public class GUIDComponent : Component
     {
         public long ID = 0xFFFFFFFF;
-        public long testID = 0;
+        public long testID = 0; //TODO: remove that when we're happy with memory disposal
         public bool Initialized = false;
         public static long test_counter = 1;
 
@@ -20,8 +20,8 @@ namespace MVCore
         public GUIDComponent()
         {
             testID = test_counter++;
-            if (testID == 110)
-                Console.WriteLine("break");
+            //if (testID == 110)
+            //    Console.WriteLine("break");
         }
         
         public override Component Clone()

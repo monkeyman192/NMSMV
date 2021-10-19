@@ -34,7 +34,7 @@ namespace ImGuiHelper
             io.ConfigFlags |= ImGuiConfigFlags.DockingEnable; //Enable Docking
             
             //Initialize items
-            ObjectViewer = new();
+            ObjectViewer = new(this);
             SceneGraphViewer = new(this);
             MaterialEditor = new();
             ShaderEditor = new();

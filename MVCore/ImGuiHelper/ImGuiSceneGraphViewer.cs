@@ -69,6 +69,17 @@ namespace ImGuiHelper
                 _selected = n;
             }
 
+            //DrawCheckbox for non root nodes
+            bool isCheckboxVisible = true;
+            if (n != _root)
+            {
+                if (ImGui.Checkbox("##Entity" + n.GetID(), ref n.IsRenderable))
+                {
+                    n.SetRenderableStatusRec(n.IsRenderable);
+                }
+                ImGui.SameLine();    
+            }
+            
             bool node_open = ImGui.TreeNodeEx(n.Name, base_flags);
             
             n.IsOpen = node_open;
@@ -82,26 +93,41 @@ namespace ImGuiHelper
             } 
             if (ImGui.BeginPopupContextItem()) // <-- use last item id as popup id
             {
-                if (ImGui.BeginMenu("Add Child##child-ctx"))
+                if (ImGui.BeginMenu("Add Child Node##child-ctx"))
                 {
+                    bool EntityAdded = false;
+                    SceneGraphNode new_node = null;
                     if (ImGui.MenuItem("Add Locator"))
                     {
-                        SceneGraphNode parent = n;
-                        
                         //Create and register locator node
-                        SceneGraphNode new_locator = _manager.EngineRef.CreateLocatorNode("Locator#1");
+                        new_node = _manager.EngineRef.CreateLocatorNode("Locator#1");
                         Callbacks.Log("Creating Locator node", LogVerbosityLevel.INFO);
-                        //Register new locator node to engine
-                        _manager.EngineRef.RegisterEntity(new_locator);
-                        
-                        //Set parent
-                        new_locator.SetParent(n);
+                        EntityAdded = true;
                     }
                     
                     if (ImGui.MenuItem("Add Light"))
                     {
-                        Console.WriteLine("Add new locator node as a child to selected node");
+                        //Create and register locator node
+                        new_node = _manager.EngineRef.CreateLightNode("Light#1");
+                        Callbacks.Log("Creating Light node", LogVerbosityLevel.INFO);
+                        EntityAdded = true;
                     }
+
+                    if (EntityAdded)
+                    {
+                        //Register new locator node to engine
+                        _manager.EngineRef.RegisterEntity(new_node);
+                        
+                        //Add locator the activeScene
+                        Scene activeScene = _manager.EngineRef.GetActiveScene();
+                        activeScene.AddNode(new_node);
+                        _manager.EngineRef.transformSys.RequestEntityUpdate(new_node);
+                        
+                        //Set parent
+                        new_node.SetParent(n);
+                    }
+                    
+                    
                     ImGui.EndMenu();
                 }
 

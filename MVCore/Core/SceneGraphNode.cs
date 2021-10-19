@@ -65,6 +65,16 @@ namespace MVCore
             }
         }
 
+        public void SetRenderableStatusRec(bool status)
+        {
+            IsRenderable = status;
+            TransformComponent tc = GetComponent<TransformComponent>() as TransformComponent;
+            tc.Data.IsActive = status;
+            
+            foreach (SceneGraphNode child in Children)
+                child.SetRenderableStatusRec(status);
+        }
+        
         public void RemoveChild(SceneGraphNode m)
         {
             if (Children.Contains(m))

@@ -904,6 +904,14 @@ namespace MVCore
         
         #endregion
         
+        #region StateQueries
+
+        public Scene GetActiveScene()
+        {
+            return sceneMgmtSys.ActiveScene;
+        }
+        
+        #endregion
         
         
         

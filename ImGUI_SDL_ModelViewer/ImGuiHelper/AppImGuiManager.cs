@@ -10,7 +10,7 @@ namespace ImGUI_SDL_ModelViewer
     class AppImGuiManager : ImGuiManager
     {
         //ImGui Variables
-        private readonly ImGuiObjectViewer ObjectViewer = new();
+        private readonly ImGuiObjectViewer ObjectViewer;
         private readonly ImGuiSceneGraphViewer SceneGraphViewer;
         private readonly ImGuiMaterialEditor MaterialEditor = new();
         private readonly ImGuiShaderEditor ShaderEditor = new();
@@ -25,6 +25,7 @@ namespace ImGUI_SDL_ModelViewer
         public AppImGuiManager(Window win, Engine engine) : base(win, engine)
         {
             SceneGraphViewer = new(this);
+            ObjectViewer = new(this);
         }
 
         public void ShowSettingsWindow()

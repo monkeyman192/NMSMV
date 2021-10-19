@@ -10,13 +10,15 @@ namespace ImGuiHelper
     class ImGuiObjectViewer
     {
         private SceneGraphNode _model;
+        private ImGuiManager _manager;
         
         //Imgui variables to reference 
         private int current_material_sampler = 0;
         private int current_material_flag = 0;
         
-        public ImGuiObjectViewer(){
-        
+        public ImGuiObjectViewer(ImGuiManager mgr)
+        {
+            _manager = mgr;
         }
 
         public void SetModel(SceneGraphNode m)
@@ -55,6 +57,14 @@ namespace ImGuiHelper
                 
             //ImGui.End();
         
+        }
+
+        private void RequestNodeUpdateRecursive(SceneGraphNode n)
+        {
+            _manager.EngineRef.transformSys.RequestEntityUpdate(n);
+            
+            foreach (SceneGraphNode child in n.Children)
+                RequestNodeUpdateRecursive(child);
         }
 
         private void DrawModel()
@@ -101,7 +111,7 @@ namespace ImGuiHelper
                 ImGui.Columns(1);
 
                 if (transform_changed)
-                    MVCore.Common.RenderState.engineRef.transformSys.RequestEntityUpdate(_model);
+                    RequestNodeUpdateRecursive(_model);
             }
             
             //Draw Components

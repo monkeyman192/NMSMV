@@ -70,11 +70,11 @@ namespace MVCore.Systems
             }
 
             //TODO: Apply frustum culling to all transform data objects and set visibility
-            //For now mark all as visible
+            //For now mark all selected nodes visible
             foreach (TransformData td in _Data)
             {
                 td.WasOccluded = td.IsOccluded;
-                td.IsOccluded = false;
+                td.IsOccluded = !td.IsActive;
                 td.IsUpdated = true;
             }
 

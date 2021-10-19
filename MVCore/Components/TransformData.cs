@@ -94,6 +94,7 @@ namespace MVCore
         public bool WasOccluded; //Set this to true so as to trigger the first instance setup
         public bool IsOccluded;
         public bool IsUpdated;
+        public bool IsActive;
 
         public TransformData(float tx = 0.0f, float ty = 0.0f, float tz = 0.0f,
                              float rx = 0.0f, float ry = 0.0f, float rz = 0.0f,
@@ -126,6 +127,7 @@ namespace MVCore
             WasOccluded = true;
             IsOccluded = true;
             IsUpdated = false;
+            IsActive = true; //by default
         }
 
         public void SetParentData(TransformData data)

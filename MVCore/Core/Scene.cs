@@ -101,6 +101,7 @@ namespace MVCore
                         GLMeshBufferManager.SetInstanceWorldMat(mc.MeshVao, mc.InstanceID, td.WorldTransformMat);
                         GLMeshBufferManager.SetInstanceWorldMatInv(mc.MeshVao, mc.InstanceID, td.InverseTransformMat);
                     }
+
                     td.IsUpdated = false; //Reset updated status to prevent further updates on the same frame update
                 }
             }
