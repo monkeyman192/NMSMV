@@ -14,7 +14,7 @@ namespace NMSPlugin
         public string GameDir;
         public string UnpackDir;
         
-        public static PluginSettings GenerateDefaultSettings()
+        public new static PluginSettings GenerateDefaultSettings()
         {
             NMSPluginSettings settings = new()
             {

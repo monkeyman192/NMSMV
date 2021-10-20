@@ -108,22 +108,40 @@ namespace MVCore
         {
             Common.Callbacks.Assert(mc.RenderInstanceID >= 0, "Negative instance ID. ILLEGAL instance removal");
 
-            int instance_float_offset = mc.RenderInstanceID * instance_struct_size_floats;
-            int next_instance_float_offset = instance_float_offset + instance_struct_size_floats;
-            float[] tempbuffer = new float[mesh.dataBuffer.Length - next_instance_float_offset];
-            //Copy next instance data to the tempbuffer
-            Array.Copy(mesh.dataBuffer, next_instance_float_offset, tempbuffer, 0, tempbuffer.Length);
-            //Overwrite tempbuffer to the data buffer
-            Array.Copy(tempbuffer, 0, mesh.dataBuffer, instance_float_offset, tempbuffer.Length);
-            
-            foreach (MeshComponent mmc in mesh.instanceRefs)
+            if (mc.RenderInstanceID == mesh.RenderedInstanceCount - 1)
             {
-                if (mmc.RenderInstanceID > mc.RenderInstanceID)
-                    mmc.RenderInstanceID--;
+                mesh.RenderedInstanceCount--;
+                return;
             }
             
+            //Find last instance
+            MeshComponent lastmc = mesh.instanceRefs[^1];
+
+            //Fetch last instance databuffer
+            float[] tempbuffer = new float[instance_struct_size_floats];
+            int instance_float_offset = lastmc.RenderInstanceID * instance_struct_size_floats;
+            Array.Copy(mesh.dataBuffer, instance_float_offset, tempbuffer, 0, instance_struct_size_floats);
+
+            //Swap instances in the instanceRefs List
+            mesh.instanceRefs.RemoveAt(mc.RenderInstanceID);
+            mesh.instanceRefs.Insert(mc.RenderInstanceID, lastmc);
+            mesh.instanceRefs.RemoveAt(mesh.instanceRefs.Count - 1);
+            mesh.instanceRefs.Add(mc);
+
+            //Replace removed instance data with the data of the last instance
+            instance_float_offset = mc.RenderInstanceID * instance_struct_size_floats;
+            Array.Copy(tempbuffer, 0, mesh.dataBuffer, instance_float_offset, instance_struct_size_floats);
+
+            //Swap RenderInstanceIds
+            int tempid = lastmc.RenderInstanceID;
+            lastmc.RenderInstanceID = mc.RenderInstanceID;
+            mc.RenderInstanceID = tempid;
+
+            
+
             mesh.RenderedInstanceCount--;
         }
+        
         public static void RemoveMeshInstance(ref GLInstancedMesh mesh, MeshComponent mc)
         {
             Common.Callbacks.Assert(mc.InstanceID >= 0, "Negative instance ID. ILLEGAL instance removal");

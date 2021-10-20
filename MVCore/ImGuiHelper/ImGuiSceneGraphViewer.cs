@@ -70,7 +70,6 @@ namespace ImGuiHelper
             }
 
             //DrawCheckbox for non root nodes
-            bool isCheckboxVisible = true;
             if (n != _root)
             {
                 if (ImGui.Checkbox("##Entity" + n.GetID(), ref n.IsRenderable))
@@ -80,6 +79,7 @@ namespace ImGuiHelper
                 ImGui.SameLine();    
             }
             
+            ImGui.SetNextItemOpen(n.IsOpen);
             bool node_open = ImGui.TreeNodeEx(n.Name, base_flags);
             
             n.IsOpen = node_open;
@@ -125,6 +125,14 @@ namespace ImGuiHelper
                         
                         //Set parent
                         new_node.SetParent(n);
+
+                        n.IsOpen = true; //Make sure to open the node so that the new node is visible
+
+                        //Set Reference to the new node
+                        _clicked = new_node;
+                        _manager.SetObjectReference(new_node);
+                        _manager.SetActiveMaterial(new_node);
+
                     }
                     
                     
@@ -144,7 +152,10 @@ namespace ImGuiHelper
                 if (n.Children.Count > 0)
                 {
                     foreach (SceneGraphNode nc in n.Children)
+                    {
                         DrawNode(nc);
+                    }
+                    
                     ImGui.TreePop();
                 }
             }

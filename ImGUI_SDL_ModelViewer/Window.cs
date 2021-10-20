@@ -75,24 +75,26 @@ namespace ImGUI_SDL_ModelViewer
             //OVERRIDE SETTINGS
             //FileUtils.dirpath = "I:\\SteamLibrary1\\steamapps\\common\\No Man's Sky\\GAMEDATA\\PCBANKS";
 
+            //Initialize Engine backend
+            engine = new Engine(this);
+            RenderState.engineRef = engine; //Set reference to engine [Should do before initialization]
+            
+            engine.init(Size.X, Size.Y); //Initialize Engine
+
+            //Initialize ImGuiManager
+            _ImGuiManager = new(this, engine);
+
             //Load Settings
             if (!File.Exists("settings.json"))
                 _ImGuiManager.ShowSettingsWindow();
-            
+
             RenderState.settings = Settings.loadFromDisk();
 
             //Pass rendering settings to the Window
             RenderFrequency = RenderState.settings.renderSettings.FPS;
             UpdateFrequency = 60;
 
-            //Initialize Engine backend
-            engine = new Engine(this);
-            RenderState.engineRef = engine; //Set reference to engine [Should do before initialization]
             
-            engine.init(Size.X, Size.Y); //Initialize Engine
-            
-            //Initialize ImGuiManager
-            _ImGuiManager = new(this, engine);
             
             //Populate GLControl
             SceneGraphNode sceneRoot = engine.CreateSceneNode("SCENE ROOT");

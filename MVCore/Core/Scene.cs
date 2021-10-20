@@ -90,16 +90,18 @@ namespace MVCore
                     if (td.IsOccluded && !td.WasOccluded)
                     {
                         //Remove Instance
+                        Console.WriteLine("Removing Instance {0}", n.Name);
                         GLMeshBufferManager.RemoveRenderInstance(ref mc.MeshVao, mc);
                     }
                     else if (!td.IsOccluded && td.WasOccluded)
                     {
+                        Console.WriteLine("Adding Instance {0}", n.Name);
                         mc.RenderInstanceID = GLMeshBufferManager.AddRenderInstance(ref mc.MeshVao, td);
                     }
                     else if (!td.IsOccluded)
                     {
-                        GLMeshBufferManager.SetInstanceWorldMat(mc.MeshVao, mc.InstanceID, td.WorldTransformMat);
-                        GLMeshBufferManager.SetInstanceWorldMatInv(mc.MeshVao, mc.InstanceID, td.InverseTransformMat);
+                        GLMeshBufferManager.SetInstanceWorldMat(mc.MeshVao, mc.RenderInstanceID, td.WorldTransformMat);
+                        GLMeshBufferManager.SetInstanceWorldMatInv(mc.MeshVao, mc.RenderInstanceID, td.InverseTransformMat);
                     }
 
                     td.IsUpdated = false; //Reset updated status to prevent further updates on the same frame update
