@@ -74,6 +74,7 @@ namespace ImGuiHelper
             {
                 if (ImGui.Checkbox("##Entity" + n.GetID(), ref n.IsRenderable))
                 {
+                    Console.WriteLine("Clicked checkbox {0}",n.IsRenderable);
                     n.SetRenderableStatusRec(n.IsRenderable);
                 }
                 ImGui.SameLine();    

@@ -96,7 +96,7 @@ namespace MVCore
                     else if (!td.IsOccluded && td.WasOccluded)
                     {
                         Console.WriteLine("Adding Instance {0}", n.Name);
-                        mc.RenderInstanceID = GLMeshBufferManager.AddRenderInstance(ref mc.MeshVao, td);
+                        GLMeshBufferManager.AddRenderInstance(ref mc, td);
                     }
                     else if (!td.IsOccluded)
                     {

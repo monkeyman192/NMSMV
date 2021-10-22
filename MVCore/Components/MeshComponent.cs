@@ -19,7 +19,8 @@ namespace MVCore
         
         public MeshComponent()
         {
-            
+            InstanceID = -1;
+            RenderInstanceID = -1;
         }
 
         public override Component Clone()

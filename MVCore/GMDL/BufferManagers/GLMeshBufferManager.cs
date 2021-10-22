@@ -1,4 +1,5 @@
 ﻿using System;
+using MVCore.Common;
 using OpenTK;
 using OpenTK.Mathematics;
 using MVCore.Utils;
@@ -54,36 +55,63 @@ namespace MVCore
                 mesh.instanceRefs.Add(mc); //Keep reference
                 mesh.InstanceCount++;
             }
-
-            return instance_id;
-        }
-
-        public static int AddRenderInstance(ref GLInstancedMesh mesh, TransformData td)
-        {
-            int render_instance_id = mesh.RenderedInstanceCount;
-
+            else return -1;
+            
             //Expand mesh data buffer if required
-            if (render_instance_id * instance_struct_size_bytes > mesh.dataBuffer.Length)
+            if ((instance_id+1) * instance_struct_size_floats > mesh.dataBuffer.Length)
             {
                 float[] newBuffer = new float[mesh.dataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
                 Array.Copy(mesh.dataBuffer, newBuffer, mesh.dataBuffer.Length);
                 mesh.dataBuffer = newBuffer;
             }
+
+            return instance_id;
+        }
+        
+        public static void AddRenderInstance(ref MeshComponent mc, TransformData td)
+        {
+            GLInstancedMesh mesh = mc.MeshVao;
             
+            if ((mc.RenderInstanceID < mesh.RenderedInstanceCount - 1) && mc.RenderInstanceID >= 0)
+            {
+                Callbacks.Assert(false, "This should not happen");
+            } else if (mc.RenderInstanceID > mesh.RenderedInstanceCount)
+            {
+                MeshComponent lastmc = mesh.instanceRefs[mesh.RenderedInstanceCount];
+                int old_pos = mesh.RenderedInstanceCount;
+                int new_pos = mc.RenderInstanceID;
+                
+                //Move the last data to the position of the requested instance
+                mesh.instanceRefs[new_pos] = lastmc;
+                mesh.instanceRefs[old_pos] = mc;
+                
+                //Copy buffer data
+                int old_instance_offset = old_pos * instance_struct_size_floats;
+                int new_instance_offset = new_pos * instance_struct_size_floats;
+                Array.Copy(mesh.dataBuffer, old_instance_offset, 
+                    mesh.dataBuffer, new_instance_offset,
+                    instance_struct_size_floats);
+                
+                //Set RenderrInstanceIDs
+                lastmc.RenderInstanceID = new_pos;
+
+            }
+            
+            mc.RenderInstanceID = mesh.RenderedInstanceCount;
+
             //Uplod worldMat to the meshVao
             Matrix4 actualWorldMat = td.WorldTransformMat;
             Matrix4 actualWorldMatInv = (actualWorldMat).Inverted();
-            SetInstanceWorldMat(mesh, render_instance_id, actualWorldMat);
-            SetInstanceWorldMatInv(mesh, render_instance_id, actualWorldMatInv);
-            SetInstanceNormalMat(mesh, render_instance_id, Matrix4.Transpose(actualWorldMatInv));
+            SetInstanceWorldMat(mesh, mc.RenderInstanceID, actualWorldMat);
+            SetInstanceWorldMatInv(mesh, mc.RenderInstanceID, actualWorldMatInv);
+            SetInstanceNormalMat(mesh, mc.RenderInstanceID, Matrix4.Transpose(actualWorldMatInv));
 
             mesh.RenderedInstanceCount++;
-            
-            return render_instance_id;
         }
         
         public static int AddRenderInstance(ref GLInstancedMesh mesh, Matrix4 worldMat, Matrix4 worldMatInv, Matrix4 normMat)
         {
+        
             int render_instance_id = mesh.RenderedInstanceCount;
 
             //Expand mesh data buffer if required
@@ -115,7 +143,7 @@ namespace MVCore
             }
             
             //Find last instance
-            MeshComponent lastmc = mesh.instanceRefs[^1];
+            MeshComponent lastmc = mesh.instanceRefs[mesh.RenderedInstanceCount - 1];
 
             //Fetch last instance databuffer
             float[] tempbuffer = new float[instance_struct_size_floats];
@@ -133,12 +161,9 @@ namespace MVCore
             Array.Copy(tempbuffer, 0, mesh.dataBuffer, instance_float_offset, instance_struct_size_floats);
 
             //Swap RenderInstanceIds
-            int tempid = lastmc.RenderInstanceID;
-            lastmc.RenderInstanceID = mc.RenderInstanceID;
-            mc.RenderInstanceID = tempid;
+            (lastmc.RenderInstanceID, mc.RenderInstanceID) = (mc.RenderInstanceID, lastmc.RenderInstanceID);
 
             
-
             mesh.RenderedInstanceCount--;
         }
         

@@ -56,12 +56,12 @@ namespace MVCore.Systems
 
         public override void OnFrameUpdate(double dt)
         {
-            UpdateActiveScene();
+            
         }
 
         public override void OnRenderUpdate(double dt)
         {
-            
+            UpdateActiveScene();
         }
 
         public override void CleanUp()
