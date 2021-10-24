@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using libMBIN.NMS;
-using libMBIN.NMS.GameComponents;
 using MathNet.Numerics;
 using MVCore.Common;
 

@@ -1,5 +1,4 @@
-﻿using libMBIN;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using libMBIN.NMS.GameComponents;
@@ -9,148 +8,41 @@ namespace MVCore
 {
     public abstract class Trigger
     {
-        public NMSTemplate _template;
         public Trigger() { }
 
-        public Trigger(NMSTemplate t)
-        {
-            _template = t;
-        }
     }
 
     public class StateTimeEventTrigger : Trigger
     {
+        public float Seconds;
+        public float RandomSeconds;
+        
         public StateTimeEventTrigger() { }
-
-        public StateTimeEventTrigger(NMSTemplate t) : base(t)
-        {
-
-        }
-
-        //Exposed Properties
-        public float Seconds
-        {
-            get {
-                return ((GcStateTimeEvent)_template).Seconds;
-                }
-        }
-
-        public float RandomSeconds
-        {
-            get
-            {
-                return ((GcStateTimeEvent)_template).RandomSeconds;
-            }
-        }
     }
 
     public class AnimFrameEventTrigger : Trigger
     {
         public AnimFrameEventTrigger() { }
-
-        public AnimFrameEventTrigger(NMSTemplate t) : base(t)
-        {
-
-        }
-
-        //Exposed Properties
-        public string Anim
-        {
-            get
-            {
-                return ((GcAnimFrameEvent)_template).Anim;
-            }
-        }
-
-        public int FrameStart
-        {
-            get
-            {
-                return ((GcAnimFrameEvent)_template).FrameStart;
-            }
-        }
-
-        public bool StartFromEnd
-        {
-            get
-            {
-                return ((GcAnimFrameEvent)_template).StartFromEnd;
-            }
-        }
+        public AnimationData AnimData;
+        public int FrameStart;
+        public int FrameEnd;
+        public bool StartFromEnd;
     }
 
     public class PlayerNearbyEventTrigger : Trigger
     {
+        public string RequirePlayerAction;
+        public float Angle;
+        public float AngleOffset;
+        public float AnglePlayerRelative;
+        public string DistanceCheckType;
+        public bool Inverse;
+        public float Distance;
+        
         public PlayerNearbyEventTrigger()
         {
 
         }
-
-        public PlayerNearbyEventTrigger(NMSTemplate t) : base(t)
-        {
-            
-        }
-
-        //Exposed Properties
-
-        public string RequirePLayerAction
-        {
-            get
-            {
-                return ((GcPlayerNearbyEvent)_template).RequirePlayerAction.ToString();
-            }
-        }
-
-        public float Angle
-        {
-            get
-            {
-                return ((GcPlayerNearbyEvent)_template).Angle;
-            }
-        }
-
-        public bool AnglePlayerRelative
-        {
-            get
-            {
-                return ((GcPlayerNearbyEvent)_template).AnglePlayerRelative;
-            }
-        }
-
-        public float AngleOffset
-        {
-            get
-            {
-                return ((GcPlayerNearbyEvent)_template).AngleOffset;
-            }
-        }
-
-        public string DistanceCheckType
-        {
-            get
-            {
-                return ((GcPlayerNearbyEvent)_template).DistanceCheckType.ToString();
-            }
-        }
-
-        public bool Inverse
-        {
-            get
-            {
-                return ((GcPlayerNearbyEvent)_template).Inverse;
-            }
-        }
-
-        public float Distance
-        {
-            get
-            {
-                return ((GcPlayerNearbyEvent)_template).Distance;
-            }
-        }
-        
-
-
     }
 
 
@@ -159,128 +51,59 @@ namespace MVCore
 
     public abstract class Action
     {
-        public NMSTemplate _template;
         public Action() { }
-
-        public Action(NMSTemplate t)
-        {
-            _template = t;
-        }
     }
 
+    public enum NodeActivationState
+    {
+        Activate,
+        Deactivate,
+        Toggle,
+        Remove,
+        RemoveChildren
+    }
+    
     public class NodeActivationAction: Action
     {
-        public SceneGraphNode Target = null;
-        
+        public string TargetName;
+        public NodeActivationState TargetState;
+        public bool UseMasterModel;
+
         public NodeActivationAction()
         {
 
         }
-
-        public NodeActivationAction(NMSTemplate t): base(t)
-        {
-            
-        }
-
-        //Exposed Properties
-        public string Name
-        {
-            get 
-            {
-                return ((GcNodeActivationAction) _template).Name;
-            }
-        }
-
-        public string NodeActiveState
-        {
-            get
-            {
-                return ((GcNodeActivationAction)_template).NodeActiveState.ToString();
-            }
-        }
-
-        public bool UseMasterModel
-        {
-            get
-            {
-                return ((GcNodeActivationAction) _template).UseMasterModel;
-            }
-        }
-
-        public void SetTarget(SceneGraphNode e)
-        {
-            Target = e;
-        }
-
-        public void ClearTargeT()
-        {
-            Target = null;
-        }
-
+        
     }
 
     public class PlayAnimAction: Action
     {
+        public string Animation;
+        
         public PlayAnimAction()
-        {
-
-        }
-
-        public PlayAnimAction(NMSTemplate t): base(t)
         {
 
         }
 
         //Expose Properties
         
-        public string Anim
-        {
-            get { return ((GcPlayAnimAction)_template).Anim; }
-        }
     }
 
     public class GoToStateAction: Action
     {
+        public string State;
+        public bool Broadcast;
+        public string BroadcastLevel;
+        
         public GoToStateAction()
         {
 
-        }
-
-        public GoToStateAction(NMSTemplate t): base(t)
-        {
-
-        }
-
-        //Exposed Properties
-        public string State
-        {
-            get
-            {
-                return ((GcGoToStateAction)_template).State;
-            }
-        }
-
-        public bool Broadcast
-        {
-            get
-            {
-                return ((GcGoToStateAction)_template).Broadcast;
-            }
-        }
-
-        public string BroadcastLevel
-        {
-            get
-            {
-                return ((GcGoToStateAction)_template).BroadcastLevel.ToString();
-            }
         }
 
     }
 
     public class ActionTrigger
     {
-        NMSTemplate _template;
         public List<Action> Actions;
         public Trigger Trigger;
         
@@ -290,8 +113,6 @@ namespace MVCore
 
         public ActionTrigger(GcActionTrigger at)
         {
-            _template = at;
-            
             //Populate Actions
             Actions = new List<Action>();
             foreach (NMSTemplate t in at.Action)

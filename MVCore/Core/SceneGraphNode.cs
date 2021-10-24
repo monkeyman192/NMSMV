@@ -32,10 +32,11 @@ namespace MVCore
         public bool IsOpen = false;
         //public SceneGraphNode ParentScene = null; //Is this useful at all?
         public List<float> LODDistances = new();
+        public Dictionary<string, string> Attributes = new();
         public SceneGraphNode Parent = null;
         public Scene SceneRef = null;
         public List<SceneGraphNode> Children = new();
-
+        
         //Disposable Stuff
         private bool disposed = false;
         private Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);

@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <BaseOutputPath>..\bin\plugins</BaseOutputPath>
   </PropertyGroup>
 
   <Import Project="..\MVCore\MVCore.projitems" Label="Shared" />

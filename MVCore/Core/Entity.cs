@@ -26,6 +26,7 @@ namespace MVCore
         ShaderSource,
         Shader,
         Mesh,
+        Animation,
         InstancedMesh,
         LightInstancedMesh
     }

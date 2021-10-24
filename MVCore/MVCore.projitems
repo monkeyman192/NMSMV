@@ -9,6 +9,8 @@
     <Import_RootNamespace>MVCore</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Animation\Animation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Animation\AnimationData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\CollisionComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\GUIDComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\JointComponent.cs" />
@@ -50,7 +52,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Systems\ActionSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\AnimationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\EngineSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\AnimData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\AnimComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Camera.cs" />

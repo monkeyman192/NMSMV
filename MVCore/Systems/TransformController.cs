@@ -38,6 +38,11 @@ namespace MVCore
         
         public TransformController(TransformData data)
         {
+            SetActor(data);
+        }
+        
+        public void SetActor(TransformData data)
+        {
             actorData = data;
             //Init States
             
@@ -52,6 +57,11 @@ namespace MVCore
             LastPosition = actorData.localTranslation;
             LastRotation = actorData.localRotation;
             LastScale = actorData.localScale;
+        }
+
+        public void ClearActor()
+        {
+            actorData = null;
         }
 
         public void AddFutureState(Vector3 dp, Quaternion dr, Vector3 ds)

@@ -138,6 +138,36 @@ namespace ImGUI_SDL_ModelViewer
 
         }
 
+        protected override void OnKeyDown(KeyboardKeyEventArgs e)
+        {
+            if (engine.rt_State == EngineRenderingState.ACTIVE)
+                engine.AddKeyboardState(KeyboardState);
+        }
+        
+        protected override void OnKeyUp(KeyboardKeyEventArgs e)
+        {
+            if (engine.rt_State == EngineRenderingState.ACTIVE)
+                engine.AddKeyboardState(KeyboardState);
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            if (engine.rt_State == EngineRenderingState.ACTIVE)
+                engine.AddMouseState(MouseState);
+        }
+        
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            if (engine.rt_State == EngineRenderingState.ACTIVE)
+                engine.AddMouseState(MouseState);
+        }
+
+        protected override void OnMouseMove(MouseMoveEventArgs e)
+        {
+            if (engine.rt_State == EngineRenderingState.ACTIVE)
+                engine.AddMouseState(MouseState);
+        }
+
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
@@ -159,9 +189,6 @@ namespace ImGUI_SDL_ModelViewer
             
             if (engine.rt_State == EngineRenderingState.ACTIVE)
             {
-                //Capture Keyboard Presses
-                engine.UpdateInput(e.Time, isSceneViewActive);
-
                 //TODO: Move these two lines in the engine and retrieve the sceneviewsize from the rendersystem
                 RenderState.activeCam.aspect = (float) SceneViewSize.X / SceneViewSize.Y;
                 RenderState.activeCam.updateViewMatrix();

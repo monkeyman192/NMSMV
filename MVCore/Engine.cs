@@ -19,6 +19,7 @@ using GLSLHelper;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Desktop;
 using System.IO;
+using System.Reflection;
 
 namespace MVCore
 {
@@ -40,8 +41,7 @@ namespace MVCore
         public SceneManagementSystem sceneMgmtSys;
         public RenderingSystem renderSys; //TODO: Try to make it private. Noone should have a reason to access it
         private readonly RequestHandler reqHandler;
-        private readonly NativeWindow windowHandler;
-
+        
         private Dictionary<EngineSystemEnum, EngineSystem> _engineSystemMap = new(); //TODO fill up
 
         //Rendering 
@@ -50,10 +50,11 @@ namespace MVCore
         //Input
         public BaseGamepadHandler gpHandler;
 
-        //Keyboard State
-        private readonly KeyboardState kbState;
-        private readonly MouseState mouseState;
-
+        private KeyboardState ActiveKbState;
+        private MouseState ActiveMsState;
+        private Queue<KeyboardState> kbStates = new();
+        private Queue<MouseState> MsStates = new();
+        
         //Camera Stuff
         public CameraPos targetCameraPos;
         public Vector2 prevMousePos;
@@ -73,18 +74,15 @@ namespace MVCore
 
         public Engine(NativeWindow win) : base(EngineSystemEnum.CORE_SYSTEM)
         {
-            //Store Window handler
-            windowHandler = win;
-            kbState = win.KeyboardState;
-            mouseState = win.MouseState;
-
-            prevMousePos = mouseState.Position;
-
+            //TODO : I don't like using the win as an argument but
+            //seems like I can't initialize empmty keyboard, mouse states
+            ActiveKbState = win.KeyboardState;
+            ActiveMsState = win.MouseState;
+            prevMousePos = ActiveMsState.Position;
+            
             //gpHandler = new PS4GamePadHandler(0); //TODO: Add support for PS4 controller
             reqHandler = new RequestHandler();
             
-            RenderState.activeGamepad = gpHandler;
-
             //Systems Init
             renderSys = new RenderingSystem(); //Init renderManager of the engine
             registrySys = new EntityRegistrySystem();
@@ -103,6 +101,37 @@ namespace MVCore
             
             //Set Start Status
             rt_State = EngineRenderingState.UNINITIALIZED;
+            
+            //Try to load plugins
+            foreach (string filename in Directory.GetFiles("Plugins"))
+            {
+                if (!filename.EndsWith(("dll")))
+                    continue;
+                //Load Assembly
+                try
+                {
+                    Assembly a = Assembly.LoadFile(Path.GetFullPath(filename));
+                    
+                    //Try to find the type the derived plugin class
+                    foreach (Type t in a.GetTypes())
+                    {
+                        if (t.IsSubclassOf(typeof(PluginBase)))
+                        {
+                            Console.WriteLine("Plugin class detected! {0}", t.Name);
+                        }    
+                    }
+                    
+                    
+                }
+                catch (Exception ex)
+                {
+                    Log("Error during loading of plugin " + filename, LogVerbosityLevel.INFO);
+                    Log("Exception type " + ex.Data, LogVerbosityLevel.INFO);
+                }
+                
+            }
+            
+            
         }
         
         ~Engine()
@@ -421,11 +450,8 @@ namespace MVCore
             //Clear Resources
             //ModelProcGen.procDecisions.Clear();
 
-            RenderState.activeModel = null;
-            
             //Clear RenderStats
             RenderStats.ClearStats();
-
 
             //Stop animation if on
             bool animToggleStatus = RenderState.settings.renderSettings.ToggleAnimations;
@@ -560,7 +586,6 @@ namespace MVCore
             //ModelProcGen.procDecisions.Clear();
             
             RenderState.itemCounter = 0;
-            RenderState.activeModel = null;
             
             //Clear RenderStats
             RenderStats.ClearStats();
@@ -597,10 +622,10 @@ namespace MVCore
 
         public override void OnFrameUpdate(double dt)
         {
+            //Update input
+            UpdateInput();
+            
             handleRequests(); //Handle engine requests
-
-            //Calculate new Camera State
-            Camera.CalculateNextCameraState(RenderState.activeCam, targetCameraPos);
 
             //Update systems
             transformSys.OnFrameUpdate(dt);
@@ -680,25 +705,59 @@ namespace MVCore
         //Keyboard handler
         private int keyDownStateToInt(Keys k)
         {
-            bool state = kbState.IsKeyDown(k);
+            bool state = ActiveKbState.IsKeyDown(k);
             return state ? 1 : 0;
         }
 
-        public void UpdateInput(double dt, bool capture_input)
+        public void UpdateInput()
         {
-            //Reset Inputs
+            bool kbStateUpdated = false;
+            bool msStateUpdated = false;
+
+            //Reset Mouse Inputs
             targetCameraPos.Reset();
             
-            if (capture_input)
+            if (kbStates.Count > 0)
             {
-                keyboardController(dt);
-                mouseController(dt);
-                //gpController();
-            } 
+                ActiveKbState = kbStates.Dequeue();
+                kbStateUpdated = true;
+                keyboardController();
+            }
 
+            if (MsStates.Count > 0)
+            {
+                ActiveMsState = MsStates.Dequeue();
+                msStateUpdated = true;
+                mouseController();
+            }
+            
+            //TODO: Re-add controller support
+                
+            if (kbStateUpdated || msStateUpdated)
+                Camera.CalculateNextCameraState(RenderState.activeCam, targetCameraPos);
+            
+            //gpController();
+            
+        }
+        
+        //Public Input Handlers
+        public void AddKeyboardState(KeyboardState state)
+        {
+            //lock (kbStates)
+            {
+                kbStates.Enqueue(state);
+            }
         }
 
-        public void keyboardController(double dt)
+        public void AddMouseState(MouseState state)
+        {
+            //lock (MsStates)
+            {
+                MsStates.Enqueue(state);
+            }
+        }
+
+        private void keyboardController()
         {
             //Camera Movement
             float step = 0.002f;
@@ -728,22 +787,22 @@ namespace MVCore
 
         private int mouseDownStateToInt(MouseButton k)
         {
-            bool state = mouseState.IsButtonDown(k);
+            bool state = ActiveMsState.IsButtonDown(k);
             return state ? 1 : 0;
         }
 
-        public void mouseController(double dt)
+        public void mouseController()
         {
             //targetCameraPos.Rotation.Xy += new Vector2(0.55f, 0);
-            if (mouseState.WasButtonDown(MouseButton.Left))
+            if (ActiveMsState.WasButtonDown(MouseButton.Left))
             {
-                Vector2 deltaVec = mouseState.Position - prevMousePos;
+                Vector2 deltaVec = ActiveMsState.Position - prevMousePos;
                 
                 //Console.WriteLine("Mouse Delta {0} {1}", deltax, deltay);
                 targetCameraPos.Rotation = deltaVec;
             }
 
-            prevMousePos = mouseState.Position;
+            prevMousePos = ActiveMsState.Position;
 
         }
 

@@ -70,6 +70,12 @@
     <Copy SourceFiles="@(ShaderFiles)" DestinationFolder="$(TargetDir)Shaders" />
   </Target>
 
+  <!-->Copy Plugins-->
+  <Target Name="CopyPlugins" AfterTargets="AfterBuild">
+    <Message Importance="high" Text="$(TargetFramework)"/>
+    <Copy SourceFiles="..\bin\plugins\$(Configuration)\$(TargetFramework)\NibbleNMSPlugin.dll" DestinationFolder="$(TargetDir)Plugins" ContinueOnError="true"/>
+  </Target>
+
   <ItemGroup>
     <Content Include="..\lib\cimgui\linux-x64\cimgui.so" Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' ">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

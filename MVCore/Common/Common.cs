@@ -35,6 +35,7 @@ namespace MVCore.Common
         public Vector2 Delta = new Vector2();   
     }
 
+    
     public static class RenderState
     {
         //Keep the view rotation Matrix
@@ -55,23 +56,8 @@ namespace MVCore.Common
         public static int itemCounter = 0;
         //Status
         public static string StatusString = "";
-        //ActiveModel
-        public static Model activeModel;
-        //Active GamePad
-        public static BaseGamepadHandler activeGamepad;
 
         public static bool enableShaderCompilationLog = true;
-        public static string shaderCompilationLog;
-
-        //Static methods
-
-        public static float progressTime(double dt)
-        {
-            float new_time = (float) dt / 500;
-            new_time %= 1000.0f;
-            return new_time;
-        }
-
     }
 
     public enum ViewSettingsEnum
@@ -105,17 +91,31 @@ namespace MVCore.Common
         public ViewSettings(int settings_mask)
         {
             SettingsMask = settings_mask;
-            ViewInfo = (settings_mask & (int) ViewSettingsEnum.ViewInfo) == 0 ? false : true;
-            ViewLights = (settings_mask & (int)ViewSettingsEnum.ViewLights) == 0 ? false : true;
-            ViewLightVolumes = (settings_mask & (int)ViewSettingsEnum.ViewLightVolumes) == 0 ? false : true;
-            ViewJoints = (settings_mask & (int)ViewSettingsEnum.ViewJoints) == 0 ? false : true;
-            ViewLocators = (settings_mask & (int)ViewSettingsEnum.ViewLocators) == 0 ? false : true;
-            ViewCollisions = (settings_mask & (int)ViewSettingsEnum.ViewCollisions) == 0 ? false : true;
-            ViewBoundHulls = (settings_mask & (int)ViewSettingsEnum.ViewBoundHulls) == 0 ? false : true;
-            ViewGizmos = (settings_mask & (int)ViewSettingsEnum.ViewGizmos) == 0 ? false : true;
-            EmulateActions = (settings_mask & (int)ViewSettingsEnum.EmulateActions) == 0 ? false : true;
+            ViewInfo = (settings_mask & (int) ViewSettingsEnum.ViewInfo) != 0;
+            ViewLights = (settings_mask & (int)ViewSettingsEnum.ViewLights) != 0;
+            ViewLightVolumes = (settings_mask & (int)ViewSettingsEnum.ViewLightVolumes) != 0;
+            ViewJoints = (settings_mask & (int)ViewSettingsEnum.ViewJoints) != 0;
+            ViewLocators = (settings_mask & (int)ViewSettingsEnum.ViewLocators) != 0;
+            ViewCollisions = (settings_mask & (int)ViewSettingsEnum.ViewCollisions) != 0;
+            ViewBoundHulls = (settings_mask & (int)ViewSettingsEnum.ViewBoundHulls) != 0;
+            ViewGizmos = (settings_mask & (int)ViewSettingsEnum.ViewGizmos) != 0;
+            EmulateActions = (settings_mask & (int)ViewSettingsEnum.EmulateActions) != 0;
         }
 
+    }
+
+    public interface ISettings
+    {
+        public static ISettings GenerateDefaults()
+        {
+            return null;
+        }
+
+        public void SaveToFile(string filename)
+        {
+            var jsonobject = JsonConvert.SerializeObject(this);
+            File.WriteAllText(filename, jsonobject);
+        }
     }
 
 
@@ -170,14 +170,29 @@ namespace MVCore.Common
     }
 
 
+
+
+    public class EngineSettings : ISettings
+    {
+        public RenderSettings RenderSettings = new();
+        public ViewSettings ViewSettings = new();
+        public bool EnableShaderCompilationLog = true;
+        public LogVerbosityLevel LogVerbosity = LogVerbosityLevel.INFO;
+
+        public static EngineSettings GenerateDefaults()
+        {
+            EngineSettings settings = new EngineSettings();
+            return settings;
+        }
+
+    }   
+    
+    //Get rid of that class
     public class Settings : INotifyPropertyChanged
     {
         //Public Settings
         public RenderSettings renderSettings = new RenderSettings();
         public ViewSettings viewSettings = new ViewSettings(31);
-
-        //Store Plugin Settings
-        public List<PluginSettings> pluginSettings = new();
 
         //Private Settings
         
@@ -196,11 +211,6 @@ namespace MVCore.Common
             {
                 _logVerbosity = value;
             }
-        }
-
-        private void NotifyPropertyChanged(String info)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
         }
 
         //Methods
