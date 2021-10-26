@@ -10,7 +10,6 @@ using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using System.Linq;
-using libMBIN.NMS.Toolkit;
 using System.ComponentModel;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 using System.Collections.ObjectModel;
@@ -539,114 +538,42 @@ namespace MVCore
     }
     
 
-    public class AnimPoseData: TkAnimPoseData
+    public class AnimPoseData
     {
+        AnimationData animData;
+        int FrameStart;
+        int FrameEnd;
 
-        public AnimPoseData(TkAnimPoseData apd)
+        public AnimPoseData(AnimPoseData apd)
         {
-            Anim = apd.Anim;
+            animData = apd.animData;
             FrameStart = apd.FrameStart;
             FrameEnd = apd.FrameEnd;
-            PActivePoseFrame = (int) ((apd.FrameEnd - apd.FrameStart) / 2 + apd.FrameStart);
         }
-
-        public string PAnim
-        {
-            get
-            {
-                return Anim;
-            }
-        }
-
-        public int PFrameStart
-        {
-            get
-            {
-                return FrameStart;
-            }
-            set
-            {
-                FrameStart = value;
-            }
-        }
-
-        public int PFrameEnd
-        {
-            get
-            {
-                return FrameEnd;
-            }
-            set
-            {
-                FrameEnd = value;
-            }
-        }
-
-        public int PActivePoseFrame
-        {
-            get; set;
-        }
-
-
 
     }
 
+    //TODO: REDO
+    //private void loadData()
+    //{
+    //    for (int j = 0; j < NodeCount; j++)
+    //    {
+    //        TkAnimNodeData node = NodeData[j];
+    //        //Init dictionary entries
+
+    //        anim_rotations[node.Node] = new Quaternion[FrameCount];
+    //        anim_positions[node.Node] = new Vector3[FrameCount];
+    //        anim_scales[node.Node] = new Vector3[FrameCount];
+
+    //        for (int i = 0; i < FrameCount; i++)
+    //        {
+    //            Import.NMS.Util.fetchRotQuaternion(node, this, i, ref anim_rotations[node.Node][i]); //use Ref
+    //            Import.NMS.Util.fetchTransVector(node, this, i, ref anim_positions[node.Node][i]); //use Ref
+    //            Import.NMS.Util.fetchScaleVector(node, this, i, ref anim_scales[node.Node][i]); //use Ref
+    //        }
+    //    }
+    //}
     
-    public class AnimMetadata: TkAnimMetadata
-    {
-        public float duration;
-        public Dictionary<string, Quaternion[]> anim_rotations;
-        public Dictionary<string, Vector3[]> anim_positions;
-        public Dictionary<string, Vector3[]> anim_scales;
-
-        public AnimMetadata(TkAnimMetadata amd)
-        {
-            //Copy struct info
-            FrameCount = amd.FrameCount;
-            NodeCount = amd.NodeCount;
-            NodeData = amd.NodeData;
-            AnimFrameData = amd.AnimFrameData;
-            StillFrameData = amd.StillFrameData;
-
-            duration = FrameCount * 1000.0f;
-        }
-
-        public AnimMetadata()
-        {
-            duration = 0.0f;
-        }
-
-        public void load()
-        {
-            //Init dictionaries
-            anim_rotations = new Dictionary<string, Quaternion[]>();
-            anim_positions = new Dictionary<string, Vector3[]>();
-            anim_scales = new Dictionary<string, Vector3[]>();
-
-            //loadData(); //TODO: Fix function
-        }
-
-        //TODO: REDO
-        //private void loadData()
-        //{
-        //    for (int j = 0; j < NodeCount; j++)
-        //    {
-        //        TkAnimNodeData node = NodeData[j];
-        //        //Init dictionary entries
-
-        //        anim_rotations[node.Node] = new Quaternion[FrameCount];
-        //        anim_positions[node.Node] = new Vector3[FrameCount];
-        //        anim_scales[node.Node] = new Vector3[FrameCount];
-
-        //        for (int i = 0; i < FrameCount; i++)
-        //        {
-        //            Import.NMS.Util.fetchRotQuaternion(node, this, i, ref anim_rotations[node.Node][i]); //use Ref
-        //            Import.NMS.Util.fetchTransVector(node, this, i, ref anim_positions[node.Node][i]); //use Ref
-        //            Import.NMS.Util.fetchScaleVector(node, this, i, ref anim_scales[node.Node][i]); //use Ref
-        //        }
-        //    }
-        //}
-    }
 
     
     public class JointBindingData

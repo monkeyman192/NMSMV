@@ -277,8 +277,8 @@ namespace MVCore.Common
 
     //Delegates - Function Types for Callbacks
     public delegate void UpdateStatusCallback(string msg);
-    public delegate void OpenAnimCallback(string filepath, Model animScene);
-    public delegate void OpenPoseCallback(string filepath, Model animScene);
+    //public delegate void OpenAnimCallback(string filepath, Model animScene);
+    //public delegate void OpenPoseCallback(string filepath, Model animScene);
     public delegate void ShowInfoMsg(string msg, string caption);
     public delegate void ShowErrorMsg(string msg, string caption);
     public delegate void LogCallback(string msg, LogVerbosityLevel level);
@@ -294,8 +294,6 @@ namespace MVCore.Common
         public static UpdateStatusCallback updateStatus = null;
         public static ShowInfoMsg showInfo = null;
         public static ShowErrorMsg showError = null;
-        public static OpenAnimCallback openAnim = null;
-        public static OpenPoseCallback openPose = null;
         public static LogCallback Log = null;
         public static AssertCallback Assert = null;
         public static SendRequestCallback issueRequestToGLControl = null;

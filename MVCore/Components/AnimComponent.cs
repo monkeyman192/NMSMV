@@ -7,10 +7,10 @@ namespace MVCore
     public class AnimComponent : Component
     {
         //animations list Contains all the animations bound to the locator through Tkanimationcomponent
-        public List<AnimData> _animations = new();
-        public Dictionary<string, AnimData> _animDict = new();
+        public List<Animation> _animations = new();
+        public Dictionary<string, Animation> _animDict = new();
 
-        public List<AnimData> Animations
+        public List<Animation> Animations
         {
             get
             {
@@ -24,18 +24,18 @@ namespace MVCore
 
         }
 
-        public AnimData getAnimation(string Name)
+        public Animation getAnimation(string Name)
         {
             if (!_animDict.ContainsKey(Name))
                 return null;
             return _animDict[Name];
         }
 
-        public List<AnimData> getActiveAnimations()
+        public List<Animation> getActiveAnimations()
         {
-            List<AnimData> animList = new();
+            List<Animation> animList = new();
             
-            foreach (AnimData ad in _animations)
+            foreach (Animation ad in _animations)
             {
                 if (ad.IsPlaying)
                     animList.Add(ad);
@@ -58,11 +58,10 @@ namespace MVCore
             AnimComponent ac = new();
 
             //Copy Animations
-            foreach (AnimData ad in _animations)
+            foreach (Animation ad in _animations)
             {
-                AnimData clone = ad.Clone();
+                Animation clone = new Animation(ad);
                 ac.Animations.Add(clone);
-                ac._animDict[clone.PName] = clone;
             }
                 
             return ac;

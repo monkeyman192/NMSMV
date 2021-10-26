@@ -65,6 +65,37 @@ namespace NMSPlugin
             node.AddComponent<AnimComponent>(ac);
         }
 
+        private static AnimationData CreateAnimationDataFromStruct(TkAnimationData data)
+        {
+            AnimationData ad = new AnimationData()
+            {
+                ActionFrame = data.ActionFrame,
+                ActionStartFrame = data.ActionStartFrame,
+                Active = data.Active,
+                Additive = data.Additive,
+                FileName = data.Filename,
+                FrameEnd = data.FrameEnd,
+                FrameStart = data.FrameStart,
+                Mirrored = data.Mirrored,
+                Name = data.Anim,
+                StartNode = data.StartNode,
+                Speed = data.Speed,
+            };
+
+            //Load Type
+            switch (data.AnimType)
+            {
+                case TkAnimationData.AnimTypeEnum.Loop:
+                    ad.Type = AnimationType.Loop;
+                    break;
+                case TkAnimationData.AnimTypeEnum.OneShot:
+                    ad.Type = AnimationType.OneShot;
+                    break;
+            }
+
+            return ad;
+        }
+
         private static AnimComponent CreateAnimComponentFromStruct(TkAnimationComponentData data)
         {
             AnimComponent ac = new AnimComponent();
@@ -72,10 +103,10 @@ namespace NMSPlugin
             //Load Animations
             if (data.Idle.Anim != "")
             {
-                ac._animations.Add(new AnimData(data.Idle)); //Add Idle Animation
+                AnimationData animData = CreateAnimationDataFromStruct(data.Idle);
+                ac._animations.Add(animData); //Add Idle Animation
                 ac._animDict[data.Idle.Anim] = ac._animations[0];
             }
-
 
             for (int i = 0; i < data.Anims.Count; i++)
             {

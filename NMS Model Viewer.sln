@@ -19,16 +19,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NibbleNMSPlugin", "NMSPlugi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NibbleAssimpPlugin", "NibbleAssimpPlugin\NibbleAssimpPlugin.csproj", "{D0D5D3D7-F2BE-4286-8D96-BBF69E2C76FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NibbleDLL", "NibbleDLL\NibbleDLL.csproj", "{8EC54636-F7D7-4213-80BD-46ECB25210EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleDLL", "NibbleDLL\NibbleDLL.csproj", "{8EC54636-F7D7-4213-80BD-46ECB25210EC}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		MVCore\MVCore.projitems*{0890732a-e096-4341-865b-8b69b0158cbd}*SharedItemsImports = 4
-		MVCore\MVCore.projitems*{15c6fc13-8166-4b74-aed0-5f654beb26f6}*SharedItemsImports = 5
 		MVCore\MVCore.projitems*{1b7cccc6-cca6-4e87-b3c8-2b07dc6863b6}*SharedItemsImports = 5
 		MVCore\MVCore.projitems*{279ad081-59e7-4a87-9e0e-50ec81d87992}*SharedItemsImports = 4
 		MVCore\MVCore.projitems*{4f7bdfc7-b030-4f1c-bcda-cd9a61ef468a}*SharedItemsImports = 5
 		MVCore\MVCore.projitems*{53c00cb6-a20b-47ae-93db-82a187f0d3cd}*SharedItemsImports = 13
+		MVCore\MVCore.projitems*{8ec54636-f7d7-4213-80bd-46ecb25210ec}*SharedItemsImports = 5
 		MVCore\MVCore.projitems*{d01a052e-ddaf-4895-8d16-545863c2c781}*SharedItemsImports = 5
 		MVCore\MVCore.projitems*{d0d5d3d7-f2be-4286-8d96-bbf69e2c76fa}*SharedItemsImports = 5
 	EndGlobalSection

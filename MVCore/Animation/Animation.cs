@@ -21,7 +21,7 @@ namespace MVCore
         private float nextFrameTime = 0.0f;
         private float LERP_coeff = 0.0f;
         public bool loaded = false;
-        private bool _playing = false;
+        public bool IsPlaying = false;
         public bool Override = false; //Used to manually manipulate animation
         
         //Constructors
@@ -37,6 +37,11 @@ namespace MVCore
         public void CopyFrom(Animation anim)
         {
             
+        }
+
+        public int GetActiveFrameIndex()
+        {
+            return activeFrameIndex;
         }
 
         public Animation Clone()
@@ -88,7 +93,7 @@ namespace MVCore
                     animationTime = 0.0f;
                     prevFrameTime = 0.0f;
                     nextFrameTime = 0.0f;
-                    _playing = false;
+                    IsPlaying = false;
                     return;
                 }
                 else

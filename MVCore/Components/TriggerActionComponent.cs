@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using libMBIN.NMS.GameComponents;
-using libMBIN.NMS;
 
 namespace MVCore
 {
@@ -24,6 +22,7 @@ namespace MVCore
     {
         public AnimFrameEventTrigger() { }
         public AnimationData AnimData;
+        public string Animation;
         public int FrameStart;
         public int FrameEnd;
         public bool StartFromEnd;
@@ -52,6 +51,9 @@ namespace MVCore
     public abstract class Action
     {
         public Action() { }
+
+        public abstract Action Clone();
+
     }
 
     public enum NodeActivationState
@@ -66,27 +68,35 @@ namespace MVCore
     public class NodeActivationAction: Action
     {
         public string TargetName;
+        public SceneGraphNode Target;
         public NodeActivationState TargetState;
         public bool UseMasterModel;
 
-        public NodeActivationAction()
+        public override Action Clone()
         {
-
+            NodeActivationAction act = new()
+            {
+                TargetName = TargetName,
+                TargetState = TargetState,
+                UseMasterModel = UseMasterModel
+            };
+            return act;
         }
-        
     }
 
     public class PlayAnimAction: Action
     {
         public string Animation;
         
-        public PlayAnimAction()
+        public override Action Clone()
         {
+            PlayAnimAction act = new()
+            {
+                Animation = Animation
+            };
 
+            return act;
         }
-
-        //Expose Properties
-        
     }
 
     public class GoToStateAction: Action
@@ -95,9 +105,16 @@ namespace MVCore
         public bool Broadcast;
         public string BroadcastLevel;
         
-        public GoToStateAction()
+        public override Action Clone()
         {
+            GoToStateAction act = new()
+            {
+                State = State,
+                Broadcast = Broadcast,
+                BroadcastLevel = BroadcastLevel
+            };
 
+            return act;
         }
 
     }
@@ -111,88 +128,38 @@ namespace MVCore
             Actions = new List<Action>();
         }
 
-        public ActionTrigger(GcActionTrigger at)
+        public ActionTrigger(ActionTrigger at)
         {
             //Populate Actions
             Actions = new List<Action>();
-            foreach (NMSTemplate t in at.Action)
+            foreach (Action a in at.Actions)
             {
-                if (t is GcNodeActivationAction)
-                {
-                    NodeActivationAction nAA = new(t);
-                    Actions.Add(nAA);
-                }   
-                else if (t is GcGoToStateAction)
-                    Actions.Add(new GoToStateAction(t));
-                else if (t is GcPlayAnimAction)
-                    Actions.Add(new PlayAnimAction(t));
-                else if (t is EmptyNode)
-                    continue;
-                else
-                    Console.WriteLine("Non Implemented Action");
+                Actions.Add(a.Clone());
             }
-            
-            //Set Trigger
-            if (at.Trigger is GcPlayerNearbyEvent)
-            {
-                Trigger = new PlayerNearbyEventTrigger(at.Trigger);
-            } 
-            else if (at.Trigger is GcStateTimeEvent)
-            {
-                Trigger = new StateTimeEventTrigger(at.Trigger);
-            }
-            else if (at.Trigger is GcAnimFrameEvent)
-            {
-                Trigger = new AnimFrameEventTrigger(at.Trigger);
-            }
-            else
-            {
-                Console.WriteLine("Non Implemented Trigger");
-                Trigger = null;
-            }
-            
-
-
         }
-
-        //Exposed Properties
-
-
     }
 
     public class ActionTriggerState
     {
-        GcActionTriggerState _template;
+        public int StateID;
         public List<ActionTrigger> Triggers;
         public ActionTriggerState() { }
 
-        public ActionTriggerState(GcActionTriggerState ats)
+        public ActionTriggerState(ActionTriggerState ats)
         {
-            _template = ats;
             Triggers = new List<ActionTrigger>();
             
             //Populate Triggers
-            foreach (GcActionTrigger at in _template.Triggers)
+            foreach (ActionTrigger at in ats.Triggers)
             {
                 Triggers.Add(new ActionTrigger(at));
             }
         }
-
-        //Exposed Properties
-        public string StateID
-        {
-            get
-            {
-                return _template.StateID;
-            }
-        }
-
     }
 
 
    public class TriggerActionComponent : Component
     {
-        public GcTriggerActionComponentData _template;
         public List<ActionTriggerState> States;
         public Dictionary<string, ActionTriggerState> StateMap;
 
@@ -202,17 +169,15 @@ namespace MVCore
             StateMap = new Dictionary<string, ActionTriggerState>();
         }
 
-        public TriggerActionComponent(GcTriggerActionComponentData tacd)
+        public TriggerActionComponent(TriggerActionComponent tacd)
         {
-            _template = tacd;
             //Populate States
             States = new List<ActionTriggerState>();
             StateMap = new Dictionary<string, ActionTriggerState>();
-            foreach (GcActionTriggerState s in tacd.States)
+            foreach (ActionTriggerState s in tacd.States)
             {
                 ActionTriggerState ats = new ActionTriggerState(s);
                 States.Add(ats);
-                StateMap[ats.StateID] = ats;
             }
         }
 
@@ -225,18 +190,6 @@ namespace MVCore
         public override void CopyFrom(Component c)
         {
             throw new NotImplementedException();
-        }
-
-        //Exposed Properties
-
-        public bool HideModel
-        {
-            get { return _template.HideModel; }
-        }
-
-        public bool StartInteractive
-        {
-            get { return _template.StartInactive; }
         }
 
     }

@@ -88,7 +88,7 @@ namespace MVCore.Systems
         private static bool TestAnimFrameEventTrigger(SceneGraphNode m, AnimFrameEventTrigger t)
         {
             int target_frame = 0;
-            int anim_frameCount = AnimationSystem.queryAnimationFrameCount(m, t.Anim);
+            int anim_frameCount = AnimationSystem.queryAnimationFrameCount(m, t.Animation);
             
             if (t.StartFromEnd)
             {
@@ -97,7 +97,7 @@ namespace MVCore.Systems
             else
                 target_frame = t.FrameStart;
 
-            int active_frame = AnimationSystem.queryAnimationFrame(m, t.Anim);
+            int active_frame = AnimationSystem.queryAnimationFrame(m, t.Animation);
 
             if (active_frame >= target_frame)
                 return true;
@@ -158,7 +158,7 @@ namespace MVCore.Systems
         private void ExecutePlayAnimAction(SceneGraphNode m, PlayAnimAction action)
         {
             AnimationSystem.StopActiveLoopAnimations(m); //Not sure if this is correct
-            AnimationSystem.StartAnimation(m, action.Anim);
+            AnimationSystem.StartAnimation(m, action.Animation);
             ActionsExecutedInState[m.GetID()].Add(action);
         }
 
@@ -171,11 +171,11 @@ namespace MVCore.Systems
                 if (action.UseMasterModel)
                 {
                     //Find Parent Scene
-                    m.Parent.findNodeByName(action.Name, ref action.Target);
+                    m.Parent.findNodeByName(action.TargetName, ref action.Target);
                 }
                 else
                 {
-                    m.findNodeByName(action.Name, ref action.Target);
+                    m.findNodeByName(action.TargetName, ref action.Target);
                 }
             }
             
@@ -185,15 +185,15 @@ namespace MVCore.Systems
                 return;
             }
 
-            switch (action.NodeActiveState)
+            switch (action.TargetState)
             {
-                case "Activate":
+                case NodeActivationState.Activate:
                     action.Target.IsRenderable = true;
                     break;
-                case "Deactivate":
+                case NodeActivationState.Deactivate:
                     action.Target.IsRenderable = false;
                     break;
-                case "Toggle":
+                case NodeActivationState.Toggle:
                     action.Target.IsRenderable = !action.Target.IsRenderable;
                     break;
                 default:

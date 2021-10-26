@@ -9,8 +9,7 @@ namespace MVCore.Systems
     public class AnimationSystem : EngineSystem
     {
         public List<Entity> AnimScenes = new();
-        public Dictionary<string, AnimMetadata> Animations = new();
-        public Dictionary<Entity, List<AnimData>> AnimQueues = new();
+        public Dictionary<string, Animation> Animations = new();
         
         public AnimationSystem() : base(EngineSystemEnum.ANIMATION_SYSTEM)
         {
@@ -20,7 +19,6 @@ namespace MVCore.Systems
         public override void CleanUp()
         {
             AnimScenes.Clear();
-            AnimQueues.Clear();
             Animations.Clear();
         }
 
@@ -142,7 +140,7 @@ namespace MVCore.Systems
         public static void StartAnimation(Entity anim_model, string Anim)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
-            AnimData ad = ac.getAnimation(Anim);
+            Animation ad = ac.getAnimation(Anim);
 
             if (ad != null)
             {
@@ -154,20 +152,20 @@ namespace MVCore.Systems
         public static void StopActiveAnimations(SceneGraphNode anim_model)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
-            List<AnimData> ad_list = ac.getActiveAnimations();
+            List<Animation> ad_list = ac.getActiveAnimations();
           
-            foreach (AnimData ad in ad_list)
+            foreach (Animation ad in ad_list)
                 ad.IsPlaying = false;
         }
 
         public static void StopActiveLoopAnimations(Entity anim_model)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
-            List<AnimData> ad_list = ac.getActiveAnimations();
+            List<Animation> ad_list = ac.getActiveAnimations();
 
-            foreach (AnimData ad in ad_list)
+            foreach (Animation ad in ad_list)
             {
-                if (ad.AnimType == libMBIN.NMS.Toolkit.TkAnimationData.AnimTypeEnum.Loop)
+                if (ad.animData.Type == AnimationType.Loop)
                     ad.IsPlaying = false;
             }
                 
@@ -176,11 +174,11 @@ namespace MVCore.Systems
         public static int queryAnimationFrame(Entity anim_model, string Anim)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
-            AnimData ad = ac.getAnimation(Anim);
+            Animation ad = ac.getAnimation(Anim);
 
             if (ad != null)
             {
-                return ad.ActiveFrame;
+                return ad.GetActiveFrameIndex();
             }
             return -1;
         }
@@ -188,11 +186,11 @@ namespace MVCore.Systems
         public static int queryAnimationFrameCount(Entity anim_model, string Anim)
         {
             AnimComponent ac = anim_model.GetComponent<AnimComponent>() as AnimComponent;
-            AnimData ad = ac.getAnimation(Anim);
+            Animation ad = ac.getAnimation(Anim);
 
             if (ad != null)
             {
-                return (ad.FrameEnd == 0 ? ad.animMeta.FrameCount : ad.FrameEnd) - (ad.FrameStart != 0 ? ad.FrameStart : 0);
+                return ad.animData.FrameCount;
             }
             return -1;
         }

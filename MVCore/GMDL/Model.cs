@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using OpenTK;
 using OpenTK.Mathematics;
-using libMBIN.NMS.Toolkit;
 using System.Collections.ObjectModel;
 using MVCore.Utils;
 using MVCore.Systems;
@@ -23,7 +22,6 @@ namespace MVCore
         //public GLSLHelper.GLSLShaderConfig[] shader_programs;
         public Dictionary<string, Dictionary<string, Vector3>> palette;
         public bool procFlag; //This is used to define procgen usage
-        public TkSceneNodeData nms_template;
         //public GLMeshVao meshVao;
         public int instanceId = -1;
         public int VolumeinstanceId = -1;
@@ -205,29 +203,6 @@ namespace MVCore
             for (int i = 0; i < 5; i++)
                 this._LODDistances[i] = input._LODDistances[i];
         }
-
-        //Export to MBIN
-        
-        
-        //Export to EXML
-        private void exportToEXML()
-        {
-            if (nms_template != null)
-            {
-                //Fetch scene name
-                string[] split = nms_template.Name.Value.Split('\\');
-                string scnName = split[^1];
-                
-                //Todo Repair Export to EXML
-                TkSceneNodeData temp = new();
-                
-                temp.WriteToExml(scnName + ".SCENE.EXML");
-                Common.Callbacks.showInfo("Scene successfully exported to " + scnName + ".exml", "Info");
-            }
-        }
-
-        
-
 
     }
 
