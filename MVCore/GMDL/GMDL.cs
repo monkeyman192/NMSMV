@@ -540,9 +540,14 @@ namespace MVCore
 
     public class AnimPoseData
     {
-        AnimationData animData;
-        int FrameStart;
-        int FrameEnd;
+        public AnimationData animData;
+        public int FrameStart;
+        public int FrameEnd;
+
+        public AnimPoseData()
+        {
+            
+        }
 
         public AnimPoseData(AnimPoseData apd)
         {

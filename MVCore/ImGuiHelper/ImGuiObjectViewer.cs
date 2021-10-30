@@ -7,7 +7,7 @@ using MVCore.Systems;
 
 namespace ImGuiHelper
 {
-    class ImGuiObjectViewer
+    public class ImGuiObjectViewer
     {
         private SceneGraphNode _model;
         private ImGuiManager _manager;

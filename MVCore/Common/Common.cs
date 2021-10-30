@@ -285,6 +285,7 @@ namespace MVCore.Common
     public delegate void AssertCallback(bool status, string msg);
     public delegate void SendRequestCallback(ref ThreadRequest req);
     public delegate byte[] GetResourceCallback(string resourceName);
+    public delegate byte[] GetResourceFromAssemblyCallback(Assembly assembly, string resourceName);
     public delegate Bitmap GetBitMapResourceCallback(string resourceName);
     public delegate string GetTextResourceCallback(string resourceName);
     public delegate object GetResourceWithTypeCallback(string resourceName, out string resourceType);
@@ -298,6 +299,7 @@ namespace MVCore.Common
         public static AssertCallback Assert = null;
         public static SendRequestCallback issueRequestToGLControl = null;
         public static GetResourceCallback getResource = null;
+        public static GetResourceFromAssemblyCallback getResourceFromAssembly = null;
         public static GetBitMapResourceCallback getBitMapResource = null;
         public static GetTextResourceCallback getTextResource = null;
         public static GetResourceWithTypeCallback getResourceWithType = null;
@@ -308,6 +310,7 @@ namespace MVCore.Common
             Log = DefaultLog;
             Assert = DefaultAssert;
             getResource = DefaultGetResource;
+            getResourceFromAssembly = DefaultGetResourceFromAssembly;
             getTextResource = DefaultGetTextResource;
             getBitMapResource = DefaultGetBitMapResource;
         }
@@ -329,16 +332,11 @@ namespace MVCore.Common
         }
 
         //Resource Handler
-        public static byte[] DefaultGetResource(string resource_name)
+        public static byte[] DefaultGetResourceFromAssembly(Assembly assembly, string resource_name)
         {
             byte[] data = null; //output data
 
-            // Determine path
-            var assembly = Assembly.GetExecutingAssembly();
-            string resourcePath = resource_name;
-
-            Assembly _assembly = Assembly.GetExecutingAssembly();
-            string[] resources = _assembly.GetManifestResourceNames();
+            string[] resources = assembly.GetManifestResourceNames();
 
             //for (int i=0;i<resources.Length;i++)
             //    Console.WriteLine((resources[i]));
@@ -346,7 +344,7 @@ namespace MVCore.Common
             try
             {
                 string res_name = resources.First(s => s.EndsWith(resource_name));
-                BinaryReader _textStreamReader = new(_assembly.GetManifestResourceStream(res_name));
+                BinaryReader _textStreamReader = new(assembly.GetManifestResourceStream(res_name));
                 data = _textStreamReader.ReadBytes((int) _textStreamReader.BaseStream.Length);
             } catch
             {
@@ -355,6 +353,13 @@ namespace MVCore.Common
             }
             
             return data;
+        }
+        
+        public static byte[] DefaultGetResource(string resource_name)
+        {
+            // Determine path
+            var assembly = Assembly.GetExecutingAssembly();
+            return DefaultGetResourceFromAssembly(assembly, resource_name);
         }
 
         public static Bitmap DefaultGetBitMapResource(string resource_name)

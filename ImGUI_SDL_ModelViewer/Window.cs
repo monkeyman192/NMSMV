@@ -494,7 +494,7 @@ namespace ImGUI_SDL_ModelViewer
                         Log("Open scene not implemented yet", LogVerbosityLevel.INFO);
                     }
 
-                    foreach (PluginBase plugin in engine.Plugins)
+                    foreach (PluginBase plugin in engine.Plugins.Values)
                     {
                         plugin.DrawImporters(ref new_scene);
                         if (new_scene != null)

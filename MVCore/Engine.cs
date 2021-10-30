@@ -63,7 +63,7 @@ namespace MVCore
         public event EventHandler<AddSceneEventData> AddSceneEventHandler;
     
         //Plugin List
-        public List<PluginBase> Plugins = new();
+        public Dictionary<string, PluginBase> Plugins = new();
 
         //Use public variables for now because getters/setters are so not worth it for our purpose
         public float light_angle_y = 0.0f;
@@ -118,7 +118,12 @@ namespace MVCore
                         if (t.IsSubclassOf(typeof(PluginBase)))
                         {
                             Console.WriteLine("Plugin class detected! {0}", t.Name);
-                        }    
+                            object c = Activator.CreateInstance(t, new object[] {this});
+                            Plugins[Path.GetFileName(filename)] = c as PluginBase;
+                            //Call Dll initializers
+                            t.GetMethod("OnLoad").Invoke(c, new object[] {});
+                            break;
+                        }
                     }
                     
                     
@@ -962,6 +967,29 @@ namespace MVCore
 
         
         #endregion
+        
+        #region GLRelatedRequests
+
+        public Texture AddTexture(string filepath)
+        {
+            byte[] data = File.ReadAllBytes(filepath);
+            return AddTexture(data, Path.GetFileName(filepath));
+        }
+        
+        public Texture AddTexture(byte[] data, string name)
+        {
+            //TODO: Possibly move that to a separate rendering thread
+            Texture tex = new();
+            tex.Name = name;
+            string ext = Path.GetExtension(name).ToUpper();
+            tex.textureInit(data, ext); //Manually load data
+            renderSys.TextureMgr.AddTexture(tex);
+            return tex;
+        }
+        
+        #endregion
+        
+        
         
         #region StateQueries
 

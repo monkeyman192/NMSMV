@@ -143,7 +143,6 @@ namespace MVCore.Systems
             CompileMainShaders();
             AddDefaultPrimitives();
             AddDefaultMaterials();
-            AddDefaultTextures();
             AddDefaultLights();
             AddDefaultFonts();
 
@@ -456,23 +455,6 @@ namespace MVCore.Systems
             f = new Font(Callbacks.getResource("segoe.fnt"),
                          Callbacks.getBitMapResource("segoe.png"), 1);
             FontMgr.addFont(f);
-        }
-
-        private void AddDefaultTextures()
-        {
-            //Add Default textures
-            //White tex
-            string texpath = "default.dds";
-            Texture tex = new();
-            tex.textureInit(Callbacks.getResource("default.dds"), texpath); //Manually load data
-
-            TextureMgr.AddTexture(tex);
-
-            //Transparent Mask
-            texpath = "default_mask.dds";
-            tex = new();
-            tex.textureInit(Callbacks.getResource("default_mask.dds"), texpath);
-            TextureMgr.AddTexture(tex);
         }
 
         private void AddDefaultLights()

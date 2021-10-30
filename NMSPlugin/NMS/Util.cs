@@ -15,6 +15,7 @@ using MVCore;
 using System.Windows;
 using System.Reflection;
 using libMBIN.NMS;
+using Quaternion = OpenTK.Mathematics.Quaternion;
 
 namespace NMSPlugin
 {
@@ -42,37 +43,8 @@ namespace NMSPlugin
 
 
         //Animation frame data collection methods
-        public static OpenTK.Mathematics.Quaternion fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
-        {
-            //Load Frames
-            //Console.WriteLine("Setting Frame Index {0}", frameIndex);
-            TkAnimNodeFrameData frame = animMeta.AnimFrameData[frameCounter];
-            TkAnimNodeFrameData stillframe = animMeta.StillFrameData;
-
-            OpenTK.Mathematics.Quaternion q;
-            //Check if there is a rotation for that node
-            if (node.RotIndex < frame.Rotations.Count)
-            {
-                int rotindex = node.RotIndex;
-                q = new OpenTK.Mathematics.Quaternion(frame.Rotations[rotindex].x,
-                                frame.Rotations[rotindex].y,
-                                frame.Rotations[rotindex].z,
-                                frame.Rotations[rotindex].w);
-            }
-            else //Load stillframedata
-            {
-                int rotindex = node.RotIndex - frame.Rotations.Count;
-                q = new OpenTK.Mathematics.Quaternion(stillframe.Rotations[rotindex].x,
-                                stillframe.Rotations[rotindex].y,
-                                stillframe.Rotations[rotindex].z,
-                                stillframe.Rotations[rotindex].w);
-            }
-
-            return q;
-        }
-
-        public static void fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, 
-            int frameCounter, ref OpenTK.Mathematics.Quaternion q)
+        public static Quaternion fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, 
+            int frameCounter)
         {
             //Load Frames
             //Console.WriteLine("Setting Frame Index {0}", frameIndex);
@@ -93,15 +65,17 @@ namespace NMSPlugin
                 rotIndex = node.RotIndex - frame.Rotations.Count;
             }
 
+            Quaternion q = new();
             q.X = activeFrame.Rotations[rotIndex].x;
             q.Y = activeFrame.Rotations[rotIndex].y;
             q.Z = activeFrame.Rotations[rotIndex].z;
             q.W = activeFrame.Rotations[rotIndex].w;
 
+            return q;
         }
 
 
-        public static void fetchTransVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter, ref Vector3 v)
+        public static Vector3 fetchTransVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
         {
             //Load Frames
             //Console.WriteLine("Setting Frame Index {0}", frameIndex);
@@ -123,13 +97,15 @@ namespace NMSPlugin
                 activeFrame = stillframe;
             }
 
-
+            Vector3 v = new();
             v.X = activeFrame.Translations[transIndex].x;
             v.Y = activeFrame.Translations[transIndex].y;
             v.Z = activeFrame.Translations[transIndex].z;
+
+            return v;
         }
 
-        public static void fetchScaleVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter, ref Vector3 s)
+        public static Vector3 fetchScaleVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
         {
             //Load Frames
             //Console.WriteLine("Setting Frame Index {0}", frameIndex);
@@ -149,10 +125,12 @@ namespace NMSPlugin
                 activeFrame = stillframe;
             }
 
+            Vector3 s = new Vector3();
             s.X = activeFrame.Scales[scaleIndex].x;
             s.Y = activeFrame.Scales[scaleIndex].y;
             s.Z = activeFrame.Scales[scaleIndex].z;
-            
+
+            return s;
         }
 
 

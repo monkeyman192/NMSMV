@@ -9,7 +9,7 @@ using MVCore.Common;
 namespace ImGuiHelper
 {
     
-    class ImGuiSceneGraphViewer
+    public class ImGuiSceneGraphViewer
     {
         private SceneGraphNode _root = null;
         private SceneGraphNode _selected = null;

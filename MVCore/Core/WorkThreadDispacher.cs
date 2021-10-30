@@ -7,14 +7,14 @@ using MVCore.Utils;
 
 namespace MVCore
 {
-    class Task
+    public class Task
     {
         public ulong task_uid;
         public Thread thread;
         public ThreadRequest thread_request;
     }
     
-    class WorkThreadDispacher : System.Timers.Timer
+    public class WorkThreadDispacher : System.Timers.Timer
     {
         private List<Task> tasks = new List<Task>();
         private ulong taskGUIDCounter = 0;

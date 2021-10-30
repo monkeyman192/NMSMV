@@ -27,7 +27,7 @@ namespace ImGuiHelper
             ImGui.BeginChild("SettingsWindow", ImGui.GetContentRegionAvail(),
                 true, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
 
-            foreach (PluginBase plugin in RenderState.engineRef.Plugins)
+            foreach (PluginBase plugin in RenderState.engineRef.Plugins.Values)
             {
                 plugin.Settings.Draw();
             }
@@ -62,7 +62,7 @@ namespace ImGuiHelper
             
             
             //Draw Plugin Modals
-            foreach (PluginBase plugin in RenderState.engineRef.Plugins)
+            foreach (PluginBase plugin in RenderState.engineRef.Plugins.Values)
             {
                 plugin.Settings.DrawModals();
             }

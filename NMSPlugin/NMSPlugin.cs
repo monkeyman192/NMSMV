@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using MVCore;
 using MVCore.Common;
 using MVCore.Plugins;
@@ -54,6 +55,13 @@ namespace NMSPlugin
         private string libMbinOnlineVersion = null;
         private string libMbinLocalVersion = null;
 
+        public NMSPlugin(Engine e) : base(e)
+        {
+            Name = "NMSPlugin";
+            Description = "NMS Plugin for Nibble Engine. Created by gregkwaste";
+            VersionTxt = "1.0.0";
+        }
+        
         public void ShowOpenFileDialogPak()
         {
             show_open_file_dialog_pak = true;
@@ -152,8 +160,8 @@ namespace NMSPlugin
 
         public override void OnLoad()
         {
-            Callbacks.Log("* Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
-
+            Log(" Loading NMS Plugin...", LogVerbosityLevel.INFO);
+            
             //Load Plugin Settings
             if (File.Exists(SettingsFileName))
             {
@@ -162,6 +170,7 @@ namespace NMSPlugin
             }
             else
             {
+                Log(" Settings file not found.", LogVerbosityLevel.INFO);
                 Settings = NMSPluginSettings.GenerateDefaultSettings();
             }
             
@@ -169,14 +178,29 @@ namespace NMSPlugin
             PluginState.Settings = cSettings;
 
             //Issue work request 
+            Log(" Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
             ThreadRequest rq = new();
-            rq.Data = (System.IO.Path.Combine(cSettings.GameDir, "PCBANKS"));
+            rq.Data = (Path.Combine(cSettings.GameDir, "PCBANKS"));
             rq.Type = THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES;
             
             //TODO: Send Request to Engine
+            EngineRef.SendRequest(ref rq);
             
+            //Add Defaults
+            AddDefaultTextures();
         }
 
+        private void AddDefaultTextures()
+        {
+            Assembly currentAssembly = Assembly.GetExecutingAssembly();
+            EngineRef.AddTexture(Callbacks.getResourceFromAssembly(currentAssembly, "default.dds"), "default.dds");
+            
+            EngineRef.AddTexture(Callbacks.getResourceFromAssembly(currentAssembly, "default_mask.dds"), "default_mask.dds");
+            
+            
+        }
+        
+        
         public override void Import(string filepath)
         {
             throw new NotImplementedException();

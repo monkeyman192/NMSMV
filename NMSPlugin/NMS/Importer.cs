@@ -16,6 +16,7 @@ using MVCore.Utils;
 using libMBIN.NMS.GameComponents;
 using libMBIN.NMS;
 using MVCore.Common;
+using Quaternion = OpenTK.Mathematics.Quaternion;
 
 
 namespace NMSPlugin
@@ -47,16 +48,14 @@ namespace NMSPlugin
         {
             AnimPoseComponent apc = new AnimPoseComponent();
 
-            apc._poseFrameData = (TkAnimMetadata) FileUtils.LoadNMSTemplate(apcd.Filename);
+            apc._poseData = new List<AnimPoseData>();
+    
+            
+            //I really need to recheck the pose data files in order to remember what the fuck
+            //I should do with pose animation data
+            throw new NotImplementedException();
 
-            //Load PoseAnims
-            for (int i = 0; i < apcd.PoseAnims.Count; i++)
-            {
-                AnimPoseData my_apd = new(apcd.PoseAnims[i]);
-                apc.poseData.Add(my_apd);
-            }
-
-            return apc;
+            
         }
 
         private static void ProcessAnimationComponent(SceneGraphNode node, TkAnimationComponentData component)
@@ -92,7 +91,30 @@ namespace NMSPlugin
                     ad.Type = AnimationType.OneShot;
                     break;
             }
+            
+            //Load Animation data
+            TkAnimMetadata metaData = (TkAnimMetadata)FileUtils.LoadNMSTemplate(data.Filename);
 
+            ad.FrameCount = metaData.FrameCount;
+
+            for (int j = 0; j < metaData.NodeCount; j++)
+            {
+                TkAnimNodeData node = metaData.NodeData[j];
+                //Init dictionary entries
+
+                ad.Rotations[node.Node] = new List<Quaternion>(metaData.FrameCount);
+                ad.Translations[node.Node] = new List<Vector3>(metaData.FrameCount);
+                ad.Scales[node.Node] = new List<Vector3>(metaData.FrameCount);
+
+                for (int i = 0; i < metaData.FrameCount; i++)
+                {
+                    ad.Rotations[node.Node][i] = Util.fetchRotQuaternion(node, metaData, i);
+                    ad.Translations[node.Node][i] = Util.fetchTransVector(node, metaData, i);
+                    ad.Scales[node.Node][i] = Util.fetchScaleVector(node, metaData, i);
+                }
+            }
+            
+            
             return ad;
         }
 
@@ -104,30 +126,56 @@ namespace NMSPlugin
             if (data.Idle.Anim != "")
             {
                 AnimationData animData = CreateAnimationDataFromStruct(data.Idle);
-                ac._animations.Add(animData); //Add Idle Animation
-                ac._animDict[data.Idle.Anim] = ac._animations[0];
+
+                Animation IdleAnim = new Animation()
+                {
+                    animData = animData
+                };
+                
+                ac._animations.Add(IdleAnim); //Add Idle Animation
+                ac._animDict[animData.Name] = ac._animations[0];
             }
 
             for (int i = 0; i < data.Anims.Count; i++)
             {
-                //Check if the animation is already loaded
-                AnimData my_ad = new(data.Anims[i]);
-                ac._animations.Add(my_ad);
-                ac._animDict[my_ad.PName] = my_ad;
+                AnimationData animData = CreateAnimationDataFromStruct(data.Anims[i]);
+                //Create Animation Instances
+                Animation anim = new Animation()
+                {
+                    animData = animData
+                };
+                
+                ac._animations.Add(anim);
+                ac._animDict[anim.animData.Name] = anim;
             }
 
             return ac;
         }
 
+        private static PhysicsData CreatePhysicsDataFromStruct(TkPhysicsData data)
+        {
+            PhysicsData pd = new()
+            {
+                Friction = data.Friction,
+                Gravity = data.Gravity,
+                Mass = data.Mass,
+                RollingFriction = data.RollingFriction
+            };
+
+            return pd;
+        }
+
         private static void ProcessPhysicsComponent(SceneGraphNode node, TkPhysicsComponentData component)
         {
-            PhysicsComponent pc = new(component);
+            PhysicsComponent pc = new();
+            pc.Data = CreatePhysicsDataFromStruct(component.Data);
             node.AddComponent<PhysicsComponent>(pc);
         }
 
         private static void ProcessTriggerActionComponent(SceneGraphNode node, GcTriggerActionComponentData component)
         {
-            TriggerActionComponent tac = new(component);
+            TriggerActionComponent tac = new();
+            //TODO: Fix that 
             node.AddComponent<TriggerActionComponent>(tac);
         }
 

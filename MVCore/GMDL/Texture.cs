@@ -31,7 +31,7 @@ namespace MVCore
         {
             if (isDDS)
             {
-                textureInitDDS(data, name);
+                textureInitDDS(data);
             } else
             {
                 textureInit(data, "temp");
@@ -67,7 +67,7 @@ namespace MVCore
             textureInit(image_data, path);
         }
 
-        private void textureInitPNG(byte[] imageData, string _name)
+        private void textureInitPNG(byte[] imageData)
         {
             MemoryStream ms = new MemoryStream(imageData);
             
@@ -117,11 +117,10 @@ namespace MVCore
         }
 
         
-        private void textureInitDDS(byte[] imageData, string _name)
+        private void textureInitDDS(byte[] imageData)
         {
             DDSImage ddsImage;
-            Name = _name;
-
+            
             ddsImage = new DDSImage(imageData);
             RenderStats.texturesNum += 1; //Accumulate settings
 
@@ -242,20 +241,18 @@ namespace MVCore
             GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0); //Unbind texture PBO
         }
 
-        public void textureInit(byte[] imageData, string _name)
+        public void textureInit(byte[] imageData, string ext)
         {
-            string ext = Path.GetExtension(_name).ToUpper();
-
             switch (ext)
             {
                 case ".DDS":
                     {
-                        textureInitDDS(imageData, _name);
+                        textureInitDDS(imageData);
                         break;
                     }
                 case ".PNG":
                     {
-                        textureInitPNG(imageData, _name);
+                        textureInitPNG(imageData);
                         break;
                     }
                 default:

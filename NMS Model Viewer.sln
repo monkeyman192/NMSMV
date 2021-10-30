@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NibbleNMSPlugin", "NMSPlugi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NibbleAssimpPlugin", "NibbleAssimpPlugin\NibbleAssimpPlugin.csproj", "{D0D5D3D7-F2BE-4286-8D96-BBF69E2C76FA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleDLL", "NibbleDLL\NibbleDLL.csproj", "{8EC54636-F7D7-4213-80BD-46ECB25210EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibble", "Nibble\Nibble.csproj", "{8EC54636-F7D7-4213-80BD-46ECB25210EC}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution

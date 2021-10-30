@@ -16,19 +16,30 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NibbleDLL\NibbleDLL.csproj" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\default.dds" />
+    <EmbeddedResource Include="$(SolutionDir)Resources\default_mask.dds" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Nibble\Nibble.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="ImGui.NET">
       <HintPath>..\lib\ImGui.NET.dll</HintPath>
     </Reference>
-    <Reference Include="libMBIN">
+    <Reference Include="libMBIN, Version=3.53.0.2, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\lib\libMBIN.dll</HintPath>
     </Reference>
     <Reference Include="libPSARC">
       <HintPath>..\lib\libPSARC.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  
+  <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
+    <Message Text="Hooya $(TargetPath)" Importance="high"/>
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)bin\$(Configuration)\$(TargetFramework)\Plugins"/>
+  </Target>
 
 </Project>
