@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using System.Threading;
 using OpenTK;
@@ -20,6 +21,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Windowing.Desktop;
 using System.IO;
 using System.Reflection;
+using Font = MVCore.Text.Font;
+using Image = System.Drawing.Image;
 
 namespace MVCore
 {
@@ -135,13 +138,57 @@ namespace MVCore
                 }
                 
             }
-            
+
+            LoadDefaultResources();
             
         }
         
         ~Engine()
         {
             Log("Goodbye!", LogVerbosityLevel.INFO);
+        }
+
+        public void LoadDefaultResources()
+        {
+            //Iterate in local folder and load existing resources
+            string fontPath = "Fonts";
+
+            if (Directory.Exists(fontPath))
+            {
+                foreach (string fontFileName in Directory.GetFiles(fontPath))
+                {
+                    string ext = Path.GetExtension(fontFileName).ToUpper();
+                    if (ext == "FNT")
+                    {
+                        string fontAtlasName = fontFileName;
+                        Path.ChangeExtension(fontAtlasName, "png");
+
+                        if (File.Exists(Path.Combine(fontPath, fontAtlasName)))
+                        {
+                            AddFont(Path.Combine(fontPath, fontFileName),
+                                Path.Combine(fontPath, fontAtlasName));
+                        }
+                        else
+                        {
+                            Log(string.Format("Cannot load font {0}. Missing font atas", fontFileName), 
+                                LogVerbosityLevel.WARNING);
+                        }
+                    }
+                }    
+            }
+            
+        }
+
+        public Font AddFont(string fontPath, string fontAtlas)
+        {
+            byte[] fontData = File.ReadAllBytes(fontPath);
+            byte[] fontAtlasData = File.ReadAllBytes(fontAtlas);
+            MemoryStream ms = new MemoryStream(fontAtlasData);
+            Bitmap FontAtlas = new(ms);
+            
+            Font f = new Font(fontData, FontAtlas, 1);
+            renderSys.FontMgr.addFont(f);
+            return f;
         }
 
         public void RegisterEntity(Entity e, bool controllable = false, bool isDynamic = false)

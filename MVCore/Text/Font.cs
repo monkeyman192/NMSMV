@@ -57,12 +57,6 @@ namespace MVCore.Text
 
             if (format == 1)
                 loadHieroFont(fnt_sr, img_data);
-
-
-
-            //Load 
-
-
         }
 
         private void loadHieroFont(StreamReader fnt_sr, Bitmap img_data)

@@ -144,8 +144,7 @@ namespace MVCore.Systems
             AddDefaultPrimitives();
             AddDefaultMaterials();
             AddDefaultLights();
-            AddDefaultFonts();
-
+            
             //Setup per Frame UBOs
             setupFrameUBO();
 
@@ -441,20 +440,6 @@ namespace MVCore.Systems
 
 
 
-        }
-
-        private void AddDefaultFonts()
-        {
-            Font f;
-            //Droid Sans
-            f = new Font(Callbacks.getResource("droid.fnt"),
-                         Callbacks.getBitMapResource("droid.png"), 1);
-            FontMgr.addFont(f);
-
-            //Segoe
-            f = new Font(Callbacks.getResource("segoe.fnt"),
-                         Callbacks.getBitMapResource("segoe.png"), 1);
-            FontMgr.addFont(f);
         }
 
         private void AddDefaultLights()
