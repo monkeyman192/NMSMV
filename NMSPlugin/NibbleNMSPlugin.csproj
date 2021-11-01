@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <BaseOutputPath>..\bin\plugins</BaseOutputPath>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,8 +39,8 @@
 
   
   <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
-    <Message Text="Hooya $(TargetPath)" Importance="high"/>
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)bin\$(Configuration)\$(TargetFramework)\Plugins"/>
+    <Message Text="Hooya $(TargetPath)" Importance="high" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)bin\$(Configuration)\$(TargetFramework)\Plugins" />
   </Target>
 
 </Project>

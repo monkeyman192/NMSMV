@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MVCore.Utils;
+using NbCore.Utils;
 using System.Net;
 using Newtonsoft.Json;
 using System.IO;
@@ -14,11 +14,9 @@ namespace Viewer_Unit_Tests
     public class UnitTest5
     {
         [TestMethod]
-        public void fetchLibMBINDLL()
+        public void updateLibMBINDLL()
         {
-
-            HTMLUtils.fetchLibMBINDLL();
-            
+            HTMLUtils.updateLibMBIN();
         }
     }
 }

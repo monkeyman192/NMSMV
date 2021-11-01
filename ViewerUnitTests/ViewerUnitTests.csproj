@@ -41,6 +41,6 @@
     </Reference>
   </ItemGroup>
 
-  <Import Project="..\MVCore\MVCore.projitems" Label="Shared" />
+  <Import Project="..\NibbleCore\NibbleCore.projitems" Label="Shared" />
 
 </Project>

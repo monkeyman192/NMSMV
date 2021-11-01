@@ -10,12 +10,12 @@ using OpenTK.Mathematics;
 using libMBIN;
 using libMBIN.NMS.Toolkit;
 using System.Linq;
-using MVCore;
+using NbCore;
 using Console = System.Console;
-using MVCore.Utils;
+using NbCore.Utils;
 using libMBIN.NMS.GameComponents;
 using libMBIN.NMS;
-using MVCore.Common;
+using NbCore.Common;
 using Quaternion = OpenTK.Mathematics.Quaternion;
 
 
@@ -85,10 +85,10 @@ namespace NMSPlugin
             switch (data.AnimType)
             {
                 case TkAnimationData.AnimTypeEnum.Loop:
-                    ad.Type = AnimationType.Loop;
+                    ad.AnimType = AnimationType.Loop;
                     break;
                 case TkAnimationData.AnimTypeEnum.OneShot:
-                    ad.Type = AnimationType.OneShot;
+                    ad.AnimType = AnimationType.OneShot;
                     break;
             }
             

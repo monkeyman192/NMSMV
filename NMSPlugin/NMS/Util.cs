@@ -11,7 +11,7 @@ using OpenTK.Graphics.OpenGL4;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Path = System.IO.Path;
-using MVCore;
+using NbCore;
 using System.Windows;
 using System.Reflection;
 using libMBIN.NMS;

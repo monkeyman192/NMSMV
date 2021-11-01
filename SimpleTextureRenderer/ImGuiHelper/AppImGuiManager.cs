@@ -2,7 +2,7 @@
 using System;
 using ImGuiHelper;
 using ImGuiNET;
-using MVCore;
+using NbCore;
 
 
 namespace SimpleTextureRenderer

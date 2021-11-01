@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ImGuiNET;
-using MVCore.Common;
+using NbCore.Common;
 
 namespace NMSPlugin
 {

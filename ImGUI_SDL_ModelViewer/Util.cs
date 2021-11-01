@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using MVCore;
-using MVCore.Common;
+using NbCore;
+using NbCore.Common;
 using ImGuiNET;
 using System.Drawing;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Reflection;
 
 
 
-namespace ImGUI_SDL_ModelViewer
+namespace NibbleEditor
 {
     public static class Util
     {

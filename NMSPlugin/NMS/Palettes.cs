@@ -12,9 +12,9 @@ using System.Drawing.Imaging;
 using libMBIN.NMS.Toolkit;
 using libMBIN.NMS.GameComponents;
 using libMBIN.NMS;
-using MVCore;
-using MVCore.Common;
-using MVCore.Utils;
+using NbCore;
+using NbCore.Common;
+using NbCore.Utils;
 
 namespace NMSPlugin
 {

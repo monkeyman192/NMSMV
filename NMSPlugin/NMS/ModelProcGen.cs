@@ -10,7 +10,7 @@ using OpenTK.Graphics.OpenGL4;
 using System.Reflection;
 using System.IO;
 using libMBIN.NMS.Toolkit;
-using MVCore;
+using NbCore;
 
 namespace NMSPlugin
 {

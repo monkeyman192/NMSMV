@@ -2,10 +2,10 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 using System;
-using MVCore;
+using NbCore;
 using ImGuiHelper;
 
-namespace ImGUI_SDL_ModelViewer
+namespace NibbleEditor
 {
     class AppImGuiManager : ImGuiManager
     {
@@ -59,8 +59,6 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.OpenPopup("open-file");
                 show_open_file_dialog = false;
             }
-
-            
 
             if (show_about_window)
             {
@@ -119,8 +117,6 @@ namespace ImGUI_SDL_ModelViewer
             }
 
         }
-
-
 
     }
 

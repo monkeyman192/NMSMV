@@ -4,9 +4,9 @@ using System.Text;
 using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
-using MVCore;
-using MVCore.Common;
-using MVCore.Utils;
+using NbCore;
+using NbCore.Common;
+using NbCore.Utils;
 using libMBIN.NMS.Toolkit;
 using System.Diagnostics;
 

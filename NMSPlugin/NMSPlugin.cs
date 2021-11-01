@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using MVCore;
-using MVCore.Common;
-using MVCore.Plugins;
+using System.Threading;
+using NbCore;
+using NbCore.Common;
+using NbCore.Plugins;
 using ImGuiHelper;
 using ImGuiNET;
 using Newtonsoft.Json;
@@ -12,6 +13,8 @@ namespace NMSPlugin
 {
     public class NMSPluginSettings : PluginSettings
     {
+        [JsonIgnore]
+        public static string DefaultSettingsFileName = "NbPlugin_NMS.ini";
         public string GameDir;
         public string UnpackDir;
         
@@ -27,27 +30,37 @@ namespace NMSPlugin
 
         public override void Draw()
         {
-            throw new NotImplementedException();
+            ImGui.InputText("Game Directory", ref GameDir, 200);
+            ImGui.InputText("Unpack Directory", ref GameDir, 200);
         }
 
         public override void DrawModals()
         {
-            throw new NotImplementedException();
+            
+        }
+
+        public override void SaveToFile()
+        {
+            string jsondata = JsonConvert.SerializeObject(this);
+            File.WriteAllText(DefaultSettingsFileName, jsondata);
         }
     }
 
-    //Shared state across the NMSPlugin domain
+    //Shared state across the NMSPlugin domain just to make import procedures easier 
+    //(Avoid passing plugin settings everywhere)
     public static class PluginState
     {
-        public static NMSPluginSettings Settings = null;
-        
-        //Add a random generator just for the procgen procedures
+        public static NMSPluginSettings Settings;
         public static Random Randgen = new Random();
     }
-    
+
     public class NMSPlugin : PluginBase
     {
-        private static string SettingsFileName = "nms_plugin.ini";
+        public static string PluginName = "NMSPlugin";
+        public static string PluginVersion = "1.0.0";
+        public static string PluginDescription = "NMS Plugin for Nibble Engine. Created by gregkwaste";
+        public static string PluginCreator = "gregkwaste";
+
         private readonly ImGuiPakBrowser PakBrowser = new();
         private bool show_open_file_dialog_pak = false;
         private bool open_file_enabled = false;
@@ -57,9 +70,10 @@ namespace NMSPlugin
 
         public NMSPlugin(Engine e) : base(e)
         {
-            Name = "NMSPlugin";
-            Description = "NMS Plugin for Nibble Engine. Created by gregkwaste";
-            VersionTxt = "1.0.0";
+            base.Name = NMSPlugin.PluginName;
+            base.Version = NMSPlugin.PluginVersion;
+            base.Description = NMSPlugin.PluginDescription;
+            base.Creator = NMSPlugin.PluginCreator;
         }
         
         public void ShowOpenFileDialogPak()
@@ -93,12 +107,10 @@ namespace NMSPlugin
                 {
                     string filename = PakBrowser.SelectedItem;
                     PakBrowser.Clear();
+                    
+                    show_open_file_dialog_pak = false;
                     ImGui.CloseCurrentPopup();
-
-                    //Issue File Open Request to the Window
-                    //Fetch filepath and load Scene
-                    //Somehow I should return the scene via the import function to the caller
-                
+                    Import(filename);
                 }
                 else
                 {
@@ -117,11 +129,11 @@ namespace NMSPlugin
             if (ImGui.BeginPopupModal("update-libmbin", ref isOpen, ImGuiWindowFlags.None))
             {
                 if (libMbinLocalVersion == null)
-                    libMbinLocalVersion = MVCore.Utils.HTMLUtils.queryLibMBINDLLLocalVersion();
+                    libMbinLocalVersion = NbCore.Utils.HTMLUtils.queryLibMBINDLLLocalVersion();
 
                 if (libMbinOnlineVersion == null)
                 {
-                    libMbinOnlineVersion = MVCore.Utils.HTMLUtils.queryLibMBINDLLOnlineVersion();
+                    libMbinOnlineVersion = NbCore.Utils.HTMLUtils.queryLibMBINDLLOnlineVersion();
                 }
 
                 ImGui.Text("Old Version: " + libMbinLocalVersion);
@@ -143,7 +155,7 @@ namespace NMSPlugin
 
                 if (updatelibmbin)
                 {
-                    //MVCore.Utils.HTMLUtils.fetchLibMBINDLL();
+                    NbCore.Utils.HTMLUtils.updateLibMBIN();
                     libMbinLocalVersion = null;
                     libMbinOnlineVersion = null;
                     ImGui.CloseCurrentPopup();
@@ -152,9 +164,6 @@ namespace NMSPlugin
                 ImGui.EndPopup();
 
             }
-
-
-
         }
 
 
@@ -163,28 +172,29 @@ namespace NMSPlugin
             Log(" Loading NMS Plugin...", LogVerbosityLevel.INFO);
             
             //Load Plugin Settings
-            if (File.Exists(SettingsFileName))
+            if (File.Exists(NMSPluginSettings.DefaultSettingsFileName))
             {
-                string filedata = File.ReadAllText(SettingsFileName);
+                string filedata = File.ReadAllText(NMSPluginSettings.DefaultSettingsFileName);
                 Settings = JsonConvert.DeserializeObject<NMSPluginSettings>(filedata);
             }
             else
             {
                 Log(" Settings file not found.", LogVerbosityLevel.INFO);
-                Settings = NMSPluginSettings.GenerateDefaultSettings();
+                Settings = NMSPluginSettings.GenerateDefaultSettings() as NMSPluginSettings;
+                Settings.SaveToFile();
             }
-            
-            NMSPluginSettings cSettings = Settings as NMSPluginSettings;
-            PluginState.Settings = cSettings;
+            //Set State
+            PluginState.Settings = Settings as NMSPluginSettings;
 
+            //Create a separate thread to try and load PAK archives
             //Issue work request 
-            Log(" Issuing NMS Archive Preload Request", LogVerbosityLevel.INFO);
-            ThreadRequest rq = new();
-            rq.Data = (Path.Combine(cSettings.GameDir, "PCBANKS"));
-            rq.Type = THREAD_REQUEST_TYPE.WINDOW_LOAD_NMS_ARCHIVES;
             
-            //TODO: Send Request to Engine
-            EngineRef.SendRequest(ref rq);
+            Thread t = new Thread(() => {
+                Console.WriteLine("test");
+                FileUtils.loadNMSArchives(Path.Combine(PluginState.Settings.GameDir, "PCBANKS"), 
+                    ref open_file_enabled);
+            });
+            t.Start();
             
             //Add Defaults
             AddDefaultTextures();
@@ -194,31 +204,31 @@ namespace NMSPlugin
         {
             Assembly currentAssembly = Assembly.GetExecutingAssembly();
             EngineRef.AddTexture(Callbacks.getResourceFromAssembly(currentAssembly, "default.dds"), "default.dds");
-            
             EngineRef.AddTexture(Callbacks.getResourceFromAssembly(currentAssembly, "default_mask.dds"), "default_mask.dds");
-            
-            
         }
-        
         
         public override void Import(string filepath)
         {
-            throw new NotImplementedException();
+            Log(string.Format("Importing {0}", filepath), LogVerbosityLevel.INFO);
+            Scene scn = Importer.ImportScene(filepath);
+            //TODO: Register Scene to Engine
+        
         }
 
         public override void Export(string filepath)
         {
-            throw new NotImplementedException();
+            
         }
 
         public override void OnUnload()
         {
-            throw new NotImplementedException();
+            FileUtils.unloadNMSArchives();
+            //TODO: Add possibly other cleanups
         }
 
-        public override void DrawImporters(ref Scene scn)
+        public override void DrawImporters()
         {
-            if (ImGui.BeginMenu("#NMS"))
+            if (ImGui.BeginMenu("NMS"))
             {
                 if (ImGui.MenuItem("Import from PAK", "", false, open_file_enabled))
                 {
@@ -232,17 +242,17 @@ namespace NMSPlugin
 
                 ImGui.EndMenu();
             }
-            
+
         }
 
         public override void DrawExporters(Scene scn)
         {
-            throw new NotImplementedException();
+            
         }
 
         public override void Draw()
         {
-            throw new NotImplementedException();
+            ProcessModals();
         }
     }
 }

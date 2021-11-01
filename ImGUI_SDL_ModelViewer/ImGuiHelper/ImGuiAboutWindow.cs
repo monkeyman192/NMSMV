@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MVCore;
-using MVCore.Common;
+using NbCore;
+using NbCore.Common;
 using ImGuiNET;
-using ImGUI_SDL_ModelViewer;
+using NibbleEditor;
 
 namespace ImGuiHelper
 {

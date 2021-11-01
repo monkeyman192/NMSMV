@@ -2,10 +2,10 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using MVCore;
+using NbCore;
 using OpenTK;
 using GLSLHelper;
-using MVCore.Common;
+using NbCore.Common;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using ImGuiNET;
@@ -107,7 +107,7 @@ namespace SimpleTextureRenderer
             //Generate Geometry
 
             //Default render quad
-            MVCore.Primitives.Quad q = new MVCore.Primitives.Quad();
+            NbCore.Primitives.Quad q = new NbCore.Primitives.Quad();
             quad_vao_id = q.getVAO().vao_id;
         }
 

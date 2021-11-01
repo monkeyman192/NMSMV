@@ -1,6 +1,6 @@
 using libMBIN.NMS.Toolkit;
-using MVCore;
-using MVCore.Common;
+using NbCore;
+using NbCore.Common;
 
 
 namespace NMSPlugin

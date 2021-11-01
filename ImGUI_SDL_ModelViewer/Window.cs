@@ -6,16 +6,16 @@ using OpenTK.Windowing.Desktop;
 using ImGuiNET;
 using ImGuiHelper;
 using OpenTK.Windowing.Common;
-using MVCore;
-using MVCore.Common;
-using MVCore.Plugins;
-using MVCore.Utils;
+using NbCore;
+using NbCore.Common;
+using NbCore.Plugins;
+using NbCore.Utils;
 using System.Collections.Generic;
-using MVCore.Text;
+using NbCore.Text;
 using System.IO;
 
 
-namespace ImGUI_SDL_ModelViewer
+namespace NibbleEditor
 {
     public class Window : GameWindow
     {
@@ -53,7 +53,7 @@ namespace ImGUI_SDL_ModelViewer
             //Setup Logger
             Util.loggingSr = new StreamWriter("log.out");
 
-            //SETUP THE Callbacks FOR THE MVCORE ENVIRONMENT
+            //SETUP THE Callbacks FOR THE NbCore ENVIRONMENT
             Callbacks.SetDefaultCallbacks();
             Callbacks.updateStatus = Util.setStatus;
             Callbacks.showInfo = Util.showInfo;
@@ -441,7 +441,7 @@ namespace ImGUI_SDL_ModelViewer
                     
                     //Add Right dock
                     uint temp;
-                    uint dockSpaceLeft;
+                    //uint dockSpaceLeft;
                     uint dockSpaceRight = ImGuiNative.igDockBuilderSplitNode(dockSpaceID, ImGuiDir.Right, 0.3f,
                         null, &temp);
                     dockSpaceID = temp; //Temp holds the main view
@@ -494,20 +494,19 @@ namespace ImGUI_SDL_ModelViewer
                         Log("Open scene not implemented yet", LogVerbosityLevel.INFO);
                     }
 
-                    foreach (PluginBase plugin in engine.Plugins.Values)
+                    if (ImGui.BeginMenu("Import"))
                     {
-                        plugin.DrawImporters(ref new_scene);
-                        if (new_scene != null)
-                        {
-                            import_new_scene = true;
-                            break;
-                        }
+                        foreach (PluginBase plugin in engine.Plugins.Values)
+                            plugin.DrawImporters();
+                        ImGui.EndMenu();
                     }
 
-                    //Todo for all plugins 
-
-
-
+                    if (ImGui.BeginMenu("Export"))
+                    {
+                        foreach (PluginBase plugin in engine.Plugins.Values)
+                            plugin.DrawExporters(engine.GetActiveScene());
+                        ImGui.EndMenu();
+                    }
 
                     if (ImGui.MenuItem("Settings"))
                     {
@@ -736,8 +735,11 @@ namespace ImGUI_SDL_ModelViewer
                 ImGui.End();
             }
             
-
             _ImGuiManager.ProcessModals(this, ref current_file_path, ref IsOpenFileDialogOpen);
+
+            //Draw plugin panels and popups
+            foreach (PluginBase plugin in engine.Plugins.Values)
+                plugin.Draw();
 
             //Debugging Information
             if (ImGui.Begin("Statistics"))
