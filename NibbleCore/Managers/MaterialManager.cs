@@ -23,7 +23,9 @@ namespace NbCore.Managers
 
         public MeshMaterial GetByName(string name)
         {
-            return MaterialNameMap[name];
+            if (MaterialNameMap.ContainsKey(name))
+                return MaterialNameMap[name];
+            return null;
         }
 
         public List<GLInstancedMesh> GetMaterialMeshes(MeshMaterial mat)

@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,8 @@
     </Reference>
   </ItemGroup>
 
-  <Import Project="..\MVCore\MVCore.projitems" Label="Shared" />
+  <ItemGroup>
+    <ProjectReference Include="..\Nibble\Nibble.csproj" />
+  </ItemGroup>
 
 </Project>

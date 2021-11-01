@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ViewerUnitTests", "ViewerUn
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleNMSPlugin", "NMSPlugin\NibbleNMSPlugin.csproj", "{15C6FC13-8166-4B74-AED0-5F654BEB26F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NibbleAssimpPlugin", "NibbleAssimpPlugin\NibbleAssimpPlugin.csproj", "{D0D5D3D7-F2BE-4286-8D96-BBF69E2C76FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleAssimpPlugin", "NibbleAssimpPlugin\NibbleAssimpPlugin.csproj", "{D0D5D3D7-F2BE-4286-8D96-BBF69E2C76FA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibble", "Nibble\Nibble.csproj", "{8EC54636-F7D7-4213-80BD-46ECB25210EC}"
 EndProject

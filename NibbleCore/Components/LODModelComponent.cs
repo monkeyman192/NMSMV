@@ -33,7 +33,7 @@ namespace NbCore
     {
         public string FileName;
         public Scene SceneRef = null;
-        public float CrossFadeTime;
-        public float CrossFadeoverlap;
+        //public float CrossFadeTime;
+        //public float CrossFadeoverlap;
     }
 }

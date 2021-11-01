@@ -29,7 +29,7 @@
     <Reference Include="ImGui.NET">
       <HintPath>..\lib\ImGui.NET.dll</HintPath>
     </Reference>
-    <Reference Include="libMBIN, Version=3.53.0.2, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="libMBIN">
       <HintPath>..\lib\libMBIN.dll</HintPath>
     </Reference>
     <Reference Include="libPSARC">

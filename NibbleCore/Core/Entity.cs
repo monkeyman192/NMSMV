@@ -13,6 +13,7 @@ namespace NbCore
         SceneNodeMesh,
         SceneNodeLocator,
         SceneNodeModel,
+        SceneNodeCollision,
         MeshComponent,
         AnimationComponent,
         SceneComponent,

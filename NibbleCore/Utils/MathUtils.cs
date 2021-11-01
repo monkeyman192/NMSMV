@@ -176,8 +176,6 @@ namespace NbCore.Utils
 
         }
 
-        
-
         public unsafe static Matrix4 Matrix4FromArray(float* array, int offset)
         {
             Matrix4 mat = Matrix4.Identity;

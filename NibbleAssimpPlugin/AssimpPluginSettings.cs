@@ -1,4 +1,4 @@
-﻿using MVCore.Plugins;
+﻿using NbCore.Plugins;
 using Newtonsoft.Json;
 using ImGuiNET;
 using ImGuiHelper;
@@ -8,11 +8,6 @@ namespace NibbleAssimpPlugin
 {
     public class AssimpPluginSettings : PluginSettings
     {
-        public AssimpPluginSettings()
-        {
-            PluginName = "Assimp Nibble v0.1";
-        }
-
         public override void Draw()
         {
             ImGui.Text("NULL");
@@ -28,6 +23,11 @@ namespace NibbleAssimpPlugin
             AssimpPluginSettings settings = new();
 
             return settings;
+        }
+
+        public override void SaveToFile()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

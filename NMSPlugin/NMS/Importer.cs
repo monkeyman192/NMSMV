@@ -108,9 +108,9 @@ namespace NMSPlugin
 
                 for (int i = 0; i < metaData.FrameCount; i++)
                 {
-                    ad.Rotations[node.Node][i] = Util.fetchRotQuaternion(node, metaData, i);
-                    ad.Translations[node.Node][i] = Util.fetchTransVector(node, metaData, i);
-                    ad.Scales[node.Node][i] = Util.fetchScaleVector(node, metaData, i);
+                    ad.Rotations[node.Node].Add(Util.fetchRotQuaternion(node, metaData, i));
+                    ad.Translations[node.Node].Add(Util.fetchTransVector(node, metaData, i));
+                    ad.Scales[node.Node].Add(Util.fetchScaleVector(node, metaData, i));
                 }
             }
             
@@ -194,8 +194,6 @@ namespace NMSPlugin
                 {
                     FileName = component.LODModel[i].LODModel.Filename,
                     SceneRef = so,
-                    CrossFadeoverlap = component.LODModel[i].CrossFadeOverlap,
-                    CrossFadeTime = component.LODModel[i].CrossFadeTime
                 };
                 lodmdlcomp.Resources.Add(lodres);
             }
@@ -274,13 +272,13 @@ namespace NMSPlugin
                 case "gDiffuseMap":
                 case "gNormalMap":
                 case "gDiffuse2Map":
-                case "gMaskMap":
-                    sam.Name = "mpCustomPerMaterial." + ms.Name;
+                case "gMasksMap":
+                    sam.Name = "mpCustomPerMaterial." + ms.Name.Value;
                     sam.texUnit = Util.MapTextureUnit[sam.Name];
                     sam.SamplerID = Util.MapTexUnitToSampler[sam.Name];
                     break;
                 default:
-                    Callbacks.Log("Not sure how to handle Sampler " + sam.Name, LogVerbosityLevel.WARNING);
+                    Callbacks.Log("Not sure how to handle Sampler " + ms.Name.Value, LogVerbosityLevel.WARNING);
                     return null;
             }
             
@@ -1062,7 +1060,7 @@ namespace NMSPlugin
                 //Create SceneComponent
                 SceneComponent sc = new()
                 {
-                    NumLods = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
+                    NumLods = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "NUMLODS"))
                 };
                 
                 so.AddComponent<SceneComponent>(sc);

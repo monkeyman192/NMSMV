@@ -61,6 +61,9 @@ namespace NbCore
                 case SceneNodeType.LIGHT:
                     base.Type = EntityType.SceneNodeLight;
                     break;
+                case SceneNodeType.COLLISION:
+                    base.Type = EntityType.SceneNodeCollision;
+                    break;
                 default:
                     throw new Exception("make sure to property initialize base type");
             }

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assimp;
-using MVCore;
-using MVCore.Systems;
-using MVCore.Utils;
+using NbCore;
+using NbCore.Systems;
+using NbCore.Utils;
 using OpenTK.Mathematics;
 
-namespace MVCore.Export
+namespace NbCore.Export
 {
 
     /* Bring that shit back when we are done with the transition to the ECS system
@@ -399,13 +399,14 @@ namespace MVCore.Export
             //Default shit
             //Create assimp node
             Node node = new(m.Name);
-            node.Transform = MathUtils.convertMatrix(TransformationSystem.GetEntityLocalMat(m));
+            node.Transform = convertMatrix(TransformationSystem.GetEntityLocalMat(m));
 
             //Handle animations maybe?
             if (m.HasComponent<AnimComponent>())
             {
                 AnimComponent cmp = m.GetComponent<AnimComponent>() as AnimComponent;
-                cmp.AssimpExport(ref scn);
+                //TODO: Export Component to Assimp
+                //cmp.AssimpExport(ref scn);
             }
             
             foreach (SceneGraphNode child in m.Children)
