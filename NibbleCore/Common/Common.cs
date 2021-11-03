@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 using NbCore;
 using NbCore.Input;
@@ -31,18 +31,18 @@ namespace NbCore.Common
 
     public class MouseMovementState
     {
-        public Vector2 Position = new Vector2();
-        public Vector2 Delta = new Vector2();   
+        public NbVector2 Position = new NbVector2();
+        public NbVector2 Delta = new NbVector2();   
     }
 
     
     public static class RenderState
     {
         //Keep the view rotation Matrix
-        public static Matrix4 rotMat = Matrix4.Identity;
+        public static NbMatrix4 rotMat = NbMatrix4.Identity();
 
         //Keep the view rotation Angles (in degrees)
-        public static Vector3 rotAngles = new Vector3(0.0f);
+        public static NbVector3 rotAngles = new NbVector3(0.0f);
 
         //App Settings
         public static Settings settings = new Settings();

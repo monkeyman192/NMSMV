@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 using NbCore.Utils;
 
@@ -19,7 +19,7 @@ namespace NbCore.Primitives
         internal GeomObject geom;
         private bool disposedValue;
 
-        public void applyTransform(Matrix4 transform)
+        public void applyTransform(NbMatrix4 transform)
         {
             for (int i = 0; i < verts.Length / 3; i++)
             {
@@ -28,7 +28,7 @@ namespace NbCore.Primitives
                 float y = verts[3 * i + 1];
                 float z = verts[3 * i + 2];
 
-                Vector4 vec = new Vector4(x, y, z, 1.0f) * transform;
+                NbVector4 vec = new NbVector4(x, y, z, 1.0f) * transform;
 
                 //Save
                 verts[3 * i + 0] = vec.X;
@@ -142,7 +142,7 @@ namespace NbCore.Primitives
     public class Sphere : Primitive {
         
         //Constructor
-        public Sphere(Vector3 center, float radius, int bands=10)
+        public Sphere(NbVector3 center, float radius, int bands=10)
         {
             int latBands = bands;
             int longBands = bands;
@@ -157,15 +157,15 @@ namespace NbCore.Primitives
             
             for (int lat = 0; lat <= latBands; lat++)
             {
-                float theta = lat * (float)Math.PI / latBands;
-                float sintheta = (float)Math.Sin(theta);
-                float costheta = (float)Math.Cos(theta);
+                float theta = lat * (float)System.Math.PI / latBands;
+                float sintheta = (float)System.Math.Sin(theta);
+                float costheta = (float)System.Math.Cos(theta);
 
                 for (int lng = 0; lng <= longBands; lng++)
                 {
-                    float phi = lng * 2 * (float) Math.PI / longBands;
-                    float sinphi = (float) Math.Sin(phi);
-                    float cosphi = (float) Math.Cos(phi);
+                    float phi = lng * 2 * (float) System.Math.PI / longBands;
+                    float sinphi = (float) System.Math.Sin(phi);
+                    float cosphi = (float) System.Math.Cos(phi);
 
                     float x = cosphi * sintheta;
                     float y = costheta;
@@ -211,7 +211,7 @@ namespace NbCore.Primitives
     public class Capsule : Primitive
     {
         //Constructor
-        public Capsule(Vector3 center, float height, float radius)
+        public Capsule(NbVector3 center, float height, float radius)
         {
             int latBands = 11;
             int longBands = 11;
@@ -229,15 +229,15 @@ namespace NbCore.Primitives
 
             for (int lat = 0; lat <= latBands; lat++)
             {
-                float theta = lat * (float)Math.PI / latBands;
-                float sintheta = (float)Math.Sin(theta);
-                float costheta = (float)Math.Cos(theta);
+                float theta = lat * (float)System.Math.PI / latBands;
+                float sintheta = (float)System.Math.Sin(theta);
+                float costheta = (float)System.Math.Cos(theta);
 
                 for (int lng = 0; lng <= longBands; lng++)
                 {
-                    float phi = lng * 2 * (float)Math.PI / longBands;
-                    float sinphi = (float)Math.Sin(phi);
-                    float cosphi = (float)Math.Cos(phi);
+                    float phi = lng * 2 * (float)System.Math.PI / longBands;
+                    float sinphi = (float)System.Math.Sin(phi);
+                    float cosphi = (float)System.Math.Cos(phi);
 
                     float x = cosphi * sintheta;
                     float y = costheta;
@@ -283,7 +283,7 @@ namespace NbCore.Primitives
     public class Cylinder : Primitive
     {
         //Constructor
-        public Cylinder(float radius, float height, Vector3 color, bool generateGeom = false, int latBands = 10)
+        public Cylinder(float radius, float height, NbVector3 color, bool generateGeom = false, int latBands = 10)
         {
             //Init Arrays
             int arraysize = latBands;
@@ -301,10 +301,10 @@ namespace NbCore.Primitives
             
             for (int lat = 0; lat < latBands; lat++)
             {
-                float theta = lat * (2 * (float) Math.PI / latBands);
-                verts[3 + 3 * lat + 0] = radius * (float) Math.Cos(theta);
+                float theta = lat * (2 * (float) System.Math.PI / latBands);
+                verts[3 + 3 * lat + 0] = radius * (float) System.Math.Cos(theta);
                 verts[3 + 3 * lat + 1] = y;
-                verts[3 + 3 * lat + 2] = radius * (float) Math.Sin(theta);
+                verts[3 + 3 * lat + 2] = radius * (float) System.Math.Sin(theta);
             }
 
             //Top Cap Indices
@@ -330,10 +330,10 @@ namespace NbCore.Primitives
             
             for (int lat = 0; lat < latBands; lat++)
             {
-                float theta = lat * (2 * (float)Math.PI / latBands);
-                verts[voff + 3 + 3 * lat + 0] = radius * (float)Math.Cos(theta);
+                float theta = lat * (2 * (float)System.Math.PI / latBands);
+                verts[voff + 3 + 3 * lat + 0] = radius * (float)System.Math.Cos(theta);
                 verts[voff + 3 + 3 * lat + 1] = -y;
-                verts[voff + 3 + 3 * lat + 2] = radius * (float)Math.Sin(theta);
+                verts[voff + 3 + 3 * lat + 2] = radius * (float)System.Math.Sin(theta);
             }
 
             //Bottom Cap Indices
@@ -392,17 +392,17 @@ namespace NbCore.Primitives
 
     public class Arrow : Primitive
     {
-        public Arrow(float radius, float length, Vector3 color, bool generateGeom=false, int latBands = 10)
+        public Arrow(float radius, float length, NbVector3 color, bool generateGeom=false, int latBands = 10)
         {
             ArrowHead head = new(radius, 2 * radius, color, false, latBands);
             Cylinder cyl = new(radius/2.0f, length, color, false, latBands);
 
             //Transform Primitives before merging
             //Move arrowhead up in place
-            Matrix4 t = Matrix4.CreateTranslation(0.0f, length, 0.0f);
+            NbMatrix4 t = NbMatrix4.CreateTranslation(0.0f, length, 0.0f);
             head.applyTransform(t);
             //Move cylinder up to fit into place
-            t = Matrix4.CreateTranslation(0.0f, length/2.0f, 0.0f);
+            t = NbMatrix4.CreateTranslation(0.0f, length/2.0f, 0.0f);
             cyl.applyTransform(t);
 
             //Merge Primitives
@@ -461,7 +461,7 @@ namespace NbCore.Primitives
 
     public class SquareCross2D : Primitive
     {
-        public SquareCross2D(float size, Vector3 col, bool generateGeom = false)
+        public SquareCross2D(float size, NbVector3 col, bool generateGeom = false)
         {
             Box b1 = new(size, size, size, col, false);
             Box b2 = new(size, size, size, col, false);
@@ -469,14 +469,14 @@ namespace NbCore.Primitives
             Box b4 = new(size, size, size, col, false);
             Box b5 = new(size, size, size, col, false);
 
-            Matrix4 t;
-            t = Matrix4.CreateTranslation(new Vector3(-size, 0.0f, 0.0f));
+            NbMatrix4 t;
+            t = NbMatrix4.CreateTranslation(new NbVector3(-size, 0.0f, 0.0f));
             b2.applyTransform(t); //Left
-            t = Matrix4.CreateTranslation(new Vector3(size, 0.0f, 0.0f));
+            t = NbMatrix4.CreateTranslation(new NbVector3(size, 0.0f, 0.0f));
             b3.applyTransform(t); //Right
-            t = Matrix4.CreateTranslation(new Vector3(0.0f, size, 0.0f));
+            t = NbMatrix4.CreateTranslation(new NbVector3(0.0f, size, 0.0f));
             b4.applyTransform(t); //Up
-            t = Matrix4.CreateTranslation(new Vector3(0.0f, -size, 0.0f));
+            t = NbMatrix4.CreateTranslation(new NbVector3(0.0f, -size, 0.0f));
             b5.applyTransform(t); //Down
 
             //Merge
@@ -500,7 +500,7 @@ namespace NbCore.Primitives
     {
         public Cross(float scale, bool generateGeom = false)
         {
-            Primitive p = generatePrimitive(new Vector3(scale));
+            Primitive p = generatePrimitive(new NbVector3(scale));
 
             verts = p.verts;
             indices = p.indices;
@@ -512,7 +512,7 @@ namespace NbCore.Primitives
         }
         
 
-        public Cross(Vector3 scale, bool generateGeom = false)
+        public Cross(NbVector3 scale, bool generateGeom = false)
         {
             Primitive p = generatePrimitive(scale);
             
@@ -526,35 +526,35 @@ namespace NbCore.Primitives
         }
 
         
-        private static Primitive generatePrimitive(Vector3 scale)
+        private static Primitive generatePrimitive(NbVector3 scale)
         {
-            Arrow XPosAxis = new(0.02f, scale.X, new Vector3(10.5f, 0.0f, 0.0f), false, 5);
-            Arrow XNegAxis = new(0.01f, scale.X, new Vector3(10.5f, 0.1f, 0.1f), false, 5);
-            Arrow YPosAxis = new(0.02f, scale.Y, new Vector3(0.0f, 10.5f, 0.0f), false, 5);
-            Arrow YNegAxis = new(0.01f, scale.Y, new Vector3(0.1f, 10.5f, 0.1f), false, 5);
-            Arrow ZPosAxis = new(0.02f, scale.Z, new Vector3(0.0f, 0.0f, 10.5f), false, 5);
-            Arrow ZNegAxis = new(0.01f, scale.Z, new Vector3(0.1f, 0.1f, 10.5f), false, 5);
+            Arrow XPosAxis = new(0.02f, scale.X, new NbVector3(10.5f, 0.0f, 0.0f), false, 5);
+            Arrow XNegAxis = new(0.01f, scale.X, new NbVector3(10.5f, 0.1f, 0.1f), false, 5);
+            Arrow YPosAxis = new(0.02f, scale.Y, new NbVector3(0.0f, 10.5f, 0.0f), false, 5);
+            Arrow YNegAxis = new(0.01f, scale.Y, new NbVector3(0.1f, 10.5f, 0.1f), false, 5);
+            Arrow ZPosAxis = new(0.02f, scale.Z, new NbVector3(0.0f, 0.0f, 10.5f), false, 5);
+            Arrow ZNegAxis = new(0.01f, scale.Z, new NbVector3(0.1f, 0.1f, 10.5f), false, 5);
             
             //SquareCross2D c = new SquareCross2D(0.01f, new Vector3(0.0f, 10.5f, 0.0f), false);
 
             //Transform Primitives before merging
             //Global Scale matrix
             //Matrix4 s = Matrix4.CreateScale(scale);
-            Matrix4 s = Matrix4.Identity;
-            Matrix4 t;
+            NbMatrix4 s = NbMatrix4.Identity();
+            NbMatrix4 t;
 
             //Move arrowhead up in place
-            t = s * Matrix4.CreateRotationZ(MathUtils.radians(90));
+            t = s * NbMatrix4.CreateRotationZ(MathUtils.radians(90));
             XNegAxis.applyTransform(t);
-            t = s * Matrix4.CreateRotationZ(MathUtils.radians(-90));
+            t = s * NbMatrix4.CreateRotationZ(MathUtils.radians(-90));
             XPosAxis.applyTransform(t);
 
-            t = s * Matrix4.CreateRotationX(MathUtils.radians(90));
+            t = s * NbMatrix4.CreateRotationX(MathUtils.radians(90));
             ZPosAxis.applyTransform(t);
-            t = s * Matrix4.CreateRotationX(MathUtils.radians(-90));
+            t = s * NbMatrix4.CreateRotationX(MathUtils.radians(-90));
             ZNegAxis.applyTransform(t);
 
-            t = s * Matrix4.CreateRotationX(MathUtils.radians(180));
+            t = s * NbMatrix4.CreateRotationX(MathUtils.radians(180));
             YNegAxis.applyTransform(t);
             YPosAxis.applyTransform(s);
 
@@ -616,19 +616,19 @@ namespace NbCore.Primitives
 
     public class TranslationGizmo : Primitive
     {
-        public TranslationGizmo(Vector3 scale, bool generateGeom = false)
+        public TranslationGizmo(NbVector3 scale, bool generateGeom = false)
         {
-            Arrow XAxis = new(0.015f, 0.25f, new Vector3(1.0f, 0.0f, 0.0f), false, 20);
-            Arrow YAxis = new(0.015f, 0.25f, new Vector3(0.0f, 1.0f, 0.0f), false, 20);
-            Arrow ZAxis = new(0.015f, 0.25f, new Vector3(0.0f, 0.0f, 1.0f), false, 20);
+            Arrow XAxis = new(0.015f, 0.25f, new NbVector3(1.0f, 0.0f, 0.0f), false, 20);
+            Arrow YAxis = new(0.015f, 0.25f, new NbVector3(0.0f, 1.0f, 0.0f), false, 20);
+            Arrow ZAxis = new(0.015f, 0.25f, new NbVector3(0.0f, 0.0f, 1.0f), false, 20);
 
             //Transform Primitives before merging
             //Scale matrix
-            Matrix4 s = Matrix4.CreateScale(scale);
+            NbMatrix4 s = NbMatrix4.CreateScale(scale);
             //Move arrowhead up in place
-            Matrix4 t = s * Matrix4.CreateRotationZ(MathUtils.radians(90));
+            NbMatrix4 t = s * NbMatrix4.CreateRotationZ(MathUtils.radians(90));
             XAxis.applyTransform(t);
-            t = s * Matrix4.CreateRotationX(MathUtils.radians(90));
+            t = s * NbMatrix4.CreateRotationX(MathUtils.radians(90));
             ZAxis.applyTransform(t);
             
             //Merge Primitives
@@ -691,7 +691,7 @@ namespace NbCore.Primitives
     public class ArrowHead : Primitive
     {
         //Constructor
-        public ArrowHead(float radius, float height, Vector3 col, bool generateGeom=false, int latBands=10)
+        public ArrowHead(float radius, float height, NbVector3 col, bool generateGeom=false, int latBands=10)
         {
             //Init Arrays
             verts = new float[3 * (2 + latBands)]; 
@@ -710,10 +710,10 @@ namespace NbCore.Primitives
             
             for (int lat = 0; lat < latBands; lat++)
             {
-                float theta = lat * (2 * (float) Math.PI / latBands);
-                verts[3 * (lat + 1) + 0] = radius * (float) Math.Cos(theta);
+                float theta = lat * (2 * (float) System.Math.PI / latBands);
+                verts[3 * (lat + 1) + 0] = radius * (float) System.Math.Cos(theta);
                 verts[3 * (lat + 1) + 1] = 0.0f;
-                verts[3 * (lat + 1) + 2] = radius * (float) Math.Sin(theta);
+                verts[3 * (lat + 1) + 2] = radius * (float) System.Math.Sin(theta);
             }
 
             //Top Cap Indices
@@ -806,7 +806,7 @@ namespace NbCore.Primitives
     public class Box : Primitive
     {
         //Constructor
-        public Box(float width, float height, float depth, Vector3 col, bool generateGeom = false)
+        public Box(float width, float height, float depth, NbVector3 col, bool generateGeom = false)
         {
             //Init Arrays
             verts = new float[8*3];
@@ -1033,9 +1033,9 @@ namespace NbCore.Primitives
     public class LineSegment : Primitive
     {
         //Constructor
-        public LineSegment(int instance_num, Vector3 color)
+        public LineSegment(int instance_num, NbVector3 color)
         {
-            instance_num = Math.Max(instance_num, 1); //Should be always >=1
+            instance_num = System.Math.Max(instance_num, 1); //Should be always >=1
             verts = new float[instance_num * 2 * 3];
             Array.Clear(verts, 0, instance_num * 2 * 3);
             

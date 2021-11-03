@@ -318,9 +318,9 @@ namespace NbCore {
 			h.dwHeight = r.ReadInt32();
 			h.dwWidth = r.ReadInt32();
 			h.dwPitchOrLinearSize = r.ReadInt32();
-			h.dwDepth = Math.Max(r.ReadInt32(), 1);
+			h.dwDepth = System.Math.Max(r.ReadInt32(), 1);
             //Hack for handling unused mipmaps
-            h.dwMipMapCount = Math.Max(r.ReadInt32(), 1); 
+            h.dwMipMapCount = System.Math.Max(r.ReadInt32(), 1); 
 			for (int i = 0; i < 11; ++i) {
 				h.dwReserved1[i] = r.ReadInt32();
 			}
@@ -376,10 +376,10 @@ namespace NbCore {
 				//GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, IntPtr.Zero + offset);
 				offset += temp_size * header.dwDepth;
 
-				w = Math.Max(w >> 1, 1);
-				h = Math.Max(h >> 1, 1);
+				w = System.Math.Max(w >> 1, 1);
+				h = System.Math.Max(h >> 1, 1);
 
-				temp_size = Math.Max(1, (w + 3) / 4) * Math.Max(1, (h + 3) / 4) * blockSize;
+				temp_size = System.Math.Max(1, (w + 3) / 4) * System.Math.Max(1, (h + 3) / 4) * blockSize;
 				//This works only for square textures
 				//temp_size = Math.Max(temp_size/4, blocksize);
 			}
@@ -402,10 +402,10 @@ namespace NbCore {
 				//GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, IntPtr.Zero + offset);
 				offset += temp_size * header.dwDepth;
 
-				w = Math.Max(w >> 1, 1);
-				h = Math.Max(h >> 1, 1);
+				w = System.Math.Max(w >> 1, 1);
+				h = System.Math.Max(h >> 1, 1);
 
-				temp_size = Math.Max(1, (w + 3) / 4) * Math.Max(1, (h + 3) / 4) * blockSize;
+				temp_size = System.Math.Max(1, (w + 3) / 4) * System.Math.Max(1, (h + 3) / 4) * blockSize;
 				//This works only for square textures
 				//temp_size = Math.Max(temp_size/4, blocksize);
 			}

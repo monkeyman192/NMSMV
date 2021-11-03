@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
-using NbCore.Systems;
 
 namespace NbCore
 {
@@ -118,7 +116,7 @@ namespace NbCore
         }
 
 
-        public static IVector3 transform_coords(Vector3 coords, ulong max_width)
+        public static IVector3 transform_coords(NbVector3 coords, ulong max_width)
         {
             ulong x, y, z;
 
@@ -238,8 +236,8 @@ namespace NbCore
         {
             GL.UseProgram(pass);
 
-            Vector3 convAABBMIN = new Vector3(AABBMIN.x, AABBMIN.y, AABBMIN.z) - new Vector3(maxWidth / 2.0f);
-            Vector3 convAABBMAX = new Vector3(AABBMAX.x, AABBMAX.y, AABBMAX.z) - new Vector3(maxWidth / 2.0f);
+            NbVector3 convAABBMIN = new NbVector3(AABBMIN.x, AABBMIN.y, AABBMIN.z) - new NbVector3(maxWidth / 2.0f);
+            NbVector3 convAABBMAX = new NbVector3(AABBMAX.x, AABBMAX.y, AABBMAX.z) - new NbVector3(maxWidth / 2.0f);
 
             //Generate all 8 points from the AABB
             float[] verts1 = new float[] {  convAABBMIN.X, convAABBMIN.Y, convAABBMIN.Z,

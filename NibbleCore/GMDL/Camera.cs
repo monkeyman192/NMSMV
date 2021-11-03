@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
-using OpenTK;
 using NbCore;
+using NbCore.Math;
 using NbCore.Utils;
 using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra.Complex;
@@ -15,30 +14,30 @@ namespace NbCore
 {
     public struct CameraPos
     {
-        public Vector3 PosImpulse;
-        public Vector2 Rotation;
+        public NbVector3 PosImpulse;
+        public NbVector2 Rotation;
 
         public void Reset()
         {
-            PosImpulse = new Vector3(0.0f);
-            Rotation = new Vector2(0.0f);
+            PosImpulse = new NbVector3(0.0f);
+            Rotation = new NbVector2(0.0f);
         }
     }
 
     public class Camera : Entity
     {
         //Base Coordinate System
-        public static Vector3 BaseRight = new(1.0f, 0.0f, 0.0f);
-        public static Vector3 BaseFront = new(0.0f, 0.0f, -1.0f);
-        public static Vector3 BaseUp = new(0.0f, 1.0f, 0.0f);
+        public static NbVector3 BaseRight = new(1.0f, 0.0f, 0.0f);
+        public static NbVector3 BaseFront = new(0.0f, 0.0f, -1.0f);
+        public static NbVector3 BaseUp = new(0.0f, 1.0f, 0.0f);
 
         //Current Vectors
-        public Vector3 Right;
-        public Vector3 Front;
-        public Vector3 Up;
+        public NbVector3 Right;
+        public NbVector3 Front;
+        public NbVector3 Up;
         public float yaw = MathUtils.radians(-90.0f);
         public float pitch = 0.0f;
-        public Vector3 Position = new(0.0f, 0.0f, 0.0f);
+        public NbVector3 Position = new(0.0f, 0.0f, 0.0f);
         //Movement Time
         
         public float Speed = 1.0f; //Speed in Units/Sec
@@ -52,17 +51,17 @@ namespace NbCore
         public float aspect = 1.0f;
         
         //Matrices
-        public Matrix4 projMat;
-        public Matrix4 projMatInv;
-        public Matrix4 lookMat;
-        public Matrix4 lookMatInv;
-        public Matrix4 viewMat = Matrix4.Identity;
+        public NbMatrix4 projMat;
+        public NbMatrix4 projMatInv;
+        public NbMatrix4 lookMat;
+        public NbMatrix4 lookMatInv;
+        public NbMatrix4 viewMat = NbMatrix4.Identity();
         public int type;
         public bool culling;
 
         //Camera Frustum Planes
         private readonly Frustum extFrustum = new();
-        public Vector4[] frPlanes = new Vector4[6];
+        public NbVector4[] frPlanes = new NbVector4[6];
 
         //Rendering Stuff
         public GLVao vao;
@@ -72,7 +71,7 @@ namespace NbCore
         {
             //Set fov on init
             fov = angle;
-            Primitives.Box _box = new Primitives.Box(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true);
+            Primitives.Box _box = new Primitives.Box(1.0f, 1.0f, 1.0f, new NbVector3(1.0f), true);
             vao = _box.getVAO();
             _box.Dispose();
             this.program = program;
@@ -93,7 +92,7 @@ namespace NbCore
         
         public void updateViewMatrix()
         {
-            lookMat = Matrix4.LookAt(Position, Position + Front, BaseUp);
+            lookMat = NbMatrix4.LookAt(Position, Position + Front, BaseUp);
             float fov_rad = MathUtils.radians(fov);
             
             if (type == 0) {
@@ -101,27 +100,27 @@ namespace NbCore
                 //Call Custom
                 //projMat = this.ComputeFOVProjection();
                 float w, h;
-                float tangent = (float) Math.Tan(fov_rad / 2.0f);   // tangent of half fovY
+                float tangent = (float) System.Math.Tan(fov_rad / 2.0f);   // tangent of half fovY
                 h = zNear * tangent;  // half height of near plane
                 w = h * aspect;       // half width of near plane
 
                 //projMat = Matrix4.CreatePerspectiveOffCenter(-w, w, -h, h, zNear, zFar);
-                Matrix4.CreatePerspectiveFieldOfView(fov_rad, aspect, zNear, zFar, out projMat);
+                projMat = NbMatrix4.CreatePerspectiveFieldOfView(fov_rad, aspect, zNear, zFar);
                 viewMat = lookMat * projMat;
             }
             else
             {
                 //Create orthographic projection
-                Matrix4.CreateOrthographic(aspect * 2.0f, 2.0f, zNear, zFar, out projMat);
+                projMat = NbMatrix4.CreateOrthographic(aspect * 2.0f, 2.0f, zNear, zFar);
                 //projMat.Transpose();
                 //Create scale matrix based on the fov
-                Matrix4 scaleMat = Matrix4.CreateScale(0.8f * fov_rad);
+                NbMatrix4 scaleMat = NbMatrix4.CreateScale(0.8f * fov_rad);
                 viewMat = scaleMat * lookMat * projMat;
             }
             
             //Calculate invert Matrices
-            lookMatInv = Matrix4.Invert(lookMat);
-            projMatInv = Matrix4.Invert(projMat);
+            lookMatInv = lookMat.Inverted();
+            projMatInv = projMat.Inverted();
             
             updateFrustumPlanes();
         }
@@ -137,17 +136,17 @@ namespace NbCore
             //Console.WriteLine(string.Format("Camera Position {0} {1} {2}",
             //                    cam.Position.X, cam.Position.Y, cam.Position.Z));
 
-            cam.Front.X = (float) Math.Cos(cam.yaw) * (float) Math.Cos(cam.pitch);
-            cam.Front.Y = (float) Math.Sin(cam.pitch);
-            cam.Front.Z = (float) Math.Sin(cam.yaw) * (float) Math.Cos(cam.pitch);
+            cam.Front.X = (float) System.Math.Cos(cam.yaw) * (float) System.Math.Cos(cam.pitch);
+            cam.Front.Y = (float) System.Math.Sin(cam.pitch);
+            cam.Front.Z = (float) System.Math.Sin(cam.yaw) * (float) System.Math.Cos(cam.pitch);
             cam.Front.Normalize();
 
-            cam.Up.X = (float) Math.Cos(cam.yaw) * (float)Math.Cos(cam.pitch + Math.PI / 2.0f);
-            cam.Up.Y = (float) Math.Sin(cam.pitch + Math.PI / 2.0f);
-            cam.Up.Z = (float) Math.Sin(cam.yaw) * (float)Math.Cos(cam.pitch + Math.PI / 2.0f);
+            cam.Up.X = (float) System.Math.Cos(cam.yaw) * (float)System.Math.Cos(cam.pitch + System.Math.PI / 2.0f);
+            cam.Up.Y = (float) System.Math.Sin(cam.pitch + System.Math.PI / 2.0f);
+            cam.Up.Z = (float) System.Math.Sin(cam.yaw) * (float)System.Math.Cos(cam.pitch + System.Math.PI / 2.0f);
             cam.Up.Normalize();
             
-            cam.Right = Vector3.Cross(cam.Front, cam.Up).Normalized();
+            cam.Right = cam.Front.Cross(cam.Up).Normalized();
             //cam.Up = Vector3.Cross(cam.Right, cam.Front);
         }
 
@@ -170,11 +169,11 @@ namespace NbCore
             //Move Camera based on the impulse
 
             //Calculate Next State 
-            Vector3 currentPosition = t_controller.LastPosition;
-            Quaternion currentRotation = t_controller.LastRotation;
-            Vector3 currentScale = new(1.0f);
+            NbVector3 currentPosition = t_controller.LastPosition;
+            NbQuaternion currentRotation = t_controller.LastRotation;
+            NbVector3 currentScale = new(1.0f);
 
-            Vector3 offset = new();
+            NbVector3 offset = new();
             offset += SpeedScale * cam.Speed * target.PosImpulse.X * cam.Right;
             offset += SpeedScale * cam.Speed * target.PosImpulse.Y * cam.Front;
             offset += SpeedScale * cam.Speed * target.PosImpulse.Z * cam.Up;
@@ -306,16 +305,16 @@ namespace NbCore
             */
         }
 
-        public bool frustum_occlude(Vector3 AABBMIN, Vector3 AABBMAX, Matrix4 transform)
+        public bool frustum_occlude(NbVector3 AABBMIN, NbVector3 AABBMAX, NbMatrix4 transform)
         {
             if (!Common.RenderState.settings.renderSettings.UseFrustumCulling)
                 return true;
 
             float radius = 0.5f * (AABBMIN - AABBMAX).Length;
-            Vector3 bsh_center = AABBMIN + 0.5f * (AABBMAX - AABBMIN);
+            NbVector3 bsh_center = AABBMIN + 0.5f * (AABBMAX - AABBMIN);
 
             //Move sphere to object's root position
-            bsh_center = (new Vector4(bsh_center, 1.0f) * transform).Xyz;
+            bsh_center = (new NbVector4(bsh_center, 1.0f) * transform).Xyz;
 
             //This is not accurate for some fucking reason
             //return extFrustum.AABBVsFrustum(cand.Bbox, cand.worldMat * transform);
@@ -325,14 +324,14 @@ namespace NbCore
         }
 
 
-        public bool frustum_occlude(GLInstancedMesh meshVao, Matrix4 transform)
+        public bool frustum_occlude(GLInstancedMesh meshVao, NbMatrix4 transform)
         {
             if (!culling) return true;
 
-            Vector4 v1, v2;
+            NbVector4 v1, v2;
 
-            v1 = new Vector4(meshVao.MetaData.AABBMIN, 1.0f);
-            v2 = new Vector4(meshVao.MetaData.AABBMAX, 1.0f);
+            v1 = new NbVector4(meshVao.MetaData.AABBMIN, 1.0f);
+            v2 = new NbVector4(meshVao.MetaData.AABBMAX, 1.0f);
             
             return frustum_occlude(v1.Xyz, v2.Xyz, transform);
         }
@@ -411,7 +410,7 @@ namespace NbCore
 
     public class Frustum
     {
-        private readonly Vector4[] _frustum = new Vector4[6];
+        private readonly NbVector4[] _frustum = new NbVector4[6];
         public float[,] _frustum_points = new float[8, 3];
         
         public const int A = 0;
@@ -431,7 +430,7 @@ namespace NbCore
 
         private static void NormalizePlane(float[,] frustum, int side)
         {
-            float magnitude = 1.0f / (float)Math.Sqrt((frustum[side, 0] * frustum[side, 0]) + (frustum[side, 1] * frustum[side, 1])
+            float magnitude = 1.0f / (float)System.Math.Sqrt((frustum[side, 0] * frustum[side, 0]) + (frustum[side, 1] * frustum[side, 1])
                                                 + (frustum[side, 2] * frustum[side, 2]));
             frustum[side, 0] *= magnitude;
             frustum[side, 1] *= magnitude;
@@ -439,11 +438,11 @@ namespace NbCore
             frustum[side, 3] *= magnitude;
         }
 
-        public bool PointVsFrustum(Vector4 point)
+        public bool PointVsFrustum(NbVector4 point)
         {
             for (int i = 0; i < 6; i++)
             {
-                if (Vector4.Dot(_frustum[i],point) <= 0.0f)
+                if (NbVector4.Dot(_frustum[i],point) <= 0.0f)
                 {
                     //Console.WriteLine("Point vs Frustum, Plane {0} Failed. Failed Vector {1} {2} {3}", (ClippingPlane)p, x, y, z);
                     return false;
@@ -453,30 +452,30 @@ namespace NbCore
             return true;
         }
 
-        public bool PointVsFrustum(Vector3 location)
+        public bool PointVsFrustum(NbVector3 location)
         {
-            return PointVsFrustum(new Vector4(location, 1.0f));
+            return PointVsFrustum(new NbVector4(location, 1.0f));
         }
 
 
-        public bool AABBVsFrustum(Vector3[] AABB)
+        public bool AABBVsFrustum(NbVector3[] AABB)
         {
             //Transform points from local to model space
-            Vector4[] tr_AABB = new Vector4[2];
+            NbVector4[] tr_AABB = new NbVector4[2];
 
-            tr_AABB[0] = new Vector4(AABB[0], 1.0f);
-            tr_AABB[1] = new Vector4(AABB[1], 1.0f);
+            tr_AABB[0] = new NbVector4(AABB[0], 1.0f);
+            tr_AABB[1] = new NbVector4(AABB[1], 1.0f);
 
 
-            Vector4[] verts = new Vector4[8];
-            verts[0] = new Vector4(tr_AABB[0].X, tr_AABB[0].Y, tr_AABB[0].Z, 1.0f);
-            verts[1] = new Vector4(tr_AABB[1].X, tr_AABB[0].Y, tr_AABB[0].Z, 1.0f);
-            verts[2] = new Vector4(tr_AABB[0].X, tr_AABB[1].Y, tr_AABB[0].Z, 1.0f);
-            verts[3] = new Vector4(tr_AABB[1].X, tr_AABB[1].Y, tr_AABB[0].Z, 1.0f);
-            verts[4] = new Vector4(tr_AABB[0].X, tr_AABB[0].Y, tr_AABB[1].Z, 1.0f);
-            verts[5] = new Vector4(tr_AABB[1].X, tr_AABB[0].Y, tr_AABB[1].Z, 1.0f);
-            verts[6] = new Vector4(tr_AABB[0].X, tr_AABB[1].Y, tr_AABB[1].Z, 1.0f);
-            verts[7] = new Vector4(tr_AABB[1].X, tr_AABB[1].Y, tr_AABB[1].Z, 1.0f);
+            NbVector4[] verts = new NbVector4[8];
+            verts[0] = new NbVector4(tr_AABB[0].X, tr_AABB[0].Y, tr_AABB[0].Z, 1.0f);
+            verts[1] = new NbVector4(tr_AABB[1].X, tr_AABB[0].Y, tr_AABB[0].Z, 1.0f);
+            verts[2] = new NbVector4(tr_AABB[0].X, tr_AABB[1].Y, tr_AABB[0].Z, 1.0f);
+            verts[3] = new NbVector4(tr_AABB[1].X, tr_AABB[1].Y, tr_AABB[0].Z, 1.0f);
+            verts[4] = new NbVector4(tr_AABB[0].X, tr_AABB[0].Y, tr_AABB[1].Z, 1.0f);
+            verts[5] = new NbVector4(tr_AABB[1].X, tr_AABB[0].Y, tr_AABB[1].Z, 1.0f);
+            verts[6] = new NbVector4(tr_AABB[0].X, tr_AABB[1].Y, tr_AABB[1].Z, 1.0f);
+            verts[7] = new NbVector4(tr_AABB[1].X, tr_AABB[1].Y, tr_AABB[1].Z, 1.0f);
 
             
             //Check if all points are outside one of the planes
@@ -486,7 +485,7 @@ namespace NbCore
                 int i;
                 for (i = 0; i < 8; i++)
                 {
-                    if (Vector4.Dot(_frustum[p], verts[i]) > 0.0f)
+                    if (NbVector4.Dot(_frustum[p], verts[i]) > 0.0f)
                         return true;
                 }
 
@@ -496,12 +495,12 @@ namespace NbCore
         }
 
 
-        public bool SphereVsFrustum(Vector4 center, float radius)
+        public bool SphereVsFrustum(NbVector4 center, float radius)
         {
             float d = 0;
             for (int p = 0; p < 6; p++)
             {
-                d = Vector4.Dot(_frustum[p], center);
+                d = NbVector4.Dot(_frustum[p], center);
                 if (d <= -radius)
                 {
                     //Console.WriteLine("Plane {0} Failed. Failed Vector {1} {2} {3}", (ClippingPlane)p,
@@ -512,9 +511,9 @@ namespace NbCore
             return true;
         }
 
-        public bool SphereVsFrustum(Vector3 location, float radius)
+        public bool SphereVsFrustum(NbVector3 location, float radius)
         {
-            return SphereVsFrustum(new Vector4(location, 1.0f), radius);
+            return SphereVsFrustum(new NbVector4(location, 1.0f), radius);
         }
 
         public static bool VolumeVsFrustum(float x, float y, float z, float width, float height, float length)
@@ -544,7 +543,7 @@ namespace NbCore
             return true;
         }
 
-        public bool VolumeVsFrustum(Vector3 location, float width, float height, float length)
+        public bool VolumeVsFrustum(NbVector3 location, float width, float height, float length)
         {
             return VolumeVsFrustum(location.X, location.Y, location.Z, width, height, length);
         }
@@ -576,38 +575,38 @@ namespace NbCore
             return true;
         }
 
-        public float distanceFromPlane(int id, Vector4 point)
+        public float distanceFromPlane(int id, NbVector4 point)
         {
-            return Vector4.Dot(_frustum[id], point) / _frustum[id].Length;
+            return NbVector4.Dot(_frustum[id], point) / _frustum[id].Length;
         }
 
 
-        public void CalculateFrustum(Matrix4 mvp)
+        public void CalculateFrustum(NbMatrix4 mvp)
         {
             //Front Plane
-            _frustum[(int)ClippingPlane.Front] = new Vector4(-mvp.M13, -mvp.M23, -mvp.M33, -mvp.M43);
+            _frustum[(int)ClippingPlane.Front] = new NbVector4(-mvp.M13, -mvp.M23, -mvp.M33, -mvp.M43);
 
             //Back Plane
-            _frustum[(int)ClippingPlane.Back] = new Vector4(mvp.M13 - mvp.M14, mvp.M23 - mvp.M24, mvp.M33 - mvp.M34,
+            _frustum[(int)ClippingPlane.Back] = new NbVector4(mvp.M13 - mvp.M14, mvp.M23 - mvp.M24, mvp.M33 - mvp.M34,
                 mvp.M43 - mvp.M44);
 
             //Left Plane
-            _frustum[(int)ClippingPlane.Left] = new Vector4(-mvp.M14 - mvp.M11, -mvp.M24 - mvp.M21,
+            _frustum[(int)ClippingPlane.Left] = new NbVector4(-mvp.M14 - mvp.M11, -mvp.M24 - mvp.M21,
                                                             -mvp.M34 - mvp.M31,
                                                             -mvp.M44 - mvp.M41);
 
             //Right Plane
-            _frustum[(int)ClippingPlane.Right] = new Vector4(mvp.M11 - mvp.M14, mvp.M21 - mvp.M24,
+            _frustum[(int)ClippingPlane.Right] = new NbVector4(mvp.M11 - mvp.M14, mvp.M21 - mvp.M24,
                                                              mvp.M31 - mvp.M34,
                                                              mvp.M41 - mvp.M44);
 
             //Top Plane
-            _frustum[(int)ClippingPlane.Top] = new Vector4(mvp.M12 - mvp.M14, mvp.M22 - mvp.M24,
+            _frustum[(int)ClippingPlane.Top] = new NbVector4(mvp.M12 - mvp.M14, mvp.M22 - mvp.M24,
                                                              mvp.M32 - mvp.M34,
                                                              mvp.M42 - mvp.M44);
 
             //Bottom Plane
-            _frustum[(int)ClippingPlane.Bottom] = new Vector4(  -mvp.M14 - mvp.M12,
+            _frustum[(int)ClippingPlane.Bottom] = new NbVector4(  -mvp.M14 - mvp.M12,
                                                                 -mvp.M24 - mvp.M22,
                                                                 -mvp.M34 - mvp.M32,
                                                                 -mvp.M44 - mvp.M42);

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
+using NbCore.Math;
 
 
 namespace NbCore
@@ -12,8 +12,8 @@ namespace NbCore
 
         //Mesh Properties
         public ulong Hash;
-        public Vector3 AABBMIN;
-        public Vector3 AABBMAX;
+        public NbVector3 AABBMIN;
+        public NbVector3 AABBMAX;
         public int VertrStartPhysics;
         public int VertrEndPhysics;
         public int VertrStartGraphics;
@@ -49,8 +49,8 @@ namespace NbCore
             BoundHullStart = 0;
             BoundHullEnd = 0;
             Hash = 0xFFFFFFFF;
-            AABBMIN = new Vector3();
-            AABBMAX = new Vector3();
+            AABBMIN = new();
+            AABBMAX = new();
         }
 
         public MeshMetaData(MeshMetaData input)
@@ -70,8 +70,8 @@ namespace NbCore
             Hash = input.Hash;
             LODLevel = input.LODLevel;
             IndicesLength = input.IndicesLength;
-            AABBMIN = new Vector3(input.AABBMIN);
-            AABBMAX = new Vector3(input.AABBMAX);
+            AABBMIN = new(input.AABBMIN);
+            AABBMAX = new(input.AABBMAX);
         }
     }
 }

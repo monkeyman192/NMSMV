@@ -1,9 +1,5 @@
 ﻿using System;
-using OpenTK;
-using OpenTK.Mathematics;
-using NbCore.Utils;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
+using NbCore.Math;
 
 namespace NbCore
 {
@@ -57,7 +53,7 @@ namespace NbCore
             }
         }
 
-        public static void SetPropertyVal(float[] buffer, int offset, Vector3 val)
+        public static void SetPropertyVal(float[] buffer, int offset, NbVector3 val)
         {
             unsafe
             {
@@ -67,7 +63,7 @@ namespace NbCore
             }
         }
 
-        public static void SetPropertyVal(float[] buffer, int offset, Vector4 val)
+        public static void SetPropertyVal(float[] buffer, int offset, NbVector4 val)
         {
             unsafe
             {
@@ -78,7 +74,7 @@ namespace NbCore
             }
         }
 
-        public static void SetPropertyVal(float[] buffer, int offset, Matrix4 val)
+        public static void SetPropertyVal(float[] buffer, int offset, NbMatrix4 val)
         {
             SetPropertyVal(buffer, offset, val.Row0);
             SetPropertyVal(buffer, offset + 4, val.Row1);
@@ -136,7 +132,7 @@ namespace NbCore
         }
 
         
-        private static Vector4 GetPropertyVec4(float[] buffer, int offset)
+        private static NbVector4 GetPropertyVec4(float[] buffer, int offset)
         {
             float x, y, z, w;
             unsafe
@@ -150,7 +146,7 @@ namespace NbCore
         }
 
 
-        private static Vector3 GetPropertyVec3(float[] buffer, int offset)
+        private static NbVector3 GetPropertyVec3(float[] buffer, int offset)
         {
             float x, y, z;
             unsafe
@@ -162,12 +158,12 @@ namespace NbCore
             return new(x, y, z);
         }
 
-        private static Matrix4 GetPropertyMat4(float[] buffer, int offset)
+        private static NbMatrix4 GetPropertyMat4(float[] buffer, int offset)
         {
-            Vector4 r1 = GetPropertyVec4(buffer, offset + 0);
-            Vector4 r2 = GetPropertyVec4(buffer, offset + 4);
-            Vector4 r3 = GetPropertyVec4(buffer, offset + 8);
-            Vector4 r4 = GetPropertyVec4(buffer, offset + 12);
+            NbVector4 r1 = GetPropertyVec4(buffer, offset + 0);
+            NbVector4 r2 = GetPropertyVec4(buffer, offset + 4);
+            NbVector4 r3 = GetPropertyVec4(buffer, offset + 8);
+            NbVector4 r4 = GetPropertyVec4(buffer, offset + 12);
 
             return new(r1, r2, r3, r4);
         }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using NbCore.Primitives;
 using NbCore;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 
 
@@ -10,21 +10,21 @@ namespace NbCore.Text
 {
     public class GLText : Primitive
     {
-        public Vector2 pos;
-        public Vector2 size;
-        public Vector3 color;
+        public NbVector2 pos;
+        public NbVector2 size;
+        public NbVector3 color;
         public float lineHeight;
         public string text;
         public GLInstancedMesh meshVao;
         public Font font; //Keep reference of the Font used
         public GLText()
         {
-            pos = new Vector2(0.0f);
+            pos = new NbVector2(0.0f);
             lineHeight = 10; //10 pixels text height by default
-            color = new Vector3(1.0f);
+            color = new NbVector3(1.0f);
         }
 
-        public GLText(Font f, Vector2 pos, float h, Vector3 c, string text)
+        public GLText(Font f, NbVector2 pos, float h, NbVector3 c, string text)
         {
             font = f;
             lineHeight = h;
@@ -50,7 +50,9 @@ namespace NbCore.Text
 
             //Add instance
             GLMeshBufferManager.AddRenderInstance(ref meshVao,
-                Matrix4.Identity, Matrix4.Identity, Matrix4.Identity);
+                NbMatrix4.Identity(), 
+                NbMatrix4.Identity(), 
+                NbMatrix4.Identity());
         }
 
         public void update(string new_text)
@@ -147,20 +149,20 @@ namespace NbCore.Text
             {
                 int vertexOffset = 12 * i;
 
-                max_text_height = Math.Max(max_text_height, verts[vertexOffset + 1]);
-                max_text_height = Math.Max(max_text_height, verts[vertexOffset + 4]);
-                max_text_height = Math.Max(max_text_height, verts[vertexOffset + 7]);
-                max_text_height = Math.Max(max_text_height, verts[vertexOffset + 10]);
+                max_text_height = System.Math.Max(max_text_height, verts[vertexOffset + 1]);
+                max_text_height = System.Math.Max(max_text_height, verts[vertexOffset + 4]);
+                max_text_height = System.Math.Max(max_text_height, verts[vertexOffset + 7]);
+                max_text_height = System.Math.Max(max_text_height, verts[vertexOffset + 10]);
 
-                min_text_height = Math.Min(min_text_height, verts[vertexOffset + 1]);
-                min_text_height = Math.Min(min_text_height, verts[vertexOffset + 4]);
-                min_text_height = Math.Min(min_text_height, verts[vertexOffset + 7]);
-                min_text_height = Math.Min(min_text_height, verts[vertexOffset + 10]);
+                min_text_height = System.Math.Min(min_text_height, verts[vertexOffset + 1]);
+                min_text_height = System.Math.Min(min_text_height, verts[vertexOffset + 4]);
+                min_text_height = System.Math.Min(min_text_height, verts[vertexOffset + 7]);
+                min_text_height = System.Math.Min(min_text_height, verts[vertexOffset + 10]);
 
             }
 
             //Save text size in pixels
-            size = new Vector2(caret_pos, Math.Abs(max_text_height - min_text_height));
+            size = new NbVector2(caret_pos, System.Math.Abs(max_text_height - min_text_height));
         }
 
         private void generate(string text)

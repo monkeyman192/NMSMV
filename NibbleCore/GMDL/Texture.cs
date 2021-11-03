@@ -1,5 +1,5 @@
 ﻿using System;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 using System.IO;
 using NbCore.Common;
@@ -20,8 +20,8 @@ namespace NbCore
         public int MipMapCount;
         public InternalFormat pif;
         public PaletteOpt palOpt;
-        public Vector4 procColor;
-        public Vector3 avgColor;
+        public NbVector4 procColor;
+        public NbVector3 avgColor;
 
         //Empty Initializer
         public Texture() :base(EntityType.Texture) { }
@@ -164,8 +164,8 @@ namespace NbCore
             //Temp Variables
             int w = Width;
             int h = Height;
-            int mm_count = Math.Max(1, ddsImage.header.dwMipMapCount); //Fix the counter to 1 to handle textures with single mipmaps
-            int depth_count = Math.Max(1, ddsImage.header.dwDepth); //Fix the counter to 1 to fit the texture in a 3D container
+            int mm_count = System.Math.Max(1, ddsImage.header.dwMipMapCount); //Fix the counter to 1 to handle textures with single mipmaps
+            int depth_count = System.Math.Max(1, ddsImage.header.dwDepth); //Fix the counter to 1 to fit the texture in a 3D container
             int temp_size = ddsImage.header.dwPitchOrLinearSize;
 
             MipMapCount = mm_count;
@@ -192,10 +192,10 @@ namespace NbCore
                 GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, temp_data);
                 offset += temp_size * depth_count;
 
-                w = Math.Max(w >> 1, 1);
-                h = Math.Max(h >> 1, 1);
+                w = System.Math.Max(w >> 1, 1);
+                h = System.Math.Max(h >> 1, 1);
 
-                temp_size = Math.Max(1, (w + 3) / 4) * Math.Max(1, (h + 3) / 4) * blocksize;
+                temp_size = System.Math.Max(1, (w + 3) / 4) * System.Math.Max(1, (h + 3) / 4) * blocksize;
                 //This works only for square textures
                 //temp_size = Math.Max(temp_size/4, blocksize);
             }
@@ -209,14 +209,14 @@ namespace NbCore
 
             //Use anisotropic filtering
             float af_amount = GL.GetFloat((GetPName)All.MaxTextureMaxAnisotropy);
-            af_amount = (float)Math.Max(af_amount, 4.0f);
+            af_amount = (float)System.Math.Max(af_amount, 4.0f);
             //GL.TexParameter(TextureTarget.Texture2D,  (TextureParameterName) 0x84FE, af_amount);
             GL.GetTexParameter(target, GetTextureParameter.TextureMaxLevel, out int max_level);
             GL.GetTexParameter(target, GetTextureParameter.TextureBaseLevel, out int base_level);
 
-            int maxsize = Math.Max(Height, Width);
-            int p = (int)Math.Floor(Math.Log(maxsize, 2)) + base_level;
-            int q = Math.Min(p, max_level);
+            int maxsize = System.Math.Max(Height, Width);
+            int p = (int)System.Math.Floor(System.Math.Log(maxsize, 2)) + base_level;
+            int q = System.Math.Min(p, max_level);
 
 #if (DEBUGNONO)
             //Get all mipmaps
@@ -279,7 +279,7 @@ namespace NbCore
             disposed = true;
         }
 
-        private Vector3 getAvgColor(byte[] pixels)
+        private NbVector3 getAvgColor(byte[] pixels)
         {
             //Assume that I have the 4x4 mipmap
             //I need to fetch the first 2 colors and calculate the Average
@@ -316,7 +316,7 @@ namespace NbCore
             char blue = (char)(((int)(b0 + b1)) / 2);
 
 
-            return new Vector3(red / 256.0f, green / 256.0f, blue / 256.0f);
+            return new NbVector3(red / 256.0f, green / 256.0f, blue / 256.0f);
 
         }
 

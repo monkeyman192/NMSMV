@@ -6,8 +6,7 @@ using GLSLHelper;
 using NbCore;
 using NbCore.Common;
 using NbCore.Managers;
-using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 using NbCore.Text;
 
@@ -34,27 +33,27 @@ namespace NbCore.Systems
         [FieldOffset(12)]
         public float MSAA_SAMPLES; //MSAA Samples
         [FieldOffset(16)]
-        public Vector2 frameDim; //Frame Dimensions
+        public NbVector2 frameDim; //Frame Dimensions
         [FieldOffset(24)]
         public float cameraNearPlane;
         [FieldOffset(28)]
         public float cameraFarPlane;
         [FieldOffset(32)]
-        public Matrix4 rotMat;
+        public NbMatrix4 rotMat;
         [FieldOffset(96)]
-        public Matrix4 rotMatInv;
+        public NbMatrix4 rotMatInv;
         [FieldOffset(160)]
-        public Matrix4 mvp;
+        public NbMatrix4 mvp;
         [FieldOffset(224)]
-        public Matrix4 lookMatInv;
+        public NbMatrix4 lookMatInv;
         [FieldOffset(288)]
-        public Matrix4 projMatInv;
+        public NbMatrix4 projMatInv;
         [FieldOffset(352)]
-        public Vector4 cameraPositionExposure; //Exposure is the W component
+        public NbVector4 cameraPositionExposure; //Exposure is the W component
         [FieldOffset(368)]
         public int light_number;
         [FieldOffset(384)]
-        public Vector3 cameraDirection;
+        public NbVector3 cameraDirection;
         [FieldOffset(400)]
         public unsafe fixed float lights[32 * 64];
         //[FieldOffset(400), MarshalAs(UnmanagedType.LPArray, SizeConst=32*64)]
@@ -88,7 +87,7 @@ namespace NbCore.Systems
         private FBO gizmo_fbo;
         private FBO blur_fbo;
         private FBO render_fbo;
-        private Vector2i ViewportSize;
+        private NbVector2i ViewportSize;
         private const int blur_fbo_scale = 2;
         private double gfTime = 0.0f;
         
@@ -199,7 +198,7 @@ namespace NbCore.Systems
             return render_fbo;
         }
 
-        public void getMousePosInfo(int x, int y, ref Vector4[] arr)
+        public void getMousePosInfo(int x, int y, ref NbVector4[] arr)
         {
             //Fetch Depth
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, gbuf.fbo);
@@ -445,7 +444,7 @@ namespace NbCore.Systems
         private void AddDefaultLights()
         {
             SceneGraphNode light = EngineRef.CreateLightNode("Default Light", 200.0f, ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
-            TransformationSystem.SetEntityLocation(light, new Vector3(100.0f, 100.0f, 100.0f));
+            TransformationSystem.SetEntityLocation(light, new NbVector3(100.0f, 100.0f, 100.0f));
             
             EngineRef.RegisterEntity(light);
             LightList.Add(light);
@@ -487,8 +486,8 @@ namespace NbCore.Systems
                 MetaData = new()
                 {
                     BatchCount = c.geom.indicesCount,
-                    AABBMIN = new Vector3(-0.1f),
-                    AABBMAX = new Vector3(0.1f),
+                    AABBMIN = new NbVector3(-0.1f),
+                    AABBMAX = new NbVector3(0.1f),
                     IndicesLength = DrawElementsType.UnsignedInt,
                 }
             };
@@ -499,7 +498,7 @@ namespace NbCore.Systems
 
 
             //Default cube
-            Primitives.Box bx = new(1.0f, 1.0f, 1.0f, new Vector3(1.0f), true);
+            Primitives.Box bx = new(1.0f, 1.0f, 1.0f, new NbVector3(1.0f), true);
 
             GLInstancedMesh def_box = new()
             {
@@ -512,7 +511,7 @@ namespace NbCore.Systems
             bx.Dispose();
             
             //Default sphere
-            Primitives.Sphere sph = new(new Vector3(0.0f, 0.0f, 0.0f), 100.0f);
+            Primitives.Sphere sph = new(new NbVector3(0.0f, 0.0f, 0.0f), 100.0f);
 
             GLInstancedMesh def_sph = new()
             {
@@ -525,7 +524,7 @@ namespace NbCore.Systems
             sph.Dispose();
 
             //Light Sphere Mesh
-            Primitives.Sphere lsph = new(new Vector3(0.0f, 0.0f, 0.0f), 1.0f);
+            Primitives.Sphere lsph = new(new NbVector3(0.0f, 0.0f, 0.0f), 1.0f);
             GLInstancedLightMesh def_lsph = new()
             {
                 Name = "default_light_sphere",
@@ -621,14 +620,14 @@ namespace NbCore.Systems
         private void GenerateGizmoParts()
         {
             //Translation Gizmo
-            Primitives.Arrow translation_x_axis = new(0.015f, 0.25f, new Vector3(1.0f, 0.0f, 0.0f), false, 20);
+            Primitives.Arrow translation_x_axis = new(0.015f, 0.25f, new NbVector3(1.0f, 0.0f, 0.0f), false, 20);
             //Move arrowhead up in place
-            Matrix4 t = Matrix4.CreateRotationZ(Utils.MathUtils.radians(90));
+            NbMatrix4 t = NbMatrix4.CreateRotationZ(Utils.MathUtils.radians(90));
             translation_x_axis.applyTransform(t);
 
-            Primitives.Arrow translation_y_axis = new(0.015f, 0.25f, new Vector3(0.0f, 1.0f, 0.0f), false, 20);
-            Primitives.Arrow translation_z_axis = new(0.015f, 0.25f, new Vector3(0.0f, 0.0f, 1.0f), false, 20);
-            t = Matrix4.CreateRotationX(Utils.MathUtils.radians(90));
+            Primitives.Arrow translation_y_axis = new(0.015f, 0.25f, new NbVector3(0.0f, 1.0f, 0.0f), false, 20);
+            Primitives.Arrow translation_z_axis = new(0.015f, 0.25f, new NbVector3(0.0f, 0.0f, 1.0f), false, 20);
+            t = NbMatrix4.CreateRotationX(Utils.MathUtils.radians(90));
             translation_z_axis.applyTransform(t);
 
             //Generate Geom objects
@@ -857,7 +856,7 @@ namespace NbCore.Systems
             cpfu.cameraDirection = RenderState.activeCam.Front;
             cpfu.cameraNearPlane = RenderState.activeCam.zNear;
             cpfu.cameraFarPlane = RenderState.activeCam.zFar;
-            cpfu.light_number = Math.Min(32, EngineRef.GetLightCount());
+            cpfu.light_number = System.Math.Min(32, EngineRef.GetLightCount());
             cpfu.gfTime = (float) gfTime;
             cpfu.MSAA_SAMPLES = gbuf.msaa_samples;
 
@@ -867,7 +866,7 @@ namespace NbCore.Systems
             
             //Upload light information
             List<Entity> lights = EngineRef.GetEntityTypeList(EntityType.SceneNodeLight);
-            for (int i = 0; i < Math.Min(32, cpfu.light_number); i++)
+            for (int i = 0; i < System.Math.Min(32, cpfu.light_number); i++)
             {
                 SceneGraphNode l = lights[i] as SceneGraphNode;
                 Callbacks.Assert(l != null,
@@ -885,7 +884,7 @@ namespace NbCore.Systems
                 
                 //Position : Offset 0
                 unsafe {
-                    Vector4 localPosition = TransformationSystem.GetEntityWorldPosition(l);
+                    NbVector4 localPosition = TransformationSystem.GetEntityWorldPosition(l);
                     cpfu.lights[offset + 0] = localPosition.X;
                     cpfu.lights[offset + 1] = localPosition.Y;
                     cpfu.lights[offset + 2] = localPosition.Z;
@@ -968,14 +967,14 @@ namespace NbCore.Systems
             GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, UBOs["_COMMON_PER_FRAME"]);
         }
 
-        public void resize(Vector2i size)
+        public void resize(NbVector2i size)
         {
             resize(size.X, size.Y);
         }
 
         public void resize(int w, int h)
         {
-            ViewportSize = new Vector2i(w, h);
+            ViewportSize = new NbVector2i(w, h);
             gbuf?.resize(w, h);
             pbuf?.resize(w, h);
             render_fbo?.resize(w, h);
@@ -1486,7 +1485,7 @@ namespace NbCore.Systems
             gfTime += dt; //Update render time
 
             //Console.WriteLine("Rendering Frame");
-            GL.ClearColor(new Color4(5, 5, 5, 255));
+            GL.ClearColor(new OpenTK.Mathematics.Color4(5, 5, 5, 255));
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
             //Prepare UBOs

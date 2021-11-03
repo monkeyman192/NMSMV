@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using NbCore;
 
 namespace NbCore
@@ -19,7 +19,7 @@ namespace NbCore
         public float ScaleZ;
 
         //Raw values 
-        public Vector3 localTranslation
+        public NbVector3 localTranslation
         {
             get
             {
@@ -34,35 +34,35 @@ namespace NbCore
             }
         }
 
-        public Quaternion localRotation
+        public NbQuaternion localRotation
         {
             get
             {
-                return Quaternion.FromEulerAngles(Utils.MathUtils.radians(RotX),
+                return NbQuaternion.FromEulerAngles(Utils.MathUtils.radians(RotX),
                                                   Utils.MathUtils.radians(RotY),
                                                   Utils.MathUtils.radians(RotZ));
             }
 
             set
             {
-                Vector3 res;
-                Quaternion.ToEulerAngles(value, out res);
+                NbVector3 res;
+                NbQuaternion.ToEulerAngles(value, out res);
                 RotX = Utils.MathUtils.degrees(res.X);
                 RotY = Utils.MathUtils.degrees(res.Y);
                 RotZ = Utils.MathUtils.degrees(res.Z);
             }
         }
 
-        public Vector4 WorldPosition
+        public NbVector4 WorldPosition
         {
             get
             {
-                return new Vector4(1.0f) * WorldTransformMat;
+                return new NbVector4(1.0f) * WorldTransformMat;
             }
 
         }
 
-        public Vector3 localScale
+        public NbVector3 localScale
         {
             get => new(ScaleX, ScaleY, ScaleZ);
 
@@ -85,10 +85,10 @@ namespace NbCore
         private float OldScaleY;
         private float OldScaleZ;
 
-        public Matrix4 LocalTransformMat;
-        public Matrix4 WorldTransformMat;
+        public NbMatrix4 LocalTransformMat;
+        public NbMatrix4 WorldTransformMat;
 
-        public Matrix4 InverseTransformMat;
+        public NbMatrix4 InverseTransformMat;
 
         private TransformData parent;
         public bool WasOccluded; //Set this to true so as to trigger the first instance setup
@@ -121,9 +121,9 @@ namespace NbCore
             OldScaleZ = ScaleZ;
 
             //Rest Properties
-            LocalTransformMat = Matrix4.Identity;
-            WorldTransformMat = Matrix4.Identity;
-            InverseTransformMat = Matrix4.Identity;
+            LocalTransformMat = NbMatrix4.Identity();
+            WorldTransformMat = NbMatrix4.Identity();
+            InverseTransformMat = NbMatrix4.Identity();
             WasOccluded = true;
             IsOccluded = true;
             IsUpdated = false;
@@ -142,9 +142,9 @@ namespace NbCore
 
         public void RecalculateTransformMatrices()
         {
-            LocalTransformMat = Matrix4.CreateScale(localScale) *
-                                Matrix4.CreateFromQuaternion(localRotation) *
-                                Matrix4.CreateTranslation(localTranslation);
+            LocalTransformMat = NbMatrix4.CreateScale(localScale) *
+                                NbMatrix4.CreateFromQuaternion(localRotation) *
+                                NbMatrix4.CreateTranslation(localTranslation);
 
             if (parent != null)
                 WorldTransformMat = LocalTransformMat * parent.WorldTransformMat;

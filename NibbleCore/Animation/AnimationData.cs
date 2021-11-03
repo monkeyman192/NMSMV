@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
-//using System.Windows.Forms;
-//using System.Windows.Media.Animation;
-using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 
 
 namespace NbCore
@@ -30,9 +27,9 @@ namespace NbCore
         public int FrameCount;
 
         //Fully unpacked scheme for now. Optimize later
-        public Dictionary<string, List<Vector3>> Translations;
-        public Dictionary<string, List<Quaternion>> Rotations;
-        public Dictionary<string, List<Vector3>> Scales;
+        public Dictionary<string, List<NbVector3>> Translations;
+        public Dictionary<string, List<NbQuaternion>> Rotations;
+        public Dictionary<string, List<NbVector3>> Scales;
         
         public AnimationData() : base(EntityType.Animation)
         {
@@ -60,13 +57,13 @@ namespace NbCore
             if (!Nodes.Contains(node))
             {
                 Nodes.Add(node);
-                Translations[node] = new List<Vector3>(FrameCount);
-                Rotations[node] = new List<Quaternion>(FrameCount);
-                Scales[node] = new List<Vector3>(FrameCount);
+                Translations[node] = new List<NbVector3>(FrameCount);
+                Rotations[node] = new List<NbQuaternion>(FrameCount);
+                Scales[node] = new List<NbVector3>(FrameCount);
             }
         }
 
-        public void SetNodeRotation(string node, int frameId, Quaternion q)
+        public void SetNodeRotation(string node, int frameId, NbQuaternion q)
         {
             Common.Callbacks.Assert(Nodes.Contains(node), "Node id out of bounds");
             Common.Callbacks.Assert(frameId < FrameCount, "Frame id out of bounds");
@@ -74,7 +71,7 @@ namespace NbCore
             Rotations[node][frameId] = q;
         }
 
-        public Quaternion GetNodeRotation(string node, int frameId)
+        public NbQuaternion GetNodeRotation(string node, int frameId)
         {
             Common.Callbacks.Assert(Nodes.Contains(node), "Node id out of bounds");
             Common.Callbacks.Assert(frameId < FrameCount, "Frame id out of bounds");
@@ -82,7 +79,7 @@ namespace NbCore
             return Rotations[node][frameId];
         }
 
-        public void SetNodeScale(string node, int frameId, Vector3 t)
+        public void SetNodeScale(string node, int frameId, NbVector3 t)
         {
             Common.Callbacks.Assert(Nodes.Contains(node), "Node id out of bounds");
             Common.Callbacks.Assert(frameId < FrameCount, "Frame id out of bounds");
@@ -90,7 +87,7 @@ namespace NbCore
             Scales[node][frameId] = t;
         }
         
-        public Vector3 GetNodeScale(string node, int frameId)
+        public NbVector3 GetNodeScale(string node, int frameId)
         {
             Common.Callbacks.Assert(Nodes.Contains(node), "Node id out of bounds");
             Common.Callbacks.Assert(frameId < FrameCount, "Frame id out of bounds");
@@ -98,7 +95,7 @@ namespace NbCore
             return Scales[node][frameId];
         }
         
-        public void SetNodeTranslation(string node, int frameId, Vector3 t)
+        public void SetNodeTranslation(string node, int frameId, NbVector3 t)
         {
             Common.Callbacks.Assert(Nodes.Contains(node), "Node id out of bounds");
             Common.Callbacks.Assert(frameId < FrameCount, "Frame id out of bounds");
@@ -106,7 +103,7 @@ namespace NbCore
             Translations[node][frameId] = t;
         }
         
-        public Vector3 GetNodeTranslation(string node, int frameId)
+        public NbVector3 GetNodeTranslation(string node, int frameId)
         {
             Common.Callbacks.Assert(Nodes.Contains(node), "Node id out of bounds");
             Common.Callbacks.Assert(frameId < FrameCount, "Frame id out of bounds");

@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using GLSLHelper;
-using NbCore.Systems;
-using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 
 
@@ -25,12 +23,12 @@ namespace NbCore
             if (mc == null)
                 return;
 
-            Vector4[] tr_AABB = new Vector4[2];
+            NbVector4[] tr_AABB = new NbVector4[2];
             //tr_AABB[0] = new Vector4(metaData.AABBMIN, 1.0f) * worldMat;
             //tr_AABB[1] = new Vector4(metaData.AABBMAX, 1.0f) * worldMat;
 
-            tr_AABB[0] = new Vector4(mc.MetaData.AABBMIN, 1.0f);
-            tr_AABB[1] = new Vector4(mc.MetaData.AABBMAX, 1.0f);
+            tr_AABB[0] = new NbVector4(mc.MetaData.AABBMIN, 1.0f);
+            tr_AABB[1] = new NbVector4(mc.MetaData.AABBMAX, 1.0f);
 
             //tr_AABB[0] = new Vector4(metaData.AABBMIN, 0.0f);
             //tr_AABB[1] = new Vector4(metaData.AABBMAX, 0.0f);

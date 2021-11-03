@@ -1,6 +1,6 @@
 ﻿using System;
 using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using NbCore.Systems;
 using NbCore.Utils;
 using System.Runtime.InteropServices;
@@ -14,15 +14,15 @@ namespace NbCore
     public struct GLLight
     {
         [FieldOffset(0)]
-        public Vector3 position; 
+        public OpenTK.Mathematics.Vector3 position; //I don't like this at all. Check the consequences of using my class instead
         [FieldOffset(12)]
         public float isRenderable; 
         [FieldOffset(16)]
-        public Vector3 color; 
+        public OpenTK.Mathematics.Vector3 color; 
         [FieldOffset(28)]
         public float intensity; 
         [FieldOffset(32)]
-        public Vector3 direction; 
+        public OpenTK.Mathematics.Vector3 direction; 
         [FieldOffset(44)]
         public float fov; 
         [FieldOffset(48)]
@@ -53,7 +53,7 @@ namespace NbCore
         //Instance Data Format:
         //TODO
 
-        public int AddRenderInstance(ref GLInstancedLightMesh mesh, MeshComponent mc, Matrix4 worldMat)
+        public int AddRenderInstance(ref GLInstancedLightMesh mesh, MeshComponent mc, NbMatrix4 worldMat)
         {
             int render_instance_id = mesh.RenderedInstanceCount;
             
@@ -81,7 +81,7 @@ namespace NbCore
             return render_instance_id;
         }
 
-        public int AddMeshInstance(ref GLInstancedLightMesh mesh, MeshComponent mc, Matrix4 worldMat)
+        public int AddMeshInstance(ref GLInstancedLightMesh mesh, MeshComponent mc, NbMatrix4 worldMat)
         {
             int instance_id = mesh.InstanceCount;
 
@@ -95,7 +95,7 @@ namespace NbCore
         }
 
         //WorldMat
-        private void SetInstanceWorldMat(ref GLInstancedLightMesh mesh, int instance_id, Matrix4 mat)
+        private void SetInstanceWorldMat(ref GLInstancedLightMesh mesh, int instance_id, NbMatrix4 mat)
         {
             unsafe
             {
@@ -107,7 +107,7 @@ namespace NbCore
             }
         }
 
-        public Matrix4 GetInstanceWorldMat(GLInstancedLightMesh mesh, int instance_id)
+        public NbMatrix4 GetInstanceWorldMat(GLInstancedLightMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -122,22 +122,22 @@ namespace NbCore
 
 
         //Color
-        public static void SetInstanceColor(ref GLInstancedLightMesh mesh, int instance_id, Vector3 color)
+        public static void SetInstanceColor(ref GLInstancedLightMesh mesh, int instance_id, NbVector3 color)
         {
             SetPropertyVal(mesh.dataBuffer,
                            instance_id * instance_struct_size_floats + instance_color_float_Offset,
                            color);
         }
 
-        public static Vector3 GetInstanceColor(ref GLInstancedLightMesh mesh, int instance_id)
+        public static NbVector3 GetInstanceColor(ref GLInstancedLightMesh mesh, int instance_id)
         {
-            return (Vector3) GetPropertyVal(BufferPropertyType.VEC4,
+            return (NbVector3) GetPropertyVal(BufferPropertyType.VEC4,
                                             mesh.dataBuffer,
                                             instance_id * instance_struct_size_floats + instance_color_float_Offset);
         }
 
         //Direction
-        public static void SetInstanceDirection(ref GLInstancedLightMesh mesh, int instance_id, Vector3 dir)
+        public static void SetInstanceDirection(ref GLInstancedLightMesh mesh, int instance_id, NbVector3 dir)
         {
 
             SetPropertyVal(mesh.dataBuffer,
@@ -145,9 +145,9 @@ namespace NbCore
                            dir);
         }
 
-        public static Vector3 GetInstanceDirection(ref GLInstancedLightMesh mesh, int instance_id)
+        public static NbVector3 GetInstanceDirection(ref GLInstancedLightMesh mesh, int instance_id)
         {
-            return (Vector3) GetPropertyVal(BufferPropertyType.VEC3,
+            return (NbVector3) GetPropertyVal(BufferPropertyType.VEC3,
                                             mesh.dataBuffer,
                                             instance_id * instance_struct_size_floats + instance_direction_float_Offset);
         }

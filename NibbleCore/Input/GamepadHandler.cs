@@ -243,9 +243,9 @@ namespace NbCore.Input
         {
             float base_val = base.getState((int)btn);
             base_val = PS4ButtonFunctionMap[btn](base_val) * 100.0f;
-            base_val = (float) Math.Round(base_val, 1);
+            base_val = (float) System.Math.Round(base_val, 1);
 
-            if (Math.Abs(base_val) < 10.0f)
+            if (System.Math.Abs(base_val) < 10.0f)
                 base_val = 0.0f;
         
             return base_val / 100.0f;

@@ -6,12 +6,12 @@ using System.Threading;
 using OpenTK;
 using OpenTK.Input;
 using OpenTK.Graphics;
-using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using NbCore;
 using NbCore.Systems;
 using NbCore.Common;
 using NbCore.Input;
+using NbCore.Math;
 using NbCore.Primitives;
 using NbCore.Utils;
 using NbCore.Plugins;
@@ -60,7 +60,7 @@ namespace NbCore
         
         //Camera Stuff
         public CameraPos targetCameraPos;
-        public Vector2 prevMousePos;
+        public OpenTK.Mathematics.Vector2 prevMousePos;
 
         //Event Handlers
         public event EventHandler<AddSceneEventData> AddSceneEventHandler;
@@ -389,7 +389,7 @@ namespace NbCore
 
             //Set Camera Initial State
             TransformController tcontroller = transformSys.GetEntityTransformController(cam);
-            tcontroller.AddFutureState(new Vector3(), Quaternion.FromEulerAngles(0.0f, -3.14f/2.0f, 0.0f), new Vector3(1.0f));
+            tcontroller.AddFutureState(new NbVector3(), NbQuaternion.FromEulerAngles(0.0f, -3.14f/2.0f, 0.0f), new NbVector3(1.0f));
 
             //Initialize the render manager
             renderSys.init(width, height);
@@ -526,28 +526,28 @@ namespace NbCore
             SceneGraphNode l = CreateLightNode("Light 1", 100.0f,
                 ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
-            TransformationSystem.SetEntityLocation(l, new Vector3(0.2f, 0.2f, -2.0f));
+            TransformationSystem.SetEntityLocation(l, new NbVector3(0.2f, 0.2f, -2.0f));
             RegisterEntity(l);
             scene.Children.Add(l);
 
             SceneGraphNode l1 = CreateLightNode("Light 2", 100.0f,
                 ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
-            TransformationSystem.SetEntityLocation(l1, new Vector3(0.2f, -0.2f, -2.0f));
+            TransformationSystem.SetEntityLocation(l1, new NbVector3(0.2f, -0.2f, -2.0f));
             RegisterEntity(l1);
             scene.Children.Add(l1);
 
             SceneGraphNode l2 = CreateLightNode("Light 3", 100.0f,
                 ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
-            TransformationSystem.SetEntityLocation(l2, new Vector3(-0.2f, 0.2f, -2.0f));
+            TransformationSystem.SetEntityLocation(l2, new NbVector3(-0.2f, 0.2f, -2.0f));
             RegisterEntity(l2);
             scene.Children.Add(l2);
 
             SceneGraphNode l3 = CreateLightNode("Light 4", 100.0f,
                 ATTENUATION_TYPE.QUADRATIC, LIGHT_TYPE.POINT);
 
-            TransformationSystem.SetEntityLocation(l3, new Vector3(-0.2f, -0.2f, -2.0f));
+            TransformationSystem.SetEntityLocation(l3, new NbVector3(-0.2f, -0.2f, -2.0f));
             RegisterEntity(l3);
             scene.Children.Add(l3);
 
@@ -577,7 +577,7 @@ namespace NbCore
             
             mc.MeshVao = new GLInstancedMesh(mc.MetaData);
             mc.MeshVao.type = SceneNodeType.MESH;
-            mc.MeshVao.vao = (new Sphere(new Vector3(), 2.0f, 40)).getVAO();
+            mc.MeshVao.vao = (new Sphere(new NbVector3(), 2.0f, 40)).getVAO();
             
             //Sphere Material
             MeshMaterial mat = new();
@@ -707,9 +707,9 @@ namespace NbCore
 
             
             //Apply extra viewport rotation
-            Matrix4 Rotx = Matrix4.CreateRotationX(MathUtils.radians(RenderState.rotAngles.X));
-            Matrix4 Roty = Matrix4.CreateRotationY(MathUtils.radians(RenderState.rotAngles.Y));
-            Matrix4 Rotz = Matrix4.CreateRotationZ(MathUtils.radians(RenderState.rotAngles.Z));
+            NbMatrix4 Rotx = NbMatrix4.CreateRotationX(MathUtils.radians(RenderState.rotAngles.X));
+            NbMatrix4 Roty = NbMatrix4.CreateRotationY(MathUtils.radians(RenderState.rotAngles.Y));
+            NbMatrix4 Rotz = NbMatrix4.CreateRotationZ(MathUtils.radians(RenderState.rotAngles.Z));
             RenderState.rotMat = Rotz * Rotx * Roty;
             //RenderState.rotMat = Matrix4.Identity;
         }
@@ -853,10 +853,11 @@ namespace NbCore
             //targetCameraPos.Rotation.Xy += new Vector2(0.55f, 0);
             if (ActiveMsState.WasButtonDown(MouseButton.Left))
             {
-                Vector2 deltaVec = ActiveMsState.Position - prevMousePos;
+                OpenTK.Mathematics.Vector2 deltaVec = ActiveMsState.Position - prevMousePos;
                 
                 //Console.WriteLine("Mouse Delta {0} {1}", deltax, deltay);
-                targetCameraPos.Rotation = deltaVec;
+                targetCameraPos.Rotation.X = deltaVec.X;
+                targetCameraPos.Rotation.Y = deltaVec.Y;
             }
 
             prevMousePos = ActiveMsState.Position;
@@ -961,7 +962,7 @@ namespace NbCore
                 type = SceneNodeType.JOINT
             };
 
-            mc.MeshVao.vao = new Primitives.LineSegment(n.Children.Count, new Vector3(1.0f, 0.0f, 0.0f)).getVAO();
+            mc.MeshVao.vao = new Primitives.LineSegment(n.Children.Count, new NbVector3(1.0f, 0.0f, 0.0f)).getVAO();
             mc.Material = Common.RenderState.engineRef.GetMaterialByName("jointMat");
 
             //Add Joint Component
@@ -987,7 +988,7 @@ namespace NbCore
             n.AddComponent<TransformComponent>(tc);
 
             //Add Mesh Component
-            LineSegment ls = new LineSegment(n.Children.Count, new Vector3(1.0f, 0.0f, 0.0f));
+            LineSegment ls = new LineSegment(n.Children.Count, new NbVector3(1.0f, 0.0f, 0.0f));
             MeshComponent mc = new()
             {
                 MeshVao = new()

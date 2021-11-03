@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using Assimp;
 using NbCore;
+using NbCore.Math;
 using NbCore.Systems;
 using NbCore.Utils;
-using OpenTK.Mathematics;
 
 namespace NbCore.Export
 {
@@ -293,7 +293,7 @@ namespace NbCore.Export
 
     public class AssimpExporter
     {
-        public static Assimp.Matrix4x4 convertMatrix(Matrix4 localMat)
+        public static Assimp.Matrix4x4 convertMatrix(NbMatrix4 localMat)
         {
             Assimp.Matrix4x4 mat = new()
             {
@@ -318,18 +318,18 @@ namespace NbCore.Export
             return mat;
         }
 
-        public static Assimp.Vector3D convertVector(Vector3 localVec)
+        public static Assimp.Vector3D convertVector(NbVector3 localVec)
         {
-            Assimp.Vector3D vec = new();
+            Vector3D vec = new();
             vec.X = localVec.X;
             vec.Y = localVec.Y;
             vec.Z = localVec.Z;
             return vec;
         }
 
-        public static Assimp.Quaternion convertQuaternion(OpenTK.Mathematics.Quaternion localQuat)
+        public static Assimp.Quaternion convertQuaternion(NbQuaternion localQuat)
         {
-            Assimp.Quaternion q = new();
+            Quaternion q = new();
             q.X = localQuat.X;
             q.Y = localQuat.Y;
             q.Z = localQuat.Z;

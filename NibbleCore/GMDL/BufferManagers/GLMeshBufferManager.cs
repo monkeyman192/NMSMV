@@ -1,7 +1,6 @@
 ﻿using System;
 using NbCore.Common;
-using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using NbCore.Utils;
 using NbCore.Systems;
 
@@ -100,16 +99,16 @@ namespace NbCore
             mc.RenderInstanceID = mesh.RenderedInstanceCount;
 
             //Uplod worldMat to the meshVao
-            Matrix4 actualWorldMat = td.WorldTransformMat;
-            Matrix4 actualWorldMatInv = (actualWorldMat).Inverted();
+            NbMatrix4 actualWorldMat = td.WorldTransformMat;
+            NbMatrix4 actualWorldMatInv = (actualWorldMat).Inverted();
             SetInstanceWorldMat(mesh, mc.RenderInstanceID, actualWorldMat);
             SetInstanceWorldMatInv(mesh, mc.RenderInstanceID, actualWorldMatInv);
-            SetInstanceNormalMat(mesh, mc.RenderInstanceID, Matrix4.Transpose(actualWorldMatInv));
+            SetInstanceNormalMat(mesh, mc.RenderInstanceID, NbMatrix4.Transpose(actualWorldMatInv));
 
             mesh.RenderedInstanceCount++;
         }
         
-        public static int AddRenderInstance(ref GLInstancedMesh mesh, Matrix4 worldMat, Matrix4 worldMatInv, Matrix4 normMat)
+        public static int AddRenderInstance(ref GLInstancedMesh mesh, NbMatrix4 worldMat, NbMatrix4 worldMatInv, NbMatrix4 normMat)
         {
         
             int render_instance_id = mesh.RenderedInstanceCount;
@@ -221,7 +220,7 @@ namespace NbCore
             }
         }
 
-        public static Matrix4 GetInstanceWorldMat(GLInstancedMesh mesh, int instance_id)
+        public static NbMatrix4 GetInstanceWorldMat(GLInstancedMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -234,7 +233,7 @@ namespace NbCore
 
         }
 
-        public static Matrix4 GetInstanceNormalMat(GLInstancedMesh mesh, int instance_id)
+        public static NbMatrix4 GetInstanceNormalMat(GLInstancedMesh mesh, int instance_id)
         {
             unsafe
             {
@@ -245,7 +244,7 @@ namespace NbCore
             }
         }
 
-        public static Vector3 GetInstanceColor(GLInstancedMesh mesh, int instance_id)
+        public static NbVector3 GetInstanceColor(GLInstancedMesh mesh, int instance_id)
         {
             float col;
             unsafe
@@ -253,10 +252,10 @@ namespace NbCore
                 col = mesh.dataBuffer[instance_id * instance_struct_size_floats + instance_color_Float_Offset];
             }
 
-            return new Vector3(col, col, col);
+            return new NbVector3(col, col, col);
         }
 
-        public static void SetInstanceUniform4(GLInstancedMesh mesh, int instance_id, string un_name, Vector4 un)
+        public static void SetInstanceUniform4(GLInstancedMesh mesh, int instance_id, string un_name, NbVector4 un)
         {
             unsafe
             {
@@ -278,9 +277,9 @@ namespace NbCore
             }
         }
 
-        public static Vector4 GetInstanceUniform(GLInstancedMesh mesh, int instance_id, string un_name)
+        public static NbVector4 GetInstanceUniform(GLInstancedMesh mesh, int instance_id, string un_name)
         {
-            Vector4 un;
+            NbVector4 un = new();
             unsafe
             {
                 int offset = instanceData_Float_Offset + instance_id * instance_struct_size_floats + instance_Uniforms_Float_Offset;
@@ -303,7 +302,7 @@ namespace NbCore
             return un;
         }
 
-        public static void SetInstanceWorldMat(GLInstancedMesh mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceWorldMat(GLInstancedMesh mesh, int instance_id, NbMatrix4 mat)
         {
             unsafe
             {
@@ -315,7 +314,7 @@ namespace NbCore
             }
         }
 
-        public static void SetInstanceWorldMatInv(GLInstancedMesh mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceWorldMatInv(GLInstancedMesh mesh, int instance_id, NbMatrix4 mat)
         {
             unsafe
             {
@@ -327,7 +326,7 @@ namespace NbCore
             }
         }
 
-        public static void SetInstanceNormalMat(GLInstancedMesh mesh, int instance_id, Matrix4 mat)
+        public static void SetInstanceNormalMat(GLInstancedMesh mesh, int instance_id, NbMatrix4 mat)
         {
             unsafe
             {

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using NbCore;
-using OpenTK.Mathematics;
-
+using NbCore.Math;
 
 namespace NbCore.Systems
 {
@@ -128,43 +127,43 @@ namespace NbCore.Systems
             e.AddComponent<TransformComponent>(tc);
         }
 
-        public static void SetEntityLocation(Entity e, Vector3 loc)
+        public static void SetEntityLocation(Entity e, NbVector3 loc)
         {
             TransformData td = (e.GetComponent<TransformComponent>() as TransformComponent).Data;
             td.localTranslation = loc;
         }
 
-        public static void SetEntityRotation(Entity e, Quaternion rot)
+        public static void SetEntityRotation(Entity e, NbQuaternion rot)
         {
             TransformData td = (e.GetComponent<TransformComponent>() as TransformComponent).Data;
             td.localRotation = rot;
         }
 
-        public static void SetEntityScale(Entity e, Vector3 scale)
+        public static void SetEntityScale(Entity e, NbVector3 scale)
         {
             TransformData td = (e.GetComponent<TransformComponent>() as TransformComponent).Data;
             td.localScale = scale;
         }
 
-        public static Matrix4 GetEntityLocalMat(Entity e)
+        public static NbMatrix4 GetEntityLocalMat(Entity e)
         {
             TransformData td = (e.GetComponent<TransformComponent>() as TransformComponent).Data;
             return td.LocalTransformMat;
         }
 
-        public static Quaternion GetEntityLocalRotation(Entity e)
+        public static NbQuaternion GetEntityLocalRotation(Entity e)
         {
             TransformData td = (e.GetComponent<TransformComponent>() as TransformComponent).Data;
             return td.localRotation;
         }
 
-        public static Matrix4 GetEntityWorldMat(Entity e)
+        public static NbMatrix4 GetEntityWorldMat(Entity e)
         {
             TransformData td = (e.GetComponent<TransformComponent>() as TransformComponent).Data;
             return td.WorldTransformMat;
         }
 
-        public static Vector4 GetEntityWorldPosition(Entity e)
+        public static NbVector4 GetEntityWorldPosition(Entity e)
         {
             TransformData td = (e.GetComponent<TransformComponent>() as TransformComponent).Data;
             return td.WorldPosition;

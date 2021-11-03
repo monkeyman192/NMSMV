@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 using System.Reflection;
 using System.Drawing;
@@ -32,10 +32,10 @@ namespace NMSPlugin
         public static readonly float rbgFloat = 0.003921f;
         
         //Palette Selection
-        public static Dictionary<string, Dictionary<string, Vector4>> paletteSel;
+        public static Dictionary<string, Dictionary<string, NbVector4>> paletteSel;
 
         //Methods
-        public static List<Vector3> getPalette(string name)
+        public static List<NbVector3> getPalette(string name)
         {
             Type t = typeof(Palettes);
             FieldInfo[] fields = t.GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
@@ -44,17 +44,17 @@ namespace NMSPlugin
                 if (f.Name == name)
                 {
                     object ob = f.GetValue(null);
-                    return (List<Vector3>)ob;
+                    return (List<NbVector3>)ob;
                 }
 
             }
             throw new ApplicationException("Missing Pallete" + name);
         }
 
-        public static Dictionary<string, Dictionary<string, Vector4>> createPalette()
+        public static Dictionary<string, Dictionary<string, NbVector4>> createPalette()
         {
-            Dictionary<string, Dictionary<string, Vector4>> newPal;
-            newPal = new Dictionary<string, Dictionary<string, Vector4>>();
+            Dictionary<string, Dictionary<string, NbVector4>> newPal;
+            newPal = new Dictionary<string, Dictionary<string, NbVector4>>();
 
             //ColourAlt ids
             int primary = PluginState.Randgen.Next(0, 64);
@@ -69,46 +69,46 @@ namespace NMSPlugin
             foreach (FieldInfo f in fields)
             {
                 //Check field type
-                if (f.FieldType != typeof(List<Vector3>))
+                if (f.FieldType != typeof(List<NbVector3>))
                     continue;
                 //Get palette
-                List<Vector3> palette = (List<Vector3>)f.GetValue(null);
+                List<NbVector3> palette = (List<NbVector3>)f.GetValue(null);
 
                 //Add palette to dictionary
-                newPal[f.Name] = new Dictionary<string, Vector4>();
+                newPal[f.Name] = new Dictionary<string, NbVector4>();
                 //Add None option
-                newPal[f.Name]["None"] = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+                newPal[f.Name]["None"] = new NbVector4(1.0f, 1.0f, 1.0f, 0.0f);
                 //Add MatchGround option
-                newPal[f.Name]["MatchGround"] = new Vector4(0.5f, 0.427f, 0.337f, 0.0f);
+                newPal[f.Name]["MatchGround"] = new NbVector4(0.5f, 0.427f, 0.337f, 0.0f);
 
                 try
                 {
-                    newPal[f.Name]["Primary"] = new Vector4(palette[primary], 1.0f);
-                    newPal[f.Name]["Alternative1"] = new Vector4(palette[alternative1], 1.0f);
-                    newPal[f.Name]["Alternative2"] = new Vector4(palette[alternative2], 1.0f);
-                    newPal[f.Name]["Alternative3"] = new Vector4(palette[alternative3], 1.0f);
-                    newPal[f.Name]["Alternative4"] = new Vector4(palette[alternative4], 1.0f);
-                    newPal[f.Name]["Unique"] = new Vector4(palette[unique], 1.0f);
+                    newPal[f.Name]["Primary"] = new NbVector4(palette[primary], 1.0f);
+                    newPal[f.Name]["Alternative1"] = new NbVector4(palette[alternative1], 1.0f);
+                    newPal[f.Name]["Alternative2"] = new NbVector4(palette[alternative2], 1.0f);
+                    newPal[f.Name]["Alternative3"] = new NbVector4(palette[alternative3], 1.0f);
+                    newPal[f.Name]["Alternative4"] = new NbVector4(palette[alternative4], 1.0f);
+                    newPal[f.Name]["Unique"] = new NbVector4(palette[unique], 1.0f);
                 }
                 catch (ArgumentOutOfRangeException)
                 {
                     Callbacks.Log("Missing Options for Palette " + f.Name, LogVerbosityLevel.WARNING);
                     //Choose the first color in all cases that the palette files have not been properly imported
-                    newPal[f.Name]["Primary"] = new Vector4(palette[0], 1.0f);
-                    newPal[f.Name]["Alternative1"] = new Vector4(palette[0], 1.0f);
-                    newPal[f.Name]["Alternative2"] = new Vector4(palette[0], 1.0f);
-                    newPal[f.Name]["Alternative3"] = new Vector4(palette[0], 1.0f);
-                    newPal[f.Name]["Alternative4"] = new Vector4(palette[0], 1.0f);
-                    newPal[f.Name]["Unique"] = new Vector4(palette[0], 1.0f);
+                    newPal[f.Name]["Primary"] = new NbVector4(palette[0], 1.0f);
+                    newPal[f.Name]["Alternative1"] = new NbVector4(palette[0], 1.0f);
+                    newPal[f.Name]["Alternative2"] = new NbVector4(palette[0], 1.0f);
+                    newPal[f.Name]["Alternative3"] = new NbVector4(palette[0], 1.0f);
+                    newPal[f.Name]["Alternative4"] = new NbVector4(palette[0], 1.0f);
+                    newPal[f.Name]["Unique"] = new NbVector4(palette[0], 1.0f);
                 }
             }
             return newPal;
         }
 
-        public static Dictionary<string, Dictionary<string, Vector4>> createPalettefromBasePalettes()
+        public static Dictionary<string, Dictionary<string, NbVector4>> createPalettefromBasePalettes()
         {
-            Dictionary<string, Dictionary<string, Vector4>> newPal;
-            newPal = new Dictionary<string, Dictionary<string, Vector4>>();
+            Dictionary<string, Dictionary<string, NbVector4>> newPal;
+            newPal = new Dictionary<string, Dictionary<string, NbVector4>>();
 
             GcPaletteList template;
             
@@ -129,7 +129,7 @@ namespace NMSPlugin
                 string pal_name = ((TkPaletteTexture.PaletteEnum) i).ToString();
                 Callbacks.Log(string.Format("Palette {0} NumColors {1}", pal_name, template.Palettes[i].NumColours),
                     LogVerbosityLevel.INFO);
-                newPal[pal_name] = new Dictionary<string, Vector4>();
+                newPal[pal_name] = new Dictionary<string, NbVector4>();
 
                 //Generate Bitmap for palette
                 Bitmap bmp = new Bitmap(64, 1);
@@ -147,14 +147,14 @@ namespace NMSPlugin
                     //                                    (int)(colour.B * 255)));
                 }
 
-                Vector4 primary, alt1, alt2, alt3, alt4, matchg, unique, none;
+                NbVector4 primary, alt1, alt2, alt3, alt4, matchg, unique, none;
                 int index = 0;
                 int index1 = 0;
                 int index2 = 0;
                 int index3 = 0;
                 int index4 = 0;
                 int unique_index = 0;
-                none = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+                none = new NbVector4(1.0f, 1.0f, 1.0f, 0.0f);
 
                 switch (template.Palettes[i].NumColours) {
                     case GcPaletteData.NumColoursEnum.Inactive: //Inactive
@@ -213,7 +213,7 @@ namespace NMSPlugin
                 newPal[pal_name]["Alternative4"] = alt4;
                 newPal[pal_name]["Unique"] = unique;
                 //Add MatchGround option
-                newPal[pal_name]["MatchGround"] = new Vector4(0.5f, 0.427f, 0.337f, 0.0f);
+                newPal[pal_name]["MatchGround"] = new NbVector4(0.5f, 0.427f, 0.337f, 0.0f);
                 newPal[pal_name]["None"] = none;
 
                 //bmp.Save("Temp\\" + pal_name + ".bmp", ImageFormat.Bmp);
@@ -227,9 +227,9 @@ namespace NMSPlugin
             return PluginState.Randgen.Next(0, 64 / grouping) * grouping;
         }
 
-        private static Vector4 colour_to_vec4(Colour col)
+        private static NbVector4 colour_to_vec4(Colour col)
         {
-            return new Vector4(col.R, col.G, col.B, col.A);
+            return new NbVector4(col.R, col.G, col.B, col.A);
         }
 
         public static void set_palleteColors()

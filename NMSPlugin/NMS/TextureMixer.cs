@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 using NbCore;
 using NbCore.Common;
@@ -15,7 +15,7 @@ namespace NMSPlugin
     public static class TextureMixer
     {
         //Local storage
-        public static Dictionary<string, Dictionary<string, Vector4>> palette = new Dictionary<string, Dictionary<string, Vector4>>();
+        public static Dictionary<string, Dictionary<string, NbVector4>> palette = new();
         public static List<PaletteOpt> palOpts = new List<PaletteOpt>();
         public static List<Texture> difftextures = new List<Texture>(8);
         public static List<Texture> masktextures = new List<Texture>(8);
@@ -46,7 +46,7 @@ namespace NMSPlugin
             }
         }
 
-        public static void combineTextures(string path, Dictionary<string, Dictionary<string, Vector4>> pal_input, ref TextureManager texMgr)
+        public static void combineTextures(string path, Dictionary<string, Dictionary<string, NbVector4>> pal_input, ref TextureManager texMgr)
         {
             clear();
             palette = pal_input;
@@ -135,7 +135,7 @@ namespace NMSPlugin
                 TkPaletteTexture paletteNode = ptex.Palette;
                 string paletteName = paletteNode.Palette.ToString();
                 string colorName = paletteNode.ColourAlt.ToString();
-                Vector4 palColor = palette[paletteName][colorName];
+                NbVector4 palColor = palette[paletteName][colorName];
                 //Randomize palette Color every single time
                 //Vector3 palColor = Model_Viewer.Palettes.get_color(paletteName, colorName);
 

@@ -83,7 +83,7 @@ namespace NbCore
             //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 4.0f);
 
             //Use anisotropic filtering
-            af_amount = Math.Max(af_amount, GL.GetFloat((GetPName)All.MaxTextureMaxAnisotropy));
+            af_amount = System.Math.Max(af_amount, GL.GetFloat((GetPName)All.MaxTextureMaxAnisotropy));
             GL.TexParameter(texTarget, (TextureParameterName)0x84FE, af_amount);
         }
         

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 using NbCore.Utils;
 
@@ -34,7 +33,7 @@ namespace NbCore
         public bool skinned = false;
 
         //Material Properties
-        public Vector3 color; //Keep a default color for the mesh
+        public NbVector3 color; //Keep a default color for the mesh
 
         public int InstanceCount = 0;
         public int RenderedInstanceCount = 0;
@@ -72,7 +71,7 @@ namespace NbCore
             int instance_offset = 128 * 16 * instance_id;
             for (int i = 0; i < BoneRemapIndicesCount; i++)
             {
-                MathUtils.insertMatToArray16(instanceBoneMatrices, instance_offset + i * 16, Matrix4.Identity);
+                MathUtils.insertMatToArray16(instanceBoneMatrices, instance_offset + i * 16, NbMatrix4.Identity());
             }
 
         }

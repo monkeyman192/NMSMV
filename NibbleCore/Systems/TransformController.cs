@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using OpenTK.Mathematics;
-using NbCore.Common;
+using NbCore.Math;
 using NbCore.Systems;
 
 namespace NbCore
@@ -9,28 +8,28 @@ namespace NbCore
     public unsafe class TransformController
     {
         //Previous
-        public Vector3 PrevPosition;
-        public Quaternion PrevRotation;
-        public Vector3 PrevScale;
+        public NbVector3 PrevPosition;
+        public NbQuaternion PrevRotation;
+        public NbVector3 PrevScale;
         
         //Next
-        public Vector3 NextPosition;
-        public Quaternion NextRotation;
-        public Vector3 NextScale;
+        public NbVector3 NextPosition;
+        public NbQuaternion NextRotation;
+        public NbVector3 NextScale;
 
         //LastQueued
-        public Vector3 LastPosition;
-        public Quaternion LastRotation;
-        public Vector3 LastScale;
+        public NbVector3 LastPosition;
+        public NbQuaternion LastRotation;
+        public NbVector3 LastScale;
 
         //Current
-        public Vector3 Position;
-        public Quaternion Rotation;
-        public Vector3 Scale;
+        public NbVector3 Position;
+        public NbQuaternion Rotation;
+        public NbVector3 Scale;
         
-        private Queue<Vector3> FutureTranslation = new();
-        private Queue<Quaternion> FutureRotation = new();
-        private Queue<Vector3> FutureScale = new();
+        private Queue<NbVector3> FutureTranslation = new();
+        private Queue<NbQuaternion> FutureRotation = new();
+        private Queue<NbVector3> FutureScale = new();
 
         private double Time = 0.0;
         private double InterpolationCoeff = 1.0f;
@@ -64,7 +63,7 @@ namespace NbCore
             actorData = null;
         }
 
-        public void AddFutureState(Vector3 dp, Quaternion dr, Vector3 ds)
+        public void AddFutureState(NbVector3 dp, NbQuaternion dr, NbVector3 ds)
         {
             LastPosition = dp;
             LastRotation = dr;
@@ -116,9 +115,9 @@ namespace NbCore
         public void CalculateState()
         {
             //Interpolate between the two states
-            Position = Vector3.Lerp(PrevPosition, NextPosition, (float) InterpolationCoeff);
-            Rotation = Quaternion.Slerp(PrevRotation, NextRotation, (float) InterpolationCoeff);
-            Scale = Vector3.Lerp(PrevScale, NextScale, (float) InterpolationCoeff);
+            Position = NbVector3.Lerp(PrevPosition, NextPosition, (float) InterpolationCoeff);
+            Rotation = NbQuaternion.Slerp(PrevRotation, NextRotation, (float) InterpolationCoeff);
+            Scale = NbVector3.Lerp(PrevScale, NextScale, (float) InterpolationCoeff);
 
             //Callbacks.Log(string.Format("Interpolated Position {0} {1} {2}",
             //                    Position.X, Position.Y, Position.Z, Time),

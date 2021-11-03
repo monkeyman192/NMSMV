@@ -7,6 +7,7 @@ using ImGuiNET;
 using ImGuiHelper;
 using OpenTK.Windowing.Common;
 using NbCore;
+using NbCore.Math;
 using NbCore.Common;
 using NbCore.Plugins;
 using NbCore.Utils;
@@ -36,7 +37,7 @@ namespace NibbleEditor
         private readonly RequestHandler requestHandler = new();
         
         //ImGui stuff
-        private Vector2i SceneViewSize = new();
+        private NbVector2i SceneViewSize = new();
         private bool isSceneViewActive = false;
         private bool firstDockSetup = true;
         private float scrolly = 0.0f;
@@ -61,7 +62,7 @@ namespace NibbleEditor
             Callbacks.Log = Util.Log;
             Callbacks.Assert = Util.Assert;
 
-            SceneViewSize = Size;
+            SceneViewSize = new(Size.X, Size.Y);
             
             //Start worker thread
             workDispatcher.Start();
@@ -582,7 +583,7 @@ namespace NibbleEditor
                 System.Numerics.Vector2 csize = ImGui.GetContentRegionAvail();
                 csize.X = Math.Max(csize.X, 100);
                 csize.Y = Math.Max(csize.Y, 100);
-                Vector2i csizetk = new((int) csize.X, (int) csize.Y);
+                NbVector2i csizetk = new((int) csize.X, (int) csize.Y);
                 ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().channels[0]),
                                 csize,
                                 new System.Numerics.Vector2(0.0f, 1.0f),
@@ -670,7 +671,7 @@ namespace NibbleEditor
 
                 if (ImGui.Button("Reset Camera"))
                 {
-                    RenderState.activeCam.Position = new Vector3(0.0f);
+                    RenderState.activeCam.Position = new NbVector3(0.0f);
                 }
                 
                 ImGui.SameLine();

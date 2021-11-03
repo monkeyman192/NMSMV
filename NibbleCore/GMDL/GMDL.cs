@@ -6,8 +6,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
-using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
 using System.Linq;
 using System.ComponentModel;
@@ -90,8 +89,8 @@ namespace NbCore
         public int[] offsets; //List to save strides according to meshdescr
         public int[] small_offsets; //Same thing for the small description
         public short[] boneRemap;
-        public List<Vector3[]> bboxes = new();
-        public List<Vector3> bhullverts = new();
+        public List<NbVector3[]> bboxes = new();
+        public List<NbVector3> bhullverts = new();
         public List<int> bhullstarts = new();
         public List<int> bhullends = new();
         public List<int[]> bhullindices = new();
@@ -118,9 +117,9 @@ namespace NbCore
         }
 
 
-        public static Vector3 get_vec3_half(BinaryReader br)
+        public static NbVector3 get_vec3_half(BinaryReader br)
         {
-            Vector3 temp;
+            NbVector3 temp = new();
             //Get Values
             uint val1 = br.ReadUInt16();
             uint val2 = br.ReadUInt16();
@@ -133,9 +132,9 @@ namespace NbCore
             return temp;
         }
 
-        public static Vector2 get_vec2_half(BinaryReader br)
+        public static NbVector2 get_vec2_half(BinaryReader br)
         {
-            Vector2 temp;
+            NbVector2 temp = new();
             //Get values
             uint val1 = br.ReadUInt16();
             uint val2 = br.ReadUInt16();
@@ -273,7 +272,7 @@ namespace NbCore
 
             for (int i = 0; i < metaData.BoundHullEnd - metaData.BoundHullStart; i++)
             {
-                Vector3 v = bhullverts[i + metaData.BoundHullStart];
+                NbVector3 v = bhullverts[i + metaData.BoundHullStart];
                 vx_buffer_float[3 * i + 0] = v.X;
                 vx_buffer_float[3 * i + 1] = v.Y;
                 vx_buffer_float[3 * i + 2] = v.Z;
@@ -482,16 +481,16 @@ namespace NbCore
     
     public class AnimNodeFrameData
     {
-        public List<Quaternion> rotations = new();
-        public List<Vector3> translations = new();
-        public List<Vector3> scales = new();
+        public List<NbQuaternion> rotations = new();
+        public List<NbVector3> translations = new();
+        public List<NbVector3> scales = new();
 
         public void LoadRotations(FileStream fs,int count)
         {
             BinaryReader br = new(fs);
             for (int i = 0; i < count; i++)
             {
-                Quaternion q = new()
+                NbQuaternion q = new()
                 {
                     X = br.ReadSingle(),
                     Y = br.ReadSingle(),
@@ -508,7 +507,7 @@ namespace NbCore
             BinaryReader br = new(fs);
             for (int i = 0; i < count; i++)
             {
-                Vector3 q = new()
+                NbVector3 q = new()
                 {
                     X = br.ReadSingle(),
                     Y = br.ReadSingle(),
@@ -524,7 +523,7 @@ namespace NbCore
             BinaryReader br = new(fs);
             for (int i = 0; i < count; i++)
             {
-                Vector3 q = new()
+                NbVector3 q = new()
                 {
                     X = br.ReadSingle(),
                     Y = br.ReadSingle(),
@@ -583,8 +582,8 @@ namespace NbCore
     
     public class JointBindingData
     {
-        public Matrix4 invBindMatrix = Matrix4.Identity;
-        public Matrix4 BindMatrix = Matrix4.Identity;
+        public NbMatrix4 invBindMatrix = NbMatrix4.Identity();
+        public NbMatrix4 BindMatrix = NbMatrix4.Identity();
 
         public void Load(Stream fs)
         {
@@ -609,8 +608,9 @@ namespace NbCore
             invBindMatrix.M44 = br.ReadSingle();
 
             //Calculate Binding Matrix
-            Vector3 BindTranslate, BindScale;
-            Quaternion BindRotation = new();
+            NbVector3 BindTranslate = new();
+            NbVector3 BindScale = new();
+            NbQuaternion BindRotation = new();
 
             //Get Translate
             BindTranslate.X = br.ReadSingle();
@@ -627,7 +627,7 @@ namespace NbCore
             BindScale.Z = br.ReadSingle();
 
             //Generate Matrix
-            BindMatrix = Matrix4.CreateScale(BindScale) * Matrix4.CreateFromQuaternion(BindRotation) * Matrix4.CreateTranslation(BindTranslate);
+            BindMatrix = NbMatrix4.CreateScale(BindScale) * NbMatrix4.CreateFromQuaternion(BindRotation) * NbMatrix4.CreateTranslation(BindTranslate);
 
             //Check Results [Except from Joint 0, the determinant of the multiplication is always 1,
             // transforms should be good]

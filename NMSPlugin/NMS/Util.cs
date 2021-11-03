@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using libMBIN;
-using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using libMBIN.NMS.Toolkit;
 using System.Security.Permissions;
 using System.Linq;
@@ -15,7 +14,6 @@ using NbCore;
 using System.Windows;
 using System.Reflection;
 using libMBIN.NMS;
-using Quaternion = OpenTK.Mathematics.Quaternion;
 
 namespace NMSPlugin
 {
@@ -43,7 +41,7 @@ namespace NMSPlugin
 
 
         //Animation frame data collection methods
-        public static Quaternion fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, 
+        public static NbQuaternion fetchRotQuaternion(TkAnimNodeData node, TkAnimMetadata animMeta, 
             int frameCounter)
         {
             //Load Frames
@@ -65,7 +63,7 @@ namespace NMSPlugin
                 rotIndex = node.RotIndex - frame.Rotations.Count;
             }
 
-            Quaternion q = new();
+            NbQuaternion q = new();
             q.X = activeFrame.Rotations[rotIndex].x;
             q.Y = activeFrame.Rotations[rotIndex].y;
             q.Z = activeFrame.Rotations[rotIndex].z;
@@ -75,7 +73,7 @@ namespace NMSPlugin
         }
 
 
-        public static Vector3 fetchTransVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
+        public static NbVector3 fetchTransVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
         {
             //Load Frames
             //Console.WriteLine("Setting Frame Index {0}", frameIndex);
@@ -97,7 +95,7 @@ namespace NMSPlugin
                 activeFrame = stillframe;
             }
 
-            Vector3 v = new();
+            NbVector3 v = new();
             v.X = activeFrame.Translations[transIndex].x;
             v.Y = activeFrame.Translations[transIndex].y;
             v.Z = activeFrame.Translations[transIndex].z;
@@ -105,7 +103,7 @@ namespace NMSPlugin
             return v;
         }
 
-        public static Vector3 fetchScaleVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
+        public static NbVector3 fetchScaleVector(TkAnimNodeData node, TkAnimMetadata animMeta, int frameCounter)
         {
             //Load Frames
             //Console.WriteLine("Setting Frame Index {0}", frameIndex);
@@ -125,7 +123,7 @@ namespace NMSPlugin
                 activeFrame = stillframe;
             }
 
-            Vector3 s = new Vector3();
+            NbVector3 s = new NbVector3();
             s.X = activeFrame.Scales[scaleIndex].x;
             s.Y = activeFrame.Scales[scaleIndex].y;
             s.Z = activeFrame.Scales[scaleIndex].z;
@@ -150,7 +148,7 @@ namespace NMSPlugin
             {
                 Texture tex = new Texture(sampler.Map);
                 tex.palOpt = new PaletteOpt(false);
-                tex.procColor = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+                tex.procColor = new NbVector4(1.0f, 1.0f, 1.0f, 0.0f);
                 sampler.Tex = tex;
             }
         }

@@ -6,7 +6,7 @@ using System;
 using System.Reflection;
 using System.Globalization;
 using OpenTK;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using libMBIN;
 using libMBIN.NMS.Toolkit;
 using System.Linq;
@@ -102,9 +102,9 @@ namespace NMSPlugin
                 TkAnimNodeData node = metaData.NodeData[j];
                 //Init dictionary entries
 
-                ad.Rotations[node.Node] = new List<Quaternion>(metaData.FrameCount);
-                ad.Translations[node.Node] = new List<Vector3>(metaData.FrameCount);
-                ad.Scales[node.Node] = new List<Vector3>(metaData.FrameCount);
+                ad.Rotations[node.Node] = new List<NbQuaternion>(metaData.FrameCount);
+                ad.Translations[node.Node] = new List<NbVector3>(metaData.FrameCount);
+                ad.Scales[node.Node] = new List<NbVector3>(metaData.FrameCount);
 
                 for (int i = 0; i < metaData.FrameCount; i++)
                 {
@@ -622,20 +622,20 @@ namespace NMSPlugin
             //Init first
             for (int i = 0; i < partcount; i++)
             {
-                Vector3[] bb = new Vector3[2];
+                NbVector3[] bb = new NbVector3[2];
                 geom.bboxes.Add(bb);
             }
 
             fs.Seek(bboxminoffset, SeekOrigin.Begin);
             for (int i = 0; i < partcount; i++) {
-                geom.bboxes[i][0] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                geom.bboxes[i][0] = new NbVector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
                 br.ReadBytes(4);
             }
 
             fs.Seek(bboxmaxoffset, SeekOrigin.Begin);
             for (int i = 0; i < partcount; i++)
             {
-                geom.bboxes[i][1] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                geom.bboxes[i][1] = new NbVector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
                 br.ReadBytes(4);
             }
 
@@ -657,7 +657,7 @@ namespace NMSPlugin
             fs.Seek(bhulloffset, SeekOrigin.Begin);
             for (int i = 0; i < bhull_count; i++)
             {
-                geom.bhullverts.Add(new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle()));
+                geom.bhullverts.Add(new NbVector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle()));
                 br.ReadBytes(4);
             }
 
@@ -934,10 +934,10 @@ namespace NMSPlugin
                         LODLevel = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
                         BoundHullStart = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
                         BoundHullEnd = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
-                        AABBMIN = new Vector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
+                        AABBMIN = new NbVector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
                                           MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINY")),
                                           MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINZ"))),
-                        AABBMAX = new Vector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
+                        AABBMAX = new NbVector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
                                           MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
                                           MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
                         Hash = ulong.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "HASH"))

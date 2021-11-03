@@ -1,5 +1,5 @@
 using MathNet.Numerics.Distributions;
-using OpenTK.Mathematics;
+using NbCore.Math;
 using System;
 
 namespace NbCore
@@ -81,7 +81,7 @@ namespace NbCore
             }
             */
 
-            int activeFrameCount = (animData.FrameEnd == 0 ? animData.FrameCount : Math.Min(animData.FrameEnd, animData.FrameCount)) - (animData.FrameStart != 0 ? animData.FrameStart : 0);
+            int activeFrameCount = (animData.FrameEnd == 0 ? animData.FrameCount : System.Math.Min(animData.FrameEnd, animData.FrameCount)) - (animData.FrameStart != 0 ? animData.FrameStart : 0);
             //Assuming a fixed frequency of 60 fps for the animations
             float activeAnimDuration = activeFrameCount * 1000.0f / 60.0f; // In ms TOTAL
             float activeAnimInterval = activeAnimDuration / (activeFrameCount - 1); // Per frame time
@@ -101,7 +101,7 @@ namespace NbCore
                     animationTime %= activeAnimDuration; //Clamp to correct time span
 
                     //Properly calculate previous and nextFrameTimes
-                    prevFrameIndex = (int) Math.Floor(animationTime / activeAnimInterval);
+                    prevFrameIndex = (int) System.Math.Floor(animationTime / activeAnimInterval);
                     nextFrameIndex = (prevFrameIndex + 1) % activeFrameCount;
                     prevFrameTime = activeAnimInterval * prevFrameIndex;
                     nextFrameTime = prevFrameTime + activeAnimInterval;
@@ -133,19 +133,19 @@ namespace NbCore
         public void ApplyNodeTransform(TransformController tc, string node)
         {
             //Fetch prevFrame stuff
-            Quaternion prev_q = animData.GetNodeRotation(node, prevFrameIndex);
-            Vector3 prev_p = animData.GetNodeTranslation(node, prevFrameIndex);
-            Vector3 prev_s = animData.GetNodeScale(node, prevFrameIndex);
+            NbQuaternion prev_q = animData.GetNodeRotation(node, prevFrameIndex);
+            NbVector3 prev_p = animData.GetNodeTranslation(node, prevFrameIndex);
+            NbVector3 prev_s = animData.GetNodeScale(node, prevFrameIndex);
 
             //Fetch nextFrame stuff
-            Quaternion next_q = animData.GetNodeRotation(node, nextFrameIndex);
-            Vector3 next_p = animData.GetNodeTranslation(node, nextFrameIndex);
-            Vector3 next_s = animData.GetNodeScale(node, nextFrameIndex);
+            NbQuaternion next_q = animData.GetNodeRotation(node, nextFrameIndex);
+            NbVector3 next_p = animData.GetNodeTranslation(node, nextFrameIndex);
+            NbVector3 next_s = animData.GetNodeScale(node, nextFrameIndex);
 
             //Interpolate
-            Quaternion q = Quaternion.Slerp(next_q, prev_q, LERP_coeff);
-            Vector3 p = next_p * LERP_coeff + prev_p * (1.0f - LERP_coeff);
-            Vector3 s = next_s * LERP_coeff + prev_s * (1.0f - LERP_coeff);
+            NbQuaternion q = NbQuaternion.Slerp(next_q, prev_q, LERP_coeff);
+            NbVector3 p = next_p * LERP_coeff + prev_p * (1.0f - LERP_coeff);
+            NbVector3 s = next_s * LERP_coeff + prev_s * (1.0f - LERP_coeff);
 
             //Convert transforms
             tc.AddFutureState(p, q, s);
