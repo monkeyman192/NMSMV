@@ -52,22 +52,32 @@ namespace NbCore.Primitives
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
             
             //Set Buffer Offsets
-            geom.offsets = new int[7];
-            geom.bufInfo = new();
-            
-            for (int i = 0; i< 7; i++)
-            {
-                geom.bufInfo.Add(null);
-                geom.offsets[i] = -1;
-            }
-
             geom.mesh_descr = "vn";
-            geom.offsets[0] = 0;
-            geom.offsets[2] = 0;
-            geom.bufInfo[0] = new(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
-
-
+            
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "nPosition",
+                semantic = 2,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
             System.Buffer.BlockCopy(indices, 0, geom.ibuffer, 0, geom.ibuffer.Length);
@@ -429,23 +439,49 @@ namespace NbCore.Primitives
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
 
             //Set Buffer Offsets
-            geom.offsets = new int[7];
             geom.bufInfo = new List<bufInfo>();
 
-            for (int i = 0; i < 7; i++)
-            {
-                geom.bufInfo.Add(null);
-                geom.offsets[i] = -1;
-            }
-
             geom.mesh_descr = "vn";
-            geom.offsets[0] = 0;
-            geom.offsets[2] = 0;
-            geom.offsets[4] = 0;
-            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
-            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
+            //geom.bufInfo[0] = new bufInfo(0, NbVertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            //geom.bufInfo[2] = new bufInfo(2, NbVertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
+            //geom.bufInfo[4] = new bufInfo(4, NbVertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
 
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "nPosition",
+                semantic = 2,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = geom.vertCount * 12,
+                sem_text = "bPosition",
+                semantic = 4,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
             System.Buffer.BlockCopy(indices, 0, geom.ibuffer, 0, geom.ibuffer.Length);
@@ -583,23 +619,49 @@ namespace NbCore.Primitives
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
 
             //Set Buffer Offsets
-            geom.offsets = new int[7];
-            geom.bufInfo = new List<bufInfo>();
-
-            for (int i = 0; i < 7; i++)
-            {
-                geom.bufInfo.Add(null);
-                geom.offsets[i] = -1;
-            }
-
             geom.mesh_descr = "vn";
-            geom.offsets[0] = 0;
-            geom.offsets[2] = 0;
-            geom.offsets[4] = 0;
-            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 12, 0, "vPosition", false);
-            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 12, geom.vertCount * 12, "nPosition", false);
-            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 12, 2 * geom.vertCount * 12, "bPosition", false);
+            
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 12,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = geom.vertCount * 12,
+                sem_text = "nPosition",
+                semantic = 2,
+                stride = 12,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = geom.vertCount * 12,
+                sem_text = "bPosition",
+                semantic = 4,
+                stride = 12,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            //geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 12, 0, "vPosition", false);
+            //geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 12, geom.vertCount * 12, "nPosition", false);
+            //geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 12, 2 * geom.vertCount * 12, "bPosition", false);
 
+            
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
             System.Buffer.BlockCopy(indices, 0, geom.ibuffer, 0, geom.ibuffer.Length);
@@ -657,23 +719,44 @@ namespace NbCore.Primitives
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
 
             //Set Buffer Offsets
-            geom.offsets = new int[7];
-            geom.bufInfo = new();
-
-            for (int i = 0; i < 7; i++)
-            {
-                geom.bufInfo.Add(null);
-                geom.offsets[i] = -1;
-            }
-
             geom.mesh_descr = "vn";
-            geom.offsets[0] = 0;
-            geom.offsets[2] = 0;
-            geom.offsets[4] = 0;
-            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "nPosition", false);
-            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
-
+            
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = geom.vertCount * 12,
+                sem_text = "nPosition",
+                semantic = 2,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = geom.vertCount * 12,
+                sem_text = "bPosition",
+                semantic = 4,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
             System.Buffer.BlockCopy(indices, 0, geom.ibuffer, 0, geom.ibuffer.Length);
@@ -775,22 +858,47 @@ namespace NbCore.Primitives
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
 
             //Set Buffer Offsets
-            geom.offsets = new int[7];
-            geom.bufInfo = new();
-
-            for (int i = 0; i < 7; i++)
-            {
-                geom.bufInfo.Add(null);
-                geom.offsets[i] = -1;
-            }
-
             geom.mesh_descr = "vn";
-            geom.offsets[0] = 0;
-            geom.offsets[2] = 0;
-            geom.offsets[4] = 0;
-            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
-            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
+            
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "nPosition",
+                semantic = 2,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = geom.vertCount * 12,
+                sem_text = "bPosition",
+                semantic = 4,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            //geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            //geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
+            //geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, geom.vertCount * 12, "bPosition", false);
 
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
@@ -1003,22 +1111,47 @@ namespace NbCore.Primitives
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
 
             //Set Buffer Offsets
-            geom.offsets = new int[7];
-            geom.bufInfo = new List<bufInfo>();
-
-            for (int i = 0; i < 7; i++)
-            {
-                geom.bufInfo.Add(null);
-                geom.offsets[i] = -1;
-            }
-
             geom.mesh_descr = "vn";
-            geom.offsets[0] = 0;
-            geom.offsets[2] = 0;
-            geom.offsets[4] = 0;
-            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 72, "nPosition", false);
-            geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, 72, "bPosition", false);
+            
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 72,
+                sem_text = "nPosition",
+                semantic = 2,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 72,
+                sem_text = "bPosition",
+                semantic = 4,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            //geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            //geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 72, "nPosition", false);
+            //geom.bufInfo[4] = new bufInfo(4, VertexAttribPointerType.Float, 3, 0, 72, "bPosition", false);
 
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
@@ -1083,22 +1216,36 @@ namespace NbCore.Primitives
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
 
             //Set Buffer Offsets
-            geom.offsets = new int[7];
-            geom.bufInfo = new List<bufInfo>();
-
-            for (int i = 0; i < 7; i++)
-            {
-                geom.bufInfo.Add(null);
-                geom.offsets[i] = -1;
-            }
-
             geom.mesh_descr = "vn";
-            geom.offsets[0] = 0;
-            geom.offsets[2] = 0;
-            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 24, "nPosition", false);
-
-
+            
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 24,
+                sem_text = "nPosition",
+                semantic = 2,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            
+            //geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
+            //geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 24, "nPosition", false);
+    
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];
             System.Buffer.BlockCopy(indices, 0, geom.ibuffer, 0, geom.ibuffer.Length);

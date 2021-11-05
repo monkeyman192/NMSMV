@@ -8,20 +8,14 @@ using NbCore.Utils;
 
 namespace NbCore
 {
-    public class GLInstancedMesh: Entity
+    public class GLInstancedMesh
     {
         //Class static properties
         public string Name;
+        public NbMesh BaseMesh;
         public GLVao vao;
         public GLVao bHullVao;
-        public MeshMetaData MetaData;
-        public GeomObject GObject;
-        public float[] dataBuffer = new float[256];
         
-        //Mesh type
-        public COLLISIONTYPES collisionType;
-        public SceneNodeType type;
-
         //Instance Data
         public int UBO_aligned_size = 0; //Actual size of the data for the UBO, multiple to 256
         public int UBO_offset = 0; //Offset 
@@ -34,26 +28,20 @@ namespace NbCore
 
         //Material Properties
         public NbVector3 color; //Keep a default color for the mesh
-
-        public int InstanceCount = 0;
-        public int RenderedInstanceCount = 0;
         public List<MeshComponent> instanceRefs = new();
         public float[] instanceBoneMatrices;
         public int instanceBoneMatricesTex;
         public int instanceBoneMatricesTexTBO;
 
-        public const int MAX_INSTANCES = 512;
-
-        public GLInstancedMesh() : base(EntityType.Mesh)
+        public GLInstancedMesh()
         {
             vao = new GLVao();
-            MetaData = new MeshMetaData();
         }
 
-        public GLInstancedMesh(MeshMetaData MD) : base(EntityType.Mesh)
+        public GLInstancedMesh(NbMesh mesh)
         {
             vao = new GLVao();
-            MetaData = new MeshMetaData(MD); //Copy MetaData
+            BaseMesh = mesh;
         }
 
         public void setSkinMatrices(SceneComponent sc, int instance_id)
@@ -109,42 +97,6 @@ namespace NbCore
             //Console.WriteLine(GL.GetError());
             GL.BindBuffer(BufferTarget.TextureBuffer, 0);
         }
-
-
-        #region IDisposable Support
-        private bool disposed = false;
-        private Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
-
-        protected override void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                    BoneRemapIndices = null;
-                    instanceBoneMatrices = null;
-
-                    
-                    handle?.Dispose();
-                }
-
-                vao?.Dispose();
-
-                if (instanceBoneMatricesTex > 0)
-                {
-                    GL.DeleteTexture(instanceBoneMatricesTex);
-                    GL.DeleteBuffer(instanceBoneMatricesTexTBO);
-                }
-                
-                disposed = true;
-                base.Dispose(disposing);
-            }
-        }
-
-        #endregion
-
-
 
     }
 

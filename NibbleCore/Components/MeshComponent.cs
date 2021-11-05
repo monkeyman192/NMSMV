@@ -10,9 +10,7 @@ namespace NbCore
     public class MeshComponent : Component
     {
         //Store TkSceneNodeAttributes for Meshes
-
-        public MeshMetaData MetaData;
-        public GLInstancedMesh MeshVao;
+        public NbMesh Mesh;
         public MeshMaterial Material;
         public int InstanceID;
         public int RenderInstanceID;
@@ -36,7 +34,8 @@ namespace NbCore
                 return;
 
             MeshComponent mc = c as MeshComponent;
-            MetaData = new(mc.MetaData); //Check if its more efficient to copy data
+            Mesh = mc.Mesh;
+            Material = mc.Material;
         }
 
         /* Move that to the exporter class

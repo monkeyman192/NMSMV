@@ -58,8 +58,8 @@ namespace NbCore
                 return;
 
             //Transform coordinates
-            IVector3 mincoords = transform_coords(mc.MetaData.AABBMIN, max_width);
-            IVector3 maxcoords = transform_coords(mc.MetaData.AABBMAX, max_width);
+            IVector3 mincoords = transform_coords(mc.Mesh.MetaData.AABBMIN, max_width);
+            IVector3 maxcoords = transform_coords(mc.Mesh.MetaData.AABBMAX, max_width);
 
             if (checkIfFits(maxcoords) == 0 && checkIfFits(mincoords) == 0)
             {

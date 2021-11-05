@@ -32,5 +32,15 @@ namespace NbCore.Math
         {
             _Value = new Vector2i(i, j);
         }
+
+        public static bool operator ==(NbVector2i a, NbVector2i b)
+        {
+            return a._Value == b._Value;
+        }
+        
+        public static bool operator !=(NbVector2i a, NbVector2i b)
+        {
+            return a == b;
+        }
     }
 }

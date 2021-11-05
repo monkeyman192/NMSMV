@@ -3,14 +3,9 @@ using OpenTK.Mathematics;
 
 namespace NbCore.Math
 {
-    public class NbMatrix4
+    public struct NbMatrix4
     {
         internal Matrix4 _Value;
-
-        public NbMatrix4()
-        {
-            _Value = new();
-        }
 
         public NbMatrix4(NbVector4 v1, NbVector4 v2, NbVector4 v3, NbVector4 v4)
         {

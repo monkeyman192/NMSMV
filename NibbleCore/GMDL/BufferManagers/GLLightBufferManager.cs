@@ -85,7 +85,7 @@ namespace NbCore
         {
             int instance_id = mesh.InstanceCount;
 
-            if (instance_id < GLInstancedLightMesh.MAX_INSTANCES)
+            if (instance_id < NbMesh.MAX_INSTANCES)
             {
                 mesh.instanceRefs.Add(mc);
                 mesh.InstanceCount++;

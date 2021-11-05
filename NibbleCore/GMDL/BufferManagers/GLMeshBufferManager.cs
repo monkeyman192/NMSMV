@@ -49,7 +49,7 @@ namespace NbCore
         {
             int instance_id = mesh.InstanceCount;
 
-            if (instance_id < GLInstancedMesh.MAX_INSTANCES)
+            if (instance_id < NbMesh.MAX_INSTANCES)
             {
                 mesh.instanceRefs.Add(mc); //Keep reference
                 mesh.InstanceCount++;
@@ -131,7 +131,7 @@ namespace NbCore
             return render_instance_id;
         }
 
-        public static void RemoveRenderInstance(ref GLInstancedMesh mesh, MeshComponent mc)
+        public static void RemoveRenderInstance(ref NbMesh mesh, MeshComponent mc)
         {
             Common.Callbacks.Assert(mc.RenderInstanceID >= 0, "Negative instance ID. ILLEGAL instance removal");
 
@@ -147,7 +147,7 @@ namespace NbCore
             //Fetch last instance databuffer
             float[] tempbuffer = new float[instance_struct_size_floats];
             int instance_float_offset = lastmc.RenderInstanceID * instance_struct_size_floats;
-            Array.Copy(mesh.dataBuffer, instance_float_offset, tempbuffer, 0, instance_struct_size_floats);
+            Array.Copy(mesh.InstanceDataBuffer, instance_float_offset, tempbuffer, 0, instance_struct_size_floats);
 
             //Swap instances in the instanceRefs List
             mesh.instanceRefs.RemoveAt(mc.RenderInstanceID);
@@ -157,7 +157,7 @@ namespace NbCore
 
             //Replace removed instance data with the data of the last instance
             instance_float_offset = mc.RenderInstanceID * instance_struct_size_floats;
-            Array.Copy(tempbuffer, 0, mesh.dataBuffer, instance_float_offset, instance_struct_size_floats);
+            Array.Copy(tempbuffer, 0, mesh.InstanceDataBuffer, instance_float_offset, instance_struct_size_floats);
 
             //Swap RenderInstanceIds
             (lastmc.RenderInstanceID, mc.RenderInstanceID) = (mc.RenderInstanceID, lastmc.RenderInstanceID);
@@ -302,11 +302,11 @@ namespace NbCore
             return un;
         }
 
-        public static void SetInstanceWorldMat(GLInstancedMesh mesh, int instance_id, NbMatrix4 mat)
+        public static void SetInstanceWorldMat(NbMesh mesh, int instance_id, NbMatrix4 mat)
         {
             unsafe
             {
-                fixed (float* ar = mesh.dataBuffer)
+                fixed (float* ar = mesh.InstanceDataBuffer)
                 {
                     int offset = instanceData_Float_Offset + instance_id * instance_struct_size_floats + instance_worldMat_Float_Offset;
                     MathUtils.insertMatToArray16(ar, offset, mat);
@@ -314,11 +314,11 @@ namespace NbCore
             }
         }
 
-        public static void SetInstanceWorldMatInv(GLInstancedMesh mesh, int instance_id, NbMatrix4 mat)
+        public static void SetInstanceWorldMatInv(NbMesh mesh, int instance_id, NbMatrix4 mat)
         {
             unsafe
             {
-                fixed (float* ar = mesh.dataBuffer)
+                fixed (float* ar = mesh.InstanceDataBuffer)
                 {
                     int offset = instanceData_Float_Offset + instance_id * instance_struct_size_floats + instance_worldMatInv_Float_Offset;
                     MathUtils.insertMatToArray16(ar, offset, mat);

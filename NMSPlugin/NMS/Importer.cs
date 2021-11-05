@@ -359,7 +359,7 @@ namespace NMSPlugin
         {
             int sem = buf_id;
             int off = offset;
-            OpenTK.Graphics.OpenGL4.VertexAttribPointerType typ = get_type(buf_type);
+            NbPrimitiveDataType typ = get_type(buf_type);
             string text = get_shader_sem(buf_id);
             bool normalize = false;
             if (text == "bPosition")
@@ -391,16 +391,16 @@ namespace NMSPlugin
             }
         }
 
-        private static OpenTK.Graphics.OpenGL4.VertexAttribPointerType get_type(int val){
+        private static NbPrimitiveDataType get_type(int val){
 
             switch (val)
             {
                 case (0x140B):
-                    return OpenTK.Graphics.OpenGL4.VertexAttribPointerType.HalfFloat;
+                    return NbPrimitiveDataType.HalfFloat;
                 case (0x1401):
-                    return OpenTK.Graphics.OpenGL4.VertexAttribPointerType.UnsignedByte;
+                    return NbPrimitiveDataType.UnsignedByte;
                 case (0x8D9F):
-                    return OpenTK.Graphics.OpenGL4.VertexAttribPointerType.Int2101010Rev;
+                    return NbPrimitiveDataType.Int2101010Rev;
                 default:
                     Console.WriteLine("Unknown VERTEX SECTION TYPE-----------------------------------");
                     throw new ApplicationException("NEW VERTEX SECTION TYPE. FIX IT ASSHOLE...");
@@ -423,43 +423,41 @@ namespace NMSPlugin
             }
         }
 
-        private static string getDescr(ref int[] offsets, int count)
+        private static string getDescr(List<bufInfo> lBufInfo)
         {
             string mesh_desc = "";
 
 
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < lBufInfo.Count; i++)
             {
-                if (offsets[i] != -1)
+                switch (lBufInfo[i].semantic)
                 {
-                    switch (i)
-                    {
-                        case 0:
-                            mesh_desc += "v"; //Verts
-                            break;
-                        case 1:
-                            mesh_desc += "u"; //UVs
-                            break;
-                        case 2:
-                            mesh_desc += "n"; //Normals
-                            break;
-                        case 3:
-                            mesh_desc += "t"; //Tangents
-                            break;
-                        case 4:
-                            mesh_desc += "p"; //Vertex Color
-                            break;
-                        case 5:
-                            mesh_desc += "b"; //BlendIndices
-                            break;
-                        case 6:
-                            mesh_desc += "w"; //BlendWeights
-                            break;
-                        default:
-                            mesh_desc += "x"; //Default
-                            break;
-                    }
+                    case 0:
+                        mesh_desc += "v"; //Verts
+                        break;
+                    case 1:
+                        mesh_desc += "u"; //UVs
+                        break;
+                    case 2:
+                        mesh_desc += "n"; //Normals
+                        break;
+                    case 3:
+                        mesh_desc += "t"; //Tangents
+                        break;
+                    case 4:
+                        mesh_desc += "p"; //Vertex Color
+                        break;
+                    case 5:
+                        mesh_desc += "b"; //BlendIndices
+                        break;
+                    case 6:
+                        mesh_desc += "w"; //BlendWeights
+                        break;
+                    default:
+                        mesh_desc += "x"; //Default
+                        break;
                 }
+                
             }
 
             return mesh_desc;
@@ -688,15 +686,7 @@ namespace NMSPlugin
             var mesh_desc = "";
             //int[] mesh_offsets = new int[buf_count];
             //Set size excplicitly to 7
-            int[] mesh_offsets = new int[7];
-            geom.bufInfo = new List<bufInfo>();
-            //Set all offsets to -1
-            for (int i = 0; i < 7; i++)
-            {
-                mesh_offsets[i] = -1;
-                geom.bufInfo.Add(null);
-            }
-
+            
             for (int i = 0; i < buf_count; i++)
             {
                 var buf_id = br.ReadInt32();
@@ -707,49 +697,42 @@ namespace NMSPlugin
                 //var buf_test2 = br.ReadInt32();
                 //var buf_test3 = br.ReadInt32();
                 //var buf_test4 = br.ReadInt32();
-                
-                geom.bufInfo[buf_id]= get_bufInfo_item(buf_id, buf_localoffset, buf_elem_count, buf_type);
-                mesh_offsets[buf_id] = buf_localoffset;
+                geom.bufInfo.Add(get_bufInfo_item(buf_id, buf_localoffset, buf_elem_count, buf_type));
                 fs.Seek(0x10, SeekOrigin.Current);
             }
 
             //Get Descr
-            mesh_desc = getDescr(ref mesh_offsets, buf_count);
+            mesh_desc = getDescr(geom.bufInfo);
             Console.WriteLine("Mesh Description: " + mesh_desc);
 
             //Store description
             geom.mesh_descr = mesh_desc;
-            geom.offsets = mesh_offsets;
             //Get small description
             fs.Seek(small_mesh_descr_offset, SeekOrigin.Begin);
             var small_mesh_desc = "";
             //int[] mesh_offsets = new int[buf_count];
-            //Set size excplicitly to 7
-            int[] small_mesh_offsets = new int[7];
-            //Set all offsets to -1
-            for (int i = 0; i < 7; i++)
-                small_mesh_offsets[i] = -1;
-
+            
             for (int i = 0; i < small_bufcount; i++)
             {
                 var buf_id = br.ReadInt32();
                 var buf_elem_count = br.ReadInt32();
                 var buf_type = br.ReadInt32();
                 var buf_localoffset = br.ReadInt32();
-                small_mesh_offsets[buf_id] = buf_localoffset;
+
+                bufInfo buf = get_bufInfo_item(buf_id,
+                    buf_localoffset, buf_elem_count, buf_type);
+                geom.smallBufInfo.Add(buf);
                 fs.Seek(0x10, SeekOrigin.Current);
             }
 
             //Get Small Descr
-            small_mesh_desc = getDescr(ref small_mesh_offsets, small_bufcount);
+            small_mesh_desc = getDescr(geom.smallBufInfo);
             Console.WriteLine("Small Mesh Description: " + small_mesh_desc);
 
             //Store description
             geom.small_mesh_descr = small_mesh_desc;
-            geom.small_offsets = small_mesh_offsets;
             //Set geom interleaved
             geom.interleaved = true;
-
 
             //Load streams from the geometry stream file
             

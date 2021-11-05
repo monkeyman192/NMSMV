@@ -19,7 +19,8 @@ namespace NbCore.Systems
         public Scene CreateScene()
         {
             int sceneID = SceneCount++;
-            _SceneMap[sceneID] = new Scene(sceneID);
+            _SceneMap[sceneID] = new Scene();
+            _SceneMap[sceneID].SetID(sceneID);
             return _SceneMap[sceneID];
         }
 

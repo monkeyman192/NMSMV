@@ -204,20 +204,34 @@ namespace NbCore.Text
             geom.vx_size = vx_size + uv_size;
 
             //Set Buffer Offsets
-            geom.offsets = new int[7];
-            geom.bufInfo = new();
-
-            for (int i = 0; i < 7; i++)
-            {
-                geom.bufInfo.Add(null);
-                geom.offsets[i] = -1;
-            }
-
             geom.mesh_descr = "vu";
-            geom.offsets[0] = 0;
-            geom.offsets[1] = geom.vertCount * vx_size;
-            geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 12, 0, "vPosition", false);
-            geom.bufInfo[1] = new bufInfo(1, VertexAttribPointerType.Float, 2, 8, geom.vertCount * 12, "uvPosition", false);
+            
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 12,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 2,
+                normalize = false,
+                offset = geom.vertCount * 12,
+                sem_text = "uvPosition",
+                semantic = 1,
+                stride = 8,
+                type = NbPrimitiveDataType.Float
+            };
+            geom.bufInfo.Add(buf);
+            
+            //geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 12, 0, "vPosition", false);
+            //geom.bufInfo[1] = new bufInfo(1, VertexAttribPointerType.Float, 2, 8, geom.vertCount * 12, "uvPosition", false);
 
             //Set Buffers
             geom.ibuffer = new byte[4 * indices.Length];

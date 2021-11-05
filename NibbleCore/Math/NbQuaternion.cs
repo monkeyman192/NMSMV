@@ -3,15 +3,10 @@ using OpenTK.Mathematics;
 
 namespace NbCore.Math
 {
-    public class NbQuaternion
+    public struct NbQuaternion
     {
         internal Quaternion _Value;
 
-        public NbQuaternion()
-        {
-            
-        }
-        
         public NbQuaternion(NbQuaternion q)
         {
             _Value = q._Value;

@@ -9,7 +9,6 @@ namespace NbCore
 {
     public class MeshMetaData
     {
-
         //Mesh Properties
         public ulong Hash;
         public NbVector3 AABBMIN;
@@ -32,7 +31,7 @@ namespace NbCore
         public int LODDistance2;
 
         //New stuff Properties
-        public DrawElementsType IndicesLength = DrawElementsType.UnsignedShort;
+        public NbPrimitiveDataType IndicesLength = NbPrimitiveDataType.UnsignedShort;
 
         public MeshMetaData()
         {

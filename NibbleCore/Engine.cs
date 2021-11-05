@@ -565,19 +565,20 @@ namespace NbCore
             int bands = 80;
             MeshComponent mc = new()
             {
-                MetaData = new()
+                Mesh = new()
                 {
-                    BatchCount = bands * bands * 6,
-                    BatchStartGraphics = 0,
-                    VertrStartGraphics = 0,
-                    VertrEndGraphics = (bands + 1) * (bands + 1) - 1,
-                    IndicesLength = DrawElementsType.UnsignedInt
+                    MetaData = new()
+                    {
+                        BatchCount = bands * bands * 6,
+                        BatchStartGraphics = 0,
+                        VertrStartGraphics = 0,
+                        VertrEndGraphics = (bands + 1) * (bands + 1) - 1,
+                        IndicesLength = NbPrimitiveDataType.UnsignedInt
+                    },
+                    Data = (new Sphere(new NbVector3(), 2.0f, 40)).GetData()
                 }
+                
             };
-            
-            mc.MeshVao = new GLInstancedMesh(mc.MetaData);
-            mc.MeshVao.type = SceneNodeType.MESH;
-            mc.MeshVao.vao = (new Sphere(new NbVector3(), 2.0f, 40)).getVAO();
             
             //Sphere Material
             MeshMaterial mat = new();
@@ -912,6 +913,33 @@ namespace NbCore
 
             n.AddComponent<MeshComponent>(mc);
 
+            return n;
+        }
+        
+        public SceneGraphNode CreateMeshNode(string name, GLInstancedMesh mesh, MeshMaterial mat)
+        {
+            SceneGraphNode n = new(SceneNodeType.MESH)
+            {
+                Name = name
+            };
+
+            //Add Transform Component
+            TransformData td = new();
+            TransformComponent tc = new(td);
+            n.AddComponent<TransformComponent>(tc);
+
+            //Create MeshComponent
+            MeshComponent mc = new()
+            {
+                MeshVao = mesh,
+                Material = mat
+            };
+            
+            //Register new instance in the meshVao
+            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
+
+            n.AddComponent<MeshComponent>(mc);
+            
             return n;
         }
         

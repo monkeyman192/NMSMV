@@ -14,11 +14,15 @@ namespace NbCore
         private readonly List<SceneGraphNode> _Nodes = new();
         private readonly List<SceneGraphNode> _MeshNodes = new();
         
-        public Scene(int id)
+        public Scene()
         {
-            ID = id;
             _Nodes = new();
             _MeshNodes = new();
+        }
+
+        public void SetID(int id)
+        {
+            ID = id;
         }
 
         public List<SceneGraphNode> GetMeshNodes()
@@ -91,7 +95,8 @@ namespace NbCore
                     {
                         //Remove Instance
                         Console.WriteLine("Removing Instance {0}", n.Name);
-                        GLMeshBufferManager.RemoveRenderInstance(ref mc.MeshVao, mc);
+                        
+                        GLMeshBufferManager.RemoveRenderInstance(ref mc.Mesh, mc);
                     }
                     else if (!td.IsOccluded && td.WasOccluded)
                     {
@@ -100,8 +105,8 @@ namespace NbCore
                     }
                     else if (!td.IsOccluded)
                     {
-                        GLMeshBufferManager.SetInstanceWorldMat(mc.MeshVao, mc.RenderInstanceID, td.WorldTransformMat);
-                        GLMeshBufferManager.SetInstanceWorldMatInv(mc.MeshVao, mc.RenderInstanceID, td.InverseTransformMat);
+                        GLMeshBufferManager.SetInstanceWorldMat(mc.Mesh, mc.RenderInstanceID, td.WorldTransformMat);
+                        GLMeshBufferManager.SetInstanceWorldMatInv(mc.Mesh, mc.RenderInstanceID, td.InverseTransformMat);
                     }
 
                     td.IsUpdated = false; //Reset updated status to prevent further updates on the same frame update

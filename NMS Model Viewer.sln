@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleAssimpPlugin", "Nibbl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibble", "Nibble\Nibble.csproj", "{8EC54636-F7D7-4213-80BD-46ECB25210EC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NibbleOBJPlugin", "NibbleOBJPlugin\NibbleOBJPlugin.csproj", "{33FBA2C8-948E-423F-B1AE-F54321DDCA1D}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		NibbleCore\NibbleCore.projitems*{0890732a-e096-4341-865b-8b69b0158cbd}*SharedItemsImports = 4
@@ -64,6 +66,10 @@ Global
 		{8EC54636-F7D7-4213-80BD-46ECB25210EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EC54636-F7D7-4213-80BD-46ECB25210EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EC54636-F7D7-4213-80BD-46ECB25210EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33FBA2C8-948E-423F-B1AE-F54321DDCA1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33FBA2C8-948E-423F-B1AE-F54321DDCA1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33FBA2C8-948E-423F-B1AE-F54321DDCA1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33FBA2C8-948E-423F-B1AE-F54321DDCA1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

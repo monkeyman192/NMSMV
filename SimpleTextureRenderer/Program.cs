@@ -126,7 +126,6 @@ namespace SimpleTextureRenderer
             
             base.OnRenderFrame(e);
             //Update Imgui
-            //TODO: maybe group mouse data to a struct and pass that one instead
             _ImGuiManager.Update(e.Time, scroll_delta_y); 
             scroll_delta_y = 0.0f; //Reset Scroll delta from frame to frame
             

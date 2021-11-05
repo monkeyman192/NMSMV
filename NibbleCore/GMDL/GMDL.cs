@@ -19,7 +19,19 @@ using NbCore.Common;
 using NbCore.Utils;
 
 namespace NbCore
-{   
+{
+    public enum NbPrimitiveDataType
+    {
+        UnsignedByte,
+        UnsignedShort,
+        UnsignedInt,
+        HalfFloat,
+        Float,
+        Double,
+        Int2101010Rev,
+        Int,
+    }
+    
     public enum COLLISIONTYPES
     {
         MESH = 0x0,
@@ -86,8 +98,7 @@ namespace NbCore
         public List<int[]> bIndices = new();
         public List<float[]> bWeights = new();
         public List<bufInfo> bufInfo = new();
-        public int[] offsets; //List to save strides according to meshdescr
-        public int[] small_offsets; //Same thing for the small description
+        public List<bufInfo> smallBufInfo = new();
         public short[] boneRemap;
         public List<NbVector3[]> bboxes = new();
         public List<NbVector3> bhullverts = new();
@@ -231,11 +242,29 @@ namespace NbCore
             RenderStats.vertNum += md.VertrEndGraphics + 1; //Accumulate settings
 
             //Assign VertexAttribPointers
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < bufInfo.Count; i++)
             {
-                if (bufInfo[i] == null) continue;
                 bufInfo buf = bufInfo[i];
-                GL.VertexAttribPointer(i, buf.count, buf.type, buf.normalize, vx_size, buf.offset);
+                VertexAttribPointerType buftype = VertexAttribPointerType.Float; //default
+                switch (buf.type)
+                {
+                    case NbPrimitiveDataType.Double:
+                        buftype = VertexAttribPointerType.Double;
+                        break;
+                    case NbPrimitiveDataType.Float:
+                        buftype = VertexAttribPointerType.Float;
+                        break;
+                    case NbPrimitiveDataType.HalfFloat:
+                        buftype = VertexAttribPointerType.HalfFloat;
+                        break;
+                    case NbPrimitiveDataType.Int2101010Rev:
+                        buftype = VertexAttribPointerType.Int2101010Rev;
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
+                
+                GL.VertexAttribPointer(buf.semantic, buf.count, buftype, buf.normalize, vx_size, buf.offset);
                 GL.EnableVertexAttribArray(i);
             }
 
@@ -290,21 +319,31 @@ namespace NbCore
             temp_geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
 
             //Set Buffer Offsets
-            temp_geom.offsets = new int[7];
-            temp_geom.bufInfo = new();
-
-            for (int i = 0; i < 7; i++)
-            {
-                temp_geom.bufInfo.Add(null);
-                temp_geom.offsets[i] = -1;
-            }
-
             temp_geom.mesh_descr = "vn";
-            temp_geom.offsets[0] = 0;
-            temp_geom.offsets[2] = 0;
-            temp_geom.bufInfo[0] = new bufInfo(0, VertexAttribPointerType.Float, 3, 0, 0, "vPosition", false);
-            temp_geom.bufInfo[2] = new bufInfo(2, VertexAttribPointerType.Float, 3, 0, 0, "nPosition", false);
-
+            bufInfo buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "vPosition",
+                semantic = 0,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            temp_geom.bufInfo.Add(buf);
+            
+            buf = new bufInfo()
+            {
+                count = 3,
+                normalize = false,
+                offset = 0,
+                sem_text = "nPosition",
+                semantic = 2,
+                stride = 0,
+                type = NbPrimitiveDataType.Float
+            };
+            temp_geom.bufInfo.Add(buf);
+            
             //Set Buffers
             temp_geom.ibuffer = new byte[temp_geom.indicesLength * metaData.BatchCount];
             temp_geom.vbuffer = new byte[sizeof(float) * vx_buffer_float.Length];
@@ -353,11 +392,28 @@ namespace NbCore
                 ibuffer, BufferUsageHint.StaticDraw);
 
             //Assign VertexAttribPointers
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < bufInfo.Count; i++)
             {
-                if (this.bufInfo[i] == null) continue;
-                bufInfo buf = this.bufInfo[i];
-                GL.VertexAttribPointer(i, buf.count, buf.type, buf.normalize, buf.stride, buf.offset);
+                bufInfo buf = bufInfo[i];
+                VertexAttribPointerType buftype = VertexAttribPointerType.Float; //default
+                switch (buf.type)
+                {
+                    case NbPrimitiveDataType.Double:
+                        buftype = VertexAttribPointerType.Double;
+                        break;
+                    case NbPrimitiveDataType.Float:
+                        buftype = VertexAttribPointerType.Float;
+                        break;
+                    case NbPrimitiveDataType.HalfFloat:
+                        buftype = VertexAttribPointerType.HalfFloat;
+                        break;
+                    case NbPrimitiveDataType.Int2101010Rev:
+                        buftype = VertexAttribPointerType.Int2101010Rev;
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
+                GL.VertexAttribPointer(buf.semantic, buf.count, buftype, buf.normalize, buf.stride, buf.offset);
                 GL.EnableVertexAttribArray(i);
             }
 
@@ -387,8 +443,6 @@ namespace NbCore
                 ibuffer = null;
                 vbuffer = null;
                 small_vbuffer = null;
-                offsets = null;
-                small_offsets = null;
                 boneRemap = null;
                 invBMats = null;
                     
@@ -434,17 +488,17 @@ namespace NbCore
 
     }
 
-    public class bufInfo
+    public struct bufInfo
     {
         public int semantic;
-        public VertexAttribPointerType type;
+        public NbPrimitiveDataType type;
         public int count;
         public int stride;
         public int offset;
         public string sem_text;
         public bool normalize;
 
-        public bufInfo(int sem,VertexAttribPointerType typ, int c, int s, int off, string t, bool n)
+        public bufInfo(int sem, NbPrimitiveDataType typ, int c, int s, int off, string t, bool n)
         {
             semantic = sem;
             type = typ;

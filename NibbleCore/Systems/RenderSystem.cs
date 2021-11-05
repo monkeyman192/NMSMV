@@ -33,27 +33,27 @@ namespace NbCore.Systems
         [FieldOffset(12)]
         public float MSAA_SAMPLES; //MSAA Samples
         [FieldOffset(16)]
-        public NbVector2 frameDim; //Frame Dimensions
+        public OpenTK.Mathematics.Vector2 frameDim; //Frame Dimensions
         [FieldOffset(24)]
         public float cameraNearPlane;
         [FieldOffset(28)]
         public float cameraFarPlane;
         [FieldOffset(32)]
-        public NbMatrix4 rotMat;
+        public OpenTK.Mathematics.Matrix4 rotMat;
         [FieldOffset(96)]
-        public NbMatrix4 rotMatInv;
+        public OpenTK.Mathematics.Matrix4 rotMatInv;
         [FieldOffset(160)]
-        public NbMatrix4 mvp;
+        public OpenTK.Mathematics.Matrix4 mvp;
         [FieldOffset(224)]
-        public NbMatrix4 lookMatInv;
+        public OpenTK.Mathematics.Matrix4 lookMatInv;
         [FieldOffset(288)]
-        public NbMatrix4 projMatInv;
+        public OpenTK.Mathematics.Matrix4 projMatInv;
         [FieldOffset(352)]
-        public NbVector4 cameraPositionExposure; //Exposure is the W component
+        public OpenTK.Mathematics.Vector4 cameraPositionExposure; //Exposure is the W component
         [FieldOffset(368)]
         public int light_number;
         [FieldOffset(384)]
-        public NbVector3 cameraDirection;
+        public OpenTK.Mathematics.Vector3 cameraDirection;
         [FieldOffset(400)]
         public unsafe fixed float lights[32 * 64];
         //[FieldOffset(400), MarshalAs(UnmanagedType.LPArray, SizeConst=32*64)]
@@ -71,6 +71,8 @@ namespace NbCore.Systems
         readonly List<SceneGraphNode> LightList = new();
         readonly List<GLInstancedMesh> lightVolumeMeshList = new();
 
+        public RenderApi Renderer;
+        
         //Entity Managers used by the rendering system
         public readonly MaterialManager MaterialMgr = new();
         public readonly GeometryManager GeometryMgr = new();
@@ -846,14 +848,14 @@ namespace NbCore.Systems
             cpfu.use_lighting = (RenderState.settings.renderSettings.UseLighting) ? 1.0f : 0.0f;
             cpfu.frameDim.X = gbuf.size[0];
             cpfu.frameDim.Y = gbuf.size[1];
-            cpfu.mvp = RenderState.activeCam.viewMat;
-            cpfu.rotMat = RenderState.rotMat;
-            cpfu.rotMatInv = RenderState.rotMat.Inverted();
-            cpfu.lookMatInv = RenderState.activeCam.lookMatInv;
-            cpfu.projMatInv = RenderState.activeCam.projMatInv;
-            cpfu.cameraPositionExposure.Xyz = RenderState.activeCam.Position;
+            cpfu.mvp = RenderState.activeCam.viewMat._Value;
+            cpfu.rotMat = RenderState.rotMat._Value;
+            cpfu.rotMatInv = RenderState.rotMat._Value.Inverted();
+            cpfu.lookMatInv = RenderState.activeCam.lookMatInv._Value;
+            cpfu.projMatInv = RenderState.activeCam.projMatInv._Value;
+            cpfu.cameraPositionExposure.Xyz = RenderState.activeCam.Position._Value;
             cpfu.cameraPositionExposure.W = RenderState.settings.renderSettings.HDRExposure;
-            cpfu.cameraDirection = RenderState.activeCam.Front;
+            cpfu.cameraDirection = RenderState.activeCam.Front._Value;
             cpfu.cameraNearPlane = RenderState.activeCam.zNear;
             cpfu.cameraFarPlane = RenderState.activeCam.zFar;
             cpfu.light_number = System.Math.Min(32, EngineRef.GetLightCount());
