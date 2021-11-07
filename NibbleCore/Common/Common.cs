@@ -8,7 +8,7 @@ using OpenTK.Graphics.OpenGL4;
 using NbCore;
 using NbCore.Input;
 using NbCore.Utils;
-using GLSLHelper;
+using NbOpenGLAPI;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using Newtonsoft.Json;

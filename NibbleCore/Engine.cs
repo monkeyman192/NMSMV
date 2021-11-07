@@ -16,9 +16,9 @@ using NbCore.Primitives;
 using NbCore.Utils;
 using NbCore.Plugins;
 using System.Timers;
-using GLSLHelper;
-using OpenTK.Windowing.GraphicsLibraryFramework;
-using OpenTK.Windowing.Desktop;
+using NbOpenGLAPI; //Add an implementation independent shader definition
+using OpenTK.Windowing.GraphicsLibraryFramework; //TODO: figure out how to remove that shit
+using OpenTK.Windowing.Desktop; //TODO: figure out how to remove that shit
 using System.IO;
 using System.Reflection;
 using Font = NbCore.Text.Font;
@@ -294,9 +294,9 @@ namespace NbCore
             return renderSys.TextureMgr.Get(name);
         }
 
-        public GLInstancedMesh GetPrimitiveMesh(string name)
+        public NbMesh GetPrimitiveMesh(long hash)
         {
-            return renderSys.GeometryMgr.GetPrimitiveMesh(name);
+            return renderSys.GeometryMgr.GetPrimitiveMesh(hash);
         }
 
         public MeshMaterial GetMaterialByName(string name)
@@ -904,19 +904,19 @@ namespace NbCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                MeshVao = GetPrimitiveMesh("default_cross"),
+                Mesh = GetPrimitiveMesh("default_cross".GetHashCode()),
                 Material = GetMaterialByName("crossMat")
             };
             
             //Register new instance in the meshVao
-            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
+            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.Mesh, mc);
 
             n.AddComponent<MeshComponent>(mc);
 
             return n;
         }
         
-        public SceneGraphNode CreateMeshNode(string name, GLInstancedMesh mesh, MeshMaterial mat)
+        public SceneGraphNode CreateMeshNode(string name, NbMesh mesh, MeshMaterial mat)
         {
             SceneGraphNode n = new(SceneNodeType.MESH)
             {
@@ -931,12 +931,12 @@ namespace NbCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                MeshVao = mesh,
+                Mesh = mesh,
                 Material = mat
             };
             
             //Register new instance in the meshVao
-            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
+            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.Mesh, mc);
 
             n.AddComponent<MeshComponent>(mc);
             
@@ -958,12 +958,12 @@ namespace NbCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                MeshVao = GetPrimitiveMesh("default_cross"),
+                Mesh = GetPrimitiveMesh("default_cross".GetHashCode()),
                 Material = GetMaterialByName("crossMat")
             };
             
             //Register new instance in the meshVao
-            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.MeshVao, mc);
+            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.Mesh, mc);
             
             n.AddComponent<MeshComponent>(mc);
 
@@ -983,16 +983,19 @@ namespace NbCore
             TransformComponent tc = new(td);
             n.AddComponent<TransformComponent>(tc);
 
-            //Add Mesh Component
-            MeshComponent mc = new();
-            mc.MeshVao = new()
+            //Add Mesh Component 
+            Primitive seg = new LineSegment(n.Children.Count, new NbVector3(1.0f, 0.0f, 0.0f));
+            MeshComponent mc = new()
             {
-                type = SceneNodeType.JOINT
+                Mesh = new()
+                {
+                    Data = seg.GetData(),
+                    MetaData = seg.GetMetaData()
+                },
+                Material = Common.RenderState.engineRef.GetMaterialByName("jointMat")
             };
-
-            mc.MeshVao.vao = new Primitives.LineSegment(n.Children.Count, new NbVector3(1.0f, 0.0f, 0.0f)).getVAO();
-            mc.Material = Common.RenderState.engineRef.GetMaterialByName("jointMat");
-
+            n.AddComponent<MeshComponent>(mc);
+            
             //Add Joint Component
             JointComponent jc = new();
             n.AddComponent<JointComponent>(jc);
@@ -1019,10 +1022,8 @@ namespace NbCore
             LineSegment ls = new LineSegment(n.Children.Count, new NbVector3(1.0f, 0.0f, 0.0f));
             MeshComponent mc = new()
             {
-                MeshVao = new()
+                Mesh = new()
                 {
-                    type = SceneNodeType.LIGHT,
-                    vao = ls.getVAO(),
                     MetaData = new()
                     {
                         BatchCount = 2

@@ -148,7 +148,7 @@ namespace ImGuiHelper
                     
                     if (ImGui.TreeNode("Mesh"))
                     {
-                        GLInstancedMesh mesh = mc.MeshVao;
+                        NbMesh mesh = mc.Mesh;
                         ImGui.Columns(2);
                         ImGui.Text("Instance Count");
                         ImGui.Text("Rendered Instance Count");

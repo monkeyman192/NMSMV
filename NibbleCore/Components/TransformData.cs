@@ -38,18 +38,18 @@ namespace NbCore
         {
             get
             {
-                return NbQuaternion.FromEulerAngles(Utils.MathUtils.radians(RotX),
-                                                  Utils.MathUtils.radians(RotY),
-                                                  Utils.MathUtils.radians(RotZ));
+                return NbQuaternion.FromEulerAngles(MathUtils.radians(RotX),
+                                                  MathUtils.radians(RotY),
+                                                  MathUtils.radians(RotZ));
             }
 
             set
             {
                 NbVector3 res;
                 NbQuaternion.ToEulerAngles(value, out res);
-                RotX = Utils.MathUtils.degrees(res.X);
-                RotY = Utils.MathUtils.degrees(res.Y);
-                RotZ = Utils.MathUtils.degrees(res.Z);
+                RotX = MathUtils.degrees(res.X);
+                RotY = MathUtils.degrees(res.Y);
+                RotZ = MathUtils.degrees(res.Z);
             }
         }
 

@@ -9,7 +9,7 @@ using NbCore.Common;
 using System.Windows;
 using NbCore.Utils;
 
-namespace GLSLHelper { 
+namespace NbOpenGLAPI { 
 
     [Flags]
     public enum SHADER_MODE
@@ -247,7 +247,7 @@ namespace GLSLHelper {
                         npath = Path.Combine(dirpath, npath);
                         //Add dynamic source
                         //Check if Shader Source exists for this path
-                        GLSLShaderSource ss = RenderState.engineRef.GetShaderSourceByFilePath(npath);
+                        GLSLShaderSource ss = NbCore.Common.RenderState.engineRef.GetShaderSourceByFilePath(npath);
                         if (ss == null)
                         {
                             ss = new GLSLShaderSource(npath, true);

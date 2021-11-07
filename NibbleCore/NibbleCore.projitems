@@ -48,6 +48,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Managers\GeometryManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\MaterialManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\ShaderManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Math\MathUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Math\NbMatrix4.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Math\NbQuaternion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Math\NbVector2.cs" />
@@ -57,8 +58,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Math\NbVector4.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Plugins\PluginBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Plugins\PluginSettings.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Renderers\MeshRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\RequestHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Renderers\OpenGLAPI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\RenderAPI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\ActionSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\AnimationSystem.cs" />
@@ -96,7 +97,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GMDL.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\KeyboardHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\HTMLUtils.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utils\MathUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Octree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\RenderSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderers\ShadowRenderer.cs" />

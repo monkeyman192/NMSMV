@@ -45,7 +45,7 @@ namespace NbCore
         //17-18: isSelected
         //18-20: padding
 
-        public static int AddMeshInstance(ref GLInstancedMesh mesh, MeshComponent mc)
+        public static int AddMeshInstance(ref NbMesh mesh, MeshComponent mc)
         {
             int instance_id = mesh.InstanceCount;
 
@@ -57,11 +57,11 @@ namespace NbCore
             else return -1;
             
             //Expand mesh data buffer if required
-            if ((instance_id+1) * instance_struct_size_floats > mesh.dataBuffer.Length)
+            if ((instance_id+1) * instance_struct_size_floats > mesh.InstanceDataBuffer.Length)
             {
-                float[] newBuffer = new float[mesh.dataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
-                Array.Copy(mesh.dataBuffer, newBuffer, mesh.dataBuffer.Length);
-                mesh.dataBuffer = newBuffer;
+                float[] newBuffer = new float[mesh.InstanceDataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
+                Array.Copy(mesh.InstanceDataBuffer, newBuffer, mesh.InstanceDataBuffer.Length);
+                mesh.InstanceDataBuffer = newBuffer;
             }
 
             return instance_id;
@@ -69,7 +69,7 @@ namespace NbCore
         
         public static void AddRenderInstance(ref MeshComponent mc, TransformData td)
         {
-            GLInstancedMesh mesh = mc.MeshVao;
+            NbMesh mesh = mc.Mesh;
             
             if ((mc.RenderInstanceID < mesh.RenderedInstanceCount - 1) && mc.RenderInstanceID >= 0)
             {
@@ -87,8 +87,8 @@ namespace NbCore
                 //Copy buffer data
                 int old_instance_offset = old_pos * instance_struct_size_floats;
                 int new_instance_offset = new_pos * instance_struct_size_floats;
-                Array.Copy(mesh.dataBuffer, old_instance_offset, 
-                    mesh.dataBuffer, new_instance_offset,
+                Array.Copy(mesh.InstanceDataBuffer, old_instance_offset, 
+                    mesh.InstanceDataBuffer, new_instance_offset,
                     instance_struct_size_floats);
                 
                 //Set RenderrInstanceIDs
@@ -108,17 +108,17 @@ namespace NbCore
             mesh.RenderedInstanceCount++;
         }
         
-        public static int AddRenderInstance(ref GLInstancedMesh mesh, NbMatrix4 worldMat, NbMatrix4 worldMatInv, NbMatrix4 normMat)
+        public static int AddRenderInstance(ref NbMesh mesh, NbMatrix4 worldMat, NbMatrix4 worldMatInv, NbMatrix4 normMat)
         {
         
             int render_instance_id = mesh.RenderedInstanceCount;
 
             //Expand mesh data buffer if required
-            if (render_instance_id * instance_struct_size_bytes > mesh.dataBuffer.Length)
+            if (render_instance_id * instance_struct_size_bytes > mesh.InstanceDataBuffer.Length)
             {
-                float[] newBuffer = new float[mesh.dataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
-                Array.Copy(mesh.dataBuffer, newBuffer, mesh.dataBuffer.Length);
-                mesh.dataBuffer = newBuffer;
+                float[] newBuffer = new float[mesh.InstanceDataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
+                Array.Copy(mesh.InstanceDataBuffer, newBuffer, mesh.InstanceDataBuffer.Length);
+                mesh.InstanceDataBuffer = newBuffer;
             }
             
             //Uplod worldMat to the meshVao
@@ -166,7 +166,7 @@ namespace NbCore
             mesh.RenderedInstanceCount--;
         }
         
-        public static void RemoveMeshInstance(ref GLInstancedMesh mesh, MeshComponent mc)
+        public static void RemoveMeshInstance(NbMesh mesh, MeshComponent mc)
         {
             Common.Callbacks.Assert(mc.InstanceID >= 0, "Negative instance ID. ILLEGAL instance removal");
 
@@ -182,49 +182,49 @@ namespace NbCore
         }
 
         //Overload with transform overrides
-        public static void ClearMeshInstances(GLInstancedMesh mesh)
+        public static void ClearMeshInstances(NbMesh mesh)
         {
             mesh.instanceRefs.Clear();
             mesh.InstanceCount = 0;
         }
 
-        public static void SetInstanceLODLevel(GLInstancedMesh mesh, int instance_id, int level)
+        public static void SetInstanceLODLevel(NbMesh mesh, int instance_id, int level)
         {
             unsafe
             {
-                mesh.dataBuffer[instance_id * instance_struct_size_floats + instance_LOD_Float_Offset] = (float)level;
+                mesh.InstanceDataBuffer[instance_id * instance_struct_size_floats + instance_LOD_Float_Offset] = (float)level;
             }
         }
 
-        public static int GetInstanceLODLevel(GLInstancedMesh mesh, int instance_id)
+        public static int GetInstanceLODLevel(NbMesh mesh, int instance_id)
         {
             unsafe
             {
-                return (int) mesh.dataBuffer[instance_id * instance_struct_size_floats + instance_LOD_Float_Offset];
+                return (int) mesh.InstanceDataBuffer[instance_id * instance_struct_size_floats + instance_LOD_Float_Offset];
             }
         }
 
-        public static void SetInstanceSelectedStatus(GLInstancedMesh mesh, int instance_id, bool status)
+        public static void SetInstanceSelectedStatus(NbMesh mesh, int instance_id, bool status)
         {
             unsafe
             {
-                mesh.dataBuffer[instance_id * instance_struct_size_floats + instance_isSelected_Float_Offset] = status ? 1.0f : 0.0f;
+                mesh.InstanceDataBuffer[instance_id * instance_struct_size_floats + instance_isSelected_Float_Offset] = status ? 1.0f : 0.0f;
             }
         }
 
-        public static bool GetInstanceSelectedStatus(GLInstancedMesh mesh, int instance_id)
+        public static bool GetInstanceSelectedStatus(NbMesh mesh, int instance_id)
         {
             unsafe
             {
-                return mesh.dataBuffer[instance_id * instance_struct_size_floats + instance_isSelected_Float_Offset] > 0.0f;
+                return mesh.InstanceDataBuffer[instance_id * instance_struct_size_floats + instance_isSelected_Float_Offset] > 0.0f;
             }
         }
 
-        public static NbMatrix4 GetInstanceWorldMat(GLInstancedMesh mesh, int instance_id)
+        public static NbMatrix4 GetInstanceWorldMat(NbMesh mesh, int instance_id)
         {
             unsafe
             {
-                fixed (float* ar = mesh.dataBuffer)
+                fixed (float* ar = mesh.InstanceDataBuffer)
                 {
                     int offset = instanceData_Float_Offset + instance_id * instance_struct_size_floats + instance_worldMat_Float_Offset;
                     return MathUtils.Matrix4FromArray(ar, offset);
@@ -233,29 +233,29 @@ namespace NbCore
 
         }
 
-        public static NbMatrix4 GetInstanceNormalMat(GLInstancedMesh mesh, int instance_id)
+        public static NbMatrix4 GetInstanceNormalMat(NbMesh mesh, int instance_id)
         {
             unsafe
             {
-                fixed (float* ar = mesh.dataBuffer)
+                fixed (float* ar = mesh.InstanceDataBuffer)
                 {
                     return MathUtils.Matrix4FromArray(ar, instance_id * instance_struct_size_floats + instance_normalMat_Float_Offset);
                 }
             }
         }
 
-        public static NbVector3 GetInstanceColor(GLInstancedMesh mesh, int instance_id)
+        public static NbVector3 GetInstanceColor(NbMesh mesh, int instance_id)
         {
             float col;
             unsafe
             {
-                col = mesh.dataBuffer[instance_id * instance_struct_size_floats + instance_color_Float_Offset];
+                col = mesh.InstanceDataBuffer[instance_id * instance_struct_size_floats + instance_color_Float_Offset];
             }
 
             return new NbVector3(col, col, col);
         }
 
-        public static void SetInstanceUniform4(GLInstancedMesh mesh, int instance_id, string un_name, NbVector4 un)
+        public static void SetInstanceUniform4(NbMesh mesh, int instance_id, string un_name, NbVector4 un)
         {
             unsafe
             {
@@ -270,14 +270,14 @@ namespace NbCore
 
                 offset += uniform_id * 4;
 
-                mesh.dataBuffer[offset] = un.X;
-                mesh.dataBuffer[offset + 1] = un.Y;
-                mesh.dataBuffer[offset + 2] = un.Z;
-                mesh.dataBuffer[offset + 3] = un.W;
+                mesh.InstanceDataBuffer[offset] = un.X;
+                mesh.InstanceDataBuffer[offset + 1] = un.Y;
+                mesh.InstanceDataBuffer[offset + 2] = un.Z;
+                mesh.InstanceDataBuffer[offset + 3] = un.W;
             }
         }
 
-        public static NbVector4 GetInstanceUniform(GLInstancedMesh mesh, int instance_id, string un_name)
+        public static NbVector4 GetInstanceUniform(NbMesh mesh, int instance_id, string un_name)
         {
             NbVector4 un = new();
             unsafe
@@ -293,10 +293,10 @@ namespace NbCore
 
                 offset += uniform_id * 4;
 
-                un.X = mesh.dataBuffer[offset];
-                un.Y = mesh.dataBuffer[offset + 1];
-                un.Z = mesh.dataBuffer[offset + 2];
-                un.W = mesh.dataBuffer[offset + 3];
+                un.X = mesh.InstanceDataBuffer[offset];
+                un.Y = mesh.InstanceDataBuffer[offset + 1];
+                un.Z = mesh.InstanceDataBuffer[offset + 2];
+                un.W = mesh.InstanceDataBuffer[offset + 3];
             }
 
             return un;
@@ -326,11 +326,11 @@ namespace NbCore
             }
         }
 
-        public static void SetInstanceNormalMat(GLInstancedMesh mesh, int instance_id, NbMatrix4 mat)
+        public static void SetInstanceNormalMat(NbMesh mesh, int instance_id, NbMatrix4 mat)
         {
             unsafe
             {
-                fixed (float* ar = mesh.dataBuffer)
+                fixed (float* ar = mesh.InstanceDataBuffer)
                 {
                     int offset = instanceData_Float_Offset + instance_id * instance_struct_size_floats + instance_normalMat_Float_Offset;
                     MathUtils.insertMatToArray16(ar, offset, mat);

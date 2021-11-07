@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Runtime.InteropServices;
-using GLSLHelper;
+using NbOpenGLAPI;
 using NbCore;
 using NbCore.Common;
 using NbCore.Managers;
@@ -63,15 +63,15 @@ namespace NbCore.Systems
 
     public class RenderingSystem : EngineSystem, IDisposable
     {
-        readonly List<GLInstancedMesh> globalMeshList = new();
-        readonly List<GLInstancedMesh> collisionMeshList = new();
-        readonly List<GLInstancedMesh> locatorMeshList = new();
-        readonly List<GLInstancedMesh> jointMeshList = new();
-        readonly List<GLInstancedMesh> lightMeshList = new();
+        readonly List<NbMesh> globalMeshList = new();
+        readonly List<NbMesh> collisionMeshList = new();
+        readonly List<NbMesh> locatorMeshList = new();
+        readonly List<NbMesh> jointMeshList = new();
+        readonly List<NbMesh> lightMeshList = new();
         readonly List<SceneGraphNode> LightList = new();
-        readonly List<GLInstancedMesh> lightVolumeMeshList = new();
+        readonly List<NbMesh> lightVolumeMeshList = new();
 
-        public RenderApi Renderer;
+        public IRenderApi Renderer;
         
         //Entity Managers used by the rendering system
         public readonly MaterialManager MaterialMgr = new();
@@ -262,7 +262,7 @@ namespace NbCore.Systems
             Console.WriteLine("MaxUniformBlock Size {0}", GL.GetInteger(GetPName.MaxUniformBlockSize));
 #endif
 
-            GLSLHelper.GLSLShaderConfig shader_conf;
+            GLSLShaderConfig shader_conf;
 
             //Geometry Shader
             //Compile Object Shaders
@@ -302,14 +302,14 @@ namespace NbCore.Systems
             GLSLShaderSource bbox_shader_fs = new("Shaders/Bound_FS.glsl", true);
 
             shader_conf = GLShaderHelper.compileShader(bbox_shader_vs, bbox_shader_fs, null, null, null,
-                new(), new(), GLSLHelper.SHADER_TYPE.BBOX_SHADER, SHADER_MODE.DEFFERED);
+                new(), new(), SHADER_TYPE.BBOX_SHADER, SHADER_MODE.DEFFERED);
             shader_conf.Dispose();
 
             //Texture Mixing Shader
             GLSLShaderSource texture_mixing_shader_vs = new("Shaders/texture_mixer_VS.glsl", true);
             GLSLShaderSource texture_mixing_shader_fs = new("Shaders/texture_mixer_FS.glsl", true);
             shader_conf = GLShaderHelper.compileShader(texture_mixing_shader_vs, texture_mixing_shader_fs, null, null, null,
-                            new(), new(), GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER, SHADER_MODE.DEFAULT);
+                            new(), new(), SHADER_TYPE.TEXTURE_MIX_SHADER, SHADER_MODE.DEFAULT);
             EngineRef.RegisterEntity(shader_conf);
             ShaderMgr.AddGenericShader(shader_conf, SHADER_TYPE.TEXTURE_MIX_SHADER);
 
@@ -459,93 +459,87 @@ namespace NbCore.Systems
             //Default quad
             Primitives.Quad q = new(1.0f, 1.0f);
 
-            GLVao def_quad = q.getVAO();
-            GLInstancedMesh def_quad_mesh = new();
-            def_quad_mesh.Name = "default_quad";
-            def_quad_mesh.vao = def_quad;
-
-            EngineRef.RegisterEntity(def_quad_mesh);
-            GeometryMgr.AddPrimitiveMesh(def_quad_mesh);
+            NbMesh mesh = new()
+            {
+                Hash = "default_quad".GetHashCode(),
+                Data = q.GetData(),
+                MetaData = q.GetMetaData()
+            };
+            
+            EngineRef.RegisterEntity(mesh);
+            GeometryMgr.AddPrimitiveMesh(mesh);
             q.Dispose();
 
             //Default render quad
             q = new Primitives.Quad();
-            GLInstancedMesh def_render_quad = new();
-            def_render_quad.Name = "default_renderquad";
-            def_render_quad.vao = q.getVAO();
-            EngineRef.RegisterEntity(def_render_quad);
-            GeometryMgr.AddPrimitiveMesh(def_render_quad);
+            
+            mesh = new()
+            {
+                Hash = "default_renderquad".GetHashCode(),
+                Data = q.GetData(),
+                MetaData = q.GetMetaData()
+            };
+            
+            EngineRef.RegisterEntity(mesh);
+            GeometryMgr.AddPrimitiveMesh(mesh);
             q.Dispose();
             
             //Default cross
             Primitives.Cross c = new(0.1f, true);
             
-            GLInstancedMesh def_cross = new()
+            mesh = new()
             {
-                Name = "default_cross",
-                type = SceneNodeType.GIZMO,
-                vao = c.getVAO(),
-                MetaData = new()
-                {
-                    BatchCount = c.geom.indicesCount,
-                    AABBMIN = new NbVector3(-0.1f),
-                    AABBMAX = new NbVector3(0.1f),
-                    IndicesLength = DrawElementsType.UnsignedInt,
-                }
+                Hash = "default_cross".GetHashCode(),
+                Data = c.GetData(),
+                MetaData = c.GetMetaData()
             };
-
-            EngineRef.RegisterEntity(def_cross);
-            GeometryMgr.AddPrimitiveMesh(def_cross);
+            
+            EngineRef.RegisterEntity(mesh);
+            GeometryMgr.AddPrimitiveMesh(mesh);
             c.Dispose();
 
 
             //Default cube
             Primitives.Box bx = new(1.0f, 1.0f, 1.0f, new NbVector3(1.0f), true);
 
-            GLInstancedMesh def_box = new()
+            mesh = new()
             {
-                Name = "default_box",
-                vao = bx.getVAO()
+                Hash = "default_box".GetHashCode(),
+                Data = bx.GetData(),
+                MetaData = bx.GetMetaData()
             };
             
-            EngineRef.RegisterEntity(def_box);
-            GeometryMgr.AddPrimitiveMesh(def_box);
+            EngineRef.RegisterEntity(mesh);
+            GeometryMgr.AddPrimitiveMesh(mesh);
             bx.Dispose();
             
             //Default sphere
             Primitives.Sphere sph = new(new NbVector3(0.0f, 0.0f, 0.0f), 100.0f);
 
-            GLInstancedMesh def_sph = new()
+            mesh = new()
             {
-                Name = "default_sphere",
-                vao = sph.getVAO()
+                Hash = "default_sphere".GetHashCode(),
+                Data = sph.GetData(),
+                MetaData = sph.GetMetaData()
             };
             
-            EngineRef.RegisterEntity(def_sph);
-            GeometryMgr.AddPrimitiveMesh(def_sph);
+            
+            EngineRef.RegisterEntity(mesh);
+            GeometryMgr.AddPrimitiveMesh(mesh);
             sph.Dispose();
 
             //Light Sphere Mesh
             Primitives.Sphere lsph = new(new NbVector3(0.0f, 0.0f, 0.0f), 1.0f);
-            GLInstancedLightMesh def_lsph = new()
+            
+            mesh = new()
             {
-                Name = "default_light_sphere",
-                MetaData = new()
-                {
-                    BatchStartGraphics = 0,
-                    VertrStartGraphics = 0,
-                    VertrEndGraphics = 11 * 11 - 1,
-                    BatchCount = 10 * 10 * 6,
-                    AABBMIN = new(-0.1f),
-                    AABBMAX = new(0.1f),
-                    IndicesLength = DrawElementsType.UnsignedInt
-                },
-                type = SceneNodeType.LIGHTVOLUME,
-                vao = lsph.getVAO()
+                Hash = "default_light_sphere".GetHashCode(),
+                Data = lsph.GetData(),
+                MetaData = lsph.GetMetaData()
             };
-
-            EngineRef.RegisterEntity(def_lsph);
-            GeometryMgr.AddPrimitiveMesh(def_lsph);
+            
+            EngineRef.RegisterEntity(mesh);
+            GeometryMgr.AddPrimitiveMesh(mesh);
             lsph.Dispose();
             
             GenerateGizmoParts();
@@ -624,12 +618,12 @@ namespace NbCore.Systems
             //Translation Gizmo
             Primitives.Arrow translation_x_axis = new(0.015f, 0.25f, new NbVector3(1.0f, 0.0f, 0.0f), false, 20);
             //Move arrowhead up in place
-            NbMatrix4 t = NbMatrix4.CreateRotationZ(Utils.MathUtils.radians(90));
+            NbMatrix4 t = NbMatrix4.CreateRotationZ(MathUtils.radians(90));
             translation_x_axis.applyTransform(t);
 
             Primitives.Arrow translation_y_axis = new(0.015f, 0.25f, new NbVector3(0.0f, 1.0f, 0.0f), false, 20);
             Primitives.Arrow translation_z_axis = new(0.015f, 0.25f, new NbVector3(0.0f, 0.0f, 1.0f), false, 20);
-            t = NbMatrix4.CreateRotationX(Utils.MathUtils.radians(90));
+            t = NbMatrix4.CreateRotationX(MathUtils.radians(90));
             translation_z_axis.applyTransform(t);
 
             //Generate Geom objects
@@ -668,23 +662,17 @@ namespace NbCore.Systems
                         break;
                 }
 
-                GLInstancedMesh temp = new()
+                NbMesh mesh = new()
                 {
-                    Name = name,
-                    type = SceneNodeType.GIZMOPART,
-                    vao = vao,
-                    MetaData = new()
-                    {
-                        BatchCount = arr.geom.indicesCount,
-                        IndicesLength = DrawElementsType.UnsignedInt,
-                    }
+                    Hash = name.GetHashCode(),
+                    Data = arr.GetData(),
+                    MetaData = arr.GetMetaData()
                 };
-
                 
-                if (!GeometryMgr.AddPrimitiveMesh(temp))
-                    temp.Dispose();
+                
+                if (!GeometryMgr.AddPrimitiveMesh(mesh))
+                    mesh.Dispose();
                 arr.Dispose();
-
             }
 
         }
@@ -719,36 +707,35 @@ namespace NbCore.Systems
                 return;
 
             //Explicitly handle locator, scenes and collision meshes
-            switch (m.MeshVao.type)
+            switch (m.Mesh.Type)
             {
-                case (SceneNodeType.MODEL):
-                case (SceneNodeType.LOCATOR):
-                case (SceneNodeType.GIZMO):
+                case (NbMeshType.Mesh):
+                case (NbMeshType.Locator):  
                     {
-                        if (!locatorMeshList.Contains(m.MeshVao))
-                            locatorMeshList.Add(m.MeshVao);
+                        if (!locatorMeshList.Contains(m.Mesh))
+                            locatorMeshList.Add(m.Mesh);
                         break;
                     }
-                case (SceneNodeType.COLLISION):
-                    collisionMeshList.Add(m.MeshVao);
+                case (NbMeshType.Collision):
+                    collisionMeshList.Add(m.Mesh);
                     break;
-                case (SceneNodeType.JOINT):
-                    jointMeshList.Add(m.MeshVao);
+                case (NbMeshType.Joint):
+                    jointMeshList.Add(m.Mesh);
                     break;
-                case (SceneNodeType.LIGHT):
-                    lightMeshList.Add(m.MeshVao);
+                case (NbMeshType.Light):
+                    lightMeshList.Add(m.Mesh);
                     break;
-                case (SceneNodeType.LIGHTVOLUME):
+                case (NbMeshType.LightVolume):
                     {
-                        if (!lightVolumeMeshList.Contains(m.MeshVao))
-                            lightVolumeMeshList.Add(m.MeshVao);
+                        if (!lightVolumeMeshList.Contains(m.Mesh))
+                            lightVolumeMeshList.Add(m.Mesh);
                         break;
                     }
                 default:
                     {
                         //Add mesh to the corresponding material meshlist
-                        if (!MaterialMgr.MaterialContainsMesh(m.Material, m.MeshVao))
-                            MaterialMgr.AddMeshToMaterial(m.Material, m.MeshVao);
+                        if (!MaterialMgr.MaterialContainsMesh(m.Material, m.Mesh))
+                            MaterialMgr.AddMeshToMaterial(m.Material, m.Mesh);
                         break;
                     }
             }
@@ -761,12 +748,12 @@ namespace NbCore.Systems
             }
                 
             //Add all meshes to the global meshlist
-            if (!globalMeshList.Contains(m.MeshVao))
-                globalMeshList.Add(m.MeshVao);
+            if (!globalMeshList.Contains(m.Mesh))
+                globalMeshList.Add(m.Mesh);
 
             //Add meshes to their associated material meshlist
-            if (!MaterialMgr.MaterialContainsMesh(m.Material, m.MeshVao))
-                MaterialMgr.AddMeshToMaterial(m.Material, m.MeshVao);
+            if (!MaterialMgr.MaterialContainsMesh(m.Material, m.Mesh))
+                MaterialMgr.AddMeshToMaterial(m.Material, m.Mesh);
             
         }
 
@@ -916,15 +903,14 @@ namespace NbCore.Systems
 
         private bool prepareCommonPermeshSSBO(GLInstancedMesh m, ref int UBO_Offset)
         {
-
             //if (m.instance_count == 0 || m.visible_instances == 0) //use the visible_instance if we maintain an occluded status
-            if (m.RenderedInstanceCount == 0)
+            if (m.Mesh.RenderedInstanceCount == 0)
                 return true;
 
             m.UBO_aligned_size = 0;
 
             //Calculate aligned size
-            int newsize = 4 * m.dataBuffer.Length;
+            int newsize = 4 * m.Mesh.InstanceDataBuffer.Length;
             newsize = ((newsize >> 8) + 1) * 256;
             
             if (newsize + UBO_Offset > atlas_cpmu.Length)
@@ -937,17 +923,17 @@ namespace NbCore.Systems
 
             m.UBO_aligned_size = newsize; //Save new size
 
-            if (m.skinned)
+            if (m.Mesh.skinned)
                 m.uploadSkinningData();
 
-            if (m.type == SceneNodeType.LIGHTVOLUME)
+            if (m.Mesh.Type == NbMeshType.LightVolume)
             {
                 ((GLInstancedLightMesh) m).uploadData();
             }
 
             unsafe
             {
-                fixed(void* p = m.dataBuffer)
+                fixed(void* p = m.Mesh.InstanceDataBuffer)
                 {
                     byte* bptr = (byte*) p;
 
@@ -1179,14 +1165,16 @@ namespace NbCore.Systems
                 GL.UseProgram(shader.ProgramID); //Set Program
 
                 //Render static meshes
-                foreach (GLInstancedMesh m in collisionMeshList)
+                foreach (NbMesh m in collisionMeshList)
                 {
-                    if (m.RenderedInstanceCount == 0 || m.UBO_aligned_size == 0)
+                    if (m.RenderedInstanceCount == 0)
                         continue;
 
                     GL.BindBufferRange(BufferRangeTarget.ShaderStorageBuffer, 1, SSBOs["_COMMON_PER_MESH"],
                         (IntPtr)(m.UBO_offset), m.UBO_aligned_size);
 
+                    Renderer.Render(m, mat, RENDERPASS.DEFERRED);
+                    
                     MeshRenderer.render(m, mat, RENDERPASS.DEFERRED);
                 }
             }

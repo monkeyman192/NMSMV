@@ -93,7 +93,7 @@ namespace ImGuiHelper
             ShaderEditor?.Draw();
         }
 
-        public virtual void SetActiveShaderSource(GLSLHelper.GLSLShaderSource s)
+        public virtual void SetActiveShaderSource(NbOpenGLAPI.GLSLShaderSource s)
         {
             ShaderEditor.SetShader(s);
         }

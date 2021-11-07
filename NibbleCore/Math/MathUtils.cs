@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using NbCore.Math;
 
-namespace NbCore.Utils
+namespace NbCore.Math
 {
     public class TwosComplement
     {
@@ -62,14 +62,6 @@ namespace NbCore.Utils
 
             return res;
         }
-
-        public static NbQuaternion conjugate(NbQuaternion q)
-        {
-            NbQuaternion t = q;
-            t.Conjugate();
-            return t;
-        }
-        
 
         public static void mulMatArrays(ref float[] dest, float[] lmat1, float[] lmat2, int count)
         {

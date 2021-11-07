@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using GLSLHelper;
+using NbOpenGLAPI;
 using NbCore;
 using NbCore.Common;
 using ImGuiNET;

@@ -324,14 +324,14 @@ namespace NbCore
         }
 
 
-        public bool frustum_occlude(GLInstancedMesh meshVao, NbMatrix4 transform)
+        public bool frustum_occlude(NbMesh mesh, NbMatrix4 transform)
         {
             if (!culling) return true;
 
             NbVector4 v1, v2;
 
-            v1 = new NbVector4(meshVao.MetaData.AABBMIN, 1.0f);
-            v2 = new NbVector4(meshVao.MetaData.AABBMAX, 1.0f);
+            v1 = new NbVector4(mesh.MetaData.AABBMIN, 1.0f);
+            v2 = new NbVector4(mesh.MetaData.AABBMAX, 1.0f);
             
             return frustum_occlude(v1.Xyz, v2.Xyz, transform);
         }

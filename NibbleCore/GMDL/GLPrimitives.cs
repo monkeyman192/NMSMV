@@ -92,6 +92,26 @@ namespace NbCore.Primitives
             return geom?.generateVAO();
         }
 
+        public MeshMetaData GetMetaData()
+        {
+            return new MeshMetaData()
+            {
+                IndicesLength = NbPrimitiveDataType.UnsignedInt,
+                BatchCount = geom.ibuffer.Length / 0x4,
+                FirstSkinMat = 0,
+                LastSkinMat = 0,
+                VertrEndGraphics = geom.vbuffer.Length / 3,
+                VertrEndPhysics = geom.vbuffer.Length / 3
+            };
+        }
+        public MeshData GetData()
+        {
+            MeshData data = new();
+            data.IndexBuffer = new byte[geom.ibuffer.Length];
+            data.VertexBuffer = new byte[geom.vbuffer.Length];
+            return data;
+        }
+
         public static Primitive mergePrimitives(Primitive p1, Primitive p2)
         {
             Primitive p = new();

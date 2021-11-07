@@ -14,7 +14,7 @@ using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Runtime.InteropServices;
-using GLSLHelper;
+using NbOpenGLAPI;
 using NbCore.Common;
 using NbCore.Utils;
 
@@ -136,9 +136,9 @@ namespace NbCore
             uint val2 = br.ReadUInt16();
             uint val3 = br.ReadUInt16();
             //Convert Values
-            temp.X = Utils.Half.decompress(val1);
-            temp.Y = Utils.Half.decompress(val2);
-            temp.Z = Utils.Half.decompress(val3);
+            temp.X = Math.Half.decompress(val1);
+            temp.Y = Math.Half.decompress(val2);
+            temp.Z = Math.Half.decompress(val3);
             //Console.WriteLine("half {0} {1} {2}", temp[0],temp[1],temp[2]);
             return temp;
         }
@@ -150,8 +150,8 @@ namespace NbCore
             uint val1 = br.ReadUInt16();
             uint val2 = br.ReadUInt16();
             //Convert Values
-            temp.X = Utils.Half.decompress(val1);
-            temp.Y = Utils.Half.decompress(val2);
+            temp.X = Math.Half.decompress(val1);
+            temp.Y = Math.Half.decompress(val2);
             return temp;
         }
 
@@ -460,20 +460,6 @@ namespace NbCore
 
                 meshDataDict.Clear();
                 meshMetaDataDict.Clear();
-
-                //Clear Vaos
-                foreach (GLVao p in GLVaos.Values)
-                    p.Dispose();
-                GLVaos.Clear();
-
-                //Dispose GLmeshes
-                foreach (Dictionary<string, GLInstancedMesh> p in GLMeshVaos.Values)
-                {
-                    foreach (GLInstancedMesh m in p.Values)
-                        m.Dispose(); 
-                    p.Clear();
-                    //Materials are stored globally
-                }
 
                 handle.Dispose();
             }

@@ -6,8 +6,8 @@ namespace NbCore.Managers
 {
     public class GeometryManager :EntityManager<Entity>
     {
-        public Dictionary<string, GeomObject> GLgeoms = new();
-        public Dictionary<string, GLInstancedMesh> GLPrimitiveMeshes = new();
+        public Dictionary<string, GeomObject> Geoms = new();
+        public Dictionary<long, NbMesh> PrimitiveMeshes = new();
 
         public GeometryManager()
         {
@@ -19,7 +19,7 @@ namespace NbCore.Managers
         {
             if (base.Add(o))
             {
-                GLgeoms[o.Name] = o;
+                Geoms[o.Name] = o;
                 return true;
             }
             return false;
@@ -27,35 +27,35 @@ namespace NbCore.Managers
 
         public bool HasGeom(string name)
         {
-            return GLgeoms.ContainsKey(name);
+            return Geoms.ContainsKey(name);
         }
 
         public GeomObject GetGeom(string name)
         {
-            return GLgeoms[name];
+            return Geoms[name];
         }
 
         #endregion
 
         #region Primitives
-        public bool AddPrimitiveMesh(GLInstancedMesh mesh)
+        public bool AddPrimitiveMesh(NbMesh mesh)
         {
             if (base.Add(mesh))
             {
-                GLPrimitiveMeshes[mesh.Name] = mesh;
+                PrimitiveMeshes[mesh.Hash] = mesh;
                 return true;
             }
             return false;
         }
 
-        public bool HasPrimitiveMesh(string name)
+        public bool HasPrimitiveMesh(long hash)
         {
-            return GLPrimitiveMeshes.ContainsKey(name);
+            return PrimitiveMeshes.ContainsKey(hash);
         }
 
-        public GLInstancedMesh GetPrimitiveMesh(string name)
+        public NbMesh GetPrimitiveMesh(long hash)
         {
-            return GLPrimitiveMeshes[name];
+            return PrimitiveMeshes[hash];
         }
 
         #endregion
@@ -64,8 +64,8 @@ namespace NbCore.Managers
 
         public new void CleanUp()
         {
-            GLgeoms.Clear();
-            GLPrimitiveMeshes.Clear();
+            Geoms.Clear();
+            PrimitiveMeshes.Clear();
 
             //I hope that the correct Dispose methods will be called and not just the default
             base.CleanUp();

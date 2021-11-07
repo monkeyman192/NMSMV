@@ -7,7 +7,7 @@ namespace NbCore.Managers
     sealed public class MaterialManager : EntityManager<MeshMaterial>
     {
         public readonly Dictionary<string, MeshMaterial> MaterialNameMap = new();
-        private readonly Dictionary<long, List<GLInstancedMesh>> MaterialMeshMap = new();
+        private readonly Dictionary<long, List<NbMesh>> MaterialMeshMap = new();
 
         public bool AddMaterial(MeshMaterial mat) {
             
@@ -28,12 +28,12 @@ namespace NbCore.Managers
             return null;
         }
 
-        public List<GLInstancedMesh> GetMaterialMeshes(MeshMaterial mat)
+        public List<NbMesh> GetMaterialMeshes(MeshMaterial mat)
         {
             return MaterialMeshMap[mat.GetID()];
         }
 
-        public bool AddMeshToMaterial(MeshMaterial mat, GLInstancedMesh mesh)
+        public bool AddMeshToMaterial(MeshMaterial mat, NbMesh mesh)
         {
             if (MaterialMeshMap[mat.GetID()].Contains(mesh))
                 return false;
@@ -41,7 +41,7 @@ namespace NbCore.Managers
             return true;
         }
 
-        public bool RemoveMeshFromMaterial(MeshMaterial mat, GLInstancedMesh mesh)
+        public bool RemoveMeshFromMaterial(MeshMaterial mat, NbMesh mesh)
         {
             if (!MaterialMeshMap[mat.GetID()].Contains(mesh))
                 return false;
@@ -49,7 +49,7 @@ namespace NbCore.Managers
             return true;
         }
 
-        public bool MaterialContainsMesh(MeshMaterial mat, GLInstancedMesh mesh)
+        public bool MaterialContainsMesh(MeshMaterial mat, NbMesh mesh)
         {
             return MaterialMeshMap[mat.GetID()].Contains(mesh);
         }

@@ -12,9 +12,12 @@ namespace NbCore
     {
         //Class static properties
         public string Name;
-        public NbMesh BaseMesh;
+        public NbMesh Mesh;
         public GLVao vao;
         public GLVao bHullVao;
+        
+        //GLSpecific Properties
+        public DrawElementsType IndicesLength;
         
         //Instance Data
         public int UBO_aligned_size = 0; //Actual size of the data for the UBO, multiple to 256
@@ -22,16 +25,9 @@ namespace NbCore
 
         //Animation Properties
         //TODO : At some point include that shit into the instance data
-        public int BoneRemapIndicesCount;
-        public int[] BoneRemapIndices;
-        public bool skinned = false;
-
-        //Material Properties
-        public NbVector3 color; //Keep a default color for the mesh
-        public List<MeshComponent> instanceRefs = new();
-        public float[] instanceBoneMatrices;
         public int instanceBoneMatricesTex;
         public int instanceBoneMatricesTexTBO;
+        
 
         public GLInstancedMesh()
         {
@@ -41,62 +37,24 @@ namespace NbCore
         public GLInstancedMesh(NbMesh mesh)
         {
             vao = new GLVao();
-            BaseMesh = mesh;
+            Mesh = mesh;
         }
 
-        public void setSkinMatrices(SceneComponent sc, int instance_id)
+        public void SetupTBO()
         {
-            int instance_offset = 128 * 16 * instance_id;
-            
-            for (int i = 0; i < BoneRemapIndicesCount; i++)
-            {
-                Array.Copy(sc.skinMats, BoneRemapIndices[i] * 16, instanceBoneMatrices, instance_offset + i * 16, 16);
-            }
-        }
-
-        public void setDefaultSkinMatrices(int instance_id)
-        {
-            int instance_offset = 128 * 16 * instance_id;
-            for (int i = 0; i < BoneRemapIndicesCount; i++)
-            {
-                MathUtils.insertMatToArray16(instanceBoneMatrices, instance_offset + i * 16, NbMatrix4.Identity());
-            }
-
-        }
-
-        public void initializeSkinMatrices(SceneComponent sc)
-        {
-            if (RenderedInstanceCount == 0 || sc == null)
-                return;
-
-            int jointCount = sc.jointDict.Values.Count;
-
-            //TODO: Use the jointCount to adaptively setup the instanceBoneMatrices
-            //Console.WriteLine("MAX : 128  vs Effective : " + jointCount.ToString());
-
-            //Re-initialize the array based on the number of instances
-            instanceBoneMatrices = new float[RenderedInstanceCount * 128 * 16];
-            int bufferSize = RenderedInstanceCount * 128 * 16 * 4;
-
             //Setup the TBO
             instanceBoneMatricesTex = GL.GenTexture();
             instanceBoneMatricesTexTBO = GL.GenBuffer();
 
+            int bufferSize = Mesh.RenderedInstanceCount * 128 * 16 * 4;
+            
             GL.BindBuffer(BufferTarget.TextureBuffer, instanceBoneMatricesTexTBO);
-            GL.BufferData(BufferTarget.TextureBuffer, bufferSize, instanceBoneMatrices, BufferUsageHint.StreamDraw);
+            GL.BufferData(BufferTarget.TextureBuffer, bufferSize, Mesh.instanceBoneMatrices, BufferUsageHint.StreamDraw);
             GL.TexBuffer(TextureBufferTarget.TextureBuffer, SizedInternalFormat.Rgba32f, instanceBoneMatricesTexTBO);
             GL.BindBuffer(BufferTarget.TextureBuffer, 0);
-
         }
 
-        public void uploadSkinningData()
-        {
-            GL.BindBuffer(BufferTarget.TextureBuffer, instanceBoneMatricesTexTBO);
-            int bufferSize = RenderedInstanceCount * 128 * 16 * 4;
-            GL.BufferSubData(BufferTarget.TextureBuffer, IntPtr.Zero, bufferSize, instanceBoneMatrices);
-            //Console.WriteLine(GL.GetError());
-            GL.BindBuffer(BufferTarget.TextureBuffer, 0);
-        }
+        
 
     }
 
