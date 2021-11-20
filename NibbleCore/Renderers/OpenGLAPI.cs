@@ -21,6 +21,11 @@ namespace NbOpenGLAPI
             }
         }
 
+        public void RenderMesh()
+        {
+            throw new NotImplementedException();
+        }
+
         private GLInstancedMesh GenerateAPIMesh(NbMesh mesh)
         {
             GLInstancedMesh imesh = new(mesh);
@@ -66,9 +71,21 @@ namespace NbOpenGLAPI
             GL.BindVertexArray(0);
         }
 
-        public void RenderCollision(NbMesh mesh, MeshMaterial mat, RENDERPASS pass)
+        public void RenderCollision(NbMesh mesh, MeshMaterial mat)
         {
-            throw new NotImplementedException();
+            GLInstancedMesh glmesh = MeshMap[mesh];
+            //Step 2: Render Elements
+            GL.PointSize(8.0f);
+            GL.BindVertexArray(glmesh.vao.vao_id);
+            
+            //TODO: make sure that primitive collisions have the vertrstartphysics set to 0
+    
+            GL.DrawElementsInstancedBaseVertex(PrimitiveType.Points, glmesh.Mesh.MetaData.BatchCount,
+                glmesh.IndicesLength, IntPtr.Zero, glmesh.Mesh.RenderedInstanceCount, -glmesh.Mesh.MetaData.VertrStartPhysics);
+            GL.DrawElementsInstancedBaseVertex(PrimitiveType.Triangles, glmesh.Mesh.MetaData.BatchCount,
+                glmesh.IndicesLength, IntPtr.Zero, glmesh.Mesh.RenderedInstanceCount, -glmesh.Mesh.MetaData.VertrStartPhysics);
+            
+            GL.BindVertexArray(0);
         }
 
         public void RenderLight(NbMesh mesh, MeshMaterial mat)
@@ -199,41 +216,6 @@ namespace NbOpenGLAPI
 
         }
     
-        //TODO Create a new derived class GLInstancedCollisionMesh
-        public void renderCollision(GLInstancedMesh mesh)
-        {
-            //Step 2: Render Elements
-            GL.PointSize(8.0f);
-            GL.BindVertexArray(mesh.vao.vao_id);
-
-            switch (mesh.collisionType)
-            {
-                //Rendering based on the original mesh buffers
-                case COLLISIONTYPES.MESH:
-                    GL.DrawElementsInstancedBaseVertex(PrimitiveType.Points, mesh.Mesh.MetaData.BatchCount,
-                        mesh.IndicesLength, IntPtr.Zero, mesh.Mesh.RenderedInstanceCount, -mesh.Mesh.MetaData.VertrStartPhysics);
-                    GL.DrawElementsInstancedBaseVertex(PrimitiveType.Triangles, mesh.Mesh.MetaData.BatchCount,
-                        mesh.IndicesLength, IntPtr.Zero, mesh.Mesh.RenderedInstanceCount, -mesh.Mesh.MetaData.VertrStartPhysics);
-                    break;
-                //Rendering custom geometry
-                case COLLISIONTYPES.BOX:
-                case COLLISIONTYPES.CYLINDER:
-                case COLLISIONTYPES.CAPSULE:
-                case COLLISIONTYPES.SPHERE:
-                    GL.DrawElementsInstanced(PrimitiveType.Points, mesh.Mesh.MetaData.BatchCount,
-                        DrawElementsType.UnsignedInt, IntPtr.Zero, mesh.Mesh.RenderedInstanceCount);
-                    GL.DrawElementsInstanced(PrimitiveType.Triangles, mesh.Mesh.MetaData.BatchCount,
-                        DrawElementsType.UnsignedInt, IntPtr.Zero, mesh.Mesh.RenderedInstanceCount);
-                    break;
-            }
-
-            GL.BindVertexArray(0);
-        }
-     
-        
-        
-        
-        
         public static void renderBHull(GLInstancedMesh mesh)
         {
             if (mesh.bHullVao == null) return;
