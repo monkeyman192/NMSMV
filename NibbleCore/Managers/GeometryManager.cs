@@ -7,7 +7,7 @@ namespace NbCore.Managers
     public class GeometryManager :EntityManager<Entity>
     {
         public Dictionary<string, GeomObject> Geoms = new();
-        public Dictionary<long, NbMesh> PrimitiveMeshes = new();
+        public Dictionary<ulong, NbMesh> PrimitiveMeshes = new();
 
         public GeometryManager()
         {
@@ -48,12 +48,12 @@ namespace NbCore.Managers
             return false;
         }
 
-        public bool HasPrimitiveMesh(long hash)
+        public bool HasPrimitiveMesh(ulong hash)
         {
             return PrimitiveMeshes.ContainsKey(hash);
         }
 
-        public NbMesh GetPrimitiveMesh(long hash)
+        public NbMesh GetPrimitiveMesh(ulong hash)
         {
             return PrimitiveMeshes[hash];
         }

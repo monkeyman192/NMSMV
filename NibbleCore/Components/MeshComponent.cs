@@ -13,12 +13,10 @@ namespace NbCore
         public NbMesh Mesh;
         public MeshMaterial Material;
         public int InstanceID;
-        public int RenderInstanceID;
         
         public MeshComponent()
         {
             InstanceID = -1;
-            RenderInstanceID = -1;
         }
 
         public override Component Clone()

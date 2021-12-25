@@ -5,9 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using NbCore;
+using NbCore.Math;
 using NbCore.Common;
 using System.Windows;
 using NbCore.Utils;
+
 
 namespace NbOpenGLAPI { 
 
@@ -403,6 +405,65 @@ namespace NbOpenGLAPI {
         }
     }
 
+    public struct GLSLSamplerState
+    {
+        public int TextureID;
+        public NbTextureTarget Target;
+
+        public GLSLSamplerState(int id, NbTextureTarget target)
+        {
+            TextureID = id;
+            Target = target;
+        }
+    }
+
+    public struct GLSLShaderState
+    {
+        public Dictionary<string, NbVector3> Vec3s;
+        public Dictionary<string, NbVector4> Vec4s;
+        public Dictionary<string, float> Floats;
+        public Dictionary<string, GLSLSamplerState> Samplers;
+
+        public static GLSLShaderState Create()
+        {
+            GLSLShaderState state;
+            state.Vec3s = new();
+            state.Vec4s = new();
+            state.Floats = new();
+            state.Samplers = new();
+
+            return state;
+        }
+
+        public void AddUniform(string name, NbVector3 vec)
+        {
+            Vec3s[name] = vec;
+        }
+
+        public void AddUniform(string name, NbVector4 vec)
+        {
+            Vec4s[name] = vec;
+        }
+
+        public void AddUniform(string name, float val)
+        {
+            Floats[name] = val;
+        }
+
+        public void AddSampler(string name, GLSLSamplerState val)
+        {
+            Samplers[name] = val;
+        }
+
+        public void Clear()
+        {
+            Vec3s.Clear();
+            Vec4s.Clear();
+            Floats.Clear();
+            Samplers.Clear();
+        }
+
+    }
 
 
     public class GLSLShaderConfig : Entity
@@ -431,6 +492,8 @@ namespace NbOpenGLAPI {
         //Shader Compilation log
         public string CompilationLog = "";
 
+        public GLSLShaderState CurrentState = GLSLShaderState.Create(); //Empty state
+
         //Keep active uniforms
         public Dictionary<string, int> uniformLocations = new Dictionary<string, int>();
 
@@ -449,6 +512,11 @@ namespace NbOpenGLAPI {
             foreach (string d in directives)
                 this.directives.Add(d);
             
+        }
+
+        public void ClearCurrentState()
+        {
+            CurrentState.Clear();
         }
     }
 
@@ -772,7 +840,7 @@ namespace NbOpenGLAPI {
             sr.Write(log);
             sr.Close();
             Console.WriteLine(log);
-            Callbacks.showError("Shader Compilation Failed. Check Log", "Shader Compilation Error");
+            Callbacks.Assert(false, "Shader Compilation Failed. Check Log");
         }
     }
 }

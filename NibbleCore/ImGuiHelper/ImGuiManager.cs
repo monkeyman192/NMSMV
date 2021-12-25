@@ -46,9 +46,10 @@ namespace ImGuiHelper
             _controller.WindowResized(x, y);
         }
 
-        public virtual void Update(double dt, float scrolly)
+        public virtual void Update(double dt, ref float scrolly)
         {
             _controller.Update(WindowRef, (float) dt, scrolly);
+            scrolly = 0.0f;
         }
 
         public virtual void Render()

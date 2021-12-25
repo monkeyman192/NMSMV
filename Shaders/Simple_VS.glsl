@@ -19,10 +19,7 @@ layout(location=6) in vec4 blendWeights;
 
 
 uniform CustomPerMaterialUniforms mpCustomPerMaterial;
-
-#ifdef _F02_SKINNED
-    uniform samplerBuffer skinMatsTex;
-#endif
+uniform CommonPerSceneUniforms mpCommonPerScene;
 
 //Uniform Blocks
 layout (std140, binding=0) uniform _COMMON_PER_FRAME
@@ -56,10 +53,10 @@ flat out int instanceId;
 
 mat4 get_skin_matrix(int offset)
 {
-    return (mat4(texelFetch(skinMatsTex, offset),
-                 texelFetch(skinMatsTex, offset + 1),
-                 texelFetch(skinMatsTex, offset + 2),
-                 texelFetch(skinMatsTex, offset + 3)));
+    return (mat4(texelFetch(mpCommonPerScene.skinMatsTex, offset),
+                 texelFetch(mpCommonPerScene.skinMatsTex, offset + 1),
+                 texelFetch(mpCommonPerScene.skinMatsTex, offset + 2),
+                 texelFetch(mpCommonPerScene.skinMatsTex, offset + 3)));
 }
 
 #endif

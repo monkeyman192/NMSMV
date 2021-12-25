@@ -95,7 +95,6 @@ namespace NbCore
                     {
                         //Remove Instance
                         Console.WriteLine("Removing Instance {0}", n.Name);
-                        
                         GLMeshBufferManager.RemoveRenderInstance(ref mc.Mesh, mc);
                     }
                     else if (!td.IsOccluded && td.WasOccluded)
@@ -105,8 +104,8 @@ namespace NbCore
                     }
                     else if (!td.IsOccluded)
                     {
-                        GLMeshBufferManager.SetInstanceWorldMat(mc.Mesh, mc.RenderInstanceID, td.WorldTransformMat);
-                        GLMeshBufferManager.SetInstanceWorldMatInv(mc.Mesh, mc.RenderInstanceID, td.InverseTransformMat);
+                        GLMeshBufferManager.SetInstanceWorldMat(mc.Mesh, mc.InstanceID, td.WorldTransformMat);
+                        GLMeshBufferManager.SetInstanceWorldMatInv(mc.Mesh, mc.InstanceID, td.InverseTransformMat);
                     }
 
                     td.IsUpdated = false; //Reset updated status to prevent further updates on the same frame update

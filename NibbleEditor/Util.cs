@@ -48,15 +48,7 @@ namespace NibbleEditor
 
         public static void showError(string message, string caption)
         {
-            Console.WriteLine(string.Format("%s", message));
-            //Cannot use ImGui from here
-            /*
-            if (ImGui.BeginPopupModal("show-error"))
-            {
-                ImGui.Text();
-                ImGui.EndPopup();
-            }
-            */
+            Console.WriteLine($"{message}");
         }
         
         
@@ -89,10 +81,6 @@ namespace NibbleEditor
             System.Diagnostics.Trace.Assert(status);
         }
     
-
-        
-
-
     }
 
 }

@@ -294,7 +294,7 @@ namespace NbCore
             return renderSys.TextureMgr.Get(name);
         }
 
-        public NbMesh GetPrimitiveMesh(long hash)
+        public NbMesh GetPrimitiveMesh(ulong hash)
         {
             return renderSys.GeometryMgr.GetPrimitiveMesh(hash);
         }
@@ -375,7 +375,7 @@ namespace NbCore
             InitializeResources();
 
             //Add Camera
-            Camera cam = new(90, -1, 0, true)
+            Camera cam = new(90, 0, true)
             {
                 isActive = false
             };
@@ -491,7 +491,7 @@ namespace NbCore
 
         private void rt_ResizeViewport(int w, int h)
         {
-            renderSys.resize(w, h);
+            renderSys.Resize(w, h);
         }
 
 #if DEBUG
@@ -720,7 +720,7 @@ namespace NbCore
             //Per Frame System Updates
             transformSys.OnRenderUpdate(dt);
             sceneMgmtSys.OnRenderUpdate(dt);
-
+            
             //Render Shit
             if (rt_State == EngineRenderingState.ACTIVE)
             {
@@ -904,13 +904,10 @@ namespace NbCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                Mesh = GetPrimitiveMesh("default_cross".GetHashCode()),
+                Mesh = GetPrimitiveMesh((ulong) "default_cross".GetHashCode()),
                 Material = GetMaterialByName("crossMat")
             };
             
-            //Register new instance in the meshVao
-            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.Mesh, mc);
-
             n.AddComponent<MeshComponent>(mc);
 
             return n;
@@ -935,9 +932,6 @@ namespace NbCore
                 Material = mat
             };
             
-            //Register new instance in the meshVao
-            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.Mesh, mc);
-
             n.AddComponent<MeshComponent>(mc);
             
             return n;
@@ -958,12 +952,9 @@ namespace NbCore
             //Create MeshComponent
             MeshComponent mc = new()
             {
-                Mesh = GetPrimitiveMesh("default_cross".GetHashCode()),
+                Mesh = GetPrimitiveMesh((ulong)"default_cross".GetHashCode()),
                 Material = GetMaterialByName("crossMat")
             };
-            
-            //Register new instance in the meshVao
-            mc.InstanceID = GLMeshBufferManager.AddMeshInstance(ref mc.Mesh, mc);
             
             n.AddComponent<MeshComponent>(mc);
 

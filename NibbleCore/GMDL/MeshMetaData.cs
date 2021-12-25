@@ -7,7 +7,7 @@ using NbCore.Math;
 
 namespace NbCore
 {
-    public class MeshMetaData
+    public class NbMeshMetaData
     {
         //Mesh Properties
         public ulong Hash;
@@ -25,7 +25,8 @@ namespace NbCore
         public int LODLevel;
         public int BoundHullStart;
         public int BoundHullEnd;
-
+        
+        
         //LOD Properties
         public int LODDistance1;
         public int LODDistance2;
@@ -33,7 +34,13 @@ namespace NbCore
         //New stuff Properties
         public NbPrimitiveDataType IndicesLength = NbPrimitiveDataType.UnsignedShort;
 
-        public MeshMetaData()
+        //Skinning Data
+        public bool skinned = false;
+        public int BoneRemapIndicesCount;
+        public int[] BoneRemapIndices;
+
+
+        public NbMeshMetaData()
         {
             //Init values to null
             VertrEndGraphics = 0;
@@ -52,7 +59,7 @@ namespace NbCore
             AABBMAX = new();
         }
 
-        public MeshMetaData(MeshMetaData input)
+        public NbMeshMetaData(NbMeshMetaData input)
         {
             //Init values to null
             VertrEndGraphics = input.VertrEndGraphics;

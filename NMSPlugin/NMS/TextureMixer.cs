@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using OpenTK;
 using NbCore.Math;
+using NbOpenGLAPI;
 using OpenTK.Graphics.OpenGL4;
 using NbCore;
 using NbCore.Common;
@@ -320,99 +321,81 @@ namespace NMSPlugin
 
             //BIND TEXTURES
             Texture tex;
-            int loc;
-
+            
             Texture dMask = RenderState.engineRef.GetTexture("default_mask.dds");
             Texture dDiff = RenderState.engineRef.GetTexture("default.dds");
 
-            //USE PROGRAM
-            GLSLHelper.GLSLShaderConfig shader = RenderState.engineRef.GetShaderByType(GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER);
-            int pass_program = shader.ProgramID;
-            GL.UseProgram(pass_program);
+            Engine engine = RenderState.engineRef;
 
-            //Upload base Layers Used
+            GLSLShaderConfig shader = engine.GetShaderByType(SHADER_TYPE.TEXTURE_MIX_SHADER);
+            shader.ClearCurrentState();
+            
+
+            //Base Layers
             int baseLayerIndex = 0;
-            loc = GL.GetUniformLocation(pass_program, "lbaseLayersUsed");
-            if (loc >= 0)
+            for (int i = 0; i < 8; i++)
             {
-                for (int i = 0; i < 8; i++)
-                {
-                    int active_id = i;
-                    GL.Uniform1(loc + i, baseLayersUsed[active_id]);
-                    if (baseLayersUsed[i] > 0.0f)
-                        baseLayerIndex = i;
-                }
+                shader.CurrentState.AddUniform("lbaseLayersUsed" + "[" + i + "]", baseLayersUsed[i]);
+                if (baseLayersUsed[i] > 0.0f)
+                    baseLayerIndex = i;
             }
 
-            loc = GL.GetUniformLocation(pass_program, "baseLayerIndex");
-            GL.Uniform1(loc, baseLayerIndex);
-
-            //Upload DiffuseTextures
-            loc = GL.GetUniformLocation(pass_program, "mainTex");
-            if (loc >= 0)
-            {
-                for (int i = 0; i < 8; i++)
-                {
-                    if (difftextures[i] != null)
-                        tex = difftextures[i];
-                    else
-                        tex = dMask;
-
-                    //Upload diffuse Texture
-                    GL.Uniform1(loc + i, i); // I need to upload the texture unit number
-
-                    int tex0Id = (int)TextureUnit.Texture0;
-
-                    GL.ActiveTexture((TextureUnit)(tex0Id + i));
-                    GL.BindTexture(tex.target, tex.texID);
-                }
-            }
-
-            //No need for extra alpha tetuxres
-            loc = GL.GetUniformLocation(pass_program, "use_alpha_textures");
-            GL.Uniform1(loc, 0.0f);
+            shader.CurrentState.AddUniform("baseLayerIndex", (float)baseLayerIndex);
 
             //Activate Recoloring
-            loc = GL.GetUniformLocation(pass_program, "recolor_flag");
-            GL.Uniform1(loc, 1.0f);
+            shader.CurrentState.AddUniform("recolor_flag", 1.0f);
+
+            //No need for extra alpha tetuxres
+            shader.CurrentState.AddUniform("use_alpha_textures", 0.0f);
+            
+            //Diffuse Samplers
+            for (int i = 0; i < 8; i++)
+            {
+                if (difftextures[i] != null)
+                    tex = difftextures[i];
+                else
+                    tex = dMask;
+
+
+                GLSLSamplerState s = new()
+                {
+                    Target = NbTextureTarget.Texture2DArray,
+                    TextureID = tex.texID
+                };
+
+                shader.CurrentState.AddSampler("mainTex" + "[" + i + "]", s);
+            }
+
 
             //Upload Recolouring Information
-            loc = GL.GetUniformLocation(pass_program, "lRecolours");
-            if (loc >= 0)
+            for (int i = 0; i < 8; i++)
             {
-                for (int i = 0; i < 8; i++)
-                {
-                    GL.Uniform4(loc + i, (float)reColourings[i][0],
-                                     (float)reColourings[i][1],
-                                     (float)reColourings[i][2],
-                                     (float)reColourings[i][3]);
-                }
+                NbVector4 vec = new(reColourings[i][0], reColourings[i][1],
+                                    reColourings[i][2], reColourings[i][3]);
+                shader.CurrentState.AddUniform("lRecolours" + "[" + i + "]", vec);
             }
-
 
             //Upload Average Colors Information
-            loc = GL.GetUniformLocation(pass_program, "lAverageColors");
-            if (loc >= 0)
+            NbVector4 avg_vec = new(0.5f);
+            for (int i = 0; i < 8; i++)
             {
-                for (int i = 0; i < 8; i++)
-                {
-                    GL.Uniform4(loc + i, 0.5f, 0.5f, 0.5f, 0.5f);
-                }
+                shader.CurrentState.AddUniform("lAverageColors" + "[" + i + "]", avg_vec);
             }
 
+            //Use the RenderQuad Method to do the job
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            NbCore.Systems.RenderingSystem renderSystem = engine.renderSys;
+            renderSystem.Renderer.RenderQuad(renderSystem.GeometryMgr.GetPrimitiveMesh((ulong) "default_renderquad".GetHashCode()),
+                shader, shader.CurrentState);
 
-            GL.BindVertexArray(RenderState.engineRef.GetPrimitiveMesh("default_renderquad").vao.vao_id);
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero);
-
+            
             //Console.WriteLine("MixTextures5, Last GL Error: " + GL.GetError());
             int out_tex_2darray_diffuse = Sampler.generateTexture2DArray(PixelInternalFormat.Rgba8, texWidth, texHeight, 1, PixelFormat.Rgba, PixelType.UnsignedByte, 11);
             Sampler.setupTextureParameters(TextureTarget.Texture2DArray, out_tex_2darray_diffuse, (int)TextureWrapMode.Repeat,
                 (int)TextureMagFilter.Linear, (int)TextureMinFilter.LinearMipmapLinear, 4.0f);
 
             //Copy the read buffers to the 
-
+            
             GL.BindTexture(TextureTarget.Texture2DArray, out_tex_2darray_diffuse);
             GL.ReadBuffer(ReadBufferMode.ColorAttachment0);
             GL.CopyTexSubImage3D(TextureTarget.Texture2DArray, 0, 0, 0, 0, 0, 0, texWidth, texHeight);
@@ -442,93 +425,78 @@ namespace NMSPlugin
 
             //BIND TEXTURES
             Texture tex;
-            int loc;
+            
 
             Texture dMask = RenderState.engineRef.GetTexture("default_mask.dds");
             Texture dDiff = RenderState.engineRef.GetTexture("default.dds");
 
-            //USE PROGRAM
-            GLSLHelper.GLSLShaderConfig shader = RenderState.engineRef.GetShaderByType(GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER);
-            int pass_program = shader.ProgramID;
-            GL.UseProgram(pass_program);
+            Engine engine = RenderState.engineRef;
 
-            //Upload base Layers Used
+            GLSLShaderConfig shader = engine.GetShaderByType(SHADER_TYPE.TEXTURE_MIX_SHADER);
+            shader.ClearCurrentState();
+
+
+            //Base Layers
             int baseLayerIndex = 0;
-            loc = GL.GetUniformLocation(pass_program, "lbaseLayersUsed");
-            if (loc >= 0)
+            for (int i = 0; i < 8; i++)
             {
-                for (int i = 0; i < 8; i++)
-                {
-                    if (masktextures[i] != null)
-                    {
-                        GL.Uniform1(loc + i, 1.0f);
-                        baseLayerIndex = i;
-                    }
-                    else
-                        GL.Uniform1(loc + i, 0.0f);
-                }
+                shader.CurrentState.AddUniform("lbaseLayersUsed" + "[" + i + "]", baseLayersUsed[i]);
+                if (baseLayersUsed[i] > 0.0f)
+                    baseLayerIndex = i;
             }
 
-            loc = GL.GetUniformLocation(pass_program, "baseLayerIndex");
-            GL.Uniform1(loc, baseLayerIndex);
-
-
-            //No need for extra alpha tetuxres
-            loc = GL.GetUniformLocation(pass_program, "use_alpha_textures");
-            GL.Uniform1(loc, 1.0f);
-
-            //Upload DiffuseTextures as alphaTextures
-            loc = GL.GetUniformLocation(pass_program, "alphaTex");
-            if (loc >= 0)
-            {
-                for (int i = 0; i < 8; i++)
-                {
-                    if (difftextures[i] != null)
-                        tex = difftextures[i];
-                    else
-                        tex = dMask;
-
-                    //Upload diffuse Texture
-                    GL.Uniform1(loc + i, i); // I need to upload the texture unit number
-
-                    int tex0Id = (int)TextureUnit.Texture0;
-
-                    GL.ActiveTexture((TextureUnit)(tex0Id + i));
-                    GL.BindTexture(tex.target, tex.texID);
-                }
-            }
-
-            //Upload maskTextures
-            loc = GL.GetUniformLocation(pass_program, "mainTex");
-            if (loc >= 0)
-            {
-                for (int i = 0; i < 8; i++)
-                {
-                    if (masktextures[i] != null)
-                        tex = masktextures[i];
-                    else
-                        tex = dMask;
-
-                    //Upload diffuse Texture
-                    GL.Uniform1(loc + i, 8 + i); // I need to upload the texture unit number
-
-                    int tex0Id = (int)TextureUnit.Texture8;
-
-                    GL.ActiveTexture((TextureUnit)(tex0Id + i));
-                    GL.BindTexture(tex.target, tex.texID);
-                }
-            }
+            shader.CurrentState.AddUniform("baseLayerIndex", (float)baseLayerIndex);
 
             //Activate Recoloring
-            loc = GL.GetUniformLocation(pass_program, "recolor_flag");
-            GL.Uniform1(loc, 0.0f);
+            shader.CurrentState.AddUniform("recolor_flag", 0.0f);
+
+            //No need for extra alpha tetuxres
+            shader.CurrentState.AddUniform("use_alpha_textures", 1.0f);
 
 
+            //Upload DiffuseTextures as alphaTextures
+            for (int i = 0; i < 8; i++)
+            {
+                if (difftextures[i] != null)
+                    tex = difftextures[i];
+                else
+                    tex = dMask;
+
+                GLSLSamplerState s = new()
+                {
+                    Target = NbTextureTarget.Texture2DArray,
+                    TextureID = tex.texID
+                };
+
+                shader.CurrentState.AddSampler("alphaTex" + "[" + i + "]", s);
+            }
+            
+
+            //Upload maskTextures
+            for (int i = 0; i < 8; i++)
+            {
+                if (masktextures[i] != null)
+                    tex = masktextures[i];
+                else
+                    tex = dMask;
+
+
+                GLSLSamplerState s = new()
+                {
+                    Target = NbTextureTarget.Texture2DArray,
+                    TextureID = tex.texID
+                };
+
+                shader.CurrentState.AddSampler("mainTex" + "[" + i + "]", s);
+            }
+
+
+            //Use the RenderQuad Method to do the job
+
+            NbCore.Systems.RenderingSystem renderSystem = engine.renderSys;
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            GL.BindVertexArray(RenderState.engineRef.GetPrimitiveMesh("default_renderquad").vao.vao_id);
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            renderSystem.Renderer.RenderQuad(renderSystem.GeometryMgr.GetPrimitiveMesh((ulong)"default_renderquad".GetHashCode()),
+                shader, shader.CurrentState);
 
             //Console.WriteLine("MixTextures5, Last GL Error: " + GL.GetError());
             int out_tex_2darray_mask = Sampler.generateTexture2DArray(PixelInternalFormat.Rgba8, texWidth, texHeight, 1, PixelFormat.Rgba, PixelType.UnsignedByte, 11);
@@ -564,93 +532,77 @@ namespace NMSPlugin
 
             //BIND TEXTURES
             Texture tex;
-            int loc;
-
+            
             Texture dMask = RenderState.engineRef.GetTexture("default_mask.dds");
             Texture dDiff = RenderState.engineRef.GetTexture("default.dds");
 
-            //USE PROGRAM
-            GLSLHelper.GLSLShaderConfig shader = RenderState.engineRef.GetShaderByType(GLSLHelper.SHADER_TYPE.TEXTURE_MIX_SHADER);
-            int pass_program = shader.ProgramID;
-            GL.UseProgram(pass_program);
 
-            //Upload base Layers Used
+            Engine engine = RenderState.engineRef;
+
+            GLSLShaderConfig shader = engine.GetShaderByType(SHADER_TYPE.TEXTURE_MIX_SHADER);
+            shader.ClearCurrentState();
+
+            //Base Layers
             int baseLayerIndex = 0;
-            loc = GL.GetUniformLocation(pass_program, "lbaseLayersUsed");
-            if (loc >= 0)
+            for (int i = 0; i < 8; i++)
             {
-                for (int i = 0; i < 8; i++)
-                {
-                    if (normaltextures[i] != null)
-                    {
-                        GL.Uniform1(loc + i, 1.0f);
-                        baseLayerIndex = i;
-                    }
-                    else
-                        GL.Uniform1(loc + i, 0.0f);
-                }
+                shader.CurrentState.AddUniform("lbaseLayersUsed" + "[" + i + "]", baseLayersUsed[i]);
+                if (baseLayersUsed[i] > 0.0f)
+                    baseLayerIndex = i;
             }
 
-            loc = GL.GetUniformLocation(pass_program, "baseLayerIndex");
-            GL.Uniform1(loc, baseLayerIndex);
+            shader.CurrentState.AddUniform("baseLayerIndex", (float)baseLayerIndex);
 
+            //Activate Recoloring
+            shader.CurrentState.AddUniform("recolor_flag", 0.0f);
 
-            //No need for extra alpha tetuxres
-            loc = GL.GetUniformLocation(pass_program, "use_alpha_textures");
-            GL.Uniform1(loc, 1.0f);
+            //Enable alpha tetuxres
+            shader.CurrentState.AddUniform("use_alpha_textures", 1.0f);
+
 
             //Upload DiffuseTextures as alphaTextures
-            loc = GL.GetUniformLocation(pass_program, "alphaTex");
-            if (loc >= 0)
+            for (int i = 0; i < 8; i++)
             {
-                for (int i = 0; i < 8; i++)
+                if (difftextures[i] != null)
+                    tex = difftextures[i];
+                else
+                    tex = dMask;
+
+
+                GLSLSamplerState s = new()
                 {
-                    if (difftextures[i] != null)
-                        tex = difftextures[i];
-                    else
-                        tex = dMask;
+                    Target = NbTextureTarget.Texture2DArray,
+                    TextureID = tex.texID
+                };
 
-                    //Upload diffuse Texture
-                    GL.Uniform1(loc + i, i); // I need to upload the texture unit number
+                shader.CurrentState.AddSampler("alphaTex" + "[" + i + "]", s);
 
-                    int tex0Id = (int)TextureUnit.Texture0;
-
-                    GL.ActiveTexture((TextureUnit)(tex0Id + i));
-                    GL.BindTexture(tex.target, tex.texID);
-                }
             }
 
             //Upload maskTextures
-            loc = GL.GetUniformLocation(pass_program, "mainTex");
-            if (loc >= 0)
+            for (int i = 0; i < 8; i++)
             {
-                for (int i = 0; i < 8; i++)
+                if (normaltextures[i] != null)
+                    tex = normaltextures[i];
+                else
+                    tex = dMask;
+
+                GLSLSamplerState s = new()
                 {
-                    if (normaltextures[i] != null)
-                        tex = normaltextures[i];
-                    else
-                        tex = dMask;
+                    Target = NbTextureTarget.Texture2DArray,
+                    TextureID = tex.texID
+                };
 
-                    //Upload diffuse Texture
-                    GL.Uniform1(loc + i, 8 + i); // I need to upload the texture unit number
-
-                    int tex0Id = (int)TextureUnit.Texture8;
-
-                    GL.ActiveTexture((TextureUnit)(tex0Id + i));
-                    GL.BindTexture(tex.target, tex.texID);
-                }
+                shader.CurrentState.AddSampler("mainTex" + "[" + i + "]", s);
             }
+            
+            
+            //Use the RenderQuad Method to do the job
 
-            //Activate Recoloring
-            loc = GL.GetUniformLocation(pass_program, "recolor_flag");
-            GL.Uniform1(loc, 0.0f);
-
-
+            NbCore.Systems.RenderingSystem renderSystem = engine.renderSys;
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            GL.BindVertexArray(RenderState.engineRef.GetPrimitiveMesh("default_renderquad").vao.vao_id);
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            renderSystem.Renderer.RenderQuad(renderSystem.GeometryMgr.GetPrimitiveMesh((ulong)"default_renderquad".GetHashCode()),
+                shader, shader.CurrentState);
 
             //Console.WriteLine("MixTextures5, Last GL Error: " + GL.GetError());
             int out_tex_2darray_mask = Sampler.generateTexture2DArray(PixelInternalFormat.Rgba8, texWidth, texHeight, 1, PixelFormat.Rgba, PixelType.UnsignedByte, 11);

@@ -46,8 +46,8 @@ namespace NbCore.Primitives
             //Set main Geometry Info
             geom.vertCount = verts.Length / 3;
             geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
-
+            geom.indicesType = NbPrimitiveDataType.Int;
+            
             //Set Strides
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
             
@@ -87,28 +87,30 @@ namespace NbCore.Primitives
             return geom;
         }
 
-        public GLVao getVAO()
+        public NbMeshMetaData GetMetaData()
         {
-            return geom?.generateVAO();
-        }
-
-        public MeshMetaData GetMetaData()
-        {
-            return new MeshMetaData()
+            return new NbMeshMetaData()
             {
                 IndicesLength = NbPrimitiveDataType.UnsignedInt,
                 BatchCount = geom.ibuffer.Length / 0x4,
                 FirstSkinMat = 0,
                 LastSkinMat = 0,
-                VertrEndGraphics = geom.vbuffer.Length / 3,
-                VertrEndPhysics = geom.vbuffer.Length / 3
+                VertrEndGraphics = geom.vbuffer.Length / (0x3 * 0x4) - 1,
+                VertrEndPhysics = geom.vbuffer.Length / (0x3 * 0x4)
             };
         }
-        public MeshData GetData()
+        public NbMeshData GetData()
         {
-            MeshData data = new();
+            NbMeshData data = new();
             data.IndexBuffer = new byte[geom.ibuffer.Length];
             data.VertexBuffer = new byte[geom.vbuffer.Length];
+            data.VertexBufferStride = geom.vx_size;
+            data.buffers = geom.bufInfo.ToArray();
+            
+            //Copy buffer data
+            System.Buffer.BlockCopy(geom.vbuffer, 0, data.VertexBuffer, 0, geom.vbuffer.Length);
+            System.Buffer.BlockCopy(geom.ibuffer, 0, data.IndexBuffer, 0, geom.ibuffer.Length);
+            
             return data;
         }
 
@@ -453,7 +455,8 @@ namespace NbCore.Primitives
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
             geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
+            geom.indicesType = NbPrimitiveDataType.Int;
+            
 
             //Set Strides
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
@@ -633,7 +636,7 @@ namespace NbCore.Primitives
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
             geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
+            geom.indicesType = NbPrimitiveDataType.Int;
 
             //Set Strides
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
@@ -669,7 +672,7 @@ namespace NbCore.Primitives
             {
                 count = 3,
                 normalize = false,
-                offset = geom.vertCount * 12,
+                offset = 2 * geom.vertCount * 12,
                 sem_text = "bPosition",
                 semantic = 4,
                 stride = 12,
@@ -733,7 +736,7 @@ namespace NbCore.Primitives
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
             geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
+            geom.indicesType = NbPrimitiveDataType.Int;
 
             //Set Strides
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
@@ -872,7 +875,7 @@ namespace NbCore.Primitives
             //Set main Geometry Info
             geom.vertCount = verts.Length / 0x3;
             geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
+            geom.indicesType = NbPrimitiveDataType.Int;
 
             //Set Strides
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
@@ -1125,7 +1128,7 @@ namespace NbCore.Primitives
             //Set main Geometry Info
             geom.vertCount = 6;
             geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
+            geom.indicesType = NbPrimitiveDataType.Int;
 
             //Set Strides
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
@@ -1230,7 +1233,7 @@ namespace NbCore.Primitives
             //Set main Geometry Info
             geom.vertCount = 2;
             geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
+            geom.indicesType = NbPrimitiveDataType.Int;
 
             //Set Strides
             geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each

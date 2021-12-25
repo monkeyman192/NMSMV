@@ -210,7 +210,9 @@ namespace NMSPlugin
         public override void Import(string filepath)
         {
             Log(string.Format("Importing {0}", filepath), LogVerbosityLevel.INFO);
-            Scene scn = Importer.ImportScene(filepath);
+
+            Importer imp = new();
+            Scene scn = imp.ImportScene(filepath);
             //TODO: Register Scene to Engine
         
         }

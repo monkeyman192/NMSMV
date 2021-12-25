@@ -8,6 +8,13 @@ using System.Drawing.Imaging;
 
 namespace NbCore
 {
+    public enum NbTextureTarget
+    {
+        Texture1D,
+        Texture2D,
+        Texture2DArray
+    }
+    
     public class Texture : Entity
     {
         public int texID = -1;

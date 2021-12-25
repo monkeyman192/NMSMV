@@ -429,8 +429,8 @@ void pbr_lighting(){
 	    //Albedo
 		outcolors[0] = lColourVec4;
 		//Normals
-		outcolors[1].rgb = lNormalVec3.xyz;
-		outcolors[1].a = isLit; //TODO: Use the alpha channel of that attachment to upload any extra material flags
+		outcolors[1].rgb = lNormalVec3;
+		outcolors[1].a = isLit; //TODO: Use the alpha c hannel of that attachment to upload any extra material flags
 
 		//Export Frag Params
 		outcolors[2].x = ao; //ao is already multiplied to the color

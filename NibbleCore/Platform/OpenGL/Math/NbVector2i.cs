@@ -42,5 +42,15 @@ namespace NbCore.Math
         {
             return a == b;
         }
+
+        public override bool Equals(object obj)
+        {
+            return (this == (NbVector2i) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }

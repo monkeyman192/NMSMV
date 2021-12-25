@@ -74,3 +74,8 @@ struct CustomPerMaterialUniforms  //locations:73
     vec4 gDissolveDataVec4;
     vec4 gCustomParams01Vec4;
 };
+
+struct CommonPerSceneUniforms
+{
+    samplerBuffer skinMatsTex;
+};

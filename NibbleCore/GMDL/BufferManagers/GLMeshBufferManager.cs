@@ -6,6 +6,48 @@ using NbCore.Systems;
 
 namespace NbCore
 {
+
+    /**
+     * Instance Buffer Documentation
+     * Instancing using the GLMeshBufferManager works as follows.
+     *      
+     *      Every time an instance of a mesh has to be created, the AddMeshInstance method is called.
+     *      This method is responsible for mainly incremented the mesh's global instance counter
+     *      but also to allocate enough space in the underlying instance buffer to store the instance's
+     *      properties.
+     *      
+     *      Note: I think that this process can be skipped. Managing RenderInstances is more than enough
+     *      to differentiate instances, keep track of the active instances and also manage the instance buffer
+     * 
+     *      Every time the rendering status of an instance is modified, the AddRenderInstance/RemoveRenderInstance
+     *      methods are called.
+     *      
+     *      The AddRenderInstance method, stores the instance data of the requested instance at the end of the instance buffer.
+     *      It also sets the new render instance id to the requested meshcomponent 
+     *      
+     *      Schematic Representation of the instance insertion
+     *      | 0 | 1 | 2 | 3 | 4 | * | <----
+     *      
+     *      
+     *      The RemoveRenderInstance method, is responsible for removing the requested instance from the buffer, using its stored
+     *      renderInstanceID, which reveals its position in the buffer. In order to prevent the update of all the instance refs
+     *      of all intermediate instances, the method swaps the instance data with just the last instance of the buffer and
+     *      decreases the renderInstanceCounter.
+     *      
+     *      Schematic Representation of the instance removal (removing Instance 2)
+     
+     *      Start:     
+     *      | 0 | 1 | 2 | 3 | 4 | x | x |
+     *      Swap 2 with 4 that is the last member:     
+     *      | 0 | 1 | 4 | 3 | 2 | x | x |
+     *      Data for 2 is still in the buffer, but the counter has been decreased so it won't be used.     
+     *      | 0 | 1 | 4 | 3 | 2 | x | x |
+     *
+     * 
+     * 
+     */
+
+
     public static class GLMeshBufferManager
     {
         public const int color_Float_Offset = 0;
@@ -45,73 +87,47 @@ namespace NbCore
         //17-18: isSelected
         //18-20: padding
 
-        public static int AddMeshInstance(ref NbMesh mesh, MeshComponent mc)
+        public static int GetNextMeshInstanceID(ref NbMesh mesh)
         {
-            int instance_id = mesh.InstanceCount;
+            int render_instance_id = mesh.InstanceCount;
 
-            if (instance_id < NbMesh.MAX_INSTANCES)
-            {
-                mesh.instanceRefs.Add(mc); //Keep reference
-                mesh.InstanceCount++;
-            }
-            else return -1;
-            
             //Expand mesh data buffer if required
-            if ((instance_id+1) * instance_struct_size_floats > mesh.InstanceDataBuffer.Length)
+            if ((render_instance_id + 1) * instance_struct_size_floats > mesh.InstanceDataBuffer.Length)
             {
                 float[] newBuffer = new float[mesh.InstanceDataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
                 Array.Copy(mesh.InstanceDataBuffer, newBuffer, mesh.InstanceDataBuffer.Length);
                 mesh.InstanceDataBuffer = newBuffer;
             }
 
-            return instance_id;
+            return render_instance_id;
         }
-        
+
         public static void AddRenderInstance(ref MeshComponent mc, TransformData td)
         {
             NbMesh mesh = mc.Mesh;
-            
-            if ((mc.RenderInstanceID < mesh.RenderedInstanceCount - 1) && mc.RenderInstanceID >= 0)
-            {
-                Callbacks.Assert(false, "This should not happen");
-            } else if (mc.RenderInstanceID > mesh.RenderedInstanceCount)
-            {
-                MeshComponent lastmc = mesh.instanceRefs[mesh.RenderedInstanceCount];
-                int old_pos = mesh.RenderedInstanceCount;
-                int new_pos = mc.RenderInstanceID;
-                
-                //Move the last data to the position of the requested instance
-                mesh.instanceRefs[new_pos] = lastmc;
-                mesh.instanceRefs[old_pos] = mc;
-                
-                //Copy buffer data
-                int old_instance_offset = old_pos * instance_struct_size_floats;
-                int new_instance_offset = new_pos * instance_struct_size_floats;
-                Array.Copy(mesh.InstanceDataBuffer, old_instance_offset, 
-                    mesh.InstanceDataBuffer, new_instance_offset,
-                    instance_struct_size_floats);
-                
-                //Set RenderrInstanceIDs
-                lastmc.RenderInstanceID = new_pos;
 
+            if (mc.InstanceID >= 0)
+            {
+                Callbacks.Assert(false, "Non negative renderInstanceID on a non visible mesh. This should not happen");
+                return;
             }
-            
-            mc.RenderInstanceID = mesh.RenderedInstanceCount;
 
+            mc.InstanceID = GetNextMeshInstanceID(ref mesh);
+            
             //Uplod worldMat to the meshVao
             NbMatrix4 actualWorldMat = td.WorldTransformMat;
             NbMatrix4 actualWorldMatInv = (actualWorldMat).Inverted();
-            SetInstanceWorldMat(mesh, mc.RenderInstanceID, actualWorldMat);
-            SetInstanceWorldMatInv(mesh, mc.RenderInstanceID, actualWorldMatInv);
-            SetInstanceNormalMat(mesh, mc.RenderInstanceID, NbMatrix4.Transpose(actualWorldMatInv));
+            SetInstanceWorldMat(mesh, mc.InstanceID, actualWorldMat);
+            SetInstanceWorldMatInv(mesh, mc.InstanceID, actualWorldMatInv);
+            SetInstanceNormalMat(mesh, mc.InstanceID, NbMatrix4.Transpose(actualWorldMatInv));
 
-            mesh.RenderedInstanceCount++;
+            mesh.InstanceCount++;
         }
         
         public static int AddRenderInstance(ref NbMesh mesh, NbMatrix4 worldMat, NbMatrix4 worldMatInv, NbMatrix4 normMat)
         {
         
-            int render_instance_id = mesh.RenderedInstanceCount;
+            int render_instance_id = mesh.InstanceCount;
 
             //Expand mesh data buffer if required
             if (render_instance_id * instance_struct_size_bytes > mesh.InstanceDataBuffer.Length)
@@ -126,61 +142,46 @@ namespace NbCore
             SetInstanceWorldMatInv(mesh, render_instance_id, worldMatInv);
             SetInstanceNormalMat(mesh, render_instance_id, normMat);
 
-            mesh.RenderedInstanceCount++;
+            mesh.InstanceCount++;
             
             return render_instance_id;
         }
 
         public static void RemoveRenderInstance(ref NbMesh mesh, MeshComponent mc)
         {
-            Common.Callbacks.Assert(mc.RenderInstanceID >= 0, "Negative instance ID. ILLEGAL instance removal");
+            Callbacks.Assert(mc.InstanceID >= 0, "Negative instance ID. ILLEGAL instance removal");
 
-            if (mc.RenderInstanceID == mesh.RenderedInstanceCount - 1)
+            if (mc.InstanceID == mesh.InstanceCount - 1)
             {
-                mesh.RenderedInstanceCount--;
+                mesh.InstanceCount--;
                 return;
             }
             
             //Find last instance
-            MeshComponent lastmc = mesh.instanceRefs[mesh.RenderedInstanceCount - 1];
+            MeshComponent lastmc = mesh.instanceRefs[mesh.InstanceCount - 1];
 
             //Fetch last instance databuffer
             float[] tempbuffer = new float[instance_struct_size_floats];
-            int instance_float_offset = lastmc.RenderInstanceID * instance_struct_size_floats;
+            int instance_float_offset = lastmc.InstanceID * instance_struct_size_floats;
             Array.Copy(mesh.InstanceDataBuffer, instance_float_offset, tempbuffer, 0, instance_struct_size_floats);
 
             //Swap instances in the instanceRefs List
-            mesh.instanceRefs.RemoveAt(mc.RenderInstanceID);
-            mesh.instanceRefs.Insert(mc.RenderInstanceID, lastmc);
+            mesh.instanceRefs.RemoveAt(mc.InstanceID);
+            mesh.instanceRefs.Insert(mc.InstanceID, lastmc);
             mesh.instanceRefs.RemoveAt(mesh.instanceRefs.Count - 1);
             mesh.instanceRefs.Add(mc);
 
             //Replace removed instance data with the data of the last instance
-            instance_float_offset = mc.RenderInstanceID * instance_struct_size_floats;
+            instance_float_offset = mc.InstanceID * instance_struct_size_floats;
             Array.Copy(tempbuffer, 0, mesh.InstanceDataBuffer, instance_float_offset, instance_struct_size_floats);
 
             //Swap RenderInstanceIds
-            (lastmc.RenderInstanceID, mc.RenderInstanceID) = (mc.RenderInstanceID, lastmc.RenderInstanceID);
+            (lastmc.InstanceID, mc.InstanceID) = (mc.InstanceID, lastmc.InstanceID);
 
-            
-            mesh.RenderedInstanceCount--;
-        }
-        
-        public static void RemoveMeshInstance(NbMesh mesh, MeshComponent mc)
-        {
-            Common.Callbacks.Assert(mc.InstanceID >= 0, "Negative instance ID. ILLEGAL instance removal");
-
-            mesh.instanceRefs.RemoveAt(mc.InstanceID);
-            
-            foreach (MeshComponent mmc in mesh.instanceRefs)
-            {
-                if (mmc.InstanceID > mc.InstanceID)
-                    mmc.InstanceID--;
-            }
             
             mesh.InstanceCount--;
         }
-
+        
         //Overload with transform overrides
         public static void ClearMeshInstances(NbMesh mesh)
         {

@@ -21,7 +21,7 @@ using Quaternion = OpenTK.Mathematics.Quaternion;
 
 namespace NMSPlugin
 {
-    public static class Importer
+    public class Importer
     {
         private static readonly Dictionary<Type, int> SupportedComponents = new()
         {
@@ -33,8 +33,17 @@ namespace NMSPlugin
             {typeof(EmptyNode), 5}
         };
 
-        private static TextureManager localTexMgr;
-        
+        private TextureManager localTexMgr;
+        private Dictionary<long, NbMesh> localMeshDictionary;
+        private Dictionary<string, MeshMaterial> localMaterialDictionary;
+
+        public Importer()
+        {
+            localTexMgr = new();
+            localMeshDictionary = new();
+            localMaterialDictionary = new();
+        }
+
         private static void ProcessAnimPoseComponent(SceneGraphNode node, TkAnimPoseComponentData component)
         {
             //Load PoseFile
@@ -179,7 +188,7 @@ namespace NMSPlugin
             node.AddComponent<TriggerActionComponent>(tac);
         }
 
-        private static void ProcessLODComponent(SceneGraphNode node, TkLODComponentData component)
+        private void ProcessLODComponent(SceneGraphNode node, TkLODComponentData component)
         {
             //Load all LOD models as children to the node
             LODModelComponent lodmdlcomp = new();
@@ -201,7 +210,7 @@ namespace NMSPlugin
             node.AddComponent<LODModelComponent>(lodmdlcomp);
         }
 
-        private static void ProcessComponents(SceneGraphNode node, TkAttachmentData attachment)
+        private void ProcessComponents(SceneGraphNode node, TkAttachmentData attachment)
         {
             if (attachment == null)
                 return;
@@ -574,15 +583,15 @@ namespace NMSPlugin
             
             //Store Counts
             geom.indicesCount = indices_num;
+            int indexByteLength = 0x4;
             if (indices_flag == 0x1)
             {
-                geom.indicesLength = 0x2;
-                geom.indicesLengthType = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedShort;
+                geom.indicesType = NbPrimitiveDataType.UnsignedShort;
+                indexByteLength = 0x2;
             }
             else
             {
-                geom.indicesLength = 0x4;
-                geom.indicesLengthType = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedInt;
+                geom.indicesType = NbPrimitiveDataType.UnsignedInt;
             }
                 
             geom.vertCount = vert_num;
@@ -661,8 +670,8 @@ namespace NMSPlugin
 
             //Get indices buffer
             fs.Seek(indices_offset, SeekOrigin.Begin);
-            geom.ibuffer = new byte[indices_num * geom.indicesLength];
-            fs.Read(geom.ibuffer, 0, indices_num * geom.indicesLength);
+            geom.ibuffer = new byte[indices_num * indexByteLength];
+            fs.Read(geom.ibuffer, 0, indices_num * indexByteLength);
 
             //Get MeshMetaData
             fs.Seek(meshMetaData_offset, SeekOrigin.Begin);
@@ -739,18 +748,19 @@ namespace NMSPlugin
             foreach (KeyValuePair<ulong, geomMeshMetaData> pair in geom.meshMetaDataDict)
             {
                 geomMeshMetaData mmd = pair.Value;
-                geomMeshData md = new()
+                NbMeshData md = new()
                 {
-                    vs_buffer = new byte[mmd.vs_size],
-                    is_buffer = new byte[mmd.is_size]
+                    Hash = mmd.hash,
+                    VertexBuffer = new byte[mmd.vs_size],
+                    IndexBuffer = new byte[mmd.is_size]
                 };
 
                 //Fetch Buffers
                 gfs.Seek((int) mmd.vs_abs_offset, SeekOrigin.Begin);
-                gfs.Read(md.vs_buffer, 0, (int) mmd.vs_size);
+                gfs.Read(md.VertexBuffer, 0, (int) mmd.vs_size);
 
                 gfs.Seek((int) mmd.is_abs_offset, SeekOrigin.Begin);
-                gfs.Read(md.is_buffer, 0, (int) mmd.is_size);
+                gfs.Read(md.IndexBuffer, 0, (int) mmd.is_size);
             
                 geom.meshDataDict[mmd.hash] = md;
             }
@@ -759,7 +769,7 @@ namespace NMSPlugin
 
         }
         
-        public static Scene ImportScene(string path)
+        public Scene ImportScene(string path)
         {
             TkSceneNodeData template = (TkSceneNodeData)FileUtils.LoadNMSTemplate(path);
             
@@ -849,7 +859,7 @@ namespace NMSPlugin
             return scn;
         }
 
-        private static SceneGraphNode CreateNodeFromTemplate(TkSceneNodeData node, 
+        private SceneGraphNode CreateNodeFromTemplate(TkSceneNodeData node, 
             GeomObject gobject, SceneGraphNode parent, Scene parentScene)
         {
             Callbacks.Log(string.Format("Importing Node {0}", node.Name), 
@@ -900,141 +910,89 @@ namespace NMSPlugin
                 Callbacks.Log(string.Format("Parsing Mesh {0}", node.Name), 
                     LogVerbosityLevel.INFO);
 
-                //Add MeshComponent
-                MeshComponent mc = new()
-                {
-                    MetaData = new()
-                    {
-                        BatchStartPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTPHYSI")),
-                        VertrStartPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTPHYSI")),
-                        VertrEndPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDPHYSICS")),
-                        BatchStartGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTGRAPH")),
-                        BatchCount = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHCOUNT")),
-                        VertrStartGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTGRAPH")),
-                        VertrEndGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDGRAPHIC")),
-                        FirstSkinMat = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "FIRSTSKINMAT")),
-                        LastSkinMat = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LASTSKINMAT")),
-                        LODLevel = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
-                        BoundHullStart = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
-                        BoundHullEnd = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
-                        AABBMIN = new NbVector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
-                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINY")),
-                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINZ"))),
-                        AABBMAX = new NbVector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
-                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
-                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
-                        Hash = ulong.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "HASH"))
-                    }
-    
-                };
-
-                //Common.Callbacks.Log(string.Format("Randomized Object Color {0}, {1}, {2}", so.color[0], so.color[1], so.color[2]), Common.LogVerbosityLevel.INFO);
-                Callbacks.Log(string.Format("Batch Physics Start {0} Count {1} Vertex Physics {2} - {3} Vertex Graphics {4} - {5} SkinMats {6}-{7}",
-                    mc.MetaData.BatchStartPhysics, mc.MetaData.BatchCount, mc.MetaData.VertrStartPhysics,
-                    mc.MetaData.VertrEndPhysics, mc.MetaData.VertrStartGraphics, mc.MetaData.VertrEndGraphics,
-                    mc.MetaData.FirstSkinMat, mc.MetaData.LastSkinMat), LogVerbosityLevel.INFO);
-
-                Console.WriteLine("Object {0}, Number of skinmatrices required: {1}", so.Name, 
-                    mc.MetaData.LastSkinMat - mc.MetaData.FirstSkinMat);
-                
-                //TODO Process the corresponding mesh if needed
-                so.AddComponent<MeshComponent>(mc);
-
-                //Search for the vao
-                GLVao vao = gobject.findVao(mc.MetaData.Hash);
-
-                if (vao == null)
-                {
-                    //Generate VAO and Save vao
-                    vao = gobject.generateVAO(mc.MetaData);
-                    gobject.saveVAO(mc.MetaData.Hash, vao);
-                }
-
                 //Get Material Name
                 string matname = FileUtils.parseNMSTemplateAttrib(node.Attributes, "MATERIAL");
 
                 //Search for the material
-                MeshMaterial mat = RenderState.engineRef.GetMaterialByName(matname);
-                if (mat == null)
-                {
-                    //Parse material
+                MeshMaterial mat;
+                if (localMaterialDictionary.ContainsKey(matname))
+                    mat = localMaterialDictionary[matname];
+                else
                     mat = ImportMaterial(matname, localTexMgr);
-                    //Save Material to the resource manager
-                    RenderState.engineRef.RegisterEntity(mat);
-                }
 
-                //Search for the meshVao in the gobject
-                GLInstancedMesh meshVao = gobject.findGLMeshVao(matname, mc.MetaData.Hash);
-                
-                if (meshVao == null)
+                //Fill Mesh Meta Data
+                NbMeshMetaData mmd = new()
                 {
-                    //Generate new meshVao
-                    meshVao = new GLInstancedMesh(mc.MetaData);
-                    meshVao.type = SceneNodeType.MESH;
-                    meshVao.vao = vao;
-                    mc.Material = mat; //Set meshVao Material
+                    BatchStartPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTPHYSI")),
+                    VertrStartPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTPHYSI")),
+                    VertrEndPhysics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDPHYSICS")),
+                    BatchStartGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHSTARTGRAPH")),
+                    BatchCount = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BATCHCOUNT")),
+                    VertrStartGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRSTARTGRAPH")),
+                    VertrEndGraphics = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VERTRENDGRAPHIC")),
+                    FirstSkinMat = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "FIRSTSKINMAT")),
+                    LastSkinMat = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LASTSKINMAT")),
+                    LODLevel = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "LODLEVEL")),
+                    BoundHullStart = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLST")),
+                    BoundHullEnd = int.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "BOUNDHULLED")),
+                    AABBMIN = new NbVector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINX")),
+                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINY")),
+                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMINZ"))),
+                    AABBMAX = new NbVector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
+                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
+                                          MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
+                    Hash = ulong.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "HASH")),
+                    IndicesLength = gobject.indicesType
+                };
 
-                    //Set indicesLength
-                    //Calculate indiceslength per index buffer
-                    if (mc.MetaData.BatchCount > 0)
-                    {
-                        int indicesLength = (int) gobject.meshMetaDataDict[mc.MetaData.Hash].is_size / mc.MetaData.BatchCount;
-                        
-                        switch (indicesLength)
-                        {
-                            case 1:
-                                meshVao.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedByte;
-                                mc.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedByte;
-                                break;
-                            case 2:
-                                meshVao.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedShort;
-                                mc.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedShort;
-                                break;
-                            case 4:
-                                meshVao.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedInt;
-                                mc.MetaData.IndicesLength = OpenTK.Graphics.OpenGL4.DrawElementsType.UnsignedInt;
-                                break;
-                        }
+                //Common.Callbacks.Log(string.Format("Randomized Object Color {0}, {1}, {2}", so.color[0], so.color[1], so.color[2]), Common.LogVerbosityLevel.INFO);
+                Callbacks.Log(string.Format("Batch Physics Start {0} Count {1} Vertex Physics {2} - {3} Vertex Graphics {4} - {5} SkinMats {6}-{7}",
+                    mmd.BatchStartPhysics, mmd.BatchCount, mmd.VertrStartPhysics, mmd.VertrEndPhysics, mmd.VertrStartGraphics, mmd.VertrEndGraphics,
+                    mmd.FirstSkinMat, mmd.LastSkinMat), LogVerbosityLevel.INFO);
 
-                    }
+                Console.WriteLine("Object {0}, Number of skinmatrices required: {1}", so.Name,
+                    mmd.LastSkinMat - mmd.FirstSkinMat);
 
-                    //Configure boneRemap properly
-                    meshVao.BoneRemapIndicesCount = mc.MetaData.LastSkinMat - mc.MetaData.FirstSkinMat;
-                    meshVao.BoneRemapIndices = new int[meshVao.BoneRemapIndicesCount];
-                    for (int i = 0; i < mc.MetaData.LastSkinMat - mc.MetaData.FirstSkinMat; i++)
-                        meshVao.BoneRemapIndices[i] = gobject.boneRemap[mc.MetaData.FirstSkinMat + i];
+                //Configure boneRemap properly in the mesh metadata
+                mmd.BoneRemapIndicesCount = mmd.LastSkinMat - mmd.FirstSkinMat;
+                mmd.BoneRemapIndices = new int[mmd.BoneRemapIndicesCount];
+                for (int i = 0; i < mmd.BoneRemapIndicesCount; i++)
+                    mmd.BoneRemapIndices[i] = gobject.boneRemap[mmd.FirstSkinMat + i];
 
-                    //Set skinned flag
-                    if (meshVao.BoneRemapIndicesCount > 0)
-                        meshVao.skinned = true;
+                //Set skinned flag
+                if (mmd.BoneRemapIndicesCount > 0)
+                    mmd.skinned = true;
 
-                    //Set skinned flag if its set as a metarial flag
-                    if (mat.has_flag(MaterialFlagEnum._F02_SKINNED))
-                        meshVao.skinned = true;
+                //Load Mesh Data
+                NbMeshData md = gobject.GetMeshData(mmd.Hash); //TODO: Check that function
 
-                    //Generate collision mesh vao
-                    try
-                    {
-                        meshVao.bHullVao = gobject.getCollisionMeshVao(mc.MetaData); //Missing data
-                    }
-                    catch (Exception)
-                    {
-                        Callbacks.Log("Error while fetching bHull Collision Mesh", LogVerbosityLevel.ERROR);
-                        meshVao.bHullVao = null;
-                    }
+                //Generate NbMesh
+                NbMesh nm = new();
+                nm.Data = md;
+                nm.MetaData = mmd;
 
-                    //so.setupBSphere(); //Setup Bounding Sphere Mesh
+                //Set skinned flag if its set as a material flag
+                if (mat.has_flag(MaterialFlagEnum._F02_SKINNED))
+                    mmd.skinned = true;
 
-                    //Save meshvao to the gobject
-                    gobject.saveGLMeshVAO(mc.MetaData.Hash, matname, meshVao);
-                }
+                
+                //Finally Add MeshComponent
+                MeshComponent mc = new()
+                {
+                    Mesh = nm,
+                    Material = mat
+                };
+
+                //TODO Process the corresponding mesh if needed
+                so.AddComponent<MeshComponent>(mc);
+
             }
             else if (typeEnum == SceneNodeType.MODEL)
             {
                 //Create MeshComponent
                 MeshComponent mc = new()
                 {
-                    MeshVao = RenderState.engineRef.GetPrimitiveMesh("default_cross"),
+                    Mesh = RenderState.engineRef.GetPrimitiveMesh((ulong) "default_cross".GetHashCode()),
                     Material = RenderState.engineRef.GetMaterialByName("crossMat")
                 };
                 

@@ -128,7 +128,6 @@ namespace ImGuiHelper
                     ImGui.Text("Material");
                     ImGui.NextColumn();
                     ImGui.Text(mc.InstanceID.ToString());
-                    ImGui.Text(mc.RenderInstanceID.ToString());
                     if (mm != null)
                     {
                         ImGui.Text(mm.Name);
@@ -154,7 +153,6 @@ namespace ImGuiHelper
                         ImGui.Text("Rendered Instance Count");
                         ImGui.NextColumn();
                         ImGui.Text(mesh.InstanceCount.ToString());
-                        ImGui.Text(mesh.RenderedInstanceCount.ToString());
                         ImGui.Columns(1);
                         if (ImGui.TreeNode("MetaData"))
                         {

@@ -24,7 +24,6 @@ namespace NbCore
         {
             mesh.instanceRefs.Clear();
             mesh.InstanceCount = 0;
-            mesh.RenderedInstanceCount = 0;
         }
 
         //Setters

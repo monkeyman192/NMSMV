@@ -63,18 +63,12 @@ namespace NbCore
         private readonly Frustum extFrustum = new();
         public NbVector4[] frPlanes = new NbVector4[6];
 
-        //Rendering Stuff
-        public GLVao vao;
-        public int program;
-        
-        public Camera(int angle, int program, int mode, bool cull) : base(EntityType.Camera)
+        public Camera(int angle, int mode, bool cull) : base(EntityType.Camera)
         {
             //Set fov on init
             fov = angle;
             Primitives.Box _box = new Primitives.Box(1.0f, 1.0f, 1.0f, new NbVector3(1.0f), true);
-            vao = _box.getVAO();
             _box.Dispose();
-            this.program = program;
             type = mode;
             culling = cull;
 
@@ -336,76 +330,6 @@ namespace NbCore
             return frustum_occlude(v1.Xyz, v2.Xyz, transform);
         }
 
-        public void render()
-        {
-            GL.UseProgram(program);
-
-            //Keep manual rendering for the camera because it needs vertex updates
-            //Init Arrays
-
-            Int32[] indices = new Int32[] { 0,1,2,
-                                            2,1,3,
-                                            1,5,3,
-                                            5,7,3,
-                                            5,4,6,
-                                            5,6,7,
-                                            0,2,4,
-                                            2,6,4,
-                                            3,6,2,
-                                            7,6,3,
-                                            0,4,5,
-                                            1,0,5 };
-
-            int b_size = extFrustum._frustum_points.Length * sizeof(float);
-            byte[] verts_b = new byte[b_size];
-
-            int i_size = indices.Length * sizeof(Int32);
-            byte[] indices_b = new byte[i_size];
-
-            System.Buffer.BlockCopy(extFrustum._frustum_points, 0, verts_b, 0, b_size);
-            System.Buffer.BlockCopy(indices, 0, indices_b, 0, i_size);
-
-            //Generate OpenGL buffers
-            int vertex_buffer_object;
-            int element_buffer_object;
-
-            GL.GenBuffers(1, out vertex_buffer_object);
-            GL.GenBuffers(1, out element_buffer_object);
-
-            //Upload vertex buffer
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vertex_buffer_object);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) b_size, verts_b, BufferUsageHint.StaticDraw);
-            
-            ////Upload index buffer
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, element_buffer_object);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr) i_size, indices_b, BufferUsageHint.StaticDraw);
-
-            //Render Elements
-            //Bind vertex buffer
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vertex_buffer_object);
-            int vpos = GL.GetAttribLocation(program, "vPosition");
-            GL.VertexAttribPointer(vpos, 3, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(vpos);
-
-            //Render Elements
-            //Bind elem buffer
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, element_buffer_object);
-            GL.PointSize(10.0f);
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-
-            //GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedShort, indices_b);
-            GL.DrawRangeElements(PrimitiveType.Triangles, 0, 36,
-                36, DrawElementsType.UnsignedInt, (IntPtr) 0);
-            //GL.DrawArrays(PrimitiveType.Points, 0, 8); //Works - renders points
-            
-            //Debug.WriteLine("Locator Object {2} vpos {0} cpos {1} prog {3}", vpos, cpos, this.name, this.shader_program);
-            //Debug.WriteLine("Buffer IDs vpos {0} vcol {1}", this.vertex_buffer_object,this.color_buffer_object);
-
-            GL.DisableVertexAttribArray(vpos);
-            indices = null;
-            verts_b = null;
-            indices_b = null;
-        }
     }
 
     public class Frustum

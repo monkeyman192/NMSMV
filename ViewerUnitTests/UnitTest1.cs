@@ -19,9 +19,9 @@ namespace Viewer_Unit_Tests
             byte[] a32 = new byte[] {0xB3, 0x61, 0x43, 0x76 };
             uint value = BitConverter.ToUInt32(a32, 0);
             //Convert Values
-            int i1 = NbCore.Utils.TwosComplement.toInt((value >> 00) & 0x3FF, 10);
-            int i2 = NbCore.Utils.TwosComplement.toInt((value >> 10) & 0x3FF, 10);
-            int i3 = NbCore.Utils.TwosComplement.toInt((value >> 20) & 0x3FF, 10);
+            int i1 = NbCore.Math.TwosComplement.toInt((value >> 00) & 0x3FF, 10);
+            int i2 = NbCore.Math.TwosComplement.toInt((value >> 10) & 0x3FF, 10);
+            int i3 = NbCore.Math.TwosComplement.toInt((value >> 20) & 0x3FF, 10);
             //int i4 = _2sComplement.toInt((value >> 30) & 0x003, 10);
             float norm = (float)Math.Sqrt(i1 * i1 + i2 * i2 + i3 * i3);
 

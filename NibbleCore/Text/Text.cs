@@ -35,24 +35,7 @@ namespace NbCore.Text
 
         public void generateMeshVao()
         {
-            geom = getGeom();
-
-            meshVao = new GLInstancedMesh()
-            {
-                type = SceneNodeType.TEXT,
-                vao = geom.generateVAO(),
-                MetaData = new()
-                {
-                    BatchCount = geom.indicesCount,
-                    IndicesLength = DrawElementsType.UnsignedInt
-                }
-            };
-
-            //Add instance
-            GLMeshBufferManager.AddRenderInstance(ref meshVao,
-                NbMatrix4.Identity(), 
-                NbMatrix4.Identity(), 
-                NbMatrix4.Identity());
+            throw new NotImplementedException();
         }
 
         public void update(string new_text)
@@ -196,7 +179,7 @@ namespace NbCore.Text
             geom.Name = name;
             geom.vertCount = verts.Length / 3;
             geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
+            geom.indicesType = NbPrimitiveDataType.Int;
 
             //Set Strides
             int vx_size = 3 * 4;

@@ -14,15 +14,15 @@ namespace NbCore
     public struct GLLight
     {
         [FieldOffset(0)]
-        public OpenTK.Mathematics.Vector3 position; //I don't like this at all. Check the consequences of using my class instead
+        public NbVector3 position;
         [FieldOffset(12)]
         public float isRenderable; 
         [FieldOffset(16)]
-        public OpenTK.Mathematics.Vector3 color; 
+        public NbVector3 color; 
         [FieldOffset(28)]
         public float intensity; 
         [FieldOffset(32)]
-        public OpenTK.Mathematics.Vector3 direction; 
+        public NbVector3 direction; 
         [FieldOffset(44)]
         public float fov; 
         [FieldOffset(48)]
@@ -53,9 +53,24 @@ namespace NbCore
         //Instance Data Format:
         //TODO
 
+        public static int GetNextMeshInstanceID(ref NbMesh mesh)
+        {
+            int render_instance_id = mesh.InstanceCount;
+
+            //Expand mesh data buffer if required
+            if (render_instance_id * instance_struct_size_bytes > mesh.InstanceDataBuffer.Length)
+            {
+                float[] newBuffer = new float[mesh.InstanceDataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
+                Array.Copy(mesh.InstanceDataBuffer, newBuffer, mesh.InstanceDataBuffer.Length);
+                mesh.InstanceDataBuffer = newBuffer;
+            }
+
+            return render_instance_id;
+        }
+
         public int AddRenderInstance(ref NbMesh mesh, MeshComponent mc, NbMatrix4 worldMat)
         {
-            int render_instance_id = mesh.RenderedInstanceCount;
+            int render_instance_id = GetNextMeshInstanceID(ref mesh);
             
             //Expand mesh data buffer if required
             if (render_instance_id * instance_struct_size_bytes > mesh.InstanceDataBuffer.Length)
@@ -76,22 +91,9 @@ namespace NbCore
             //SetInstanceFallOff(ref mesh, instance_id, (int)l.Falloff);
             //SetInstanceType(ref mesh, instance_id, (l.LightType == LIGHT_TYPE.SPOT) ? 1.0f : 0.0f);
 
-            mesh.RenderedInstanceCount++;
+            mesh.InstanceCount++;
 
             return render_instance_id;
-        }
-
-        public int AddMeshInstance(NbMesh mesh, MeshComponent mc, NbMatrix4 worldMat)
-        {
-            int instance_id = mesh.InstanceCount;
-
-            if (instance_id < NbMesh.MAX_INSTANCES)
-            {
-                mesh.instanceRefs.Add(mc);
-                mesh.InstanceCount++;
-            }
-            
-            return instance_id;
         }
 
         //WorldMat

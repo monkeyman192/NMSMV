@@ -319,9 +319,7 @@ namespace NbCore.Common
         public static void DefaultLog(string msg, LogVerbosityLevel lvl)
         {
             if (lvl >= RenderState.settings.LogVerbosity)
-            {
                 Console.WriteLine(msg);
-            }
         }
 
         public static void DefaultAssert(bool status, string msg)

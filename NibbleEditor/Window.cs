@@ -208,8 +208,8 @@ namespace NibbleEditor
             Camera.UpdateCameraDirectionalVectors(RenderState.activeCam);
 
             engine.OnRenderUpdate(e.Time);
-            _ImGuiManager.Update(e.Time, scrolly);
-            scrolly = 0.0f;
+            
+            _ImGuiManager.Update(e.Time, ref scrolly);
             
             //Bind Default Framebuffer
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
@@ -217,6 +217,7 @@ namespace NibbleEditor
 
             //UI
             DrawUI();
+            
             //ImGui.ShowDemoWindow();
             _ImGuiManager.Render();
 
@@ -397,6 +398,40 @@ namespace NibbleEditor
             
             foreach (SceneGraphNode child in node.Children)
                 findActionScenes(child);
+        }
+
+        public void TestDrawUI()
+        {
+            //Enable docking in main view
+            ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags.None;
+            dockspace_flags |= ImGuiDockNodeFlags.PassthruCentralNode;
+
+            ImGuiWindowFlags window_flags = ImGuiWindowFlags.NoBackground |
+                                            ImGuiWindowFlags.NoCollapse |
+                                            ImGuiWindowFlags.NoResize |
+                                            ImGuiWindowFlags.NoDocking;
+
+            ImGuiViewportPtr vp = ImGui.GetMainViewport();
+            ImGui.SetNextWindowPos(vp.WorkPos);
+            ImGui.SetNextWindowSize(vp.WorkSize);
+            ImGui.SetNextWindowViewport(vp.ID);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.0f);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, 0.0f);
+
+            bool keep_window_open = true;
+            int statusBarHeight = (int)(1.75f * ImGui.CalcTextSize("Status").Y);
+            ImGui.Begin("MainWindow", ref keep_window_open, window_flags);
+            ImGui.PopStyleVar(2);
+
+            //Debugging Information
+            if (ImGui.Begin("Statistics"))
+            {
+                ImGui.Text("test");
+                ImGui.Text("test");
+                ImGui.Text("test");
+                ImGui.End();
+            }
         }
 
         public void DrawUI()
@@ -584,7 +619,7 @@ namespace NibbleEditor
                 csize.X = Math.Max(csize.X, 100);
                 csize.Y = Math.Max(csize.Y, 100);
                 NbVector2i csizetk = new((int) csize.X, (int) csize.Y);
-                ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().channels[0]),
+                ImGui.Image(new IntPtr(engine.renderSys.getRenderFBO().GetChannel(0)),
                                 csize,
                                 new System.Numerics.Vector2(0.0f, 1.0f),
                                 new System.Numerics.Vector2(1.0f, 0.0f));
@@ -594,7 +629,7 @@ namespace NibbleEditor
                 if (csizetk != SceneViewSize)
                 {
                     SceneViewSize = csizetk;
-                    engine.renderSys.resize(csizetk);
+                    engine.renderSys.Resize(csizetk.X, csizetk.Y);
                 }
 
                 ImGui.PopStyleVar();
@@ -739,8 +774,8 @@ namespace NibbleEditor
             _ImGuiManager.ProcessModals(this, ref current_file_path, ref IsOpenFileDialogOpen);
 
             //Draw plugin panels and popups
-            foreach (PluginBase plugin in engine.Plugins.Values)
-                plugin.Draw();
+            //foreach (PluginBase plugin in engine.Plugins.Values)
+            //    plugin.Draw();
 
             //Debugging Information
             if (ImGui.Begin("Statistics"))

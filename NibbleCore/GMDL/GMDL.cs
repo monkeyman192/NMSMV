@@ -63,13 +63,6 @@ namespace NbCore
         public uint is_abs_offset;
     }
 
-    public class geomMeshData
-    {
-        public ulong hash;
-        public byte[] vs_buffer;
-        public byte[] is_buffer;
-    }
-
     public class GeomObject : Entity
     {
         public string Name;
@@ -82,8 +75,7 @@ namespace NbCore
 
         //Counters
         public int indicesCount=0;
-        public int indicesLength = 0;
-        public DrawElementsType indicesLengthType;
+        public NbPrimitiveDataType indicesType;        
         public int vertCount = 0;
 
         //make sure there are enough buffers for non interleaved formats
@@ -107,17 +99,12 @@ namespace NbCore
         public List<int[]> bhullindices = new();
         public List<int> vstarts = new();
         public Dictionary<ulong, geomMeshMetaData> meshMetaDataDict = new();
-        public Dictionary<ulong, geomMeshData> meshDataDict = new();
+        public Dictionary<ulong, NbMeshData> meshDataDict = new();
 
         //Joint info
         public int jointCount;
         public List<JointBindingData> jointData = new();
         public float[] invBMats = new float[256 * 16];
-
-        //Dictionary with the compiled VAOs belonging on this gobject
-        private readonly Dictionary<ulong, GLVao> GLVaos = new();
-        //Dictionary to index 
-        private readonly Dictionary<ulong, Dictionary<string, GLInstancedMesh>> GLMeshVaos = new();
 
         private bool disposed = false;
         private Microsoft.Win32.SafeHandles.SafeFileHandle handle = new(IntPtr.Zero, true);
@@ -127,6 +114,12 @@ namespace NbCore
 
         }
 
+        public NbMeshData GetMeshData(ulong hash)
+        {
+            if (meshDataDict.ContainsKey(hash))
+                return meshDataDict[hash];
+            return NbMeshData.GetEmpty();
+        }
 
         public static NbVector3 get_vec3_half(BinaryReader br)
         {
@@ -156,278 +149,7 @@ namespace NbCore
         }
 
 
-        //Fetch Meshvao from dictionary
-        public GLInstancedMesh findGLMeshVao(string material_name, ulong hash)
-        {
-            if (GLMeshVaos.ContainsKey(hash))
-                if (GLMeshVaos[hash].ContainsKey(material_name))
-                    return GLMeshVaos[hash][material_name];
-                
-            return null;
-        }
-
-        //Fetch Meshvao from dictionary
-        public GLVao findVao(ulong hash)
-        {
-            if (GLVaos.ContainsKey(hash))
-                return GLVaos[hash];
-            return null;
-        }
-
-        //Save GLMeshVAO to gobject
-        public bool saveGLMeshVAO(ulong hash, string matname, GLInstancedMesh meshVao)
-        {
-            if (GLMeshVaos.ContainsKey(hash))
-            {
-                if (GLMeshVaos[hash].ContainsKey(matname))
-                {
-                    Callbacks.Log("MeshVao already in the dictionary, nothing to do...", LogVerbosityLevel.INFO);
-                    return false;
-                }
-            }
-            else
-                GLMeshVaos[hash] = new Dictionary<string, GLInstancedMesh>();
-                
-            GLMeshVaos[hash][matname] = meshVao;
-
-            return true;
-
-        }
-
-        //Save VAO to gobject
-        public bool saveVAO(ulong hash, GLVao vao)
-        {
-            //Double check tha the VAO is not already in the dictinary
-            if (GLVaos.ContainsKey(hash))
-            {
-                Callbacks.Log("Vao already in the dictinary, nothing to do...", LogVerbosityLevel.INFO);
-                return false;
-            }
-                
-            //Save to dictionary
-            GLVaos[hash] = vao;
-            return true;
-        }
-
-        //Fetch main VAO
-        public GLVao generateVAO(MeshMetaData md)
-        {
-            //Generate VAO
-            GLVao vao = new();
-            vao.vao_id = GL.GenVertexArray();
-            GL.BindVertexArray(vao.vao_id);
-            
-            //Generate VBOs
-            int[] vbo_buffers = new int[2];
-            GL.GenBuffers(2, vbo_buffers);
-
-            vao.vertex_buffer_object = vbo_buffers[0];
-            vao.element_buffer_object = vbo_buffers[1];
-            
-            //Bind vertex buffer
-            int size;
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vao.vertex_buffer_object);
-            //Upload Vertex Buffer
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) meshMetaDataDict[md.Hash].vs_size,
-                meshDataDict[md.Hash].vs_buffer, BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize,
-                out size);
-            if (size != vx_size * (md.VertrEndGraphics + 1))
-            {
-                //throw new ApplicationException(String.Format("Problem with vertex buffer"));
-                Callbacks.showError("Mesh metadata does not match the vertex buffer size from the geometry file",
-                    "Error");
-            }
-                
-            RenderStats.vertNum += md.VertrEndGraphics + 1; //Accumulate settings
-
-            //Assign VertexAttribPointers
-            for (int i = 0; i < bufInfo.Count; i++)
-            {
-                bufInfo buf = bufInfo[i];
-                VertexAttribPointerType buftype = VertexAttribPointerType.Float; //default
-                switch (buf.type)
-                {
-                    case NbPrimitiveDataType.Double:
-                        buftype = VertexAttribPointerType.Double;
-                        break;
-                    case NbPrimitiveDataType.Float:
-                        buftype = VertexAttribPointerType.Float;
-                        break;
-                    case NbPrimitiveDataType.HalfFloat:
-                        buftype = VertexAttribPointerType.HalfFloat;
-                        break;
-                    case NbPrimitiveDataType.Int2101010Rev:
-                        buftype = VertexAttribPointerType.Int2101010Rev;
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-                
-                GL.VertexAttribPointer(buf.semantic, buf.count, buftype, buf.normalize, vx_size, buf.offset);
-                GL.EnableVertexAttribArray(i);
-            }
-
-            //Upload index buffer
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, vao.element_buffer_object);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr) meshMetaDataDict[md.Hash].is_size, 
-                meshDataDict[md.Hash].is_buffer, BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ElementArrayBuffer, BufferParameterName.BufferSize,
-                out size);
-            if (size != meshMetaDataDict[md.Hash].is_size)
-            {
-                Callbacks.showError("Mesh metadata does not match the index buffer size from the geometry file", "Error");
-                //throw new ApplicationException(String.Format("Problem with vertex buffer"));
-            }
-
-            RenderStats.trisNum += (int) (md.BatchCount / 3); //Accumulate settings
-
-            //Unbind
-            GL.BindVertexArray(0);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-            for (int i = 0; i < 7; i++)
-                GL.DisableVertexAttribArray(i);
-
-            return vao;
-        }
-
-        public GLVao getCollisionMeshVao(MeshMetaData metaData)
-        {
-            //Collision Mesh isn't used anywhere else.
-            //No need to check for hashes and shit
-
-            float[] vx_buffer_float = new float[(metaData.BoundHullEnd - metaData.BoundHullStart) * 3];
-
-            for (int i = 0; i < metaData.BoundHullEnd - metaData.BoundHullStart; i++)
-            {
-                NbVector3 v = bhullverts[i + metaData.BoundHullStart];
-                vx_buffer_float[3 * i + 0] = v.X;
-                vx_buffer_float[3 * i + 1] = v.Y;
-                vx_buffer_float[3 * i + 2] = v.Z;
-            }
-
-            //Generate intermediate geom
-            GeomObject temp_geom = new();
-
-            //Set main Geometry Info
-            temp_geom.vertCount = vx_buffer_float.Length / 3;
-            temp_geom.indicesCount = metaData.BatchCount;
-            temp_geom.indicesLength = indicesLength; 
-
-            //Set Strides
-            temp_geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
-
-            //Set Buffer Offsets
-            temp_geom.mesh_descr = "vn";
-            bufInfo buf = new bufInfo()
-            {
-                count = 3,
-                normalize = false,
-                offset = 0,
-                sem_text = "vPosition",
-                semantic = 0,
-                stride = 0,
-                type = NbPrimitiveDataType.Float
-            };
-            temp_geom.bufInfo.Add(buf);
-            
-            buf = new bufInfo()
-            {
-                count = 3,
-                normalize = false,
-                offset = 0,
-                sem_text = "nPosition",
-                semantic = 2,
-                stride = 0,
-                type = NbPrimitiveDataType.Float
-            };
-            temp_geom.bufInfo.Add(buf);
-            
-            //Set Buffers
-            temp_geom.ibuffer = new byte[temp_geom.indicesLength * metaData.BatchCount];
-            temp_geom.vbuffer = new byte[sizeof(float) * vx_buffer_float.Length];
-
-            System.Buffer.BlockCopy(ibuffer, metaData.BatchStartPhysics * temp_geom.indicesLength, temp_geom.ibuffer, 0, temp_geom.ibuffer.Length);
-            System.Buffer.BlockCopy(vx_buffer_float, 0, temp_geom.vbuffer, 0, temp_geom.vbuffer.Length);
-
-
-            return temp_geom.generateVAO();
-        }
-
-        public GLVao generateVAO()
-        {
-
-            GLVao vao = new();
-
-            //Generate VAO
-            vao.vao_id = GL.GenVertexArray();
-            GL.BindVertexArray(vao.vao_id);
-            
-            //Generate VBOs
-            int[] vbo_buffers = new int[2];
-            GL.GenBuffers(2, vbo_buffers);
-
-            vao.vertex_buffer_object = vbo_buffers[0];
-            vao.element_buffer_object = vbo_buffers[1];
-
-            ErrorCode err = GL.GetError();
-            if (err != ErrorCode.NoError)
-                Console.WriteLine(GL.GetError());
-            
-            //Bind vertex buffer
-            int size;
-            //Upload Vertex Buffer
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vao.vertex_buffer_object);
-            GL.BufferData(BufferTarget.ArrayBuffer, vbuffer.Length,
-                vbuffer, BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize,
-                out size);
-            if (size != vbuffer.Length)
-                throw new ApplicationException(String.Format("Problem with vertex buffer"));
-
-            //Upload index buffer
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, vao.element_buffer_object);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, ibuffer.Length,
-                ibuffer, BufferUsageHint.StaticDraw);
-
-            //Assign VertexAttribPointers
-            for (int i = 0; i < bufInfo.Count; i++)
-            {
-                bufInfo buf = bufInfo[i];
-                VertexAttribPointerType buftype = VertexAttribPointerType.Float; //default
-                switch (buf.type)
-                {
-                    case NbPrimitiveDataType.Double:
-                        buftype = VertexAttribPointerType.Double;
-                        break;
-                    case NbPrimitiveDataType.Float:
-                        buftype = VertexAttribPointerType.Float;
-                        break;
-                    case NbPrimitiveDataType.HalfFloat:
-                        buftype = VertexAttribPointerType.HalfFloat;
-                        break;
-                    case NbPrimitiveDataType.Int2101010Rev:
-                        buftype = VertexAttribPointerType.Int2101010Rev;
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-                GL.VertexAttribPointer(buf.semantic, buf.count, buftype, buf.normalize, buf.stride, buf.offset);
-                GL.EnableVertexAttribArray(i);
-            }
-
-            //Unbind
-            GL.BindVertexArray(0);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-            
-            for (int i = 0; i < 7; i++)
-                GL.DisableVertexAttribArray(i);
-
-            return vao;
-        }
-
+        
 
 #region IDisposable Support
         protected override void Dispose(bool disposing)
@@ -453,10 +175,6 @@ namespace NbCore
                 bhullverts.Clear();
                 vstarts.Clear();
                 jointData.Clear();
-
-                //Clear buffers
-                foreach (KeyValuePair<ulong, geomMeshMetaData> pair in meshMetaDataDict)
-                    meshDataDict[pair.Key] = null;
 
                 meshDataDict.Clear();
                 meshMetaDataDict.Clear();

@@ -9,7 +9,7 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "NibbleCore", "NibbleCore\Ni
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WPFModelViewer", "WPFModelViewer\WPFModelViewer.csproj", "{279AD081-59E7-4A87-9E0E-50EC81D87992}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleEditor", "ImGUI_SDL_ModelViewer\NibbleEditor.csproj", "{1B7CCCC6-CCA6-4E87-B3C8-2B07DC6863B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleEditor", "NibbleEditor\NibbleEditor.csproj", "{1B7CCCC6-CCA6-4E87-B3C8-2B07DC6863B6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleTextureRenderer", "SimpleTextureRenderer\SimpleTextureRenderer.csproj", "{D01A052E-DDAF-4895-8D16-545863C2C781}"
 EndProject

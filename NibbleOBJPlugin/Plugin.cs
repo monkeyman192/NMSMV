@@ -157,7 +157,7 @@ namespace NibbleOBJPlugin
                 SceneGraphNode root = EngineRef.CreateLocatorNode("OBJ_Root");
                 
                 //Generate Mesh Node
-                SceneGraphNode mesh = EngineRef.CreateMeshNode("obj_mesh", geom.);
+                //SceneGraphNode mesh = EngineRef.CreateMeshNode("obj_mesh", geom.);
 
 
             } 
