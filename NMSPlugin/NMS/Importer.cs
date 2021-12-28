@@ -21,7 +21,7 @@ using Quaternion = OpenTK.Mathematics.Quaternion;
 
 namespace NMSPlugin
 {
-    public class Importer
+    public static class Importer
     {
         private static readonly Dictionary<Type, int> SupportedComponents = new()
         {
@@ -33,15 +33,14 @@ namespace NMSPlugin
             {typeof(EmptyNode), 5}
         };
 
-        private TextureManager localTexMgr;
-        private Dictionary<long, NbMesh> localMeshDictionary;
-        private Dictionary<string, MeshMaterial> localMaterialDictionary;
+        private static TextureManager localTexMgr = new();
+        private static Dictionary<long, NbMesh> localMeshDictionary = new();
+        private static Dictionary<string, MeshMaterial> localMaterialDictionary = new();
+        private static Engine EngineRef;
 
-        public Importer()
+        public static void SetEngineReference(Engine engine)
         {
-            localTexMgr = new();
-            localMeshDictionary = new();
-            localMaterialDictionary = new();
+            EngineRef = engine;
         }
 
         private static void ProcessAnimPoseComponent(SceneGraphNode node, TkAnimPoseComponentData component)
@@ -52,7 +51,6 @@ namespace NMSPlugin
             node.AddComponent<AnimPoseComponent>(apc);
         }
 
-        
         private static AnimPoseComponent CreateAnimPoseComponentFromStruct(TkAnimPoseComponentData apcd)
         {
             AnimPoseComponent apc = new AnimPoseComponent();
@@ -188,7 +186,7 @@ namespace NMSPlugin
             node.AddComponent<TriggerActionComponent>(tac);
         }
 
-        private void ProcessLODComponent(SceneGraphNode node, TkLODComponentData component)
+        private static void ProcessLODComponent(SceneGraphNode node, TkLODComponentData component)
         {
             //Load all LOD models as children to the node
             LODModelComponent lodmdlcomp = new();
@@ -210,7 +208,7 @@ namespace NMSPlugin
             node.AddComponent<LODModelComponent>(lodmdlcomp);
         }
 
-        private void ProcessComponents(SceneGraphNode node, TkAttachmentData attachment)
+        private static void ProcessComponents(SceneGraphNode node, TkAttachmentData attachment)
         {
             if (attachment == null)
                 return;
@@ -268,7 +266,7 @@ namespace NMSPlugin
             MeshMaterial mat = CreateMaterialFromStruct(template, input_texMgr);
             
             mat.texMgr = input_texMgr;
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+            EngineRef.renderSys.Renderer.CompileMaterialShader(mat);
             return mat;
         }
 
@@ -769,7 +767,7 @@ namespace NMSPlugin
 
         }
         
-        public Scene ImportScene(string path)
+        public static Scene ImportScene(string path)
         {
             TkSceneNodeData template = (TkSceneNodeData)FileUtils.LoadNMSTemplate(path);
             
@@ -859,7 +857,7 @@ namespace NMSPlugin
             return scn;
         }
 
-        private SceneGraphNode CreateNodeFromTemplate(TkSceneNodeData node, 
+        private static SceneGraphNode CreateNodeFromTemplate(TkSceneNodeData node, 
             GeomObject gobject, SceneGraphNode parent, Scene parentScene)
         {
             Callbacks.Log(string.Format("Importing Node {0}", node.Name), 

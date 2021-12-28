@@ -1,10 +1,10 @@
 ﻿using ImGuiNET;
-using OpenTK.Mathematics;
+using NbCore.Platform.Graphics.OpenGL; //TODO: Abstract
 using OpenTK.Windowing.Desktop;
 using System;
 using NbCore;
 
-namespace ImGuiHelper
+namespace NbCore.UI.ImGui
 {   
     public class ImGuiManager
     {
@@ -30,7 +30,7 @@ namespace ImGuiHelper
             _controller = new ImGuiController(win.ClientSize.X, win.ClientSize.Y); //Init with a start size
             
             //Enable docking by default
-            ImGuiIOPtr io = ImGui.GetIO();
+            ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
             io.ConfigFlags |= ImGuiConfigFlags.DockingEnable; //Enable Docking
             
             //Initialize items
@@ -94,7 +94,7 @@ namespace ImGuiHelper
             ShaderEditor?.Draw();
         }
 
-        public virtual void SetActiveShaderSource(NbOpenGLAPI.GLSLShaderSource s)
+        public virtual void SetActiveShaderSource(GLSLShaderSource s)
         {
             ShaderEditor.SetShader(s);
         }

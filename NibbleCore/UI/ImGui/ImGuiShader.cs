@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using OpenTK.Graphics.OpenGL4;
 
-namespace ImGuiHelper
+namespace NbCore.UI.ImGui
 {
     struct UniformFieldInfo
     {

@@ -1,13 +1,11 @@
 using System;
 using NbCore;
 using NbCore.Common;
-using ImGuiNET;
+using ImGuiCore = ImGuiNET.ImGui;
 using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 
 
-namespace ImGuiHelper
+namespace NbCore.UI.ImGui
 {
     public class ImGuiTextureEditor
     {
@@ -22,34 +20,34 @@ namespace ImGuiHelper
             for (int i = 0; i < items.Length; i++)
                 items[i] = textureList[i].Name == "" ? "Texture_" + i : textureList[i].Name; 
 
-            if (ImGui.Combo("##1", ref _SelectedId, items, items.Length))
+            if (ImGuiCore.Combo("##1", ref _SelectedId, items, items.Length))
                 _ActiveTexture = textureList[_SelectedId];
-            
-            ImGui.SameLine();
 
-            if (ImGui.Button("Add"))
+            ImGuiCore.SameLine();
+
+            if (ImGuiCore.Button("Add"))
             {
                 Console.WriteLine("Todo Create Texture");
             }
-            ImGui.SameLine();
-            if (ImGui.Button("Del"))
+            ImGuiCore.SameLine();
+            if (ImGuiCore.Button("Del"))
             {
                 Console.WriteLine("Todo Delete Texture");
             }
             if (_ActiveTexture is null)
             {
-                ImGui.Text("NULL");
+                ImGuiCore.Text("NULL");
                 return;
             }
-                
+
             //TODO show texture info
 
-            ImGui.Columns(2);
-            ImGui.Text("Name");
-            ImGui.Text("Class");
-            ImGui.Text("Flags");
-            ImGui.NextColumn();
-            ImGui.InputText("", ref _ActiveTexture.Name, 30);
+            ImGuiCore.Columns(2);
+            ImGuiCore.Text("Name");
+            ImGuiCore.Text("Class");
+            ImGuiCore.Text("Flags");
+            ImGuiCore.NextColumn();
+            ImGuiCore.InputText("", ref _ActiveTexture.Name, 30);
             
         }
 

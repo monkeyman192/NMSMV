@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using Num = System.Numerics;
 
-namespace ImGuiHelper
+using ImGuiCore = ImGuiNET.ImGui;
+
+namespace NbCore.UI.ImGui
 {
 	public class FilePicker
 	{
@@ -67,22 +69,22 @@ namespace ImGuiHelper
 				if (Directory.Exists(fse))
 				{
 					var name = Path.GetFileName(fse);
-					ImGui.PushStyleColor(ImGuiCol.Text, YELLOW_TEXT_COLOR);
-					if (ImGui.Selectable(name + "/", false, ImGuiSelectableFlags.DontClosePopups))
+					ImGuiCore.PushStyleColor(ImGuiCol.Text, YELLOW_TEXT_COLOR);
+					if (ImGuiCore.Selectable(name + "/", false, ImGuiSelectableFlags.DontClosePopups))
 						CurrentFolder = fse;
-					ImGui.PopStyleColor();
+					ImGuiCore.PopStyleColor();
 				}
 				else
 				{
 					var name = Path.GetFileName(fse);
 					bool isSelected = SelectedFile == fse;
-					if (ImGui.Selectable(name, isSelected, ImGuiSelectableFlags.DontClosePopups))
+					if (ImGuiCore.Selectable(name, isSelected, ImGuiSelectableFlags.DontClosePopups))
 						SelectedFile = fse;
 
-					if (ImGui.IsMouseDoubleClicked(0))
+					if (ImGuiCore.IsMouseDoubleClicked(0))
 					{
 						result = true;
-						ImGui.CloseCurrentPopup();
+						ImGuiCore.CloseCurrentPopup();
 					}
 				}
 			}
@@ -94,8 +96,8 @@ namespace ImGuiHelper
 		{
 			if (CurrentFolder == null)
             {
-				ImGui.Text("My Computer");
-				if (ImGui.BeginChildFrame(1, winsize))
+				ImGuiCore.Text("My Computer");
+				if (ImGuiCore.BeginChildFrame(1, winsize))
 				{
 					//Draw Drives
 					var driveList = DriveInfo.GetDrives();
@@ -104,32 +106,32 @@ namespace ImGuiHelper
 						if (Directory.Exists(de.RootDirectory.FullName))
 						{
 							var name = de.RootDirectory.FullName;
-							ImGui.PushStyleColor(ImGuiCol.Text, YELLOW_TEXT_COLOR);
-							if (ImGui.Selectable(name, false, ImGuiSelectableFlags.DontClosePopups))
+							ImGuiCore.PushStyleColor(ImGuiCol.Text, YELLOW_TEXT_COLOR);
+							if (ImGuiCore.Selectable(name, false, ImGuiSelectableFlags.DontClosePopups))
 								CurrentFolder = de.RootDirectory.FullName;
-							ImGui.PopStyleColor();
+							ImGuiCore.PopStyleColor();
 						}
 					}
-					ImGui.EndChildFrame();
+					ImGuiCore.EndChildFrame();
 				}
 
-				if (ImGui.Button("Cancel"))
+				if (ImGuiCore.Button("Cancel"))
 				{
-					ImGui.CloseCurrentPopup();
+					ImGuiCore.CloseCurrentPopup();
 				}
 
 				return false;
 			}
 
-			ImGui.Text("Current Folder: " + CurrentFolder);
+			ImGuiCore.Text("Current Folder: " + CurrentFolder);
 			bool result = false;
 
-			if (ImGui.BeginChildFrame(1, winsize))
+			if (ImGuiCore.BeginChildFrame(1, winsize))
 			{
 				var di = new DirectoryInfo(CurrentFolder);
 				if (di.Exists)
 				{
-					if (ImGui.Selectable("../", false, ImGuiSelectableFlags.DontClosePopups))
+					if (ImGuiCore.Selectable("../", false, ImGuiSelectableFlags.DontClosePopups))
 					{
 						if (di.Parent != null)
                         {
@@ -146,32 +148,32 @@ namespace ImGuiHelper
 					}
 				}
 			}
-			ImGui.EndChildFrame();
+			ImGuiCore.EndChildFrame();
 
 
-			if (ImGui.Button("Cancel"))
+			if (ImGuiCore.Button("Cancel"))
 			{
 				result = false;
-				ImGui.CloseCurrentPopup();
+				ImGuiCore.CloseCurrentPopup();
 			}
 
 			if (OnlyAllowFolders)
 			{
-				ImGui.SameLine();
-				if (ImGui.Button("Open"))
+				ImGuiCore.SameLine();
+				if (ImGuiCore.Button("Open"))
 				{
 					result = true;
 					SelectedFile = CurrentFolder;
-					ImGui.CloseCurrentPopup();
+					ImGuiCore.CloseCurrentPopup();
 				}
 			}
 			else if (SelectedFile != null)
 			{
-				ImGui.SameLine();
-				if (ImGui.Button("Open"))
+				ImGuiCore.SameLine();
+				if (ImGuiCore.Button("Open"))
 				{
 					result = true;
-					ImGui.CloseCurrentPopup();
+					ImGuiCore.CloseCurrentPopup();
 				}
 			}
 

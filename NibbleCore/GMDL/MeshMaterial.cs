@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using NbOpenGLAPI;
+using NbCore.Platform.Graphics.OpenGL; //TODO: Abstract
 using NbCore.Common;
 
 namespace NbCore
@@ -128,55 +128,6 @@ namespace NbCore
         }
 
         
-        public void CompileShader(string vspath, string fspath)
-        {
-            //Calculate material hash
-            List<string> includes = new();
-            for (int i = 0; i < Flags.Count; i++)
-            {
-                if (supported_flags.Contains(Flags[i]))
-                    includes.Add(Flags[i].ToString().Split(".")[^1]);
-            }
-
-            int hash  = GLShaderHelper.calculateShaderHash(includes);
-            GLSLShaderConfig shader = RenderState.engineRef.GetShaderByHash(hash);
-
-            if (shader == null)
-            {
-                try
-                {
-                    Shader = compileMaterialShader(this);
-                    RenderState.engineRef.RegisterEntity(Shader);
-
-                    //Load Active Uniforms to Material
-
-                    foreach (Uniform un in Uniforms)
-                    {
-                        if (Shader.uniformLocations.ContainsKey(un.Name))
-                        {
-                            un.ShaderLocation = Shader.uniformLocations[un.Name];
-                            ActiveUniforms.Add(un);
-                        }
-                    }
-
-                    foreach (Sampler s in Samplers)
-                    {
-                        if (Shader.uniformLocations.ContainsKey(s.Name))
-                        {
-                            s.ShaderLocation = Shader.uniformLocations[s.Name];
-                        }
-                    }
-                } catch (Exception e)
-                {
-                    Callbacks.Log("Error during material shader compilation: " + e.Message, Common.LogVerbosityLevel.ERROR);
-                }
-            }
-            else
-            {
-                Shader = shader;
-            }
-        }
-
         //Wrapper to support uberflags
         public bool has_flag(MaterialFlagEnum flag)
         {
@@ -240,50 +191,7 @@ namespace NbCore
             return hash.GetHashCode();
         }
 
-        public static GLSLShaderConfig compileMaterialShader(MeshMaterial mat)
-        {
-            SHADER_MODE mode = SHADER_MODE.DEFFERED;
-            
-            List<string> includes = new();
-            
-            if (mat.Flags.Contains(MaterialFlagEnum._F51_DECAL_DIFFUSE) ||
-                mat.Flags.Contains(MaterialFlagEnum._F52_DECAL_NORMAL))
-            {
-                mode = SHADER_MODE.DECAL | SHADER_MODE.FORWARD;
-            } else if (mat.Flags.Contains(MaterialFlagEnum._F09_TRANSPARENT) ||
-                       mat.Flags.Contains(MaterialFlagEnum._F22_TRANSPARENT_SCALAR) ||
-                       mat.Flags.Contains(MaterialFlagEnum._F11_ALPHACUTOUT))
-            {
-                mode = SHADER_MODE.FORWARD;
-            }
-            
-            for (int i = 0; i < mat.Flags.Count; i++)
-            {
-                if (supported_flags.Contains(mat.Flags[i]))
-                    includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
-            }
-            
-            string vs_path = "Shaders/Simple_VS.glsl";
-            vs_path = System.IO.Path.GetFullPath(vs_path);
-            vs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, vs_path);
-
-            string fs_path = "Shaders/Simple_FS.glsl";
-            fs_path = System.IO.Path.GetFullPath(fs_path);
-            fs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, fs_path);
-
-            GLSLShaderSource vs = RenderState.engineRef.GetShaderSourceByFilePath(vs_path);
-            GLSLShaderSource fs = RenderState.engineRef.GetShaderSourceByFilePath(fs_path);
-            
-            GLSLShaderConfig shader = GLShaderHelper.compileShader(vs, fs, null, null, null,
-                new(), includes, SHADER_TYPE.MATERIAL_SHADER, mode);
-            
-            //Attach UBO binding Points
-            GLShaderHelper.attachUBOToShaderBindingPoint(shader, "_COMMON_PER_FRAME", 0);
-            GLShaderHelper.attachSSBOToShaderBindingPoint(shader, "_COMMON_PER_MESH", 1);
-
-            //Save shader to the resource Manager
-            return shader;
-        }
+        
 
     }
 

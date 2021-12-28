@@ -16,7 +16,7 @@ namespace NbCore
             IndexBuffer = null;
         }
 
-        public static NbMeshData GetEmpty()
+        public static NbMeshData Create()
         {
             NbMeshData md = new()
             {

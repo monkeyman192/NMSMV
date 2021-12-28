@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using libMBIN;
+using libPSARC;
 using libMBIN.NMS.Toolkit;
 using Microsoft.Win32;
 using System.Reflection;

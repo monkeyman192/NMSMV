@@ -11,7 +11,7 @@ using System.Windows;
 using NbCore.Utils;
 
 
-namespace NbOpenGLAPI { 
+namespace NbCore.Platform.Graphics.OpenGL { 
 
     [Flags]
     public enum SHADER_MODE

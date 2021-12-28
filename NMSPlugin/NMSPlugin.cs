@@ -5,9 +5,9 @@ using System.Threading;
 using NbCore;
 using NbCore.Common;
 using NbCore.Plugins;
-using ImGuiHelper;
 using ImGuiNET;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace NMSPlugin
 {
@@ -42,7 +42,9 @@ namespace NMSPlugin
         public override void SaveToFile()
         {
             string jsondata = JsonConvert.SerializeObject(this);
-            File.WriteAllText(DefaultSettingsFileName, jsondata);
+            //Get Plugin Directory
+            string plugindirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            File.WriteAllText(Path.Join(plugindirectory, DefaultSettingsFileName), jsondata);
         }
     }
 
@@ -58,7 +60,7 @@ namespace NMSPlugin
     {
         public static string PluginName = "NMSPlugin";
         public static string PluginVersion = "1.0.0";
-        public static string PluginDescription = "NMS Plugin for Nibble Engine. Created by gregkwaste";
+        public static string PluginDescription = "NMS Plugin for Nibble Engine.";
         public static string PluginCreator = "gregkwaste";
 
         private readonly ImGuiPakBrowser PakBrowser = new();
@@ -170,11 +172,14 @@ namespace NMSPlugin
         public override void OnLoad()
         {
             Log(" Loading NMS Plugin...", LogVerbosityLevel.INFO);
-            
+
+            string plugindirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string settingsfilepath = Path.Join(plugindirectory, NMSPluginSettings.DefaultSettingsFileName);
+
             //Load Plugin Settings
-            if (File.Exists(NMSPluginSettings.DefaultSettingsFileName))
+            if (File.Exists(settingsfilepath))
             {
-                string filedata = File.ReadAllText(NMSPluginSettings.DefaultSettingsFileName);
+                string filedata = File.ReadAllText(settingsfilepath);
                 Settings = JsonConvert.DeserializeObject<NMSPluginSettings>(filedata);
             }
             else
@@ -184,13 +189,12 @@ namespace NMSPlugin
                 Settings.SaveToFile();
             }
             //Set State
-            PluginState.Settings = Settings as NMSPluginSettings;
+             PluginState.Settings = Settings as NMSPluginSettings;
 
             //Create a separate thread to try and load PAK archives
             //Issue work request 
-            
+
             Thread t = new Thread(() => {
-                Console.WriteLine("test");
                 FileUtils.loadNMSArchives(Path.Combine(PluginState.Settings.GameDir, "PCBANKS"), 
                     ref open_file_enabled);
             });
@@ -211,10 +215,9 @@ namespace NMSPlugin
         {
             Log(string.Format("Importing {0}", filepath), LogVerbosityLevel.INFO);
 
-            Importer imp = new();
-            Scene scn = imp.ImportScene(filepath);
+            Importer.SetEngineReference(EngineRef);
+            Scene scn = Importer.ImportScene(filepath);
             //TODO: Register Scene to Engine
-        
         }
 
         public override void Export(string filepath)

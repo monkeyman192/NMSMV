@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using NbOpenGLAPI;
+using NbCore.Platform.Graphics.OpenGL; //TODO: Abstract
 using OpenTK.Graphics.OpenGL;
 
 namespace NbCore.Managers

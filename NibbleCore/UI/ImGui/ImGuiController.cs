@@ -9,7 +9,9 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
-namespace ImGuiHelper
+using NbCore.Math;
+
+namespace NbCore.UI.ImGui
 {
     public class ImGuiController : IDisposable
     {
@@ -37,9 +39,9 @@ namespace ImGuiHelper
             _windowWidth = width;
             _windowHeight = height;
 
-            IntPtr context = ImGui.CreateContext();
-            ImGui.SetCurrentContext(context);
-            var io = ImGui.GetIO();
+            IntPtr context = ImGuiNET.ImGui.CreateContext();
+            ImGuiNET.ImGui.SetCurrentContext(context);
+            var io = ImGuiNET.ImGui.GetIO();
             io.Fonts.AddFontDefault();
 
             io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
@@ -49,7 +51,7 @@ namespace ImGuiHelper
 
             SetPerFrameImGuiData(1f / 60f);
 
-            ImGui.NewFrame();
+            ImGuiNET.ImGui.NewFrame();
             _frameBegun = true;
         }
 
@@ -126,7 +128,7 @@ void main()
         /// </summary>
         public void RecreateFontDeviceTexture()
         {
-            ImGuiIOPtr io = ImGui.GetIO();
+            ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
             io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out int bytesPerPixel);
 
             _fontTexture = new ImGuiTexture("ImGui Text Atlas", width, height, pixels);
@@ -149,8 +151,8 @@ void main()
             if (_frameBegun)
             {
                 _frameBegun = false;
-                ImGui.Render();
-                RenderImDrawData(ImGui.GetDrawData());
+                ImGuiNET.ImGui.Render();
+                RenderImDrawData(ImGuiNET.ImGui.GetDrawData());
             }
         }
 
@@ -161,14 +163,14 @@ void main()
         {
             if (_frameBegun)
             {
-                ImGui.Render();
+                ImGuiNET.ImGui.Render();
             }
 
             SetPerFrameImGuiData(deltaSeconds);
             UpdateImGuiInput(wnd, scrolly);
 
             _frameBegun = true;
-            ImGui.NewFrame();
+            ImGuiNET.ImGui.NewFrame();
         }
 
         /// <summary>
@@ -177,7 +179,7 @@ void main()
         /// </summary>
         private void SetPerFrameImGuiData(float deltaSeconds)
         {
-            ImGuiIOPtr io = ImGui.GetIO();
+            ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
             io.DisplaySize = new System.Numerics.Vector2(
                 _windowWidth / _scaleFactor.X,
                 _windowHeight / _scaleFactor.Y);
@@ -189,7 +191,7 @@ void main()
 
         private void UpdateImGuiInput(GameWindow wnd, float scrolly)
         {
-            ImGuiIOPtr io = ImGui.GetIO();
+            ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
 
             MouseState MouseState = wnd.MouseState;
             KeyboardState KeyboardState = wnd.KeyboardState;
@@ -232,7 +234,7 @@ void main()
 
         internal void MouseScroll(Vector2 offset)
         {
-            ImGuiIOPtr io = ImGui.GetIO();
+            ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
 
             io.MouseWheel = offset.Y;
             io.MouseWheelH = offset.X;
@@ -240,7 +242,7 @@ void main()
 
         private static void SetKeyMappings()
         {
-            ImGuiIOPtr io = ImGui.GetIO();
+            ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
             io.KeyMap[(int)ImGuiKey.Tab] = (int)Keys.Tab;
             io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Keys.Left;
             io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Keys.Right;
@@ -276,7 +278,7 @@ void main()
                 int vertexSize = cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>();
                 if (vertexSize > _vertexBufferSize)
                 {
-                    int newSize = (int)Math.Max(_vertexBufferSize * 1.5f, vertexSize);
+                    int newSize = (int) System.Math.Max(_vertexBufferSize * 1.5f, vertexSize);
                     GL.NamedBufferData(_vertexBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                     _vertexBufferSize = newSize;
                     Console.WriteLine($"Resized dear imgui vertex buffer to new size {_vertexBufferSize}");
@@ -285,7 +287,7 @@ void main()
                 int indexSize = cmd_list.IdxBuffer.Size * sizeof(ushort);
                 if (indexSize > _indexBufferSize)
                 {
-                    int newSize = (int)Math.Max(_indexBufferSize * 1.5f, indexSize);
+                    int newSize = (int) System.Math.Max(_indexBufferSize * 1.5f, indexSize);
                     GL.NamedBufferData(_indexBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                     _indexBufferSize = newSize;
                     Console.WriteLine($"Resized dear imgui index buffer to new size {_indexBufferSize}");
@@ -293,7 +295,7 @@ void main()
             }
 
             // Setup orthographic projection matrix into our constant buffer
-            ImGuiIOPtr io = ImGui.GetIO();
+            ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
             Matrix4 mvp = Matrix4.CreateOrthographicOffCenter(
                 0.0f,
                 io.DisplaySize.X,

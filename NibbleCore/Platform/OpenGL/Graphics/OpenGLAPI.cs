@@ -6,9 +6,11 @@ using NbCore;
 using NbCore.Systems;
 using NbCore.Math;
 using NbCore.Common;
+using NbCore.Platform.Graphics;
 using OpenTK.Graphics.OpenGL4;
 
-namespace NbOpenGLAPI
+
+namespace NbCore.Platform.Graphics.OpenGL
 {
     //Framebuffer Structs
     [StructLayout(LayoutKind.Explicit)]
@@ -59,7 +61,7 @@ namespace NbOpenGLAPI
         public static readonly int SizeInBytes = 8592;
     };
 
-    public class GLAPI : IRenderApi
+    public class GraphicsAPI : IGraphicsApi
     {
         private const string RendererName = "OpenGL Renderer";
         private int activeProgramID = -1;
@@ -522,6 +524,79 @@ namespace NbOpenGLAPI
             GL.BindVertexArray(0);
         }
 
+        //Fetch main VAO
+        public static GLVao generateVAO(NbMesh mesh)
+        {
+            //Generate VAO
+            GLVao vao = new();
+            vao.vao_id = GL.GenVertexArray();
+            GL.BindVertexArray(vao.vao_id);
+
+            //Generate VBOs
+            int[] vbo_buffers = new int[2];
+            GL.GenBuffers(2, vbo_buffers);
+
+            vao.vertex_buffer_object = vbo_buffers[0];
+            vao.element_buffer_object = vbo_buffers[1];
+
+            //Bind vertex buffer
+            int size;
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vao.vertex_buffer_object);
+            //Upload Vertex Buffer
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)mesh.Data.VertexBuffer.Length,
+                mesh.Data.VertexBuffer, BufferUsageHint.StaticDraw);
+            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize,
+                out size);
+
+            Common.Callbacks.Assert(size == mesh.Data.VertexBufferStride * (mesh.MetaData.VertrEndGraphics + 1),
+                "Mesh metadata does not match the vertex buffer size from the geometry file");
+
+            //Assign VertexAttribPointers
+            for (int i = 0; i < mesh.Data.buffers.Length; i++)
+            {
+                bufInfo buf = mesh.Data.buffers[i];
+                VertexAttribPointerType buftype = VertexAttribPointerType.Float; //default
+                switch (buf.type)
+                {
+                    case NbPrimitiveDataType.Double:
+                        buftype = VertexAttribPointerType.Double;
+                        break;
+                    case NbPrimitiveDataType.Float:
+                        buftype = VertexAttribPointerType.Float;
+                        break;
+                    case NbPrimitiveDataType.HalfFloat:
+                        buftype = VertexAttribPointerType.HalfFloat;
+                        break;
+                    case NbPrimitiveDataType.Int2101010Rev:
+                        buftype = VertexAttribPointerType.Int2101010Rev;
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
+
+                GL.VertexAttribPointer(buf.semantic, buf.count, buftype, buf.normalize, buf.stride, buf.offset);
+                GL.EnableVertexAttribArray(buf.semantic);
+            }
+
+            //Upload index buffer
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, vao.element_buffer_object);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)mesh.Data.IndexBuffer.Length,
+                mesh.Data.IndexBuffer, BufferUsageHint.StaticDraw);
+            GL.GetBufferParameter(BufferTarget.ElementArrayBuffer, BufferParameterName.BufferSize,
+                out size);
+            Common.Callbacks.Assert(size == mesh.Data.IndexBuffer.Length,
+                "Mesh metadata does not match the index buffer size from the geometry file");
+
+            //Unbind
+            GL.BindVertexArray(0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            for (int i = 0; i < mesh.Data.buffers.Length; i++)
+                GL.DisableVertexAttribArray(mesh.Data.buffers[i].semantic);
+
+            return vao;
+        }
+
         public void RenderMesh(NbMesh mesh, MeshMaterial mat)
         {
             GLInstancedMesh glmesh = MeshMap[mesh.Hash]; //Fetch GL Mesh
@@ -824,5 +899,92 @@ namespace NbOpenGLAPI
 
             return fbo;
         }
+
+        #region ShaderMethods
+
+        public int CalculateMaterialShaderhash(MeshMaterial mat)
+        {
+            //Calculate material hash
+            List<string> includes = new();
+            for (int i = 0; i < mat.Flags.Count; i++)
+            {
+                if (MeshMaterial.supported_flags.Contains(mat.Flags[i]))
+                    includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
+            }
+
+            return GLShaderHelper.calculateShaderHash(includes);
+        }
+
+        private void AttachShaderToMaterial(MeshMaterial mat, GLSLShaderConfig shader)
+        {
+            mat.Shader = shader;
+
+            //Load Active Uniforms to Material
+            foreach (Uniform un in mat.Uniforms)
+            {
+                if (shader.uniformLocations.ContainsKey(un.Name))
+                {
+                    un.ShaderLocation = shader.uniformLocations[un.Name];
+                    mat.ActiveUniforms.Add(un);
+                }
+            }
+
+            foreach (Sampler s in mat.Samplers)
+            {
+                if (shader.uniformLocations.ContainsKey(s.Name))
+                {
+                    s.ShaderLocation = shader.uniformLocations[s.Name];
+                }
+            }
+            
+        }
+
+        public GLSLShaderConfig CompileMaterialShader(MeshMaterial mat)
+        {
+            SHADER_MODE mode = SHADER_MODE.DEFFERED;
+
+            List<string> includes = new();
+
+            if (mat.Flags.Contains(MaterialFlagEnum._F51_DECAL_DIFFUSE) ||
+                mat.Flags.Contains(MaterialFlagEnum._F52_DECAL_NORMAL))
+            {
+                mode = SHADER_MODE.DECAL | SHADER_MODE.FORWARD;
+            }
+            else if (mat.Flags.Contains(MaterialFlagEnum._F09_TRANSPARENT) ||
+                     mat.Flags.Contains(MaterialFlagEnum._F22_TRANSPARENT_SCALAR) ||
+                     mat.Flags.Contains(MaterialFlagEnum._F11_ALPHACUTOUT))
+            {
+                mode = SHADER_MODE.FORWARD;
+            }
+
+            for (int i = 0; i < mat.Flags.Count; i++)
+            {
+                if (MeshMaterial.supported_flags.Contains(mat.Flags[i]))
+                    includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
+            }
+
+            string vs_path = "Shaders/Simple_VS.glsl";
+            vs_path = System.IO.Path.GetFullPath(vs_path);
+            vs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, vs_path);
+
+            string fs_path = "Shaders/Simple_FS.glsl";
+            fs_path = System.IO.Path.GetFullPath(fs_path);
+            fs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, fs_path);
+
+            GLSLShaderSource vs = RenderState.engineRef.GetShaderSourceByFilePath(vs_path);
+            GLSLShaderSource fs = RenderState.engineRef.GetShaderSourceByFilePath(fs_path);
+
+            GLSLShaderConfig shader = GLShaderHelper.compileShader(vs, fs, null, null, null,
+                new(), includes, SHADER_TYPE.MATERIAL_SHADER, mode);
+
+            //Attach UBO binding Points
+            GLShaderHelper.attachUBOToShaderBindingPoint(shader, "_COMMON_PER_FRAME", 0);
+            GLShaderHelper.attachSSBOToShaderBindingPoint(shader, "_COMMON_PER_MESH", 1);
+
+            AttachShaderToMaterial(mat, shader);
+            return shader;
+        }
+
+        #endregion  
     }
 }

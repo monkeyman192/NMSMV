@@ -6,6 +6,10 @@ using NbCore.Common;
 using NbCore.Math;
 using NbCore.Plugins;
 using NbCore.Systems;
+using NbCore.UI.ImGui;
+
+using ImGuiCore = ImGuiNET.ImGui;
+
 
 namespace NibbleOBJPlugin
 {
@@ -16,7 +20,8 @@ namespace NibbleOBJPlugin
         public static string PluginDescription = "OBJ Plugin for Nibble Engine. Created by gregkwaste";
         public static string PluginCreator = "gregkwaste";
 
-        private bool show_open_file_dialog = false;
+        private OpenFileDialog openFileDialog;
+
         
         public Plugin(Engine e) : base(e)
         {
@@ -28,49 +33,84 @@ namespace NibbleOBJPlugin
 
         public override void OnLoad()
         {
+            openFileDialog = new("", ".obj", false); //Initialize OpenFileDialog
             Log("Loaded OBJ Plugin", LogVerbosityLevel.INFO);
         }
 
         public override void Import(string filepath)
         {
             
-            
-            
-            
         }
 
-        private GeomObject GenerateGeometry(List<NbVector3> lverts, List<NbVector3i> ltris)
+        private NbMesh GenerateMesh(List<NbVector3> lverts, List<NbVector3i> ltris)
         {
-            float[] verts = new float[lverts.Count * 3];
-            float[] indices = new float[ltris.Count * 3];
+
+            NbMeshData data = GenerateGeometryData(lverts, ltris);
+            NbMeshMetaData metadata = GenerateGeometryMetaData(data);
+
+            //Generate NbMesh
+            NbMesh mesh = new()
+            {
+                Hash = (ulong)"obj_mesh".GetHashCode(),
+                Data = data,
+                MetaData = metadata
+            };
+
+            return mesh;
+        }
+
+        private NbMeshMetaData GenerateGeometryMetaData(NbMeshData data)
+        {
+            NbMeshMetaData metadata = new()
+            {
+                IndicesLength = NbPrimitiveDataType.UnsignedInt,
+                BatchCount = data.IndexBuffer.Length / 0x4,
+                FirstSkinMat = 0,
+                LastSkinMat = 0,
+                VertrEndGraphics = data.VertexBuffer.Length / (0x3 * 0x4) - 1,
+                VertrEndPhysics = data.VertexBuffer.Length / (0x3 * 0x4)
+            };
+
+            return metadata;
+        }
+
+        private NbMeshData GenerateGeometryData(List<NbVector3> lverts, List<NbVector3i> ltris)
+        {
+            NbMeshData data = NbMeshData.Create();
+            data.Hash = (ulong)"obj_mesh".GetHashCode();
+
+            //Save vertices
+            int vxbytecount = lverts.Count * 3 * 4;
+            int ixbytecount = ltris.Count * 3 * 4;
+            data.VertexBuffer = new byte[vxbytecount];
+            data.IndexBuffer = new byte[ixbytecount];
+
+            MemoryStream ms = new MemoryStream(data.VertexBuffer);
+            BinaryWriter bw = new BinaryWriter(ms);
+            bw.Seek(0, SeekOrigin.Begin);
 
             for (int i = 0; i < lverts.Count; i++)
             {
-                verts[3 * i + 0] = lverts[i].X;
-                verts[3 * i + 1] = lverts[i].Y;
-                verts[3 * i + 2] = lverts[i].Z;
+                bw.Write(lverts[i].X);
+                bw.Write(lverts[i].Y);
+                bw.Write(lverts[i].Z);
             }
-            
+            bw.Close();
+
+
+            ms = new MemoryStream(data.IndexBuffer);
+            bw = new BinaryWriter(ms);
+            bw.Seek(0, SeekOrigin.Begin);
+
             for (int i = 0; i < ltris.Count; i++)
             {
-                indices[3 * i + 0] = ltris[i].X;
-                indices[3 * i + 1] = ltris[i].Y;
-                indices[3 * i + 2] = ltris[i].Z;
+                bw.Write(ltris[i].X);
+                bw.Write(ltris[i].Y);
+                bw.Write(ltris[i].Z);
             }
-            
-            GeomObject geom = new();
-            geom.Name = "obj_mesh";
 
-            //Set main Geometry Info
-            geom.vertCount = verts.Length / 3;
-            geom.indicesCount = indices.Length;
-            geom.indicesLength = 0x4;
-
-            //Set Strides
-            geom.vx_size = 3 * 4; //3 Floats * 4 Bytes each
-            
-            //Set Buffer Offsets
-            geom.mesh_descr = "vn";
+            //Create Buffers
+            data.buffers = new bufInfo[1];
             
             bufInfo buf = new bufInfo()
             {
@@ -79,20 +119,13 @@ namespace NibbleOBJPlugin
                 offset = 0,
                 sem_text = "vPosition",
                 semantic = 0,
-                stride = 0,
+                stride = 12,
                 type = NbPrimitiveDataType.Float
             };
-            geom.bufInfo.Add(buf);
-            
-            //TODO: I can calculate normals if needed
-            
-            //Set Buffers
-            geom.ibuffer = new byte[4 * indices.Length];
-            Buffer.BlockCopy(indices, 0, geom.ibuffer, 0, geom.ibuffer.Length);
-            geom.vbuffer = new byte[4 * verts.Length];
-            Buffer.BlockCopy(verts, 0, geom.vbuffer, 0, geom.vbuffer.Length);
 
-            return geom;
+            data.buffers[0] = buf;
+
+            return data;
         }
 
         public Scene ParseObj(string filename)
@@ -133,35 +166,33 @@ namespace NibbleOBJPlugin
                 {
                     Log("Unknown obj directive. Skipping...", LogVerbosityLevel.WARNING);
                 }
-                
-                //Convert data to mesh
-                GeomObject geom = GenerateGeometry(Vertices, Tris);
-                
-                GLInstancedMesh mesh = new()
+
+                NbMesh mesh = GenerateMesh(Vertices, Tris);
+
+                //Generate Material
+                MeshMaterial mat = new();
+
+                mat.Name = "objMat";
+                mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+                Uniform uf = new()
                 {
-                    Name = "obj_mesh",
-                    type = SceneNodeType.GIZMO,
-                    vao = geom.generateVAO(),
-                    MetaData = new()
-                    {
-                        BatchCount = geom.indicesCount,
-                        AABBMIN = new NbVector3(-0.1f),
-                        AABBMAX = new NbVector3(0.1f),
-                        IndicesLength = NbPrimitiveDataType.UnsignedInt,
-                    }
+                    Name = "mpCustomPerMaterial.gMaterialColourVec4",
+                    Values = new(0.0f, 1.0f, 1.0f, 1.0f)
                 };
+                mat.Uniforms.Add(uf);
+                EngineRef.renderSys.Renderer.CompileMaterialShader(mat);
                 
+
                 //Generate Scene
                 Scene scn = new Scene();
                 //Generate Scene Root
                 SceneGraphNode root = EngineRef.CreateLocatorNode("OBJ_Root");
                 
                 //Generate Mesh Node
-                //SceneGraphNode mesh = EngineRef.CreateMeshNode("obj_mesh", geom.);
+                SceneGraphNode mesh_node = EngineRef.CreateMeshNode("obj_mesh", mesh, mat);
 
 
-            } 
-            
+            }             
             
             
             
@@ -181,7 +212,10 @@ namespace NibbleOBJPlugin
 
         public override void DrawImporters()
         {
-            return;
+            if (ImGuiCore.MenuItem("Import from obj", "", false, openFileDialog.IsOpen))
+            {
+                openFileDialog.Open();
+            }
         }
 
         public override void DrawExporters(Scene scn)
@@ -191,7 +225,7 @@ namespace NibbleOBJPlugin
 
         public override void Draw()
         {
-            throw new NotImplementedException();
+            openFileDialog.Draw(new System.Numerics.Vector2(600,400));
         }
     }
 }

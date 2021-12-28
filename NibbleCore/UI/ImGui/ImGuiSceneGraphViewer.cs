@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using ImGuiNET;
+using ImGuiCore = ImGuiNET.ImGui;
 using NbCore;
 using NbCore.Common;
 
 
-namespace ImGuiHelper
+namespace NbCore.UI.ImGui
 {
     
     public class ImGuiSceneGraphViewer
@@ -56,48 +56,49 @@ namespace ImGuiHelper
         {
             if (n is null)
                 return;
-            
+
             //Draw using ImGUI
-            ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth;
+            ImGuiNET.ImGuiTreeNodeFlags base_flags = ImGuiNET.ImGuiTreeNodeFlags.OpenOnArrow | 
+                                                     ImGuiNET.ImGuiTreeNodeFlags.SpanAvailWidth;
 
             if (n.Children.Count == 0)
-                base_flags |= ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiTreeNodeFlags.Leaf;
+                base_flags |= ImGuiNET.ImGuiTreeNodeFlags.NoTreePushOnOpen | ImGuiNET.ImGuiTreeNodeFlags.Leaf;
 
             if (_clicked != null && n == _clicked)
             {
-                base_flags |= ImGuiTreeNodeFlags.Selected;
+                base_flags |= ImGuiNET.ImGuiTreeNodeFlags.Selected;
                 _selected = n;
             }
 
             //DrawCheckbox for non root nodes
             if (n != _root)
             {
-                if (ImGui.Checkbox("##Entity" + n.GetID(), ref n.IsRenderable))
+                if (ImGuiCore.Checkbox("##Entity" + n.GetID(), ref n.IsRenderable))
                 {
                     n.SetRenderableStatusRec(n.IsRenderable);
                 }
-                ImGui.SameLine();    
+                ImGuiCore.SameLine();    
             }
-            
-            ImGui.SetNextItemOpen(n.IsOpen);
-            bool node_open = ImGui.TreeNodeEx(n.Name, base_flags);
+
+            ImGuiCore.SetNextItemOpen(n.IsOpen);
+            bool node_open = ImGuiCore.TreeNodeEx(n.Name, base_flags);
             
             n.IsOpen = node_open;
             Vector2 ctxPos = Vector2.Zero;
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+            if (ImGuiCore.IsItemClicked(ImGuiNET.ImGuiMouseButton.Left))
             {
                 _clicked = n;
                 _manager.SetObjectReference(n);
                 _manager.SetActiveMaterial(n);
-                ImGui.CloseCurrentPopup();
+                ImGuiCore.CloseCurrentPopup();
             } 
-            if (ImGui.BeginPopupContextItem()) // <-- use last item id as popup id
+            if (ImGuiCore.BeginPopupContextItem()) // <-- use last item id as popup id
             {
-                if (ImGui.BeginMenu("Add Child Node##child-ctx"))
+                if (ImGuiCore.BeginMenu("Add Child Node##child-ctx"))
                 {
                     bool EntityAdded = false;
                     SceneGraphNode new_node = null;
-                    if (ImGui.MenuItem("Add Locator"))
+                    if (ImGuiCore.MenuItem("Add Locator"))
                     {
                         //Create and register locator node
                         new_node = _manager.EngineRef.CreateLocatorNode("Locator#1");
@@ -105,7 +106,7 @@ namespace ImGuiHelper
                         EntityAdded = true;
                     }
                     
-                    if (ImGui.MenuItem("Add Light"))
+                    if (ImGuiCore.MenuItem("Add Light"))
                     {
                         //Create and register locator node
                         new_node = _manager.EngineRef.CreateLightNode("Light#1");
@@ -134,17 +135,17 @@ namespace ImGuiHelper
                         _manager.SetActiveMaterial(new_node);
 
                     }
-                    
-                    
-                    ImGui.EndMenu();
+
+
+                    ImGuiCore.EndMenu();
                 }
 
-                if (ImGui.MenuItem("Delete"))
+                if (ImGuiCore.MenuItem("Delete"))
                 {
                     Console.WriteLine("Delete Node permanently");
                 }
-                
-                ImGui.EndPopup();
+
+                ImGuiCore.EndPopup();
             }
 
             if (n.IsOpen)
@@ -155,8 +156,8 @@ namespace ImGuiHelper
                     {
                         DrawNode(nc);
                     }
-                    
-                    ImGui.TreePop();
+
+                    ImGuiCore.TreePop();
                 }
             }
 

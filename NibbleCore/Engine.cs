@@ -16,13 +16,14 @@ using NbCore.Primitives;
 using NbCore.Utils;
 using NbCore.Plugins;
 using System.Timers;
-using NbOpenGLAPI; //Add an implementation independent shader definition
+using NbCore.Platform.Graphics.OpenGL; //Add an implementation independent shader definition
 using OpenTK.Windowing.GraphicsLibraryFramework; //TODO: figure out how to remove that shit
 using OpenTK.Windowing.Desktop; //TODO: figure out how to remove that shit
 using System.IO;
 using System.Reflection;
 using Font = NbCore.Text.Font;
 using Image = System.Drawing.Image;
+using System.Linq;
 
 namespace NbCore
 {
@@ -126,10 +127,16 @@ namespace NbCore
             {
                 if (!filename.EndsWith(("dll")))
                     continue;
+
+                if (!Path.GetFileName(filename).StartsWith(("Nibble")))
+                    continue;
+
+                var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
                 //Load Assembly
                 try
                 {
-                    Assembly a = Assembly.LoadFile(Path.GetFullPath(filename));
+                    Assembly a = Assembly.LoadFrom(Path.GetFullPath(filename));
+                    AppDomain.CurrentDomain.Load(a.GetName());
 
                     //Try to find the type the derived plugin class
                     foreach (Type t in a.GetTypes())
@@ -137,6 +144,45 @@ namespace NbCore
                         if (t.IsSubclassOf(typeof(PluginBase)))
                         {
                             Console.WriteLine("Plugin class detected! {0}", t.Name);
+
+                            //Load Referenced Assemblies
+                            AssemblyName[] l = a.GetReferencedAssemblies();
+                            loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+                            foreach (AssemblyName a2 in l)
+                            {
+                                var asm = loadedAssemblies.FirstOrDefault(a => a.FullName == a2.FullName);
+
+                                if (asm == null)
+                                {
+                                    Assembly test = null;
+                                    try
+                                    {
+                                        //First try to load using the assembly name just in case its a system dll    
+                                        test = Assembly.Load(a2);
+                                    } 
+                                    catch (FileNotFoundException ex)
+                                    {
+                                        try
+                                        {
+                                            Callbacks.Log($"Unable to load assembly {a2.Name}, Looking in plugin directory...", LogVerbosityLevel.WARNING);
+                                            test = Assembly.LoadFrom(Path.Join(Path.GetDirectoryName(a.Location), a2.Name + ".dll"));
+                                        } catch (Exception ex2)
+                                        {
+                                            Callbacks.Log($"Unable to load assembly {a2.Name}, Error: {ex2.Message}", LogVerbosityLevel.WARNING);
+                                        }
+                                    }
+
+                                    if (test != null)
+                                    {
+                                        Callbacks.Log($"Loaded Assembly {a2.Name}", LogVerbosityLevel.WARNING);
+                                        AppDomain.CurrentDomain.Load(test.GetName());
+                                    }
+
+                                }
+                            }
+
+
                             object c = Activator.CreateInstance(t, new object[] { this });
                             Plugins[Path.GetFileName(filename)] = c as PluginBase;
                             //Call Dll initializers
@@ -144,8 +190,6 @@ namespace NbCore
                             break;
                         }
                     }
-
-
                 }
                 catch (Exception ex)
                 {
@@ -595,7 +639,7 @@ namespace NbCore
             //x: roughness
             //z: metallic
             mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+            renderSys.Renderer.CompileMaterialShader(mat);
             
             RegisterEntity(mat);
             

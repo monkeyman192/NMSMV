@@ -1,6 +1,6 @@
 using NbCore;
 
-namespace ImGuiHelper
+namespace NbCore.UI.ImGui
 {
     public abstract class ImGuiPanel
     {

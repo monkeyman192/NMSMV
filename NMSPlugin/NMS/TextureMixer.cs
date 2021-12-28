@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using OpenTK;
 using NbCore.Math;
-using NbOpenGLAPI;
+using NbCore.Platform.Graphics.OpenGL;
 using OpenTK.Graphics.OpenGL4;
 using NbCore;
 using NbCore.Common;

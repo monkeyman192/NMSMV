@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
 
-namespace ImGuiHelper
+namespace NbCore.UI.ImGui
 {
     static class ImGuiUtil
     {

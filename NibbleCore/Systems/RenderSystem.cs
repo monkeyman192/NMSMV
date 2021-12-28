@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Runtime.InteropServices;
-using NbOpenGLAPI;
+using NbCore.Platform.Graphics.OpenGL; //TODO: Abstract
 using NbCore;
 using NbCore.Common;
+using NbCore.Platform.Graphics;
 using NbCore.Managers;
 using NbCore.Math;
 using OpenTK.Graphics.OpenGL4;
-using NbCore.Text;
 
 namespace NbCore.Systems
 {
@@ -22,7 +20,7 @@ namespace NbCore.Systems
         readonly List<SceneGraphNode> LightList = new();
         readonly List<NbMesh> lightVolumeMeshList = new();
 
-        public IRenderApi Renderer;
+        public IGraphicsApi Renderer;
         
         //Entity Managers used by the rendering system
         public readonly MaterialManager MaterialMgr = new();
@@ -65,7 +63,7 @@ namespace NbCore.Systems
 
 
             //Initialize API
-            Renderer = new GLAPI(); //Use OpenGL by default
+            Renderer = new GraphicsAPI(); //Use OpenGL by default
             Renderer.Init();
 
             //Setup Shadow Renderer
@@ -473,9 +471,10 @@ namespace NbCore.Systems
                 Values = new(1.0f, 1.0f, 1.0f, 1.0f)
             };
             mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
-
-            EngineRef.RegisterEntity(mat);
+            EngineRef.renderSys.Renderer.CompileMaterialShader(mat);
+            
+            EngineRef.RegisterEntity(mat.Shader); //Register Shader
+            EngineRef.RegisterEntity(mat); //Register Material
             MaterialMgr.AddMaterial(mat);
             
             //Joint Material
@@ -489,8 +488,9 @@ namespace NbCore.Systems
             uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
             uf.Values = new(1.0f, 0.0f, 0.0f, 1.0f);
             mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+            EngineRef.renderSys.Renderer.CompileMaterialShader(mat);
 
+            EngineRef.RegisterEntity(mat.Shader); //Register Shader
             EngineRef.RegisterEntity(mat);
             MaterialMgr.AddMaterial(mat);
 
@@ -505,8 +505,9 @@ namespace NbCore.Systems
             uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
             uf.Values = new(1.0f, 1.0f, 0.0f, 1.0f);
             mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+            EngineRef.renderSys.Renderer.CompileMaterialShader(mat);
 
+            EngineRef.RegisterEntity(mat.Shader); //Register Shader
             EngineRef.RegisterEntity(mat);
             MaterialMgr.AddMaterial(mat);
 
@@ -519,8 +520,9 @@ namespace NbCore.Systems
             uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
             uf.Values = new(0.8f, 0.8f, 0.2f, 1.0f);
             mat.Uniforms.Add(uf);
-            mat.CompileShader("Shaders/Simple_VS.glsl", "Shaders/Simple_FS.glsl");
+            EngineRef.renderSys.Renderer.CompileMaterialShader(mat);
 
+            EngineRef.RegisterEntity(mat.Shader); //Register Shader
             EngineRef.RegisterEntity(mat);
             MaterialMgr.AddMaterial(mat);
 

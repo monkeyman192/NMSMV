@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using NbCore.Math;
+using NbCore.Platform.Graphics.OpenGL;
 using OpenTK.Graphics.OpenGL4;
 using NbCore.Utils;
 
@@ -47,7 +47,7 @@ namespace NbCore
 
         public GLInstancedMesh(NbMesh mesh)
         {
-            vao = generateVAO(mesh);
+            vao =  GraphicsAPI.generateVAO(mesh);
             Mesh = mesh;
         }
 
@@ -65,78 +65,7 @@ namespace NbCore
             GL.BindBuffer(BufferTarget.TextureBuffer, 0);
         }
 
-        //Fetch main VAO
-        public static GLVao generateVAO(NbMesh mesh)
-        {
-            //Generate VAO
-            GLVao vao = new();
-            vao.vao_id = GL.GenVertexArray();
-            GL.BindVertexArray(vao.vao_id);
-
-            //Generate VBOs
-            int[] vbo_buffers = new int[2];
-            GL.GenBuffers(2, vbo_buffers);
-
-            vao.vertex_buffer_object = vbo_buffers[0];
-            vao.element_buffer_object = vbo_buffers[1];
-
-            //Bind vertex buffer
-            int size;
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vao.vertex_buffer_object);
-            //Upload Vertex Buffer
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) mesh.Data.VertexBuffer.Length,
-                mesh.Data.VertexBuffer, BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize,
-                out size);
-            
-            Common.Callbacks.Assert(size == mesh.Data.VertexBufferStride * (mesh.MetaData.VertrEndGraphics + 1),
-                "Mesh metadata does not match the vertex buffer size from the geometry file");
-            
-            //Assign VertexAttribPointers
-            for (int i = 0; i < mesh.Data.buffers.Length; i++)
-            {
-                bufInfo buf = mesh.Data.buffers[i];
-                VertexAttribPointerType buftype = VertexAttribPointerType.Float; //default
-                switch (buf.type)
-                {
-                    case NbPrimitiveDataType.Double:
-                        buftype = VertexAttribPointerType.Double;
-                        break;
-                    case NbPrimitiveDataType.Float:
-                        buftype = VertexAttribPointerType.Float;
-                        break;
-                    case NbPrimitiveDataType.HalfFloat:
-                        buftype = VertexAttribPointerType.HalfFloat;
-                        break;
-                    case NbPrimitiveDataType.Int2101010Rev:
-                        buftype = VertexAttribPointerType.Int2101010Rev;
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-
-                GL.VertexAttribPointer(buf.semantic, buf.count, buftype, buf.normalize, buf.stride, buf.offset);
-                GL.EnableVertexAttribArray(buf.semantic);
-            }
-
-            //Upload index buffer
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, vao.element_buffer_object);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr) mesh.Data.IndexBuffer.Length,
-                mesh.Data.IndexBuffer, BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ElementArrayBuffer, BufferParameterName.BufferSize,
-                out size);
-            Common.Callbacks.Assert(size == mesh.Data.IndexBuffer.Length, 
-                "Mesh metadata does not match the index buffer size from the geometry file");
-            
-            //Unbind
-            GL.BindVertexArray(0);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-            for (int i = 0; i < mesh.Data.buffers.Length; i++)
-                GL.DisableVertexAttribArray(mesh.Data.buffers[i].semantic);
-
-            return vao;
-        }
+        
 
         //TODO: Generate a Data object back to the geometry object with the bound hull vertices
         //and then use the normal generateVao method

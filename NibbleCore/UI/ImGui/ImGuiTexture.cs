@@ -10,7 +10,7 @@ using OpenTK.Graphics.OpenGL4;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 
-namespace ImGuiHelper
+namespace NbCore.UI.ImGui
 {
     public enum TextureCoordinate
     {
@@ -49,7 +49,7 @@ namespace ImGuiHelper
             if (generateMipmaps)
             {
                 // Calculate how many levels to generate for this texture
-                MipmapLevels = (int)Math.Floor(Math.Log(Math.Max(Width, Height), 2));
+                MipmapLevels = (int) System.Math.Floor(System.Math.Log(System.Math.Max(Width, Height), 2));
             }
             else
             {
@@ -104,7 +104,7 @@ namespace ImGuiHelper
             Width = width;
             Height = height;
             InternalFormat = srgb ? Srgb8Alpha8 : SizedInternalFormat.Rgba8;
-            MipmapLevels = generateMipmaps == false ? 1 : (int)Math.Floor(Math.Log(Math.Max(Width, Height), 2));
+            MipmapLevels = generateMipmaps == false ? 1 : (int)System.Math.Floor(System.Math.Log(System.Math.Max(Width, Height), 2));
 
             ImGuiUtil.CreateTexture(TextureTarget.Texture2D, Name, out GLTexture);
             GL.TextureStorage2D(GLTexture, MipmapLevels, InternalFormat, Width, Height);

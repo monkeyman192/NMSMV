@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using NbCore.Common;
 using NbCore.Math;
-using NbOpenGLAPI;
+using NbCore.Platform.Graphics.OpenGL;
 
-namespace NbCore
+namespace NbCore.Platform.Graphics
 {
     public enum NbBufferMask
     {
@@ -11,7 +11,7 @@ namespace NbCore
         Depth
     }
 
-    public interface IRenderApi
+    public interface IGraphicsApi
     {
         public void Init();
         public void SetProgram(int progra_id);
@@ -24,7 +24,11 @@ namespace NbCore
         public void SetCommonDataPerFrame(FBO gBuffer, NbMatrix4 rotMat, double time);
         public void SetLightDataPerFrame(List<Entity> lights);
         public void UploadFrameData();
-        
+
+        //Shader Compilation
+        public GLSLShaderConfig CompileMaterialShader(MeshMaterial mat);
+        public int CalculateMaterialShaderhash(MeshMaterial mat);
+
         //Mesh Buffer Methods
         public void PrepareMeshBuffers();
         public void UnbindMeshBuffers();

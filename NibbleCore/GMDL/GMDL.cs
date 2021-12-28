@@ -14,7 +14,7 @@ using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Runtime.InteropServices;
-using NbOpenGLAPI;
+using NbCore.Platform.Graphics.OpenGL; //TODO: Abstract
 using NbCore.Common;
 using NbCore.Utils;
 
@@ -118,7 +118,7 @@ namespace NbCore
         {
             if (meshDataDict.ContainsKey(hash))
                 return meshDataDict[hash];
-            return NbMeshData.GetEmpty();
+            return NbMeshData.Create();
         }
 
         public static NbVector3 get_vec3_half(BinaryReader br)
