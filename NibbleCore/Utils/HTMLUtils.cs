@@ -33,7 +33,7 @@ namespace NbCore.Utils
         public static string queryLibMBINDLLLocalVersion()
         {
             string assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string assemblyLoc = Path.Combine(assemblyDir, "libMBIN.dll");
+            string assemblyLoc = Path.Combine(assemblyDir, "Plugins", "libMBIN.dll");
             string assemblyVersion = Assembly.LoadFile(assemblyLoc).GetName().Version.ToString();
 
             return assemblyVersion;

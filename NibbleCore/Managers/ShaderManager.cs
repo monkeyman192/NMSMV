@@ -13,36 +13,26 @@ namespace NbCore.Managers
         public readonly List<GLSLShaderConfig> GLDeferredDecalShaders = new();
 
         private readonly Dictionary<SHADER_TYPE, GLSLShaderConfig> GenericShaders = new(); //Generic Shader Map
-        private readonly Dictionary<long, GLSLShaderConfig> ShaderMap = new();
-        private readonly Dictionary<int, GLSLShaderConfig> ShaderHashMap = new();
+        private readonly Dictionary<long, GLSLShaderConfig> ShaderHashMap = new();
         private readonly Dictionary<long, List<MeshMaterial>> ShaderMaterialMap = new();
 
-
-        public void IdentifyActiveShaders()
-        {
-            GLDeferredShaders.Clear();
-            GLDeferredDecalShaders.Clear();
-            GLForwardTransparentShaders.Clear();
-
-            foreach (GLSLShaderConfig conf in ShaderMap.Values)
-            {
-                if ((conf.ShaderMode & SHADER_MODE.FORWARD) == SHADER_MODE.FORWARD)
-                    GLForwardTransparentShaders.Add(conf);
-                else if ((conf.ShaderMode & SHADER_MODE.DECAL) == SHADER_MODE.DECAL)
-                    GLDeferredDecalShaders.Add(conf);
-                else
-                    GLDeferredShaders.Add(conf);
-            }
-        }
 
         public bool AddShader(GLSLShaderConfig shader)
         {
             if (Add(shader))
             {
                 GUIDComponent gc = shader.GetComponent<GUIDComponent>() as GUIDComponent;
-                ShaderMap[gc.ID] = shader;
                 ShaderHashMap[shader.Hash] = shader;
                 ShaderMaterialMap[gc.ID] = new();
+
+                //Add Shader to the corresponding list
+                if ((shader.ShaderMode & SHADER_MODE.FORWARD) == SHADER_MODE.FORWARD)
+                    GLForwardTransparentShaders.Add(shader);
+                else if ((shader.ShaderMode & SHADER_MODE.DECAL) == SHADER_MODE.DECAL)
+                    GLDeferredDecalShaders.Add(shader);
+                else
+                    GLDeferredShaders.Add(shader);
+
                 return true;
             }
             return false;
@@ -63,14 +53,34 @@ namespace NbCore.Managers
             return GenericShaders[stype];
         }
 
-        public bool ShaderExists(long ID)
+        public GLSLShaderConfig GetShaderByHash(long hash)
         {
-            return ShaderMap.ContainsKey(ID);
+            return ShaderHashMap[hash];
+        }
+
+        public GLSLShaderConfig GetShaderByID(long id)
+        {
+            return Get(id) as GLSLShaderConfig;
+        }
+
+        public bool ShaderHashExists(long hash)
+        {
+            return ShaderHashMap.ContainsKey(hash);
+        }
+
+        public bool ShaderIDExists(long ID) //GUID
+        {
+            return EntityMap.ContainsKey(ID);
         }
 
         public void AddMaterialToShader(MeshMaterial mat)
         {
             ShaderMaterialMap[mat.Shader.GetID()].Add(mat);
+        }
+
+        public bool ShaderContainsMaterial(GLSLShaderConfig shader, MeshMaterial mat)
+        {
+            return ShaderMaterialMap[shader.GetID()].Contains(mat);
         }
 
         public List<MeshMaterial> GetShaderMaterials(GLSLShaderConfig shader)
@@ -83,7 +93,6 @@ namespace NbCore.Managers
             //Shader Cleanup
             ShaderMaterialMap.Clear();
             ShaderHashMap.Clear();
-            ShaderMap.Clear();
             GLDeferredShaders.Clear();
             GLForwardTransparentShaders.Clear();
             GLDeferredDecalShaders.Clear();

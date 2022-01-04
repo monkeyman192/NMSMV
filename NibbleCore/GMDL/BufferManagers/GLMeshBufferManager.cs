@@ -29,10 +29,10 @@ namespace NbCore
      *      | 0 | 1 | 2 | 3 | 4 | * | <----
      *      
      *      
-     *      The RemoveRenderInstance method, is responsible for removing the requested instance from the buffer, using its stored
-     *      renderInstanceID, which reveals its position in the buffer. In order to prevent the update of all the instance refs
-     *      of all intermediate instances, the method swaps the instance data with just the last instance of the buffer and
-     *      decreases the renderInstanceCounter.
+     *      The RemoveRenderInstance method, is responsible for removing the requested instance from the buffer, 
+     *      using its stored renderInstanceID, which reveals its position in the buffer. In order to prevent the
+     *      update of all the instance refs of all intermediate instances, the method swaps the instance data
+     *      with just the last instance of the buffer and decreases the renderInstanceCounter.
      *      
      *      Schematic Representation of the instance removal (removing Instance 2)
      
@@ -87,6 +87,12 @@ namespace NbCore
         //17-18: isSelected
         //18-20: padding
 
+        public static void SwapInstanceData(int from_id, int to_id)
+        {
+
+        }
+
+        
         public static int GetNextMeshInstanceID(ref NbMesh mesh)
         {
             int render_instance_id = mesh.InstanceCount;
@@ -97,6 +103,14 @@ namespace NbCore
                 float[] newBuffer = new float[mesh.InstanceDataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
                 Array.Copy(mesh.InstanceDataBuffer, newBuffer, mesh.InstanceDataBuffer.Length);
                 mesh.InstanceDataBuffer = newBuffer;
+            }
+
+            //Expand instancerefs array if required
+            if (render_instance_id + 1 > mesh.instanceRefs.Length)
+            {
+                MeshComponent[] new_list = new MeshComponent[mesh.instanceRefs.Length + 10];
+                Array.Copy(mesh.instanceRefs, new_list, mesh.instanceRefs.Length);
+                mesh.instanceRefs = new_list;
             }
 
             return render_instance_id;
@@ -113,7 +127,8 @@ namespace NbCore
             }
 
             mc.InstanceID = GetNextMeshInstanceID(ref mesh);
-            
+            mesh.instanceRefs[mc.InstanceID] = mc;
+
             //Uplod worldMat to the meshVao
             NbMatrix4 actualWorldMat = td.WorldTransformMat;
             NbMatrix4 actualWorldMatInv = (actualWorldMat).Inverted();
@@ -124,28 +139,28 @@ namespace NbCore
             mesh.InstanceCount++;
         }
         
-        public static int AddRenderInstance(ref NbMesh mesh, NbMatrix4 worldMat, NbMatrix4 worldMatInv, NbMatrix4 normMat)
-        {
+        //public static int AddRenderInstance(ref NbMesh mesh, NbMatrix4 worldMat, NbMatrix4 worldMatInv, NbMatrix4 normMat)
+        //{
         
-            int render_instance_id = mesh.InstanceCount;
+        //    int render_instance_id = mesh.InstanceCount;
 
-            //Expand mesh data buffer if required
-            if (render_instance_id * instance_struct_size_bytes > mesh.InstanceDataBuffer.Length)
-            {
-                float[] newBuffer = new float[mesh.InstanceDataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
-                Array.Copy(mesh.InstanceDataBuffer, newBuffer, mesh.InstanceDataBuffer.Length);
-                mesh.InstanceDataBuffer = newBuffer;
-            }
+        //    //Expand mesh data buffer if required
+        //    if (render_instance_id * instance_struct_size_bytes > mesh.InstanceDataBuffer.Length)
+        //    {
+        //        float[] newBuffer = new float[mesh.InstanceDataBuffer.Length + instance_struct_size_floats * 5]; //Extend by 5 instances
+        //        Array.Copy(mesh.InstanceDataBuffer, newBuffer, mesh.InstanceDataBuffer.Length);
+        //        mesh.InstanceDataBuffer = newBuffer;
+        //    }
             
-            //Uplod worldMat to the meshVao
-            SetInstanceWorldMat(mesh, render_instance_id, worldMat);
-            SetInstanceWorldMatInv(mesh, render_instance_id, worldMatInv);
-            SetInstanceNormalMat(mesh, render_instance_id, normMat);
+        //    //Uplod worldMat to the meshVao
+        //    SetInstanceWorldMat(mesh, render_instance_id, worldMat);
+        //    SetInstanceWorldMatInv(mesh, render_instance_id, worldMatInv);
+        //    SetInstanceNormalMat(mesh, render_instance_id, normMat);
 
-            mesh.InstanceCount++;
+        //    mesh.InstanceCount++;
             
-            return render_instance_id;
-        }
+        //    return render_instance_id;
+        //}
 
         public static void RemoveRenderInstance(ref NbMesh mesh, MeshComponent mc)
         {
@@ -154,6 +169,7 @@ namespace NbCore
             if (mc.InstanceID == mesh.InstanceCount - 1)
             {
                 mesh.InstanceCount--;
+                mc.InstanceID = -1;
                 return;
             }
             
@@ -161,31 +177,20 @@ namespace NbCore
             MeshComponent lastmc = mesh.instanceRefs[mesh.InstanceCount - 1];
 
             //Fetch last instance databuffer
-            float[] tempbuffer = new float[instance_struct_size_floats];
-            int instance_float_offset = lastmc.InstanceID * instance_struct_size_floats;
-            Array.Copy(mesh.InstanceDataBuffer, instance_float_offset, tempbuffer, 0, instance_struct_size_floats);
+            int instance_float_offset = (mesh.InstanceCount - 1) * instance_struct_size_floats;
+            int new_instance_float_offset = mc.InstanceID * instance_struct_size_floats;
+            Array.Copy(mesh.InstanceDataBuffer, instance_float_offset, mesh.InstanceDataBuffer, new_instance_float_offset, instance_struct_size_floats);
 
-            //Swap instances in the instanceRefs List
-            mesh.instanceRefs.RemoveAt(mc.InstanceID);
-            mesh.instanceRefs.Insert(mc.InstanceID, lastmc);
-            mesh.instanceRefs.RemoveAt(mesh.instanceRefs.Count - 1);
-            mesh.instanceRefs.Add(mc);
-
-            //Replace removed instance data with the data of the last instance
-            instance_float_offset = mc.InstanceID * instance_struct_size_floats;
-            Array.Copy(tempbuffer, 0, mesh.InstanceDataBuffer, instance_float_offset, instance_struct_size_floats);
-
-            //Swap RenderInstanceIds
-            (lastmc.InstanceID, mc.InstanceID) = (mc.InstanceID, lastmc.InstanceID);
-
+            mesh.instanceRefs[mc.InstanceID] = lastmc;
+            lastmc.InstanceID = mc.InstanceID;
             
             mesh.InstanceCount--;
+            mc.InstanceID = -1; //Negate the instance ID so that we can Identify a non visible mesh
         }
         
         //Overload with transform overrides
         public static void ClearMeshInstances(NbMesh mesh)
         {
-            mesh.instanceRefs.Clear();
             mesh.InstanceCount = 0;
         }
 

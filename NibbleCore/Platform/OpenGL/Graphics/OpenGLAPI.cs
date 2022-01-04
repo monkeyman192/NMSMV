@@ -902,20 +902,15 @@ namespace NbCore.Platform.Graphics.OpenGL
 
         #region ShaderMethods
 
-        public int CalculateMaterialShaderhash(MeshMaterial mat)
+        public int CalculateMaterialShaderhash(MeshMaterial mat, SHADER_MODE mode)
         {
-            //Calculate material hash
-            List<string> includes = new();
-            for (int i = 0; i < mat.Flags.Count; i++)
-            {
-                if (MeshMaterial.supported_flags.Contains(mat.Flags[i]))
-                    includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
-            }
-
+            //Step 1: COmbine Material directives
+            List<string> includes = GetMaterialShaderDirectives(mat);
+            includes = GLShaderHelper.CombineShaderDirectives(includes, mode);
             return GLShaderHelper.calculateShaderHash(includes);
         }
 
-        private void AttachShaderToMaterial(MeshMaterial mat, GLSLShaderConfig shader)
+        public void AttachShaderToMaterial(MeshMaterial mat, GLSLShaderConfig shader)
         {
             mat.Shader = shader;
 
@@ -939,23 +934,9 @@ namespace NbCore.Platform.Graphics.OpenGL
             
         }
 
-        public GLSLShaderConfig CompileMaterialShader(MeshMaterial mat)
+        public List<string> GetMaterialShaderDirectives(MeshMaterial mat)
         {
-            SHADER_MODE mode = SHADER_MODE.DEFFERED;
-
             List<string> includes = new();
-
-            if (mat.Flags.Contains(MaterialFlagEnum._F51_DECAL_DIFFUSE) ||
-                mat.Flags.Contains(MaterialFlagEnum._F52_DECAL_NORMAL))
-            {
-                mode = SHADER_MODE.DECAL | SHADER_MODE.FORWARD;
-            }
-            else if (mat.Flags.Contains(MaterialFlagEnum._F09_TRANSPARENT) ||
-                     mat.Flags.Contains(MaterialFlagEnum._F22_TRANSPARENT_SCALAR) ||
-                     mat.Flags.Contains(MaterialFlagEnum._F11_ALPHACUTOUT))
-            {
-                mode = SHADER_MODE.FORWARD;
-            }
 
             for (int i = 0; i < mat.Flags.Count; i++)
             {
@@ -963,6 +944,13 @@ namespace NbCore.Platform.Graphics.OpenGL
                     includes.Add(mat.Flags[i].ToString().Split(".")[^1]);
             }
 
+            return includes;
+        }
+
+        public GLSLShaderConfig CompileMaterialShader(MeshMaterial mat, SHADER_MODE mode)
+        {
+            List<string> directives = GetMaterialShaderDirectives(mat);
+            
             string vs_path = "Shaders/Simple_VS.glsl";
             vs_path = System.IO.Path.GetFullPath(vs_path);
             vs_path = System.IO.Path.GetRelativePath(AppDomain.CurrentDomain.BaseDirectory, vs_path);
@@ -975,13 +963,12 @@ namespace NbCore.Platform.Graphics.OpenGL
             GLSLShaderSource fs = RenderState.engineRef.GetShaderSourceByFilePath(fs_path);
 
             GLSLShaderConfig shader = GLShaderHelper.compileShader(vs, fs, null, null, null,
-                new(), includes, SHADER_TYPE.MATERIAL_SHADER, mode);
+                directives, SHADER_TYPE.MATERIAL_SHADER, mode);
 
             //Attach UBO binding Points
             GLShaderHelper.attachUBOToShaderBindingPoint(shader, "_COMMON_PER_FRAME", 0);
             GLShaderHelper.attachSSBOToShaderBindingPoint(shader, "_COMMON_PER_MESH", 1);
 
-            AttachShaderToMaterial(mat, shader);
             return shader;
         }
 

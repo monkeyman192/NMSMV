@@ -121,6 +121,120 @@ namespace NbCore
             sceneMgmtSys.SetEngine(this);
         }
 
+        private AssemblyName GetAssemblyName(string name)
+        {
+            //Fetch AssemblyName
+            AssemblyName aName = null;
+            try
+            {
+                aName = AssemblyName.GetAssemblyName(name);
+            }
+            catch (FileNotFoundException)
+            {
+                var plugindirectory = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Plugins");
+                var path = Path.Join(plugindirectory, name);
+
+                if (File.Exists(path))
+                {
+                    aName = AssemblyName.GetAssemblyName(path);
+                } else
+                {
+                    Log($"Unable to find assembly {name}", LogVerbosityLevel.WARNING);
+                }
+            }
+
+            return aName;
+        }
+
+        private Assembly GetAssembly(AssemblyName aName)
+        {
+            Assembly a = null;
+            try
+            {
+                //First try to load using the assembly name just in case its a system dll    
+                a = Assembly.Load(aName);
+            }
+            catch (FileNotFoundException ex)
+            {
+                Log($"Unable to load assembly {aName.Name}, Looking in plugin directory...", LogVerbosityLevel.WARNING);
+                //Look in plugin directory
+                var plugindirectory = Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Plugins");
+                var path = Path.Join(plugindirectory, aName.Name + ".dll");
+
+                if (File.Exists(path))
+                {
+                    a = Assembly.LoadFrom(path);
+                } else
+                {
+                    Log($"Unable to load assembly {aName.Name}, Error: {ex.Message}", LogVerbosityLevel.WARNING);
+                }
+            }
+
+            return a;
+        }
+
+        private void LoadAssembly(string name)
+        {
+            AssemblyName aName = GetAssemblyName(name);
+            if (aName == null)
+                return;
+            
+            Assembly test = GetAssembly(aName);
+            if (test == null)
+                return;
+
+            //FetchAssembly
+            Log($"Loaded Assembly {test.GetName()}", LogVerbosityLevel.WARNING);
+            AppDomain.CurrentDomain.Load(test.GetName());
+            
+            //Load Referenced Assemblies
+            AssemblyName[] l = test.GetReferencedAssemblies();
+            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (AssemblyName a2 in l)
+            {
+                var asm = loadedAssemblies.FirstOrDefault(a => a.FullName == a2.FullName);
+
+                if (asm == null)
+                {
+                    LoadAssembly(a2.Name + ".dll");
+                }
+            }
+
+        }
+
+        public void LoadPlugin(string filepath)
+        {
+            //Load Assembly
+            try
+            {
+                Assembly a = Assembly.LoadFile(Path.GetFullPath(filepath));
+                
+                //Try to find the type the derived plugin class
+                foreach (Type t in a.GetTypes())
+                {
+                    if (t.IsSubclassOf(typeof(PluginBase)))
+                    {
+                        Log($"Plugin class detected! {t.Name}", LogVerbosityLevel.INFO);
+                        
+                        LoadAssembly(filepath);
+
+                        object c = Activator.CreateInstance(t, new object[] { this });
+                        Plugins[Path.GetFileName(filepath)] = c as PluginBase;
+                        //Call Dll initializers
+                        t.GetMethod("OnLoad").Invoke(c, new object[] { });
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"Error during loading of plugin {filepath}", LogVerbosityLevel.INFO);
+                Log("Exception type " + ex.Data, LogVerbosityLevel.INFO);
+            }
+        }
+
+
         private void LoadPlugins()
         {
             foreach (string filename in Directory.GetFiles("Plugins"))
@@ -131,72 +245,7 @@ namespace NbCore
                 if (!Path.GetFileName(filename).StartsWith(("Nibble")))
                     continue;
 
-                var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-                //Load Assembly
-                try
-                {
-                    Assembly a = Assembly.LoadFrom(Path.GetFullPath(filename));
-                    AppDomain.CurrentDomain.Load(a.GetName());
-
-                    //Try to find the type the derived plugin class
-                    foreach (Type t in a.GetTypes())
-                    {
-                        if (t.IsSubclassOf(typeof(PluginBase)))
-                        {
-                            Console.WriteLine("Plugin class detected! {0}", t.Name);
-
-                            //Load Referenced Assemblies
-                            AssemblyName[] l = a.GetReferencedAssemblies();
-                            loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-                            foreach (AssemblyName a2 in l)
-                            {
-                                var asm = loadedAssemblies.FirstOrDefault(a => a.FullName == a2.FullName);
-
-                                if (asm == null)
-                                {
-                                    Assembly test = null;
-                                    try
-                                    {
-                                        //First try to load using the assembly name just in case its a system dll    
-                                        test = Assembly.Load(a2);
-                                    } 
-                                    catch (FileNotFoundException ex)
-                                    {
-                                        try
-                                        {
-                                            Callbacks.Log($"Unable to load assembly {a2.Name}, Looking in plugin directory...", LogVerbosityLevel.WARNING);
-                                            test = Assembly.LoadFrom(Path.Join(Path.GetDirectoryName(a.Location), a2.Name + ".dll"));
-                                        } catch (Exception ex2)
-                                        {
-                                            Callbacks.Log($"Unable to load assembly {a2.Name}, Error: {ex2.Message}", LogVerbosityLevel.WARNING);
-                                        }
-                                    }
-
-                                    if (test != null)
-                                    {
-                                        Callbacks.Log($"Loaded Assembly {a2.Name}", LogVerbosityLevel.WARNING);
-                                        AppDomain.CurrentDomain.Load(test.GetName());
-                                    }
-
-                                }
-                            }
-
-
-                            object c = Activator.CreateInstance(t, new object[] { this });
-                            Plugins[Path.GetFileName(filename)] = c as PluginBase;
-                            //Call Dll initializers
-                            t.GetMethod("OnLoad").Invoke(c, new object[] { });
-                            break;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log("Error during loading of plugin " + filename, LogVerbosityLevel.INFO);
-                    Log("Exception type " + ex.Data, LogVerbosityLevel.INFO);
-                }
-
+                LoadPlugin(filename);
             }
         }
         private void LoadDefaultResources()
@@ -242,23 +291,39 @@ namespace NbCore
             return f;
         }
 
-        public void RegisterEntity(Entity e, bool controllable = false, bool isDynamic = false)
+        public void RegisterEntity(Entity e)
         {
             //Add Entity to main registry
             if (registrySys.RegisterEntity(e))
             {
+                //Register to transformation System
                 if (e.HasComponent<TransformComponent>())
-                    transformSys.RegisterEntity(e, controllable, isDynamic);
+                    transformSys.RegisterEntity(e);
 
+                //Register to rendering System
+                if (e.HasComponent<MeshComponent>())
+                {
+
+                    //Register mesh, material and the corresponding shader if necessary
+                    MeshComponent mc = e.GetComponent<MeshComponent>() as MeshComponent;
+                    
+                    RegisterEntity(mc.Mesh);
+                    RegisterEntity(mc.Material);
+                    RegisterEntity(mc.Material.Shader);
+                    
+                    renderSys.RegisterEntity(e); //Register Mesh
+                }
+                    
                 //TODO Register to the rest systems if necessary
             }
         }
 
-        public void RegisterSceneGraph(SceneGraphNode node)
+        public void RegisterSceneGraphNode(SceneGraphNode node)
         {
             RegisterEntity(node);
+            sceneMgmtSys.ActiveScene.AddNode(node); //Add to the active scene
             foreach (SceneGraphNode child in node.Children)
-                RegisterSceneGraph(child);
+                RegisterSceneGraphNode(child);
         }
         
         public Scene CreateScene()
@@ -325,6 +390,9 @@ namespace NbCore
         }
 
         #endregion
+
+
+        #region EngineQueries
 
         //Asset Setters
         public void AddTexture(Texture tex)
@@ -410,8 +478,8 @@ namespace NbCore
         {
             return registrySys.GetEntityTypeList(type);
         }
-        
-    
+
+        #endregion
 
         public void init(int width, int height)
         {
@@ -426,7 +494,10 @@ namespace NbCore
 
             //Add Necessary Components to Camera
             TransformationSystem.AddTransformComponentToEntity(cam);
-            RegisterEntity(cam, true, true); //Register Entity
+            TransformComponent tc = cam.GetComponent<TransformComponent>() as TransformComponent;
+            tc.IsControllable = true;
+            tc.IsDynamic = true;
+            RegisterEntity(cam);
             
             //Set global reference to cam
             RenderState.activeCam = cam;
@@ -623,7 +694,9 @@ namespace NbCore
                 }
                 
             };
-            
+
+            GLSLShaderConfig shader = null;
+
             //Sphere Material
             MeshMaterial mat = new();
             mat.Name = "default_scn";
@@ -639,8 +712,9 @@ namespace NbCore
             //x: roughness
             //z: metallic
             mat.Uniforms.Add(uf);
-            renderSys.Renderer.CompileMaterialShader(mat);
-            
+            shader = renderSys.Renderer.CompileMaterialShader(mat, SHADER_MODE.DEFFERED);
+            renderSys.Renderer.AttachShaderToMaterial(mat, shader);
+
             RegisterEntity(mat);
             
             scene.Children.Add(sphere);
@@ -704,7 +778,7 @@ namespace NbCore
             SceneGraphNode l = CreateLightNode();
             node.AddChild(l);
             
-            RegisterSceneGraph(node);
+            RegisterSceneGraphNode(node);
             
             //root.update(); //Refresh all transforms
             //root.setupSkinMatrixArrays();
@@ -943,6 +1017,8 @@ namespace NbCore
             //Add Transform Component
             TransformData td = new();
             TransformComponent tc = new(td);
+            tc.IsDynamic = false;
+            tc.IsControllable = true;
             n.AddComponent<TransformComponent>(tc);
 
             //Create MeshComponent
@@ -991,6 +1067,8 @@ namespace NbCore
             //Add Transform Component
             TransformData td = new();
             TransformComponent tc = new(td);
+            tc.IsDynamic = false;
+            tc.IsControllable = true;
             n.AddComponent<TransformComponent>(tc);
 
             //Create MeshComponent
@@ -1059,10 +1137,8 @@ namespace NbCore
             {
                 Mesh = new()
                 {
-                    MetaData = new()
-                    {
-                        BatchCount = 2
-                    },
+                    MetaData = ls.GetMetaData(),
+                    Data = ls.GetData()
                 },
                 Material = GetMaterialByName("lightMat")
             };

@@ -33,13 +33,15 @@ namespace NibbleOBJPlugin
 
         public override void OnLoad()
         {
-            openFileDialog = new("", ".obj", false); //Initialize OpenFileDialog
+            var assemblypath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            openFileDialog = new("obj-open-file", assemblypath, ".obj", false); //Initialize OpenFileDialog
             Log("Loaded OBJ Plugin", LogVerbosityLevel.INFO);
         }
 
         public override void Import(string filepath)
         {
-            
+            SceneGraphNode node = ParseObj(filepath);
+            EngineRef.RegisterSceneGraphNode(node);
         }
 
         private NbMesh GenerateMesh(List<NbVector3> lverts, List<NbVector3i> ltris)
@@ -94,7 +96,9 @@ namespace NibbleOBJPlugin
                 bw.Write(lverts[i].X);
                 bw.Write(lverts[i].Y);
                 bw.Write(lverts[i].Z);
+                
             }
+            bw.Flush();
             bw.Close();
 
 
@@ -124,17 +128,25 @@ namespace NibbleOBJPlugin
             };
 
             data.buffers[0] = buf;
+            //Use buffer information to calculate the per vertex stride
+            data.VertexBufferStride = 0x4 * 0x3; 
 
             return data;
         }
 
-        public Scene ParseObj(string filename)
+        public SceneGraphNode ParseObj(string filename)
         {
             FileStream fs = new FileStream(filename, FileMode.Open);
             StreamReader sr = new StreamReader(fs);
 
+            List<NbVector3> VertexPositions = new();
+            List<NbVector3> VertexNormals = new();
+            List<NbVector2> VertexUVs = new();
+
+            //Final Data
             List<NbVector3> Vertices = new();
             List<NbVector3i> Tris = new();
+            int indexCount = 0;
             
             while (!sr.EndOfStream)
             {
@@ -142,62 +154,101 @@ namespace NibbleOBJPlugin
 
                 if (line.StartsWith("#"))
                     continue;
-                
-                if (line.StartsWith("v"))
+
+                if (line.StartsWith("vt"))
+                {
+                    //Parse Vertex
+                    string[] split = line.Split(' ');
+                    float.TryParse(split[1], out var x);
+                    float.TryParse(split[2], out var y);
+                    VertexUVs.Add(new NbVector2(x, y));
+                } else if (line.StartsWith("vn"))
                 {
                     //Parse Vertex
                     string[] split = line.Split(' ');
                     float.TryParse(split[1], out var x);
                     float.TryParse(split[2], out var y);
                     float.TryParse(split[3], out var z);
-                    Vertices.Add(new NbVector3(x, y, z));
+                    VertexNormals.Add(new NbVector3(x, y, z));
+                }
+                else if (line.StartsWith("v"))
+                {
+                    //Parse Vertex
+                    string[] split = line.Split(' ');
+                    float.TryParse(split[1], out var x);
+                    float.TryParse(split[2], out var y);
+                    float.TryParse(split[3], out var z);
+                    VertexPositions.Add(new NbVector3(x, y, z));
                 }
                 else if (line.StartsWith("f"))
                 {
-                    //Parse Triangle
-                    //Parse Vertex
+                    //Parse Face Data
                     string[] split = line.Split(' ');
-                    int.TryParse(split[1], out var x);
-                    int.TryParse(split[2], out var y);
-                    int.TryParse(split[3], out var z);
-                    Tris.Add(new NbVector3i(x, y, z));
+                    
+                    //Quad
+                    if (split.Length == 5)
+                    {
+                        //TODO
+                    } else //Triangle
+                    {
+                        //Assume triangles
+                        for (int i = 1; i < 4; i++)
+                        {
+                            string[] vsplit = split[i].Split('/');
+                            
+                            for (int j = 0; j < vsplit.Length; j++)
+                            {
+                                switch (j)
+                                {
+                                    //VertexPositions
+                                    case 0:
+                                        {
+                                            NbVector3 v1 = VertexPositions[int.Parse(vsplit[0]) - 1];
+                                            Vertices.Add(v1);
+                                            break;
+                                        };
+                                    default:
+                                        {
+                                            //Normals and Uns not yet supported
+                                            break;
+                                        }
+                                }
+                            }
+                        }
+                        //Save triangle
+                        Tris.Add(new NbVector3i(indexCount, indexCount + 1, indexCount + 2));
+                        indexCount += 3;
+                    }
                 }
                 else
                 {
-                    Log("Unknown obj directive. Skipping...", LogVerbosityLevel.WARNING);
+                    Log($"Unknown obj directive {line}. Skipping...", LogVerbosityLevel.WARNING);
                 }
 
-                NbMesh mesh = GenerateMesh(Vertices, Tris);
-
-                //Generate Material
-                MeshMaterial mat = new();
-
-                mat.Name = "objMat";
-                mat.add_flag(MaterialFlagEnum._F07_UNLIT);
-                Uniform uf = new()
-                {
-                    Name = "mpCustomPerMaterial.gMaterialColourVec4",
-                    Values = new(0.0f, 1.0f, 1.0f, 1.0f)
-                };
-                mat.Uniforms.Add(uf);
-                EngineRef.renderSys.Renderer.CompileMaterialShader(mat);
-                
-
-                //Generate Scene
-                Scene scn = new Scene();
-                //Generate Scene Root
-                SceneGraphNode root = EngineRef.CreateLocatorNode("OBJ_Root");
-                
-                //Generate Mesh Node
-                SceneGraphNode mesh_node = EngineRef.CreateMeshNode("obj_mesh", mesh, mat);
-
-
-            }             
-            
-            
-            
+            }
             sr.Close();
-            return null;
+
+            NbMesh mesh = GenerateMesh(Vertices, Tris);
+
+            //Generate Material
+            MeshMaterial mat = new();
+
+            mat.Name = "objMat";
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+            Uniform uf = new()
+            {
+                Name = "mpCustomPerMaterial.gMaterialColourVec4",
+                Values = new(0.0f, 1.0f, 1.0f, 1.0f)
+            };
+            mat.Uniforms.Add(uf);
+            mat.Shader = EngineRef.renderSys.GetMaterialShader(mat, 
+                NbCore.Platform.Graphics.OpenGL.SHADER_MODE.DEFFERED);
+            
+            //Generate Mesh Node
+            SceneGraphNode mesh_node = EngineRef.CreateMeshNode("obj_mesh", mesh, mat);
+            
+
+            return mesh_node;
         }
 
         public override void Export(string filepath)
@@ -212,10 +263,11 @@ namespace NibbleOBJPlugin
 
         public override void DrawImporters()
         {
-            if (ImGuiCore.MenuItem("Import from obj", "", false, openFileDialog.IsOpen))
+            if (ImGuiCore.MenuItem("Import from obj", "", false, true))
             {
                 openFileDialog.Open();
             }
+
         }
 
         public override void DrawExporters(Scene scn)
@@ -225,7 +277,10 @@ namespace NibbleOBJPlugin
 
         public override void Draw()
         {
-            openFileDialog.Draw(new System.Numerics.Vector2(600,400));
+            if (openFileDialog.Draw(new System.Numerics.Vector2(600, 400)))
+            {
+                Import(openFileDialog.GetSelectedFile());
+            }
         }
     }
 }

@@ -26,7 +26,7 @@ namespace NbCore
         
         //This is needed only for removing render instances, so that InstanceIDs for relocated meshes in the buffer are updated
         //I think I should find a way to get rid of this at some point. Till then I'll keep it
-        public List<MeshComponent> instanceRefs = new(); 
+        public MeshComponent[] instanceRefs = new MeshComponent[10]; 
         
         public float[] instanceBoneMatrices;
         

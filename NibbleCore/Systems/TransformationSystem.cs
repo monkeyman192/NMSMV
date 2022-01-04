@@ -30,7 +30,7 @@ namespace NbCore.Systems
             updateInterval = interval;
         }
 
-        public void RegisterEntity(Entity e, bool createController, bool isDynamic)
+        public void RegisterEntity(Entity e)
         {
             if (EntityDataMap.ContainsKey(e.GetID()))
             {
@@ -50,10 +50,10 @@ namespace NbCore.Systems
             EntityDataMap[e.GetID()] = tc;
             _Data.Add(tc.Data); //Add ref to TransformData list
             
-            if (createController)
+            if (tc.IsControllable)
                 EntityControllerMap[e.GetID()] = new TransformController(tc.Data);
 
-            if (isDynamic)
+            if (tc.IsDynamic)
                 AddDynamicEntity(e);
         }
 

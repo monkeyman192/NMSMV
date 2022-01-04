@@ -22,7 +22,6 @@ namespace NbCore
         //Overload with transform overrides
         public static void ClearInstances(NbMesh mesh)
         {
-            mesh.instanceRefs.Clear();
             mesh.InstanceCount = 0;
         }
 

@@ -498,10 +498,12 @@ namespace NbCore.Platform.Graphics.OpenGL {
         public Dictionary<string, int> uniformLocations = new Dictionary<string, int>();
 
         public GLSLShaderConfig(SHADER_TYPE type, GLSLShaderSource vvs, 
-            GLSLShaderSource ffs, GLSLShaderSource ggs, GLSLShaderSource ttcs, GLSLShaderSource ttes, List<string> directives) : base(EntityType.Shader)
+            GLSLShaderSource ffs, GLSLShaderSource ggs, GLSLShaderSource ttcs, GLSLShaderSource ttes, 
+            List<string> directives, SHADER_MODE mode) : base(EntityType.Shader)
         {
             shader_type = type; //Set my custom shader type for recognition
-            
+            ShaderMode = mode;
+
             //Store objects
             FSText = ffs;
             GSText = ggs;
@@ -553,29 +555,26 @@ namespace NbCore.Platform.Graphics.OpenGL {
             return hash.GetHashCode();
         }
 
-        public static GLSLShaderConfig compileShader(GLSLShaderSource vs, GLSLShaderSource fs, 
-                                                     GLSLShaderSource gs, GLSLShaderSource tcs,
-                                                     GLSLShaderSource tes, List<string> defines,
-            List<string> includes, SHADER_TYPE type, SHADER_MODE mode)
+        public static List<string> CombineShaderDirectives(List<string> directives, SHADER_MODE mode)
         {
-
-            List<string> extraDirectives = new();
+            List<string> includes = directives.ToList();
             
             //General Directives are provided here
             if ((mode & SHADER_MODE.DEFFERED) == SHADER_MODE.DEFFERED)
-                extraDirectives.Add("_D_DEFERRED_RENDERING");
-            
-            //Pass extra definitions
-            foreach (string  f in defines)
-                extraDirectives.Add(f);
-            
-            //Material Flags are provided here
-            foreach (string  f in includes)
-                extraDirectives.Add(f);
-            
-            GLSLShaderConfig shader_conf = new GLSLShaderConfig(type, vs, fs, gs, tcs, tes, extraDirectives);
+                includes.Add("_D_DEFERRED_RENDERING");
+
+            return includes;
+        }
+
+        public static GLSLShaderConfig compileShader(GLSLShaderSource vs, GLSLShaderSource fs, 
+                                                     GLSLShaderSource gs, GLSLShaderSource tcs,
+                                                     GLSLShaderSource tes, List<string> directives,
+            SHADER_TYPE type, SHADER_MODE mode)
+        {
+            List<string> finaldirectives = CombineShaderDirectives(directives, mode);
+            GLSLShaderConfig shader_conf = new GLSLShaderConfig(type, vs, fs, gs, tcs, tes, finaldirectives, mode);
             compileShader(shader_conf);
-            shader_conf.Hash = calculateShaderHash(extraDirectives);
+            shader_conf.Hash = calculateShaderHash(finaldirectives);
             
             return shader_conf;
         }

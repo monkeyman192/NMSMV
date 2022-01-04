@@ -9,15 +9,19 @@ namespace NbCore.UI.ImGui
 {
 	public class OpenFileDialog
 	{
+		
 		static readonly Num.Vector4 YELLOW_TEXT_COLOR = new Num.Vector4(1.0f, 1.0f, 0.0f, 1.0f);
-		public string uid;
 
+		private string _uid;
 		private FilePicker filePicker = null;
 		public bool IsOpen = false;
+		private bool show_open_file_dialog = false;
 
-		public OpenFileDialog(string startingPath, string searchFilter = null, bool onlyAllowFolders = false)
+		public OpenFileDialog(string uid, string startingPath, string searchFilter = null, bool onlyAllowFolders = false)
         {
+			_uid = uid;
 			filePicker = new();
+			filePicker.SelectedFile = "";
 			filePicker.RootFolder = startingPath;
 			filePicker.CurrentFolder = startingPath;
 			filePicker.OnlyAllowFolders = onlyAllowFolders;
@@ -50,13 +54,8 @@ namespace NbCore.UI.ImGui
 				{
 					var name = Path.GetFileName(fse);
 					bool isSelected = filePicker.SelectedFile == fse;
-					if (ImGuiCore.Selectable(name, isSelected, ImGuiNET.ImGuiSelectableFlags.DontClosePopups))
+					if (ImGuiCore.Selectable(name, isSelected, ImGuiNET.ImGuiSelectableFlags.DontClosePopups) || ImGuiCore.IsMouseDoubleClicked(0))
 						filePicker.SelectedFile = fse;
-
-					if (ImGuiCore.IsMouseDoubleClicked(0))
-					{
-						Close();
-					}
 				}
 			}
 
@@ -65,24 +64,34 @@ namespace NbCore.UI.ImGui
 		public void Open()
         {
 			filePicker.SelectedFile = "";
-			IsOpen = true;
-			ImGuiCore.OpenPopup(uid);
+			show_open_file_dialog = true;
 		}
 
-		public void Close()
+		private void Close()
         {
 			ImGuiCore.CloseCurrentPopup();
-			IsOpen = false;
 		}
 
 		public bool isFileSelected()
         {
 			return filePicker.SelectedFile != "";
         }
+
+		public string GetSelectedFile()
+        {
+			return filePicker.SelectedFile;
+        }
 		
-		public void Draw(System.Numerics.Vector2 winsize)
+		public bool Draw(System.Numerics.Vector2 winsize)
 		{
-			if (ImGuiCore.BeginPopupModal(uid, ref IsOpen))
+			if (show_open_file_dialog)
+			{
+				ImGuiCore.OpenPopup(_uid);
+				show_open_file_dialog = false;
+			}
+
+			bool isopen = true;
+			if (ImGuiCore.BeginPopupModal(_uid, ref isopen, ImGuiNET.ImGuiWindowFlags.None))
 			{
 				if (filePicker.CurrentFolder == null)
 				{
@@ -159,11 +168,14 @@ namespace NbCore.UI.ImGui
 					if (ImGuiCore.Button("Open"))
 					{
 						Close();
+						return true;
 					}
 				}
 
 				ImGuiCore.EndPopup();
 			}
+
+			return false;
 
 		}
 

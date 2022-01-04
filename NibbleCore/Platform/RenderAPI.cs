@@ -26,8 +26,10 @@ namespace NbCore.Platform.Graphics
         public void UploadFrameData();
 
         //Shader Compilation
-        public GLSLShaderConfig CompileMaterialShader(MeshMaterial mat);
-        public int CalculateMaterialShaderhash(MeshMaterial mat);
+        public GLSLShaderConfig CompileMaterialShader(MeshMaterial mat, SHADER_MODE mode);
+        public void AttachShaderToMaterial(MeshMaterial mat, GLSLShaderConfig shader);
+        public List<string> GetMaterialShaderDirectives(MeshMaterial mat);
+        public int CalculateMaterialShaderhash(MeshMaterial mat, SHADER_MODE mode);
 
         //Mesh Buffer Methods
         public void PrepareMeshBuffers();

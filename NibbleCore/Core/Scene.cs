@@ -48,7 +48,11 @@ namespace NbCore
                     LogVerbosityLevel.WARNING);
                 return;
             }
-            
+
+            //Handle orphans
+            if (n.Parent == null)
+                Root?.AddChild(n);
+
             _Nodes.Add(n);
 
             if (n.HasComponent<MeshComponent>())

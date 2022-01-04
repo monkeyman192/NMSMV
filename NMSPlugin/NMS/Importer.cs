@@ -266,7 +266,8 @@ namespace NMSPlugin
             MeshMaterial mat = CreateMaterialFromStruct(template, input_texMgr);
             
             mat.texMgr = input_texMgr;
-            EngineRef.renderSys.Renderer.CompileMaterialShader(mat);
+            EngineRef.renderSys.Renderer.CompileMaterialShader(mat, 
+                NbCore.Platform.Graphics.OpenGL.SHADER_MODE.DEFFERED);
             return mat;
         }
 
