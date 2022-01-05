@@ -56,6 +56,7 @@ namespace NbCore
 
         private KeyboardState ActiveKbState;
         private MouseState ActiveMsState;
+        private bool CaptureInput; //Toggle to enable Capture of Mouse/Keyboard/Controller input
         private Queue<KeyboardState> kbStates = new();
         private Queue<MouseState> MsStates = new();
         
@@ -120,6 +121,13 @@ namespace NbCore
             transformSys.SetEngine(this);
             sceneMgmtSys.SetEngine(this);
         }
+
+        public void SetCaptureInputStatus(bool status)
+        {
+            CaptureInput = status;
+        }
+
+        #region plugin_loader
 
         private AssemblyName GetAssemblyName(string name)
         {
@@ -278,6 +286,8 @@ namespace NbCore
             }
             
         }
+
+        #endregion
 
         public Font AddFont(string fontPath, string fontAtlas)
         {
@@ -754,8 +764,7 @@ namespace NbCore
         {
             //Once the new scene has been loaded, 
             //Initialize Palettes
-            //Import.NMS.Palettes.set_palleteColors();
-
+            
             //Clear Systems
             actionSys.CleanUp();
             animationSys.CleanUp();
@@ -801,7 +810,8 @@ namespace NbCore
         public override void OnFrameUpdate(double dt)
         {
             //Update input
-            UpdateInput();
+            if (CaptureInput)
+                UpdateInput();
             
             handleRequests(); //Handle engine requests
 

@@ -747,15 +747,22 @@ namespace NbCore.Platform.Graphics.OpenGL {
                 int loc;
 
                 GL.GetActiveUniform(shader_conf.ProgramID, i, bufSize, out int size, out int length, out ActiveUniformType type, out string name);
-                loc = GL.GetUniformLocation(shader_conf.ProgramID, name);
-                shader_conf.uniformLocations[name] = loc; //Store location
-                
-                if (RenderState.enableShaderCompilationLog)
+                string basename = name.Split("[0]")[0];
+                for (int j = 0; j < length; j++)
                 {
-                    string info_string = String.Format("Uniform # {0} Location: {1} Type: {2} Name: {3} Length: {4} Size: {5}",
-                    i, loc, type.ToString(), name, length, size);
-                    shader_conf.CompilationLog += info_string + "\n";
+                    if (j > 0)
+                        name = basename + "[" + j + "]";
+                    loc = GL.GetUniformLocation(shader_conf.ProgramID, name);
+                    shader_conf.uniformLocations[name] = loc; //Store location
+
+                    if (RenderState.enableShaderCompilationLog)
+                    {
+                        string info_string = $"Uniform # {i} Location: {loc} Type: {type.ToString()} Name: {name}";
+                        shader_conf.CompilationLog += info_string + "\n";
+                    }
                 }
+
+                
             }
         }
         

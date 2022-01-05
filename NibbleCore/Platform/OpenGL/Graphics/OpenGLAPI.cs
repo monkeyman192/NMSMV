@@ -76,8 +76,8 @@ namespace NbCore.Platform.Graphics.OpenGL
         private static readonly Dictionary<NbTextureTarget, TextureTarget> TextureTargetMap = new()
         {
             {NbTextureTarget.Texture1D , TextureTarget.Texture1D},
-            {NbTextureTarget.Texture1D , TextureTarget.Texture1D},
-            {NbTextureTarget.Texture1D , TextureTarget.Texture1D}
+            {NbTextureTarget.Texture2D , TextureTarget.Texture2D},
+            {NbTextureTarget.Texture2DArray , TextureTarget.Texture2DArray }
         };
 
         //UBO structs

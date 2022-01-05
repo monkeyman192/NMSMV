@@ -77,14 +77,16 @@ namespace NbCore.UI.ImGui
             ImGuiCore.Text("GUID");
             ImGuiCore.Text("Type");
             ImGuiCore.Text("LOD");
+            ImGuiCore.Text("Name");
 
             ImGuiCore.NextColumn();
             ImGuiCore.Text(gc.ID.ToString());
             ImGuiCore.Text(_model.Type.ToString());
             ImGuiCore.Text("TODO");
+            ImGuiCore.InputText("##Name", ref _model.Name, 30);
 
             ImGuiCore.Columns(1);
-            ImGuiCore.InputText("Name", ref _model.Name, 30);
+            
 
 
             //ImGui.Text(_model.LODNumber.ToString());
@@ -98,18 +100,30 @@ namespace NbCore.UI.ImGui
             {
                 //Draw TransformMatrix
                 bool transform_changed = false;
-                ImGuiCore.Columns(3);
-                transform_changed |= ImGuiCore.DragFloat("TransX", ref td.TransX, 0.005f);
-                transform_changed |= ImGuiCore.DragFloat("RotX", ref td.RotX);
-                transform_changed |= ImGuiCore.DragFloat("ScaleX", ref td.ScaleX, 0.005f);
+                ImGuiCore.Columns(4);
+                ImGuiCore.Text("Translation");
                 ImGuiCore.NextColumn();
-                transform_changed |= ImGuiCore.DragFloat("TransY", ref td.TransY, 0.005f);
-                transform_changed |= ImGuiCore.DragFloat("RotY", ref td.RotY);
-                transform_changed |= ImGuiCore.DragFloat("ScaleY", ref td.ScaleY, 0.005f);
+                transform_changed |= ImGuiCore.DragFloat("##TransX", ref td.TransX, 0.005f);
                 ImGuiCore.NextColumn();
-                transform_changed |= ImGuiCore.DragFloat("TransZ", ref td.TransZ, 0.005f);
-                transform_changed |= ImGuiCore.DragFloat("RotZ", ref td.RotZ);
-                transform_changed |= ImGuiCore.DragFloat("ScaleZ", ref td.ScaleZ, 0.005f);
+                transform_changed |= ImGuiCore.DragFloat("##TransY", ref td.TransY, 0.005f);
+                ImGuiCore.NextColumn();
+                transform_changed |= ImGuiCore.DragFloat("##TransZ", ref td.TransZ, 0.005f);
+                ImGuiCore.NextColumn();
+                ImGuiCore.Text("Rotation");
+                ImGuiCore.NextColumn();
+                transform_changed |= ImGuiCore.DragFloat("##RotX", ref td.RotX);
+                ImGuiCore.NextColumn();
+                transform_changed |= ImGuiCore.DragFloat("##RotY", ref td.RotY);
+                ImGuiCore.NextColumn();
+                transform_changed |= ImGuiCore.DragFloat("##RotZ", ref td.RotZ);
+                ImGuiCore.NextColumn();
+                ImGuiCore.Text("Scale");
+                ImGuiCore.NextColumn();
+                transform_changed |= ImGuiCore.DragFloat("##ScaleX", ref td.ScaleX, 0.005f);
+                ImGuiCore.NextColumn();
+                transform_changed |= ImGuiCore.DragFloat("##ScaleY", ref td.ScaleY, 0.005f);
+                ImGuiCore.NextColumn();
+                transform_changed |= ImGuiCore.DragFloat("##ScaleZ", ref td.ScaleZ, 0.005f);
                 ImGuiCore.Columns(1);
 
                 if (transform_changed)
@@ -126,7 +140,6 @@ namespace NbCore.UI.ImGui
                 {
                     ImGuiCore.Columns(2);
                     ImGuiCore.Text("Instance ID");
-                    ImGuiCore.Text("Render Instance ID");
                     ImGuiCore.Text("Material");
                     ImGuiCore.NextColumn();
                     ImGuiCore.Text(mc.InstanceID.ToString());
@@ -141,10 +154,10 @@ namespace NbCore.UI.ImGui
                     {
                         ImGuiCore.Text("Null");
                         ImGuiCore.SameLine();
-                        if (ImGuiCore.Button("-"))
+                        if (ImGuiCore.Button("+"))
                             Console.WriteLine("Add Material not implemented yet");
                     }
-
+                    
                     ImGuiCore.Columns(1);
                     
                     if (ImGuiCore.TreeNode("Mesh"))
@@ -152,7 +165,6 @@ namespace NbCore.UI.ImGui
                         NbMesh mesh = mc.Mesh;
                         ImGuiCore.Columns(2);
                         ImGuiCore.Text("Instance Count");
-                        ImGuiCore.Text("Rendered Instance Count");
                         ImGuiCore.NextColumn();
                         ImGuiCore.Text(mesh.InstanceCount.ToString());
                         ImGuiCore.Columns(1);

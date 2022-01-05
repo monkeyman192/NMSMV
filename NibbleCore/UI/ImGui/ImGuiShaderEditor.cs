@@ -50,7 +50,7 @@ namespace NbCore.UI.ImGui
             if (ActiveShaderSource != null)
             {
                 ImGuiCore.InputTextMultiline("##2", ref ActiveShaderSource.SourceText, 50000,
-                    new System.Numerics.Vector2(400, 400));
+                    new System.Numerics.Vector2(-1, -20));
 
                 if (ImGuiCore.Button("Recompile Shader"))
                 {

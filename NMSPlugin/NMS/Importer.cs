@@ -275,13 +275,14 @@ namespace NMSPlugin
         {
             Sampler sam = new Sampler();
             
-            switch (ms.Name)
+            switch (ms.Name.Value)
             {
                 case "gDiffuseMap":
                 case "gNormalMap":
                 case "gDiffuse2Map":
                 case "gMasksMap":
                     sam.Name = "mpCustomPerMaterial." + ms.Name.Value;
+                    sam.Map = ms.Map.Value;
                     sam.texUnit = Util.MapTextureUnit[sam.Name];
                     sam.SamplerID = Util.MapTexUnitToSampler[sam.Name];
                     break;
@@ -304,7 +305,7 @@ namespace NMSPlugin
                 
                 //Detect Procedural Texture
                 if (FileUtils.NMSFileToArchiveMap.Keys.Contains(texMbin))
-                {
+                { 
                     TextureMixer.combineTextures(sam.Map, Palettes.paletteSel, ref texMgr);
                     //Override Map
                     sam.isProcGen = true;
@@ -861,9 +862,9 @@ namespace NMSPlugin
         private static SceneGraphNode CreateNodeFromTemplate(TkSceneNodeData node, 
             GeomObject gobject, SceneGraphNode parent, Scene parentScene)
         {
-            Callbacks.Log(string.Format("Importing Node {0}", node.Name), 
+            Callbacks.Log(string.Format("Importing Node {0}", node.Name.Value), 
                 LogVerbosityLevel.INFO);
-            Callbacks.updateStatus("Importing Part: " + node.Name);
+            Callbacks.updateStatus("Importing Part: " + node.Name.Value);
 
             if (!Enum.TryParse(node.Type, out SceneNodeType typeEnum))
                 throw new Exception("Node Type " + node.Type + "Not supported");
@@ -906,7 +907,7 @@ namespace NMSPlugin
 
             if (typeEnum == SceneNodeType.MESH)
             {
-                Callbacks.Log(string.Format("Parsing Mesh {0}", node.Name), 
+                Callbacks.Log(string.Format("Parsing Mesh {0}", node.Name.Value), 
                     LogVerbosityLevel.INFO);
 
                 //Get Material Name
@@ -1015,27 +1016,27 @@ namespace NMSPlugin
             }
             else if (typeEnum == SceneNodeType.LOCATOR)
             {
-                throw new Exception("Not Implemented Yet!");
+                Callbacks.Log("Locators not supported atm", LogVerbosityLevel.INFO);
             }
             else if (typeEnum == SceneNodeType.JOINT)
             {
-                throw new Exception("Not Implemented Yet!");
+                Callbacks.Log("Joints not supported atm", LogVerbosityLevel.INFO);
             }
             else if (typeEnum == SceneNodeType.REFERENCE)
             {
-                throw new Exception("Not Implemented Yet!");
+                Callbacks.Log("References not supported atm", LogVerbosityLevel.INFO);
             }
             else if (typeEnum == SceneNodeType.COLLISION)
             {
-                throw new Exception("Not Implemented Yet!");
+                Callbacks.Log("Collisions not supported atm", LogVerbosityLevel.INFO);
             }
             else if (typeEnum == SceneNodeType.LIGHT)
             {
-                throw new Exception("Not Implemented Yet!");
+                Callbacks.Log("Lights not supported atm", LogVerbosityLevel.INFO);
             }
             else if (typeEnum == SceneNodeType.EMITTER)
             {
-                throw new Exception("Not Implemented Yet!");
+                Callbacks.Log("Emmiters not supported atm", LogVerbosityLevel.INFO);
             } else
             {
                 Callbacks.Log("Unknown scenenode type. Please contant the developer", LogVerbosityLevel.WARNING);

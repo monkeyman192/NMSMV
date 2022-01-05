@@ -91,6 +91,15 @@ namespace NMSPlugin
             texMgr.AddTexture(normalTex);
         }
 
+        private static Texture LoadNMSTexture(string path)
+        {
+            System.IO.Stream s = FileUtils.LoadNMSFileStream(path);
+            byte[] data = new byte[s.Length];
+            s.Read(data, 0, data.Length);
+
+            return new Texture(data, true, path);
+        }
+
         //Generate procedural textures
         private static void prepareTextures(TextureManager texMgr, string path)
         {
@@ -164,7 +173,8 @@ namespace NMSPlugin
                     //Configure the Diffuse Texture
                     try
                     {
-                        Texture tex = new Texture(partNameDiff);
+                        //Get NMS texture data
+                        Texture tex = LoadNMSTexture(partNameDiff);
                         tex.palOpt = palOpt;
                         tex.procColor = palColor;
                         //Store to master texture manager
@@ -203,7 +213,7 @@ namespace NMSPlugin
                     //Configure Mask
                     try
                     {
-                        Texture texmask = new Texture(partNameMask);
+                        Texture texmask = LoadNMSTexture(partNameMask);
                         //Store to master texture manager
                         texMgr.AddTexture(texmask);
                         //Store Texture to material
@@ -238,7 +248,7 @@ namespace NMSPlugin
                 {
                     try
                     {
-                        Texture texnormal = new Texture(partNameNormal);
+                        Texture texnormal = LoadNMSTexture(partNameNormal);
                         //Store to master texture manager
                         texMgr.AddTexture(texnormal);
                         //Store Texture to material

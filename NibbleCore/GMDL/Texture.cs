@@ -36,6 +36,7 @@ namespace NbCore
 
         public Texture(byte[] data, bool isDDS, string name) : base(EntityType.Texture)
         {
+            Name = name;
             if (isDDS)
             {
                 textureInitDDS(data);
@@ -179,7 +180,7 @@ namespace NbCore
             Depth = depth_count;
             
             //Generate PBO
-            GL.BufferData(BufferTarget.PixelUnpackBuffer, ddsImage.Data.Length, ddsImage.Data, BufferUsageHint.StaticDraw);
+            //GL.BufferData(BufferTarget.PixelUnpackBuffer, ddsImage.Data.Length, ddsImage.Data, BufferUsageHint.StaticDraw);
             //GL.BufferSubData(BufferTarget.PixelUnpackBuffer, IntPtr.Zero, ddsImage.bdata.Length, ddsImage.bdata);
 
             //Upload to GPU
@@ -245,7 +246,7 @@ namespace NbCore
 #endif
             //avgColor = getAvgColor(pixels);
             ddsImage = null;
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0); //Unbind texture PBO
+            //GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0); //Unbind texture PBO
         }
 
         public void textureInit(byte[] imageData, string ext)

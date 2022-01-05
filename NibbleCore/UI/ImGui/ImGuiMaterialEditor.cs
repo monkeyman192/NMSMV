@@ -30,12 +30,12 @@ namespace NbCore.UI.ImGui
 
             if (ImGuiNET.ImGui.Button("Add"))
             {
-                Console.WriteLine("Todo Create Shader");
+                Console.WriteLine("Todo Create Material");
             }
             ImGuiNET.ImGui.SameLine();
             if (ImGuiNET.ImGui.Button("Del"))
             {
-                Console.WriteLine("Todo Delete Shader");
+                Console.WriteLine("Todo Delete Material");
             }
             if (_ActiveMaterial is null)
             {
@@ -56,48 +56,64 @@ namespace NbCore.UI.ImGui
             List<string> flags = new();
             for (int i = 0;i<_ActiveMaterial.Flags.Count;i++)
                 flags.Add(_ActiveMaterial.Flags[i].ToString());
-            
-            if (ImGuiNET.ImGui.ListBox("", ref current_material_flag, flags.ToArray(), flags.Count, System.Math.Min(flags.Count, 5)))
+                
+            //TODO Add combobox here with all the available flags that can be selected and added to the material
+            if (ImGuiNET.ImGui.Button("+"))
             {
-                Console.WriteLine("ListBox event");
-            }
-            ImGuiNET.ImGui.SameLine();
-            if (ImGuiNET.ImGui.Button("Add"))
-            {
-                Console.WriteLine("Todo Add Material");
-            }
-            ImGuiNET.ImGui.SameLine();
-            
-            if (ImGuiNET.ImGui.Button("Del"))
-            {
-                Console.WriteLine("Todo Delete Material");
+                Console.WriteLine("Add Flag");
             }
 
+            float lineheight = ImGuiNET.ImGui.GetTextLineHeight();
+            if (ImGuiNET.ImGui.BeginListBox("##FlagsListBox", new Vector2(0, (lineheight + 5) * flags.Count)))
+            {
+                foreach (string flag in flags)
+                {
+                    ImGuiNET.ImGui.Selectable(flag);
+
+                    if (ImGuiNET.ImGui.BeginPopupContextItem(flag, ImGuiPopupFlags.MouseButtonRight))
+                    {
+                        if (ImGuiNET.ImGui.MenuItem("Delete ##flag"))
+                        {
+                            Console.WriteLine("Delete Flag");
+                        }
+                        ImGuiNET.ImGui.EndPopup();
+                    }
+                }
+
+                ImGuiNET.ImGui.EndListBox();
+            }
+
+            //if (ImGuiNET.ImGui.ListBox("", ref current_material_flag, flags.ToArray(), flags.Count, System.Math.Min(flags.Count, 5)))
+            //{
+            //    if (ImGuiNET.ImGui.IsMouseClicked(ImGuiMouseButton.Right))
+            //    {
+            //        Console.WriteLine("ListBox event1");
+            //    }
+            //}
+            
             ImGuiNET.ImGui.NextColumn();
             ImGuiNET.ImGui.Text("Samplers");
             ImGuiNET.ImGui.NextColumn();
-            List<string> samplers = new();
-            for (int i=0;i<_ActiveMaterial.Samplers.Count;i++)
-                samplers.Add(_ActiveMaterial.Samplers[i].Name);
-            if (ImGuiNET.ImGui.ListBox("", ref current_material_sampler, samplers.ToArray(), samplers.Count, System.Math.Min(samplers.Count, 5)))
-            {
-                Sampler current_sampler = _ActiveMaterial.Samplers[current_material_sampler];
-                ImGuiNET.ImGui.Text(current_sampler.Name);
-                ImGuiNET.ImGui.Text(current_sampler.Map);
-            }
-
-            ImGuiNET.ImGui.SameLine();
             if (ImGuiNET.ImGui.Button("+"))
             {
                 Console.WriteLine("Adding Sampler");
             }
 
-            ImGuiNET.ImGui.SameLine();
-            
-            if (ImGuiNET.ImGui.Button("-"))
+            List<string> samplers = new();
+            for (int i=0;i<_ActiveMaterial.Samplers.Count;i++)
+                samplers.Add(_ActiveMaterial.Samplers[i].Name);
+            if (samplers.Count > 0)
             {
-                Console.WriteLine("Removing Sampler");   
+                if (ImGuiNET.ImGui.ListBox("", ref current_material_sampler, samplers.ToArray(), samplers.Count, System.Math.Min(samplers.Count, 5)))
+                {
+                    Sampler current_sampler = _ActiveMaterial.Samplers[current_material_sampler];
+                    ImGuiNET.ImGui.Text(current_sampler.Name);
+                    ImGuiNET.ImGui.Text(current_sampler.Map);
+                }
+                ImGuiNET.ImGui.SameLine();
             }
+            
+            
             //Uniforms
             ImGuiNET.ImGui.NextColumn();
             ImGuiNET.ImGui.Text("Uniforms");

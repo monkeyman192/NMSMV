@@ -13,7 +13,7 @@ uniform vec4 lAverageColors[8];
 
 uniform float recolor_flag;
 uniform float use_alpha_textures;
-uniform int baseLayerIndex;
+uniform float baseLayerIndex;
 
 in vec2 uv0;
 in vec3 color;
@@ -90,7 +90,7 @@ vec4 MixTextures(){
 
 	
 	//Set the lowest alpha layer to fully opaque
-	gBaseAlphaLayerXVec4[baseLayerIndex] = 1.0;
+	gBaseAlphaLayerXVec4[int(baseLayerIndex)] = 1.0;
 	for (int i=0; i<8; i++) {
 	   	lfAlpha[i] = mix(lfAlpha[i], 1.0, gBaseAlphaLayerXVec4[i]);
 	}
