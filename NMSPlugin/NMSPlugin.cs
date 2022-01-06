@@ -219,7 +219,12 @@ namespace NMSPlugin
             Palettes.set_palleteColors();
 
             Importer.SetEngineReference(EngineRef);
-            Scene scn = Importer.ImportScene(filepath);
+            SceneGraphNode root = Importer.ImportScene(filepath);
+
+            EngineRef.GetActiveScene().Clear();
+            EngineRef.RegisterSceneGraphNode(root);
+            
+            //root.Dispose(); //Dispose since I don't use it for now
             //TODO: Register Scene to Engine
         }
 

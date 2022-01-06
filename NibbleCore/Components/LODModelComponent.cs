@@ -32,7 +32,7 @@ namespace NbCore
     public class LODModelResource
     {
         public string FileName;
-        public Scene SceneRef = null;
+        public SceneGraphNode SceneRef = null;
         //public float CrossFadeTime;
         //public float CrossFadeoverlap;
     }

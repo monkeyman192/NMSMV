@@ -74,15 +74,17 @@ namespace NbCore
 
         public void SetRoot(SceneGraphNode n)
         {
-            if (HasNode(n))
-                Root = n;
+            Root = n;
         }
 
         public void Clear()
         {
+            foreach (SceneGraphNode node in _Nodes)
+                node.Dispose();
+            
+            Root.Children.Clear();
             _Nodes.Clear();
             _MeshNodes.Clear();
-            Root = null;
         }
 
         public void Update()

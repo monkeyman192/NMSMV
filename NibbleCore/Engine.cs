@@ -113,7 +113,7 @@ namespace NbCore
             transformSys = new TransformationSystem();
             sceneMgmtSys = new SceneManagementSystem();
 
-
+            SetEngine(this);
             renderSys.SetEngine(this);
             registrySys.SetEngine(this);
             actionSys.SetEngine(this);
@@ -338,7 +338,12 @@ namespace NbCore
         
         public Scene CreateScene()
         {
-            return sceneMgmtSys.CreateScene();
+            Scene scn = sceneMgmtSys.CreateScene();
+            //Register Entities
+            RegisterEntity(scn.Root);
+            transformSys.RequestEntityUpdate(scn.Root);
+            
+            return scn;
         }
 
         #region ResourceManager
@@ -697,8 +702,7 @@ namespace NbCore
                         BatchCount = bands * bands * 6,
                         BatchStartGraphics = 0,
                         VertrStartGraphics = 0,
-                        VertrEndGraphics = (bands + 1) * (bands + 1) - 1,
-                        IndicesLength = NbPrimitiveDataType.UnsignedInt
+                        VertrEndGraphics = (bands + 1) * (bands + 1) - 1
                     },
                     Data = (new Sphere(new NbVector3(), 2.0f, 40)).GetData()
                 }
@@ -1189,11 +1193,22 @@ namespace NbCore
             renderSys.TextureMgr.AddTexture(tex);
             return tex;
         }
-        
+
         #endregion
-        
-        
-        
+
+
+        #region AssetDisposal
+        public void RecursiveSceneGraphNodeDispose(SceneGraphNode node)
+        {
+            foreach (SceneGraphNode child in node.Children)
+                RecursiveSceneGraphNodeDispose(child);
+            node.Dispose();
+        }
+
+        #endregion
+
+
+
         #region StateQueries
 
         public Scene GetActiveScene()

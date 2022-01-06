@@ -91,7 +91,6 @@ namespace NbCore.Primitives
         {
             return new NbMeshMetaData()
             {
-                IndicesLength = NbPrimitiveDataType.UnsignedInt,
                 BatchCount = geom.ibuffer.Length / 0x4,
                 FirstSkinMat = 0,
                 LastSkinMat = 0,
@@ -106,7 +105,8 @@ namespace NbCore.Primitives
             data.VertexBuffer = new byte[geom.vbuffer.Length];
             data.VertexBufferStride = geom.vx_size;
             data.buffers = geom.bufInfo.ToArray();
-            
+            data.IndicesLength = NbPrimitiveDataType.UnsignedInt;
+
             //Copy buffer data
             System.Buffer.BlockCopy(geom.vbuffer, 0, data.VertexBuffer, 0, geom.vbuffer.Length);
             System.Buffer.BlockCopy(geom.ibuffer, 0, data.IndexBuffer, 0, geom.ibuffer.Length);

@@ -31,9 +31,6 @@ namespace NbCore
         public int LODDistance1;
         public int LODDistance2;
 
-        //New stuff Properties
-        public NbPrimitiveDataType IndicesLength = NbPrimitiveDataType.UnsignedShort;
-
         //Skinning Data
         public bool skinned = false;
         public int BoneRemapIndicesCount;
@@ -75,7 +72,6 @@ namespace NbCore
             BoundHullEnd = input.BoundHullEnd;
             Hash = input.Hash;
             LODLevel = input.LODLevel;
-            IndicesLength = input.IndicesLength;
             AABBMIN = new(input.AABBMIN);
             AABBMAX = new(input.AABBMAX);
         }

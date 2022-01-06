@@ -195,7 +195,7 @@ namespace NMSPlugin
             {
                 string filepath = component.LODModel[i].LODModel.Filename;
                 Console.WriteLine("Loading LOD " + filepath);
-                Scene so = ImportScene(filepath);
+                SceneGraphNode so = ImportScene(filepath);
                 //Create LOD Resource
                 LODModelResource lodres = new()
                 {
@@ -364,7 +364,7 @@ namespace NMSPlugin
     
         
         
-        private static bufInfo get_bufInfo_item(int buf_id, int offset, int count, int buf_type)
+        private static bufInfo get_bufInfo_item(int buf_id, int offset, int stride, int count, int buf_type)
         {
             int sem = buf_id;
             int off = offset;
@@ -373,7 +373,7 @@ namespace NMSPlugin
             bool normalize = false;
             if (text == "bPosition")
                 normalize = true;
-            return new bufInfo(sem, typ, count, 0, off, text, normalize);
+            return new bufInfo(sem, typ, count, stride, off, text, normalize);
         }
 
 
@@ -702,11 +702,12 @@ namespace NMSPlugin
                 var buf_elem_count = br.ReadInt32();
                 var buf_type = br.ReadInt32();
                 var buf_localoffset = br.ReadInt32();
+                var buf_stride = geom.vx_size;
                 //var buf_test1 = br.ReadInt32();
                 //var buf_test2 = br.ReadInt32();
                 //var buf_test3 = br.ReadInt32();
                 //var buf_test4 = br.ReadInt32();
-                geom.bufInfo.Add(get_bufInfo_item(buf_id, buf_localoffset, buf_elem_count, buf_type));
+                geom.bufInfo.Add(get_bufInfo_item(buf_id, buf_localoffset, buf_stride, buf_elem_count, buf_type));
                 fs.Seek(0x10, SeekOrigin.Current);
             }
 
@@ -729,7 +730,7 @@ namespace NMSPlugin
                 var buf_localoffset = br.ReadInt32();
 
                 bufInfo buf = get_bufInfo_item(buf_id,
-                    buf_localoffset, buf_elem_count, buf_type);
+                    buf_localoffset, geom.small_vx_size, buf_elem_count, buf_type);
                 geom.smallBufInfo.Add(buf);
                 fs.Seek(0x10, SeekOrigin.Current);
             }
@@ -752,7 +753,9 @@ namespace NMSPlugin
                 {
                     Hash = mmd.hash,
                     VertexBuffer = new byte[mmd.vs_size],
-                    IndexBuffer = new byte[mmd.is_size]
+                    IndexBuffer = new byte[mmd.is_size],
+                    buffers = geom.bufInfo.ToArray(),
+                    VertexBufferStride = geom.vx_size
                 };
 
                 //Fetch Buffers
@@ -762,6 +765,15 @@ namespace NMSPlugin
                 gfs.Seek((int) mmd.is_abs_offset, SeekOrigin.Begin);
                 gfs.Read(md.IndexBuffer, 0, (int) mmd.is_size);
             
+                //Identify indices length (not 100% correct but much cleaner)
+                
+                //int testIndex = BitConverter.ToInt32(md.IndexBuffer.Take(4).ToArray());
+                
+                if (indexByteLength == 0x4)
+                    md.IndicesLength = NbPrimitiveDataType.UnsignedInt;
+                else
+                    md.IndicesLength = NbPrimitiveDataType.UnsignedShort;
+
                 geom.meshDataDict[mmd.hash] = md;
             }
 
@@ -769,7 +781,7 @@ namespace NMSPlugin
 
         }
         
-        public static Scene ImportScene(string path)
+        public static SceneGraphNode ImportScene(string path)
         {
             TkSceneNodeData template = (TkSceneNodeData)FileUtils.LoadNMSTemplate(path);
             
@@ -818,9 +830,9 @@ namespace NMSPlugin
 
                 gfs = FileUtils.LoadNMSFileStream(gstreamfile);
 
-                //FileStream gffs = new FileStream("testfilegeom.mbin", FileMode.Create);
-                //fs.CopyTo(gffs);
-                //gffs.Close();
+                FileStream gffs = new FileStream("testfilegeom.mbin", FileMode.Create);
+                gfs.CopyTo(gffs);
+                gffs.Close();
 
                 if (fs is null)
                 {
@@ -837,7 +849,6 @@ namespace NMSPlugin
 
                 gobject = ImportGeometry(ref fs, ref gfs);
                 gobject.Name = geomfile;
-                RenderState.engineRef.renderSys.GeometryMgr.AddGeom(gobject);
                 Callbacks.Log(string.Format("Geometry file {0} successfully parsed",
                     geomfile + ".PC"), LogVerbosityLevel.INFO);
                 
@@ -848,35 +859,30 @@ namespace NMSPlugin
             //Random Generetor for colors
             Random randgen = new();
 
-            //Create SCene
-            Scene scn = RenderState.engineRef.sceneMgmtSys.CreateScene();
-            scn.Name = path;
-            
             //Parse root scene
-            SceneGraphNode root = CreateNodeFromTemplate(template, gobject, null, scn);
-            scn.SetRoot(root);
-            
-            return scn;
+            SceneGraphNode root = CreateNodeFromTemplate(template, gobject, null);
+
+            gobject.Dispose();
+            return root;
         }
 
         private static SceneGraphNode CreateNodeFromTemplate(TkSceneNodeData node, 
-            GeomObject gobject, SceneGraphNode parent, Scene parentScene)
+            GeomObject gobject, SceneGraphNode parent)
         {
             Callbacks.Log(string.Format("Importing Node {0}", node.Name.Value), 
                 LogVerbosityLevel.INFO);
-            Callbacks.updateStatus("Importing Part: " + node.Name.Value);
+            Callbacks.updateStatus($"Importing Part: {node.Name.Value}");
 
             if (!Enum.TryParse(node.Type, out SceneNodeType typeEnum))
-                throw new Exception("Node Type " + node.Type + "Not supported");
+                throw new Exception("Node Type " + node.Type.Value + "Not supported");
 
             SceneGraphNode so = new(typeEnum)
             {
-                Name = node.Name,
+                Name = node.Name.Value,
                 NameHash = node.NameHash
             };
 
-            parentScene.AddNode(so); //Add node to the scene
-            
+
             //Add Transform Component
             TransformData td = new(node.Transform.TransX,
                                    node.Transform.TransY,
@@ -903,7 +909,8 @@ namespace NMSPlugin
             }
 
             //Process Attachments
-            ProcessComponents(so, attachment_data);
+            //TODO: Skip components for now
+            //ProcessComponents(so, attachment_data);
 
             if (typeEnum == SceneNodeType.MESH)
             {
@@ -914,11 +921,13 @@ namespace NMSPlugin
                 string matname = FileUtils.parseNMSTemplateAttrib(node.Attributes, "MATERIAL");
 
                 //Search for the material
-                MeshMaterial mat;
-                if (localMaterialDictionary.ContainsKey(matname))
-                    mat = localMaterialDictionary[matname];
-                else
-                    mat = ImportMaterial(matname, localTexMgr);
+                
+                //TODO: Restore material import
+                //MeshMaterial mat;
+                //if (localMaterialDictionary.ContainsKey(matname))
+                //    mat = localMaterialDictionary[matname];
+                //else
+                //    mat = ImportMaterial(matname, localTexMgr);
 
                 //Fill Mesh Meta Data
                 NbMeshMetaData mmd = new()
@@ -941,8 +950,7 @@ namespace NMSPlugin
                     AABBMAX = new NbVector3(MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXX")),
                                           MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXY")),
                                           MathUtils.FloatParse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "AABBMAXZ"))),
-                    Hash = ulong.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "HASH")),
-                    IndicesLength = gobject.indicesType
+                    Hash = ulong.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "HASH"))
                 };
 
                 //Common.Callbacks.Log(string.Format("Randomized Object Color {0}, {1}, {2}", so.color[0], so.color[1], so.color[2]), Common.LogVerbosityLevel.INFO);
@@ -968,14 +976,19 @@ namespace NMSPlugin
 
                 //Generate NbMesh
                 NbMesh nm = new();
+                //TODO differentiate mesh from mesh stream hashes, technically 
+                //another mesh should be able to use the same data with a different hash
+                nm.Hash =  (ulong) mmd.GetHashCode() ^ md.Hash; 
                 nm.Data = md;
                 nm.MetaData = mmd;
 
                 //Set skinned flag if its set as a material flag
-                if (mat.has_flag(MaterialFlagEnum._F02_SKINNED))
-                    mmd.skinned = true;
+                //if (mat.has_flag(MaterialFlagEnum._F02_SKINNED))
+                //    mmd.skinned = true;
 
-                
+
+                MeshMaterial mat = EngineRef.renderSys.MaterialMgr.GetByName("defaultMat");
+
                 //Finally Add MeshComponent
                 MeshComponent mc = new()
                 {
@@ -1045,8 +1058,7 @@ namespace NMSPlugin
             //Console.WriteLine("Children Count {0}", childs.ChildNodes.Count);
             foreach (TkSceneNodeData child in node.Children)
             {
-                SceneGraphNode part = CreateNodeFromTemplate(child, gobject, so, parentScene);
-                so.Children.Add(part);
+                CreateNodeFromTemplate(child, gobject, so);
             }
 
             //Finally Order children by name

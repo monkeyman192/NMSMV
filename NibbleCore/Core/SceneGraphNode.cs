@@ -161,16 +161,12 @@ namespace NbCore
 
             if (disposing)
             {
-                //Free other resources here
-                if (Children != null)
-                    foreach (SceneGraphNode c in Children) c.Dispose();
                 Children.Clear();
-                
-                //Free textureManager
             }
 
             //Free unmanaged resources
             disposed = true;
+            base.Dispose(disposing);
         }
 
     }

@@ -517,6 +517,24 @@ namespace NbCore.Systems
             EngineRef.RegisterEntity(mat);
             MaterialMgr.AddMaterial(mat);
 
+            //Light Material
+            mat = new()
+            {
+                Name = "defaultMat"
+            };
+            mat.add_flag(MaterialFlagEnum._F07_UNLIT);
+
+            uf = new();
+            uf.Name = "mpCustomPerMaterial.gMaterialColourVec4";
+            uf.Values = new(0.7f, 0.7f, 0.7f, 1.0f);
+            mat.Uniforms.Add(uf);
+            shader = EngineRef.renderSys.Renderer.CompileMaterialShader(mat, SHADER_MODE.DEFFERED);
+            EngineRef.renderSys.Renderer.AttachShaderToMaterial(mat, shader);
+
+            EngineRef.RegisterEntity(mat.Shader); //Register Shader
+            EngineRef.RegisterEntity(mat);
+            MaterialMgr.AddMaterial(mat);
+
             //Collision Material
             mat = new();
             mat.Name = "collisionMat";

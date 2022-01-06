@@ -39,7 +39,7 @@ namespace NbCore.Systems
         {
             if (e.GetID() != (0xFFFFFFFF))
             {
-                Log("Entity has no default ID, probably already registered", Common.LogVerbosityLevel.INFO);
+                Log($"Entity of type {e.Type} has no default ID, probably already registered", LogVerbosityLevel.INFO);
                 return false;
             }
 

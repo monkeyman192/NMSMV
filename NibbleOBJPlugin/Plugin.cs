@@ -65,7 +65,6 @@ namespace NibbleOBJPlugin
         {
             NbMeshMetaData metadata = new()
             {
-                IndicesLength = NbPrimitiveDataType.UnsignedInt,
                 BatchCount = data.IndexBuffer.Length / 0x4,
                 FirstSkinMat = 0,
                 LastSkinMat = 0,

@@ -36,7 +36,7 @@ namespace NbCore
         public DrawElementsType IndicesLength { 
             get
             {
-                return IndicesLengthMap[Mesh.MetaData.IndicesLength];
+                return IndicesLengthMap[Mesh.Data.IndicesLength];
             }
         }
 

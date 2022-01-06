@@ -19,13 +19,20 @@ namespace NbCore.Systems
         public Scene CreateScene()
         {
             int sceneID = SceneCount++;
-            _SceneMap[sceneID] = new Scene();
-            _SceneMap[sceneID].SetID(sceneID);
-            return _SceneMap[sceneID];
+            Scene scn = new Scene();
+            scn.SetID(sceneID);
+            
+            //Create root
+            SceneGraphNode sceneRoot = EngineRef.CreateSceneNode("SCENE ROOT");
+            scn.SetRoot(sceneRoot);
+            
+            _SceneMap[sceneID] = scn; //Register
+            return scn;
         }
 
         public void DeleteScene(int id)
         {
+            //TODO: Add Scene dispose method to also dispose the root node
             _SceneMap[id].Clear();
             _SceneMap.Remove(id);
         }

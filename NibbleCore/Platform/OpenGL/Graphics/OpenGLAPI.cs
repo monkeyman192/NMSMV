@@ -422,6 +422,13 @@ namespace NbCore.Platform.Graphics.OpenGL
 
         public void AddMesh(NbMesh mesh)
         {
+
+            if (mesh.Hash == 0x0)
+            {
+                Callbacks.Log("Default mesh hash. Something went wrong during mesh generation", LogVerbosityLevel.WARNING);
+                return;
+            }
+
             if (MeshMap.ContainsKey(mesh.Hash))
             {
                 Callbacks.Log("Mesh Hash already exists in map", LogVerbosityLevel.WARNING);
@@ -560,6 +567,9 @@ namespace NbCore.Platform.Graphics.OpenGL
                 {
                     case NbPrimitiveDataType.Double:
                         buftype = VertexAttribPointerType.Double;
+                        break;
+                    case NbPrimitiveDataType.UnsignedByte:
+                        buftype = VertexAttribPointerType.UnsignedByte;
                         break;
                     case NbPrimitiveDataType.Float:
                         buftype = VertexAttribPointerType.Float;

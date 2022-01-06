@@ -20,8 +20,8 @@ namespace NbCore
         public GUIDComponent()
         {
             testID = test_counter++;
-            //if (testID == 110)
-            //    Console.WriteLine("break");
+            if (testID == 120)
+                Console.WriteLine("break");
         }
         
         public override Component Clone()

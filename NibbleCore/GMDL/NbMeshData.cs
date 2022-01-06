@@ -9,7 +9,8 @@ namespace NbCore
         public byte[] VertexBuffer;
         public byte[] IndexBuffer;
         public bufInfo[] buffers;
-        
+        public NbPrimitiveDataType IndicesLength;
+
         public void Dispose()
         {
             VertexBuffer = null;
@@ -22,7 +23,8 @@ namespace NbCore
             {
                 Hash = 0,
                 VertexBuffer = null,
-                IndexBuffer = null
+                IndexBuffer = null,
+                IndicesLength = NbPrimitiveDataType.UnsignedInt
             };
             return md;
         }
