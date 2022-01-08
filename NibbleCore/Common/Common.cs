@@ -29,13 +29,114 @@ namespace NbCore.Common
         IDLE
     }
 
-    public class MouseMovementState
+    public enum NbMouseButton
     {
-        public NbVector2 Position = new NbVector2();
-        public NbVector2 Delta = new NbVector2();   
+       LEFT,
+       RIGHT,
+       MIDDLE
     }
 
-    
+    public enum NbKey
+    {
+        Numpad1,
+        Numpad2,
+        Numpad3,
+        Numpad4,
+        Numpad5,
+        Numpad6,
+        Numpad7,
+        Numpad8,
+        Numpad9,
+        Numpad0,
+        A,
+        B,
+        C,
+        D,
+        E,
+        F,
+        G,
+        H,
+        I,
+        J,
+        K,
+        L,
+        M,
+        N,
+        O,
+        P,
+        Q,
+        R,
+        S,
+        T,
+        U,
+        V,
+        W,
+        X,
+        Y,
+        Z,
+        Tab,
+        LeftCtrl,
+        RightCtrl,
+        LeftShift,
+        RightShift,
+        LeftAlt,
+        RightAlt,
+        LeftSuper,
+        RightSuper,
+        LeftArrow,
+        RightArrow,
+        UpArrow,
+        DownArrow,
+        Home,
+        End,
+        Insert,
+        Delete,
+        PageUp,
+        PageDown,
+        Space,
+        Backspace,
+        Enter,
+        Escape
+    }
+
+    public unsafe struct NbKeyboardState
+    {
+        public fixed bool KeyDown[80];
+        public bool UpdateScene;
+
+        public bool IsKeyDown(NbKey key)
+        {
+            return KeyDown[(int) key];
+        }
+
+        public void SetKeyDownStatus(NbKey button, bool state)
+        {
+            KeyDown[(int)button] = state;
+        }
+    }
+
+
+    public unsafe struct NbMouseState
+    {
+        public fixed bool ButtonDown[3];
+        public NbVector2 Position;
+        public NbVector2 PositionDelta;
+        public NbVector2 Scroll;
+        //public NbVector2 ScrollDelta;
+        public bool UpdateScene;
+
+        public bool IsButtonDown(NbMouseButton button)
+        {
+            return ButtonDown[(int)button];
+        }
+
+        public void SetButtonStatus(NbMouseButton button, bool state)
+        {
+            ButtonDown[(int)button] = state;
+        }
+
+    }
+
     public static class RenderState
     {
         //Keep the view rotation Matrix

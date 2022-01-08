@@ -584,7 +584,7 @@ namespace NbCore.Platform.Graphics.OpenGL
                         throw new NotImplementedException();
                 }
 
-                GL.VertexAttribPointer(buf.semantic, buf.count, buftype, buf.normalize, buf.stride, buf.offset);
+                GL.VertexAttribPointer(buf.semantic, buf.count, buftype, buf.normalize, (int) buf.stride, buf.offset);
                 GL.EnableVertexAttribArray(buf.semantic);
             }
 

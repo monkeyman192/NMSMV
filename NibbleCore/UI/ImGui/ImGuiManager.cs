@@ -46,12 +46,21 @@ namespace NbCore.UI.ImGui
             _controller.WindowResized(x, y);
         }
 
-        public virtual void Update(double dt, ref float scrolly)
+        public virtual void Update(double dt)
         {
-            _controller.Update(WindowRef, (float) dt, scrolly);
-            scrolly = 0.0f;
+            _controller.Update(WindowRef, (float) dt);
         }
 
+        public virtual void SetMouseState(Common.NbMouseState state)
+        {
+            _controller.SetMouseState(state);
+        }
+
+        public virtual void SetKeyboardState(Common.NbKeyboardState state)
+        {
+            _controller.SetKeyboardState(state);
+        }
+        
         public virtual void Render()
         {
             _controller.Render();

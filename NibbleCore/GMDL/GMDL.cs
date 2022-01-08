@@ -70,8 +70,8 @@ namespace NbCore
         public string small_mesh_descr;
 
         public bool interleaved;
-        public int vx_size;
-        public int small_vx_size;
+        public uint vx_size;
+        public uint small_vx_size;
 
         //Counters
         public int indicesCount=0;
@@ -197,12 +197,12 @@ namespace NbCore
         public int semantic;
         public NbPrimitiveDataType type;
         public int count;
-        public int stride;
+        public uint stride;
         public int offset;
         public string sem_text;
         public bool normalize;
 
-        public bufInfo(int sem, NbPrimitiveDataType typ, int c, int s, int off, string t, bool n)
+        public bufInfo(int sem, NbPrimitiveDataType typ, int c, uint s, int off, string t, bool n)
         {
             semantic = sem;
             type = typ;

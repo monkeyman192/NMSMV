@@ -364,7 +364,7 @@ namespace NMSPlugin
     
         
         
-        private static bufInfo get_bufInfo_item(int buf_id, int offset, int stride, int count, int buf_type)
+        private static bufInfo get_bufInfo_item(int buf_id, int offset, uint stride, int count, int buf_type)
         {
             int sem = buf_id;
             int off = offset;
@@ -549,7 +549,7 @@ namespace NMSPlugin
 
 
             var lod_count = br.ReadInt32();
-            var vx_type = br.ReadInt32();
+            var vx_type = br.ReadUInt32();
             Console.WriteLine("Buffer Count: {0} VxType {1}", lod_count, vx_type);
             fs.Seek(0x8, SeekOrigin.Current);
             var mesh_descr_offset = fs.Position + br.ReadInt64();
@@ -558,7 +558,7 @@ namespace NMSPlugin
 
             //Parse Small Vertex Layout Info
             var small_bufcount = br.ReadInt32();
-            var small_vx_type = br.ReadInt32();
+            var small_vx_type = br.ReadUInt32();
             Console.WriteLine("Small Buffer Count: {0} VxType {1}", small_bufcount, small_vx_type);
             fs.Seek(0x8, SeekOrigin.Current);
             var small_mesh_descr_offset = fs.Position + br.ReadInt32();
@@ -764,15 +764,14 @@ namespace NMSPlugin
 
                 gfs.Seek((int) mmd.is_abs_offset, SeekOrigin.Begin);
                 gfs.Read(md.IndexBuffer, 0, (int) mmd.is_size);
-            
-                //Identify indices length (not 100% correct but much cleaner)
-                
-                //int testIndex = BitConverter.ToInt32(md.IndexBuffer.Take(4).ToArray());
-                
-                if (indexByteLength == 0x4)
+
+
+                //Calculate vertex count on stream
+                uint vx_count = mmd.vs_size / geom.vx_size;
+
+                md.IndicesLength = NbPrimitiveDataType.UnsignedShort;
+                if (vx_count > 0xFFFF)
                     md.IndicesLength = NbPrimitiveDataType.UnsignedInt;
-                else
-                    md.IndicesLength = NbPrimitiveDataType.UnsignedShort;
 
                 geom.meshDataDict[mmd.hash] = md;
             }

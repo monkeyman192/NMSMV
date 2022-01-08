@@ -26,7 +26,7 @@ namespace NMSPlugin
             _filter.Draw("Filter");
             //Draw listbox
             if (ImGui.BeginChild("ListBox",
-                            new System.Numerics.Vector2(ImGui.GetWindowSize().X, 250),
+                            new System.Numerics.Vector2(0, -20),
                             true))
             {
                 foreach (var line in FileUtils.NMSSceneFilesList)

@@ -54,16 +54,12 @@ namespace NbCore
         //Input
         public BaseGamepadHandler gpHandler;
 
-        private KeyboardState ActiveKbState;
-        private MouseState ActiveMsState;
-        private bool CaptureInput; //Toggle to enable Capture of Mouse/Keyboard/Controller input
-        private Queue<KeyboardState> kbStates = new();
-        private Queue<MouseState> MsStates = new();
+        private NbKeyboardState ActiveKbState;
+        private NbMouseState ActiveMsState;
         
         //Camera Stuff
         public CameraPos targetCameraPos;
-        public OpenTK.Mathematics.Vector2 prevMousePos;
-
+        
         //Event Handlers
         public event EventHandler<AddSceneEventData> AddSceneEventHandler;
     
@@ -79,12 +75,6 @@ namespace NbCore
 
         public Engine(NativeWindow win) : base(EngineSystemEnum.CORE_SYSTEM)
         {
-            //TODO : I don't like using the win as an argument but
-            //seems like I can't initialize empmty keyboard, mouse states
-            ActiveKbState = win.KeyboardState;
-            ActiveMsState = win.MouseState;
-            prevMousePos = ActiveMsState.Position;
-            
             //gpHandler = new PS4GamePadHandler(0); //TODO: Add support for PS4 controller
             reqHandler = new RequestHandler();
 
@@ -120,11 +110,6 @@ namespace NbCore
             animationSys.SetEngine(this);
             transformSys.SetEngine(this);
             sceneMgmtSys.SetEngine(this);
-        }
-
-        public void SetCaptureInputStatus(bool status)
-        {
-            CaptureInput = status;
         }
 
         #region plugin_loader
@@ -814,8 +799,7 @@ namespace NbCore
         public override void OnFrameUpdate(double dt)
         {
             //Update input
-            if (CaptureInput)
-                UpdateInput();
+            UpdateInput();
             
             handleRequests(); //Handle engine requests
 
@@ -893,7 +877,7 @@ namespace NbCore
         }
 
         //Keyboard handler
-        private int keyDownStateToInt(Keys k)
+        private int keyDownStateToInt(NbKey k)
         {
             bool state = ActiveKbState.IsKeyDown(k);
             return state ? 1 : 0;
@@ -907,22 +891,20 @@ namespace NbCore
             //Reset Mouse Inputs
             targetCameraPos.Reset();
             
-            if (kbStates.Count > 0)
+            if (ActiveKbState.UpdateScene)
             {
-                ActiveKbState = kbStates.Dequeue();
                 kbStateUpdated = true;
                 keyboardController();
             }
 
-            if (MsStates.Count > 0)
+            if (ActiveMsState.UpdateScene)
             {
-                ActiveMsState = MsStates.Dequeue();
                 msStateUpdated = true;
                 mouseController();
             }
-            
+
             //TODO: Re-add controller support
-                
+
             if (kbStateUpdated || msStateUpdated)
                 Camera.CalculateNextCameraState(RenderState.activeCam, targetCameraPos);
             
@@ -931,20 +913,14 @@ namespace NbCore
         }
         
         //Public Input Handlers
-        public void AddKeyboardState(KeyboardState state)
+        public void SetKeyboardState(NbKeyboardState state)
         {
-            //lock (kbStates)
-            {
-                kbStates.Enqueue(state);
-            }
+            ActiveKbState = state;
         }
 
-        public void AddMouseState(MouseState state)
+        public void SetMouseState(NbMouseState state)
         {
-            //lock (MsStates)
-            {
-                MsStates.Enqueue(state);
-            }
+            ActiveMsState = state;
         }
 
         private void keyboardController()
@@ -953,16 +929,16 @@ namespace NbCore
             float step = 0.002f;
             float x, y, z;
 
-            x = keyDownStateToInt(Keys.D) - keyDownStateToInt(Keys.A);
-            y = keyDownStateToInt(Keys.W) - keyDownStateToInt(Keys.S);
-            z = keyDownStateToInt(Keys.R) - keyDownStateToInt(Keys.F);
+            x = keyDownStateToInt(NbKey.D) - keyDownStateToInt(NbKey.A);
+            y = keyDownStateToInt(NbKey.W) - keyDownStateToInt(NbKey.S);
+            z = keyDownStateToInt(NbKey.R) - keyDownStateToInt(NbKey.F);
 
             //Camera rotation is done exclusively using the mouse
             
             //rotx = 50 * step * (kbHandler.getKeyStatus(OpenTK.Input.Key.E) - kbHandler.getKeyStatus(OpenTK.Input.Key.Q));
             //float roty = (kbHandler.getKeyStatus(Key.C) - kbHandler.getKeyStatus(Key.Z));
 
-            RenderState.rotAngles.Y += 100 * step * (keyDownStateToInt(Keys.E) - keyDownStateToInt(Keys.Q));
+            RenderState.rotAngles.Y += 100 * step * (keyDownStateToInt(NbKey.E) - keyDownStateToInt(NbKey.Q));
             RenderState.rotAngles.Y %= 360;
             
             //Move Camera
@@ -970,31 +946,23 @@ namespace NbCore
             targetCameraPos.PosImpulse.Y = y;
             targetCameraPos.PosImpulse.Z = z;
 
-            //Console.WriteLine("{0} {1} {2}", x, y, z);
+            Console.WriteLine("{0} {1} {2}", x, y, z);
         }
 
         //Mouse Methods
 
-        private int mouseDownStateToInt(MouseButton k)
-        {
-            bool state = ActiveMsState.IsButtonDown(k);
-            return state ? 1 : 0;
-        }
-
         public void mouseController()
         {
             //targetCameraPos.Rotation.Xy += new Vector2(0.55f, 0);
-            if (ActiveMsState.WasButtonDown(MouseButton.Left))
+            if (ActiveMsState.IsButtonDown(NbMouseButton.LEFT))
             {
-                OpenTK.Mathematics.Vector2 deltaVec = ActiveMsState.Position - prevMousePos;
+                OpenTK.Mathematics.Vector2 deltaVec = new(ActiveMsState.PositionDelta.X,
+                    ActiveMsState.PositionDelta.Y);
                 
                 //Console.WriteLine("Mouse Delta {0} {1}", deltax, deltay);
                 targetCameraPos.Rotation.X = deltaVec.X;
                 targetCameraPos.Rotation.Y = deltaVec.Y;
             }
-
-            prevMousePos = ActiveMsState.Position;
-
         }
 
         public override void CleanUp()

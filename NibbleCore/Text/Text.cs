@@ -182,8 +182,8 @@ namespace NbCore.Text
             geom.indicesType = NbPrimitiveDataType.Int;
 
             //Set Strides
-            int vx_size = 3 * 4;
-            int uv_size = 2 * 4;
+            uint vx_size = 3 * 4;
+            uint uv_size = 2 * 4;
             geom.vx_size = vx_size + uv_size;
 
             //Set Buffer Offsets

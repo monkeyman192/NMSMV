@@ -5,7 +5,7 @@ namespace NbCore
     public struct NbMeshData: IDisposable
     {
         public ulong Hash;
-        public int VertexBufferStride;
+        public uint VertexBufferStride;
         public byte[] VertexBuffer;
         public byte[] IndexBuffer;
         public bufInfo[] buffers;
