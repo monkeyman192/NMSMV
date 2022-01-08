@@ -57,6 +57,33 @@ namespace NbCore.Systems
                 AddDynamicEntity(e);
         }
 
+        public void DeleteEntity(Entity e)
+        {
+            if (!e.HasComponent<TransformComponent>())
+            {
+                Log($"Entity {e.GetID()} should has no transform component. Nothing to do...", Common.LogVerbosityLevel.INFO);
+                return;
+            }
+
+            if (!EntityDataMap.ContainsKey(e.GetID()))
+            {
+                Log("Entity not Registered", Common.LogVerbosityLevel.INFO);
+                return;
+            }
+
+            TransformComponent tc = e.GetComponent<TransformComponent>() as TransformComponent;
+
+            //Remove from maps
+            EntityDataMap.Remove(e.GetID());
+            _Data.Remove(tc.Data);
+
+            if (tc.IsControllable)
+                EntityControllerMap.Remove(e.GetID());
+
+            if (tc.IsDynamic)
+                RemoveDynamicEntity(e);
+        }
+
         public override void OnRenderUpdate(double dt)
         {
             //Dynamic entities that have transform controllers should be updated per frame

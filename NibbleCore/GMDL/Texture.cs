@@ -185,7 +185,10 @@ namespace NbCore
 
             //Upload to GPU
             texID = GL.GenTexture();
-            target = TextureTarget.Texture2DArray;
+            if (depth_count > 1)
+                target = TextureTarget.Texture2DArray;
+            else
+                target = TextureTarget.Texture2D;
 
             GL.BindTexture(target, texID);
             //When manually loading mipmaps, levels should be loaded first
@@ -197,7 +200,10 @@ namespace NbCore
             {
                 byte[] temp_data = new byte[temp_size * depth_count];
                 System.Buffer.BlockCopy(ddsImage.Data, offset, temp_data, 0, temp_size * depth_count);
-                GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, temp_data);
+                if (depth_count > 1)
+                    GL.CompressedTexImage3D(target, i, pif, w, h, depth_count, 0, temp_size * depth_count, temp_data);
+                else
+                    GL.CompressedTexImage2D(target, i, pif, w, h, 0, temp_size * depth_count, temp_data);
                 offset += temp_size * depth_count;
 
                 w = System.Math.Max(w >> 1, 1);
@@ -333,18 +339,18 @@ namespace NbCore
             return (ulong)((r << 24) | (g << 16) | (b << 8) | a);
         }
 
-        public static void dump_texture(int texid, TextureTarget target, string name, int width, int height)
+        public static void dump_texture(Texture tex, string name)
         {
-            var pixels = new byte[4 * width * height];
-            GL.BindTexture(target, texid);
-            GL.GetTexImage(target, 0, OpenTK.Graphics.OpenGL4.PixelFormat.Rgba, PixelType.Byte, pixels);
-            var bmp = new Bitmap(width, height);
-            for (int i = 0; i < height; i++)
-            for (int j = 0; j < width; j++)
-                bmp.SetPixel(j, i, Color.FromArgb(pixels[4 * (width * i + j) + 3],
-                    (int)pixels[4 * (width * i + j) + 0],
-                    (int)pixels[4 * (width * i + j) + 1],
-                    (int)pixels[4 * (width * i + j) + 2]));
+            var pixels = new byte[4 * tex.Width * tex.Height];
+            GL.BindTexture(tex.target, tex.texID);
+            GL.GetTexImage(tex.target, 0, OpenTK.Graphics.OpenGL4.PixelFormat.Rgba, PixelType.Byte, pixels);
+            var bmp = new Bitmap(tex.Width, tex.Height);
+            for (int i = 0; i < tex.Height; i++)
+            for (int j = 0; j < tex.Width; j++)
+                bmp.SetPixel(j, i, Color.FromArgb(pixels[4 * (tex.Width * i + j) + 3],
+                    (int)pixels[4 * (tex.Width * i + j) + 0],
+                    (int)pixels[4 * (tex.Width * i + j) + 1],
+                    (int)pixels[4 * (tex.Width * i + j) + 2]));
             bmp.Save("Temp//framebuffer_raw_" + name + ".png", ImageFormat.Png);
         }
 

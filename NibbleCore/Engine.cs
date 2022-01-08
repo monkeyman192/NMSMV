@@ -286,6 +286,19 @@ namespace NbCore
             return f;
         }
 
+        
+        public void RemoveEntity(Entity e)
+        {
+            //Remove from main registry
+            if (registrySys.DeleteEntity(e))
+            {
+                //Register to transformation System
+                if (e.HasComponent<TransformComponent>())
+                    transformSys.DeleteEntity(e);
+            }
+        }
+
+        
         public void RegisterEntity(Entity e)
         {
             //Add Entity to main registry
@@ -788,9 +801,6 @@ namespace NbCore
             RenderState.settings.renderSettings.ToggleAnimations = animToggleStatus;
         }
         
-        
-        
-        
         public void SendRequest(ref ThreadRequest r)
         {
             reqHandler.AddRequest(ref r);
@@ -849,7 +859,6 @@ namespace NbCore
                 //Callbacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
             }
         }
-
 
         #region INPUT_HANDLERS
 
@@ -946,7 +955,7 @@ namespace NbCore
             targetCameraPos.PosImpulse.Y = y;
             targetCameraPos.PosImpulse.Z = z;
 
-            Console.WriteLine("{0} {1} {2}", x, y, z);
+            //Console.WriteLine("{0} {1} {2}", x, y, z);
         }
 
         //Mouse Methods
@@ -1114,7 +1123,7 @@ namespace NbCore
             n.AddComponent<TransformComponent>(tc);
 
             //Add Mesh Component
-            LineSegment ls = new LineSegment(n.Children.Count, new NbVector3(1.0f, 0.0f, 0.0f));
+            LineSegment ls = new LineSegment(2, new NbVector3(1.0f, 0.0f, 0.0f));
             MeshComponent mc = new()
             {
                 Mesh = new()
@@ -1166,11 +1175,26 @@ namespace NbCore
 
 
         #region AssetDisposal
+
+        public void DisposeSceneGraphNode(SceneGraphNode node)
+        {
+            RemoveEntity(node);
+            
+            //Mesh Node Disposal
+            if (node.HasComponent<MeshComponent>())
+            {
+                MeshComponent mc = node.GetComponent<MeshComponent>() as MeshComponent;
+                renderSys.Renderer.RemoveRenderInstance(ref mc.Mesh, mc);
+            }
+
+            node.Dispose();
+        }
+
         public void RecursiveSceneGraphNodeDispose(SceneGraphNode node)
         {
             foreach (SceneGraphNode child in node.Children)
                 RecursiveSceneGraphNodeDispose(child);
-            node.Dispose();
+            DisposeSceneGraphNode(node);
         }
 
         #endregion

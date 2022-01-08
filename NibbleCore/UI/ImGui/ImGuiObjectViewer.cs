@@ -132,6 +132,7 @@ namespace NbCore.UI.ImGui
             
             //Draw Components
             
+            //MeshComponent
             if (_model.HasComponent<MeshComponent>())
             {
                 MeshComponent mc = _model.GetComponent<MeshComponent>() as MeshComponent;
@@ -188,6 +189,38 @@ namespace NbCore.UI.ImGui
                 }
             }
 
+            //LightComponent
+            if (_model.HasComponent<LightComponent>())
+            {
+                LightComponent lc = _model.GetComponent<LightComponent>() as LightComponent;
+
+                if (ImGuiCore.CollapsingHeader("Light Component", ImGuiTreeNodeFlags.DefaultOpen))
+                {
+                    ImGuiCore.Columns(2);
+                    ImGuiCore.Text("Intensity");
+                    ImGuiCore.NextColumn();
+                    ImGuiCore.InputFloat("##Intensity", ref lc.Intensity);
+                    ImGuiCore.NextColumn();
+                    ImGuiCore.Text("FOV");
+                    ImGuiCore.NextColumn();
+                    ImGuiCore.InputFloat("##fov", ref lc.FOV);
+                    ImGuiCore.NextColumn();
+                    ImGuiCore.Text("FallOff");
+                    ImGuiCore.NextColumn();
+                    ImGuiCore.Text(lc.Falloff.ToString());
+                    ImGuiCore.NextColumn();
+                    ImGuiCore.Text("Color");
+                    ImGuiCore.NextColumn();
+                    
+                    System.Numerics.Vector3 v = new(lc.Color.X, lc.Color.Y, lc.Color.Z);
+                    if (ImGuiCore.ColorPicker3("##Color", ref v))
+                    {
+                        lc.Color = new(v.X, v.Y, v.Z);
+                    }
+                    ImGuiCore.Columns(1);
+                }
+
+            }
         
         }
 

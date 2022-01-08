@@ -40,7 +40,7 @@ namespace NbCore.Math
         
         public static bool operator !=(NbVector2i a, NbVector2i b)
         {
-            return a == b;
+            return !(a == b);
         }
 
         public override bool Equals(object obj)

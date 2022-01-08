@@ -982,6 +982,26 @@ namespace NbCore.Platform.Graphics.OpenGL
             return shader;
         }
 
-        #endregion  
+        public void AddRenderInstance(ref MeshComponent mc, TransformData td)
+        {
+            GLMeshBufferManager.AddRenderInstance(ref mc, td);
+        }
+
+        public void RemoveRenderInstance(ref NbMesh mesh, MeshComponent mc)
+        {
+            GLMeshBufferManager.RemoveRenderInstance(ref mesh, mc);
+        }
+
+        public void SetInstanceWorldMat(NbMesh mesh, int instanceID, NbMatrix4 mat)
+        {
+            GLMeshBufferManager.SetInstanceWorldMat(mesh, instanceID, mat);
+        }
+
+        public void SetInstanceWorldMatInv(NbMesh mesh, int instanceID, NbMatrix4 mat)
+        {
+            GLMeshBufferManager.SetInstanceWorldMatInv(mesh, instanceID, mat);
+        }
+
+        #endregion
     }
 }

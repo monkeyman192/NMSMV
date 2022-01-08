@@ -221,11 +221,9 @@ namespace NMSPlugin
             Importer.SetEngineReference(EngineRef);
             SceneGraphNode root = Importer.ImportScene(filepath);
 
-            EngineRef.GetActiveScene().Clear();
+            EngineRef.sceneMgmtSys.ClearScene(EngineRef.GetActiveScene());
             EngineRef.RegisterSceneGraphNode(root);
-            
-            //root.Dispose(); //Dispose since I don't use it for now
-            //TODO: Register Scene to Engine
+        
         }
 
         public override void Export(string filepath)

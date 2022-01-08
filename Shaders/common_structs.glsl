@@ -61,11 +61,18 @@ struct CommonPerFrameSamplers
 //Custom Per Frame Struct
 struct CustomPerMaterialUniforms  //locations:73
 {
-    sampler2DArray gDiffuseMap;
-    sampler2DArray gDiffuse2Map;
-    sampler2DArray gMasksMap;
-    sampler2DArray gNormalMap;
-    
+    #ifdef _F55_MULTITEXTURE
+        sampler2DArray gDiffuseMap;
+        sampler2DArray gDiffuse2Map;
+        sampler2DArray gMasksMap;
+        sampler2DArray gNormalMap;
+    #else
+        sampler2D gDiffuseMap;
+        sampler2D gDiffuse2Map;
+        sampler2D gMasksMap;
+        sampler2D gNormalMap;
+    #endif
+
     vec4 gMaterialColourVec4;
     vec4 gMaterialParamsVec4;
     vec4 gMaterialSFXVec4;

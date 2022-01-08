@@ -154,7 +154,7 @@ namespace NbCore.Platform.Graphics.OpenGL {
 
             CompilationLog += GLShaderHelper.NumberLines(ActualShaderSource) + "\n";
             CompilationLog += info + "\n";
-                
+            
             GL.GetShader(shader_object_id, ShaderParameter.CompileStatus, out int status_code);
             if (status_code != 1)
             {

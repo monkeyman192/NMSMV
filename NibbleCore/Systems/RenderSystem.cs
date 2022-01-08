@@ -57,15 +57,20 @@ namespace NbCore.Systems
             EntityDataMap = new();
         }
 
+        public NbVector2i GetViewportSize()
+        {
+            return ViewportSize;
+        }
+
         public void init(int width, int height)
         {
-            
             //Identify System
             Log(string.Format("Renderer {0}", GL.GetString(StringName.Vendor)), LogVerbosityLevel.INFO);
             Log(string.Format("Vendor {0}", GL.GetString(StringName.Vendor)), LogVerbosityLevel.INFO);
             Log(string.Format("OpenGL Version {0}", GL.GetString(StringName.Version)), LogVerbosityLevel.INFO);
             Log(string.Format("Shading Language Version {0}", GL.GetString(StringName.ShadingLanguageVersion)), LogVerbosityLevel.INFO);
 
+            ViewportSize = new NbVector2i(width, height);
 
             //Initialize API
             Renderer = new GraphicsAPI(); //Use OpenGL by default
@@ -401,6 +406,7 @@ namespace NbCore.Systems
             
             mesh = new()
             {
+                Type = NbMeshType.Locator, //Explicitly set as locator mesh
                 Hash = (ulong)"default_cross".GetHashCode(),
                 Data = c.GetData(),
                 MetaData = c.GetMetaData()
@@ -666,7 +672,7 @@ namespace NbCore.Systems
             //octree.insert(root);
             //octree.report();
             MeshComponent mc;
-            foreach (SceneGraphNode n in s.GetMeshNodes())
+            foreach (SceneGraphNode n in s.MeshNodes)
             {
                 mc = n.GetComponent<MeshComponent>() as MeshComponent;
                 process_model(mc);
@@ -683,9 +689,13 @@ namespace NbCore.Systems
             if (m == null)
                 return;
 
+            bool connect_material_to_shader = false;
             //Explicitly handle locator, scenes and collision meshes
             switch (m.Mesh.Type)
             {
+                case (NbMeshType.Mesh):
+                        connect_material_to_shader = true;
+                        break;
                 case (NbMeshType.Locator):  
                     {
                         if (!locatorMeshList.Contains(m.Mesh))
@@ -715,7 +725,8 @@ namespace NbCore.Systems
                 ShaderMgr.AddShader(m.Material.Shader);
             }
 
-            if (!ShaderMgr.ShaderContainsMaterial(m.Material.Shader, m.Material))
+            if (connect_material_to_shader && 
+                !ShaderMgr.ShaderContainsMaterial(m.Material.Shader, m.Material))
             {
                 ShaderMgr.AddMaterialToShader(m.Material);
             }
@@ -881,7 +892,7 @@ namespace NbCore.Systems
             if (RenderState.settings.viewSettings.ViewCollisions)
             {
                 MeshMaterial mat = EngineRef.GetMaterialByName("collisionMat");
-                Renderer.EnableMaterialProgram(mat);
+                Renderer.SetProgram(mat.Shader.ProgramID);
 
                 //Render static meshes
                 foreach (NbMesh m in collisionMeshList)
@@ -897,8 +908,8 @@ namespace NbCore.Systems
             if (RenderState.settings.viewSettings.ViewLights)
             {
                 MeshMaterial mat = EngineRef.GetMaterialByName("lightMat");
-                Renderer.EnableMaterialProgram(mat);
-                
+                Renderer.SetProgram(mat.Shader.ProgramID);
+
                 //Render static meshes
                 foreach (NbMesh m in lightMeshList)
                 {
@@ -911,7 +922,7 @@ namespace NbCore.Systems
             if (RenderState.settings.viewSettings.ViewLightVolumes)
             {
                 MeshMaterial mat = EngineRef.GetMaterialByName("lightMat");
-                Renderer.EnableMaterialProgram(mat);
+                Renderer.SetProgram(mat.Shader.ProgramID);
 
                 //Render static meshes
                 foreach (NbMesh m in lightVolumeMeshList)
@@ -927,7 +938,7 @@ namespace NbCore.Systems
             if (RenderState.settings.viewSettings.ViewJoints)
             {
                 MeshMaterial mat = EngineRef.GetMaterialByName("jointMat");
-                Renderer.EnableMaterialProgram(mat);
+                Renderer.SetProgram(mat.Shader.ProgramID);
 
                 //Render static meshes
                 foreach (NbMesh m in jointMeshList)
@@ -945,15 +956,16 @@ namespace NbCore.Systems
             if (RenderState.settings.viewSettings.ViewLocators)
             {
                 MeshMaterial mat = EngineRef.GetMaterialByName("crossMat");
-                Renderer.EnableMaterialProgram(mat);
-
+                Renderer.SetProgram(mat.Shader.ProgramID);
+                
                 //Render static meshes
                 foreach (NbMesh m in locatorMeshList)
                 {
                     if (m.InstanceCount == 0)
                         continue;
 
-                    Renderer.RenderLocator(m, mat);
+                    //Renderer.RenderLocator(m, mat);
+                    Renderer.RenderMesh(m, mat);
                 }
             }
             
@@ -1041,9 +1053,9 @@ namespace NbCore.Systems
             //renderTestQuad();
             renderStaticMeshes(); //Deferred Rendered MESHES
             //renderDecalMeshes(); //Render Decals
-            //renderDefaultMeshes(); //Collisions, Locators, Joints
+            renderDefaultMeshes(); //Collisions, Locators, Joints
             
-            //renderDeferredLightPass(); //Deferred Lighting Pass to pbuf
+            renderDeferredLightPass(); //Deferred Lighting Pass to pbuf
 
             //FORWARD STAGE - TRANSPARENT MESHES
             //renderTransparent(); //Directly to Pbuf
@@ -1551,7 +1563,6 @@ namespace NbCore.Systems
             GL.DepthMask(false);
             GL.Disable(EnableCap.DepthTest);
 
-            
             NbMesh mesh = GeometryMgr.GetPrimitiveMesh((ulong) "default_light_sphere".GetHashCode());
             
             GL.UseProgram(shader_conf.ProgramID);

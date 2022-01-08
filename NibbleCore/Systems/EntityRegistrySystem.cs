@@ -78,12 +78,21 @@ namespace NbCore.Systems
             }
             EntityMap.Remove(e.GetID());
             EntityTypeList[e.Type].Remove(e);
-            
-            //Dispose entity lets hope that the overrides will work and we won't have to cast
-            e.Dispose();
-            
+
+            //Explicitly handle ScenenodeTypes
+            switch (e.Type)
+            {
+                case EntityType.SceneNodeLight:
+                case EntityType.SceneNodeJoint:
+                case EntityType.SceneNodeMesh:
+                case EntityType.SceneNodeModel:
+                    EntityTypeList[EntityType.SceneNode].Remove(e);
+                    break;
+            }
+
             return true;
         }
+
         //This clears the registry, other systems are responsible for disposing all generated components
         public void Clear()
         {

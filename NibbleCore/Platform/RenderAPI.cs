@@ -34,7 +34,13 @@ namespace NbCore.Platform.Graphics
         //Mesh Buffer Methods
         public void PrepareMeshBuffers();
         public void UnbindMeshBuffers();
-        
+
+        //Render Instance Manipulation
+        public void AddRenderInstance(ref MeshComponent mc, TransformData td);
+        public void RemoveRenderInstance(ref NbMesh mesh, MeshComponent mc);
+        public void SetInstanceWorldMat(NbMesh mesh, int instanceID, NbMatrix4 mat);
+        public void SetInstanceWorldMatInv(NbMesh mesh, int instanceId, NbMatrix4 mat);
+
         //Rendering Methods
         public void RenderQuad(NbMesh quadMesh, GLSLShaderConfig shaderConf, GLSLShaderState state);
         public void RenderMesh(NbMesh mesh); //Direct mesh rendering, without any shader, uniform uploads

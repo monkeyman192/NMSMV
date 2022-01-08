@@ -133,7 +133,16 @@ namespace NMSPlugin
 
 
         //Texture Utilities
-        
+
+        public static Texture LoadNMSTexture(string path)
+        {
+            Stream s = FileUtils.LoadNMSFileStream(path);
+            byte[] data = new byte[s.Length];
+            s.Read(data, 0, data.Length);
+
+            return new Texture(data, true, path);
+        }
+
         public static void loadSamplerTexture(Sampler sampler, TextureManager texMgr)
         {
             if (sampler.Map == "")
@@ -146,7 +155,7 @@ namespace NMSPlugin
             }
             else
             {
-                Texture tex = new Texture(sampler.Map);
+                Texture tex = LoadNMSTexture(sampler.Map);
                 tex.palOpt = new PaletteOpt(false);
                 tex.procColor = new NbVector4(1.0f, 1.0f, 1.0f, 0.0f);
                 sampler.Tex = tex;

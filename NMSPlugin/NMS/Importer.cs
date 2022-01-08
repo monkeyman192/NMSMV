@@ -266,8 +266,10 @@ namespace NMSPlugin
             MeshMaterial mat = CreateMaterialFromStruct(template, input_texMgr);
             
             mat.texMgr = input_texMgr;
-            EngineRef.renderSys.Renderer.CompileMaterialShader(mat, 
+            //TODO: Maybe I can check if the shader is compiled during registration
+            NbCore.Platform.Graphics.OpenGL.GLSLShaderConfig shader = EngineRef.renderSys.Renderer.CompileMaterialShader(mat, 
                 NbCore.Platform.Graphics.OpenGL.SHADER_MODE.DEFFERED);
+            EngineRef.renderSys.Renderer.AttachShaderToMaterial(mat, shader);
             return mat;
         }
 
@@ -339,10 +341,10 @@ namespace NMSPlugin
             {
                 TkMaterialSampler ms = md.Samplers[i];
                 Sampler s = CreateSamplerFromStruct(md.Samplers[i], texMgr);
-                s.Name = md.Samplers[i].Name;
-                s.Map = md.Samplers[i].Map;
-                
-                mat.Samplers.Add(s);
+                if (s != null)
+                {
+                    mat.Samplers.Add(s);
+                }
             }
             
             //Get Uniforms
@@ -922,12 +924,15 @@ namespace NMSPlugin
                 //Search for the material
                 
                 //TODO: Restore material import
-                //MeshMaterial mat;
-                //if (localMaterialDictionary.ContainsKey(matname))
-                //    mat = localMaterialDictionary[matname];
-                //else
-                //    mat = ImportMaterial(matname, localTexMgr);
-
+                MeshMaterial mat;
+                if (localMaterialDictionary.ContainsKey(matname))
+                    mat = localMaterialDictionary[matname];
+                else
+                {
+                    mat = ImportMaterial(matname, localTexMgr);
+                    localMaterialDictionary.Add(matname, mat);
+                }
+                    
                 //Fill Mesh Meta Data
                 NbMeshMetaData mmd = new()
                 {
@@ -985,9 +990,6 @@ namespace NMSPlugin
                 //if (mat.has_flag(MaterialFlagEnum._F02_SKINNED))
                 //    mmd.skinned = true;
 
-
-                MeshMaterial mat = EngineRef.renderSys.MaterialMgr.GetByName("defaultMat");
-
                 //Finally Add MeshComponent
                 MeshComponent mc = new()
                 {
@@ -1044,7 +1046,43 @@ namespace NMSPlugin
             }
             else if (typeEnum == SceneNodeType.LIGHT)
             {
-                Callbacks.Log("Lights not supported atm", LogVerbosityLevel.INFO);
+                //Parse extra light attributes
+                float fov = float.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "FOV"));
+                string falloff = FileUtils.parseNMSTemplateAttrib(node.Attributes, "FALLOFF");
+                float falloff_rate = float.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "FALLOFF_RATE"));
+                float intensity = float.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "INTENSITY"));
+                float color_r = float.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "COL_R"));
+                float color_g = float.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "COL_G"));
+                float color_b = float.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "COL_B"));
+                float volumetric = float.Parse(FileUtils.parseNMSTemplateAttrib(node.Attributes, "VOLUMETRIC"));
+
+                //Add Mesh Component
+                NbCore.Primitives.LineSegment ls = new NbCore.Primitives.LineSegment(2, new NbVector3(1.0f, 0.0f, 0.0f));
+                MeshComponent mc = new()
+                {
+                    Mesh = new()
+                    {
+                        Type = NbMeshType.Light,
+                        MetaData = ls.GetMetaData(),
+                        Data = ls.GetData(),
+                        Hash = (ulong) (so.Name.GetHashCode() ^ DateTime.Now.GetHashCode())
+                    },
+                    Material = EngineRef.GetMaterialByName("lightMat")
+                };
+
+                so.AddComponent<MeshComponent>(mc);
+                ls.Dispose();
+
+                //Add Light Component
+                LightComponent lc = new()
+                {
+                    Intensity = intensity,
+                    FOV = fov,
+                    Falloff = (ATTENUATION_TYPE) Enum.Parse(typeof(ATTENUATION_TYPE), falloff.ToUpper()),
+                    Color = new NbVector3(color_r, color_g, color_b)
+                };
+                so.AddComponent<LightComponent>(lc);
+            
             }
             else if (typeEnum == SceneNodeType.EMITTER)
             {

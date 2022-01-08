@@ -23,7 +23,7 @@ out vec4 fragColor;
 
 void main(){
 	vec2 eff_uv = vec2(uv.x, uv.y);
-	vec4 texColor = textureLod(mpCustomPerMaterial.gDiffuseMap, vec3(eff_uv, 0.0), 0.0);
+	vec4 texColor = textureLod(mpCustomPerMaterial.gDiffuseMap, eff_uv, 0.0);
 	float dist = 1.0 - texColor.a;
 
 	float width = 0.5;

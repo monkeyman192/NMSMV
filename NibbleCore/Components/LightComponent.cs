@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using NbCore;
-using OpenTK.Mathematics;
+using NbCore.Math;
 
 
 namespace NbCore
@@ -21,14 +21,14 @@ namespace NbCore
         COUNT
     }
 
-    class LightComponent : Component
+    public class LightComponent : Component
     {
         //Light Volume Mesh
         public GLInstancedLightMesh VolumeMeshVao;
         
         //Exposed Light Properties
-        public Vector3 Color;
-        public Vector3 Direction;
+        public Math.NbVector3 Color;
+        public Math.NbVector3 Direction;
         public float FOV;
         public float Intensity;
         public bool IsRenderable;
@@ -36,16 +36,16 @@ namespace NbCore
         public LIGHT_TYPE LightType;
 
         //Light Projection + View Matrices
-        public Matrix4[] lightSpaceMatrices;
-        public Matrix4 lightProjectionMatrix;
+        public NbMatrix4[] lightSpaceMatrices;
+        public NbMatrix4 lightProjectionMatrix;
 
         //Light Falloff Radius
         public float radius;
 
         public LightComponent() : base()
         {
-            Color = new Vector3(1.0f);
-            Direction = new Vector3(0.0f, 0.0f, -1.0f); //target front
+            Color = new NbVector3(1.0f);
+            Direction = new NbVector3(0.0f, 0.0f, -1.0f); //target front
             FOV = 360.0f;
             Intensity = 1.0f;
             IsRenderable = true;

@@ -215,7 +215,7 @@ void pbr_lighting(){
 			#ifdef _F55_MULTITEXTURE
 				lColourVec4 = texture(mpCustomPerMaterial.gDiffuseMap, vec3(lTexCoordsVec4.xy, lfMultiTextureIndex));
 			#else
-				lColourVec4 = texture(mpCustomPerMaterial.gDiffuseMap, vec3(lTexCoordsVec4.xy, 0.0));
+				lColourVec4 = texture(mpCustomPerMaterial.gDiffuseMap, lTexCoordsVec4.xy);
 			#endif
 
 			#if !defined(_F07_UNLIT) && defined(_F39_METALLIC_MASK)
@@ -241,7 +241,7 @@ void pbr_lighting(){
 	    	#ifdef _F55_MULTITEXTURE
 	            vec4 lMasks = texture(mpCustomPerMaterial.gMasksMap, vec3(lTexCoordsVec4.xy, lfMultiTextureIndex));
 	        #else
-	            vec4 lMasks = texture(mpCustomPerMaterial.gMasksMap, vec3(lTexCoordsVec4.xy, 0.0));
+	            vec4 lMasks = texture(mpCustomPerMaterial.gMasksMap, lTexCoordsVec4.xy);
 	        #endif
 	    #endif
 
@@ -305,7 +305,7 @@ void pbr_lighting(){
 	            #ifdef _F55_MULTITEXTURE
 	                vec4 lTexColour = texture(mpCustomPerMaterial.gNormalMap, vec3(lTexCoordsVec4.xy, lfMultiTextureIndex));
 	            #else
-					vec4 lTexColour = texture(mpCustomPerMaterial.gNormalMap, vec3(lTexCoordsVec4.xy, 0.0));
+					vec4 lTexColour = texture(mpCustomPerMaterial.gNormalMap, lTexCoordsVec4.xy);
 	            #endif 
 	        
 	        	vec3 lNormalTexVec3 = DecodeNormalMap( lTexColour );

@@ -154,6 +154,7 @@ namespace NbCore
             td.ResetTransform();
         }
 
+        //WARNING: This should NOT be called directly, object disposals should happen via the engine
         protected override void Dispose(bool disposing)
         {
             if (disposed)
@@ -163,6 +164,16 @@ namespace NbCore
             {
                 Children.Clear();
             }
+
+
+            if (HasComponent<MeshComponent>())
+            {
+                MeshComponent mc = GetComponent<MeshComponent>() as MeshComponent;
+                //TODO: Remove mc from the corresponding mesh instanceRefs
+            
+            };
+
+
 
             //Free unmanaged resources
             disposed = true;

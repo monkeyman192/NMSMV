@@ -33,7 +33,7 @@ namespace NbCore.Systems
         public void DeleteScene(int id)
         {
             //TODO: Add Scene dispose method to also dispose the root node
-            _SceneMap[id].Clear();
+            ClearScene(_SceneMap[id]);
             _SceneMap.Remove(id);
         }
 
@@ -53,13 +53,13 @@ namespace NbCore.Systems
 
         public void UpdateActiveScene()
         {
-            ActiveScene.Update();
+            UpdateScene(ActiveScene);
         }
 
         public void UpdateAllScenes()
         {
             foreach (Scene s in _SceneMap.Values)
-                s.Update();
+                UpdateScene(s);
         }
 
         public override void OnFrameUpdate(double dt)
@@ -70,6 +70,53 @@ namespace NbCore.Systems
         public override void OnRenderUpdate(double dt)
         {
             UpdateActiveScene();
+        }
+
+        public void UpdateScene(Scene s)
+        {
+            //Add instances to all non occluded Nodes
+            foreach (SceneGraphNode n in s.MeshNodes)
+            {
+                TransformData td = TransformationSystem.GetEntityTransformData(n);
+                MeshComponent mc = n.GetComponent<MeshComponent>() as MeshComponent;
+
+                if (td.IsUpdated)
+                {
+                    if (td.IsOccluded && !td.WasOccluded)
+                    {
+                        //Remove Instance
+                        Console.WriteLine("Removing Instance {0}", n.Name);
+                        //TODO: Maybe it is  a good idea to keep queues for 
+                        //instances that will be removed and instance that will be added
+                        //which will be passed per frame update to the rendering system
+                        //which has direct access to the renderer
+                        EngineRef.renderSys.Renderer.RemoveRenderInstance(ref mc.Mesh, mc);
+                    }
+                    else if (!td.IsOccluded && td.WasOccluded)
+                    {
+                        Console.WriteLine("Adding Instance {0}", n.Name);
+                        EngineRef.renderSys.Renderer.AddRenderInstance(ref mc, td);
+                    }
+                    else if (!td.IsOccluded)
+                    {
+                        EngineRef.renderSys.Renderer.SetInstanceWorldMat(mc.Mesh, mc.InstanceID, td.WorldTransformMat);
+                        EngineRef.renderSys.Renderer.SetInstanceWorldMatInv(mc.Mesh, mc.InstanceID, td.InverseTransformMat);
+                    }
+
+                    td.IsUpdated = false; //Reset updated status to prevent further updates on the same frame update
+                }
+            }
+        }
+
+
+        public void ClearScene(Scene s)
+        {
+            foreach (SceneGraphNode node in s.Nodes)
+                EngineRef.DisposeSceneGraphNode(node);
+            
+            s.Root.Children.Clear();
+            s.Nodes.Clear();
+            s.MeshNodes.Clear();
         }
 
         public override void CleanUp()

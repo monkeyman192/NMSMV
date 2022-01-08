@@ -14,7 +14,23 @@ namespace NbCore.UI.ImGui
         private MeshMaterial _ActiveMaterial = null;
         private static int current_material_flag = 0;
         private static int current_material_sampler = 0;
-        private int _SelectedId = -1; 
+        private int _SelectedId = -1;
+
+
+        static void HelpMarker(string desc)
+        {
+            ImGuiNET.ImGui.TextDisabled("(?)");
+            if (ImGuiNET.ImGui.IsItemHovered())
+            {
+                ImGuiNET.ImGui.BeginTooltip();
+                ImGuiNET.ImGui.PushTextWrapPos(ImGuiNET.ImGui.GetFontSize()* 35.0f);
+                ImGuiNET.ImGui.TextUnformatted(desc);
+                ImGuiNET.ImGui.PopTextWrapPos();
+                ImGuiNET.ImGui.EndTooltip();
+            }
+        }
+
+
         public void Draw()
         {
             //Items
@@ -98,22 +114,35 @@ namespace NbCore.UI.ImGui
             {
                 Console.WriteLine("Adding Sampler");
             }
+            
+            int samplerlineheight = 64 + 5;
 
-            List<string> samplers = new();
-            for (int i=0;i<_ActiveMaterial.Samplers.Count;i++)
-                samplers.Add(_ActiveMaterial.Samplers[i].Name);
-            if (samplers.Count > 0)
+            for (int i = 0; i < _ActiveMaterial.Samplers.Count; i++)
             {
-                if (ImGuiNET.ImGui.ListBox("", ref current_material_sampler, samplers.ToArray(), samplers.Count, System.Math.Min(samplers.Count, 5)))
+                Sampler current_sampler = _ActiveMaterial.Samplers[i];
+                if (current_sampler.Tex.target != OpenTK.Graphics.OpenGL4.TextureTarget.Texture2DArray)
+                    ImGuiNET.ImGui.Image((IntPtr)current_sampler.Tex.texID, new Vector2(64, 64));
+                else
+                    ImGuiNET.ImGui.Text("Null");
+
+                if (ImGuiNET.ImGui.IsItemHovered())
                 {
-                    Sampler current_sampler = _ActiveMaterial.Samplers[current_material_sampler];
+                    ImGuiNET.ImGui.BeginTooltip();
+                    if (current_sampler.Tex.target != OpenTK.Graphics.OpenGL4.TextureTarget.Texture2DArray)
+                        ImGuiNET.ImGui.Image((IntPtr)current_sampler.Tex.texID, new Vector2(512, 512));
                     ImGuiNET.ImGui.Text(current_sampler.Name);
                     ImGuiNET.ImGui.Text(current_sampler.Map);
+                    ImGuiNET.ImGui.EndTooltip();
                 }
-                ImGuiNET.ImGui.SameLine();
+
+                if (i != _ActiveMaterial.Samplers.Count - 1)
+                    ImGuiNET.ImGui.SameLine();
+
+                //ImGuiNET.ImGui.Text(current_sampler.Name.Split('.')[1]);
+                //ImGuiNET.ImGui.SameLine();
+                //ImGuiNET.ImGui.Text(current_sampler.Map);
             }
-            
-            
+
             //Uniforms
             ImGuiNET.ImGui.NextColumn();
             ImGuiNET.ImGui.Text("Uniforms");
@@ -137,6 +166,7 @@ namespace NbCore.UI.ImGui
                     un.Values.Z = val.Z;
                     un.Values.W = val.W;
                 }
+                ImGuiNET.ImGui.NextColumn();
             }
             ImGuiNET.ImGui.Columns(1);
         }

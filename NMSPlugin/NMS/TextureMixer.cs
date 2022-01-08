@@ -1,3 +1,5 @@
+#define DUMP_TEXTURES
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,6 +12,7 @@ using NbCore.Common;
 using NbCore.Utils;
 using libMBIN.NMS.Toolkit;
 using System.Diagnostics;
+
 
 namespace NMSPlugin
 {
@@ -91,15 +94,6 @@ namespace NMSPlugin
             texMgr.AddTexture(normalTex);
         }
 
-        private static Texture LoadNMSTexture(string path)
-        {
-            System.IO.Stream s = FileUtils.LoadNMSFileStream(path);
-            byte[] data = new byte[s.Length];
-            s.Read(data, 0, data.Length);
-
-            return new Texture(data, true, path);
-        }
-
         //Generate procedural textures
         private static void prepareTextures(TextureManager texMgr, string path)
         {
@@ -174,7 +168,7 @@ namespace NMSPlugin
                     try
                     {
                         //Get NMS texture data
-                        Texture tex = LoadNMSTexture(partNameDiff);
+                        Texture tex = Util.LoadNMSTexture(partNameDiff);
                         tex.palOpt = palOpt;
                         tex.procColor = palColor;
                         //Store to master texture manager
@@ -213,7 +207,7 @@ namespace NMSPlugin
                     //Configure Mask
                     try
                     {
-                        Texture texmask = LoadNMSTexture(partNameMask);
+                        Texture texmask = Util.LoadNMSTexture(partNameMask);
                         //Store to master texture manager
                         texMgr.AddTexture(texmask);
                         //Store Texture to material
@@ -248,7 +242,7 @@ namespace NMSPlugin
                 {
                     try
                     {
-                        Texture texnormal = LoadNMSTexture(partNameNormal);
+                        Texture texnormal = Util.LoadNMSTexture(partNameNormal);
                         //Store to master texture manager
                         texMgr.AddTexture(texnormal);
                         //Store Texture to material
@@ -424,7 +418,7 @@ namespace NMSPlugin
 
 #if (DUMP_TEXTURES)
             GL.ReadBuffer(ReadBufferMode.ColorAttachment0);
-            Sampler.dump_texture("diffuse", texWidth, texHeight);
+            Texture.dump_texture(new_tex, "diffuse");
 #endif
             return new_tex;
         }
@@ -637,7 +631,7 @@ namespace NMSPlugin
 
 #if (DUMP_TEXTURES)
             GL.ReadBuffer(ReadBufferMode.ColorAttachment0);
-            Sampler.dump_texture("normal", texWidth, texHeight);
+            Texture.dump_texture(new_tex, "normal");
 #endif
             return new_tex;
         }
