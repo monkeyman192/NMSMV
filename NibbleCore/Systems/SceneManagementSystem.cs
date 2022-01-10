@@ -106,8 +106,41 @@ namespace NbCore.Systems
                     td.IsUpdated = false; //Reset updated status to prevent further updates on the same frame update
                 }
             }
-        }
 
+            //Process Lights
+            foreach (SceneGraphNode n in s.LightNodes)
+            {
+                TransformData td = TransformationSystem.GetEntityTransformData(n);
+                LightComponent lc = n.GetComponent<LightComponent>() as LightComponent;
+
+                if (!lc.Data.IsRenderable && lc.InstanceID != -1)
+                {
+                    //Remove Instance
+                    Console.WriteLine("Removing Instance {0}", n.Name);
+                    //TODO: Maybe it is  a good idea to keep queues for 
+                    //instances that will be removed and instance that will be added
+                    //which will be passed per frame update to the rendering system
+                    //which has direct access to the renderer
+                    EngineRef.renderSys.Renderer.RemoveLightRenderInstance(ref lc.Mesh, lc);
+                }
+                else if (lc.Data.IsRenderable && lc.InstanceID == -1)
+                {
+                    Console.WriteLine("Adding Instance {0}", n.Name);
+                    EngineRef.renderSys.Renderer.AddLightRenderInstance(ref lc, td);
+                }
+                else if (lc.Data.IsRenderable)
+                {
+                    EngineRef.renderSys.Renderer.SetInstanceWorldMat(lc.Mesh, lc.InstanceID, td.WorldTransformMat);
+                }
+                
+                if (lc.Data.IsUpdated && lc.InstanceID != -1)
+                {
+                    EngineRef.renderSys.Renderer.SetLightInstanceData(lc);
+                    lc.Data.IsUpdated = false;
+                }
+                    
+            }
+        }
 
         public void ClearScene(Scene s)
         {
@@ -117,11 +150,14 @@ namespace NbCore.Systems
             s.Root.Children.Clear();
             s.Nodes.Clear();
             s.MeshNodes.Clear();
+            s.LightNodes.Clear();
         }
 
         public override void CleanUp()
         {
             //TODO : Check if more has to be cleaned up or if the registry system will handle everything
+            foreach (Scene s in _SceneMap.Values)
+                ClearScene(s);
             _SceneMap.Clear();
         }
     }

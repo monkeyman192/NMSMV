@@ -22,7 +22,6 @@ namespace NbCore.Platform.Graphics
         public void SetCameraData(Camera cam);
         public void SetRenderSettings(RenderSettings settings);
         public void SetCommonDataPerFrame(FBO gBuffer, NbMatrix4 rotMat, double time);
-        public void SetLightDataPerFrame(List<Entity> lights);
         public void UploadFrameData();
 
         //Shader Compilation
@@ -38,6 +37,9 @@ namespace NbCore.Platform.Graphics
         //Render Instance Manipulation
         public void AddRenderInstance(ref MeshComponent mc, TransformData td);
         public void RemoveRenderInstance(ref NbMesh mesh, MeshComponent mc);
+        public void AddLightRenderInstance(ref LightComponent mc, TransformData td);
+        public void RemoveLightRenderInstance(ref NbMesh mesh, LightComponent mc);
+        public void SetLightInstanceData(LightComponent lc);
         public void SetInstanceWorldMat(NbMesh mesh, int instanceID, NbMatrix4 mat);
         public void SetInstanceWorldMatInv(NbMesh mesh, int instanceId, NbMatrix4 mat);
 

@@ -29,17 +29,15 @@ layout (std140, binding=0) uniform _COMMON_PER_FRAME
 
 layout (std430, binding=1) buffer _COMMON_PER_MESH
 {
-    vec3 color; //Mesh Default Color
-    float skinned;
-    MeshInstance instanceData[]; //Instance world matrices, normal matrices, occlusion and selection status
+    MeshInstance instanceData[512];
 };
 
 //Outputs
 out vec4 fragPos; 
 out vec4 screenPos;
 out vec4 vertColor;
-out float isOccluded;
 out float isSelected;
+out vec3 instanceColor;
 out vec3 mTangentSpaceNormalVec3;
 out vec4 uv;
 out mat3 TBN;
@@ -75,7 +73,7 @@ void main()
     
     //Load Per Instance data
     instanceId = gl_InstanceID;
-    isOccluded = instanceData[gl_InstanceID].isOccluded;
+    instanceColor = instanceData[gl_InstanceID].color;
     isSelected = instanceData[gl_InstanceID].isSelected;
     
     mat4 lWorldMat;

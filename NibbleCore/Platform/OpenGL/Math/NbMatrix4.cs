@@ -243,6 +243,22 @@ namespace NbCore.Math
             set => _Value[k1, k2] = value;
         }
 
+        //By default single indexing returns row
+        public NbVector4 this[int k1]
+        {
+            get => new NbVector4(this[k1, 0], 
+                                 this[k1, 1],
+                                 this[k1, 2],
+                                 this[k1, 3]);
+            set
+            {   
+                _Value[k1, 0] = value.X;
+                _Value[k1, 1] = value.Y;
+                _Value[k1, 2] = value.Z;
+                _Value[k1, 3] = value.W;
+            }  
+        }
+
         public static NbMatrix4 operator *(NbMatrix4 a, NbMatrix4 b)
         {
             return new NbMatrix4()

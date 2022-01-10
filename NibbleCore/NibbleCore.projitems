@@ -21,8 +21,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Core\DDSImage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventData.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedLightMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLVao.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Platform\OpenGL\Graphics\GLSLShaderSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Platform\OpenGL\Math\Half.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Platform\OpenGL\Math\TwosComplement.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\ImGui\ImGuiOpenFileDialog.cs" />
@@ -67,7 +67,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Systems\ActionSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\AnimationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Systems\EngineSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLBufferManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Platform\OpenGL\Graphics\GLBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\AnimComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Camera.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\Common.cs" />
@@ -81,12 +81,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)Components\PhysicsComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\TransformComponent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Components\TriggerActionComponent.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLLightBufferManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Platform\OpenGL\Graphics\GLLightBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Core\Entity.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\GLInstancedMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Platform\OpenGL\Graphics\GLInstancedMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GMDL\Texture.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GMDL\BufferManagers\GLMeshBufferManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Platform\OpenGL\Graphics\GLMeshBufferManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\TextureManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Text\Font.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Managers\FontManager.cs" />
@@ -110,6 +110,5 @@
     <Folder Include="$(MSBuildThisFileDirectory)Common\" />
     <Folder Include="$(MSBuildThisFileDirectory)Input\" />
     <Folder Include="$(MSBuildThisFileDirectory)UI\" />
-    <Folder Include="$(MSBuildThisFileDirectory)Platform\OpenGL\Graphics\" />
   </ItemGroup>
 </Project>

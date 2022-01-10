@@ -221,6 +221,9 @@ void main()
                 io.KeysDown[(int) key] = KeyboardState.IsKeyDown(key);
             }
 
+            //Use Keypad Enter as normal enter
+            io.KeysDown[(int) NbKey.Enter] |= KeyboardState.IsKeyDown(NbKey.KeyPadEnter);
+
             foreach (var c in PressedChars)
             {
                 io.AddInputCharacter(c);
@@ -261,6 +264,7 @@ void main()
             io.KeyMap[(int)ImGuiKey.Delete] = (int)NbKey.Delete;
             io.KeyMap[(int)ImGuiKey.Backspace] = (int)NbKey.Backspace;
             io.KeyMap[(int)ImGuiKey.Enter] = (int)NbKey.Enter;
+            io.KeyMap[(int)ImGuiKey.KeyPadEnter] = (int)NbKey.KeyPadEnter;
             io.KeyMap[(int)ImGuiKey.Escape] = (int)NbKey.Escape;
             io.KeyMap[(int)ImGuiKey.A] = (int)NbKey.A;
             io.KeyMap[(int)ImGuiKey.C] = (int)NbKey.C;

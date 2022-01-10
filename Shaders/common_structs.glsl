@@ -9,14 +9,11 @@ struct Light //locations:6
 
 struct MeshInstance
 {
-    vec4 gUserDataVec4;
-    vec4 un2;
-    vec4 un3;
-    vec4 un4;
+    mat4 uniforms;
     mat4 worldMat;
     mat4 normalMat;
     mat4 worldMatInv;
-    float isOccluded;
+    vec3 color;
     float isSelected;
 };
 
@@ -49,7 +46,6 @@ struct CommonPerFrameUniforms
     vec4 cameraPosition; //w component is the HDR exposure
     int light_count;
     vec3 cameraDirection;
-    Light lights[32];
 };
 
 struct CommonPerFrameSamplers

@@ -333,6 +333,13 @@ namespace NbCore
             foreach (SceneGraphNode child in node.Children)
                 RegisterSceneGraphNode(child);
         }
+
+        public void RequestEntityTransformUpdate(SceneGraphNode node)
+        {
+            transformSys.RequestEntityUpdate(node);
+            foreach (SceneGraphNode child in node.Children)
+                RequestEntityTransformUpdate(child);
+        }
         
         public Scene CreateScene()
         {
@@ -369,12 +376,14 @@ namespace NbCore
                 {
                     foreach (FileInfo file in files)
                     {
+                        //Convert filepath to single 
+                        string filepath = Utils.FileUtils.FixPath(file.FullName);
                         //Add source file
-                        Console.WriteLine("Working On {0}", file.FullName);
-                        if (GetShaderSourceByFilePath(file.FullName) == null)
+                        Console.WriteLine("Working On {0}", filepath);
+                        if (GetShaderSourceByFilePath(filepath) == null)
                         {
                             //Construction includes registration
-                            GLSLShaderSource ss = new(file.FullName, true); 
+                            GLSLShaderSource ss = new(filepath, true); 
                         }
                     }
                 }
@@ -458,7 +467,7 @@ namespace NbCore
         public GLSLShaderSource GetShaderSourceByFilePath(string path)
         {
             return registrySys.GetEntityTypeList(EntityType.ShaderSource)
-                .Find(x => ((GLSLShaderSource)x).SourceFilePath == path) as GLSLShaderSource;
+                .Find(x => ((GLSLShaderSource)x).SourceFilePath == FileUtils.FixPath(path)) as GLSLShaderSource;
         }
 
         public GLSLShaderConfig GetShaderByHash(int hash)
@@ -846,16 +855,16 @@ namespace NbCore
             //Per Frame System Updates
             transformSys.OnRenderUpdate(dt);
             sceneMgmtSys.OnRenderUpdate(dt);
-            
+            renderSys.OnRenderUpdate(dt);
+
             //Render Shit
             if (rt_State == EngineRenderingState.ACTIVE)
             {
                 //Callbacks.Log("* CONTROL : STARTING FRAME UPDATE", LogVerbosityLevel.DEBUG);
                 //Callbacks.Log("* CONTROL : FRAME UPDATED", LogVerbosityLevel.DEBUG);
                 //Callbacks.Log("* CONTROL : STARTING FRAME RENDER", LogVerbosityLevel.DEBUG);
-
-                renderSys.testrender(dt); //Render Everything
-
+                renderSys.OnRenderUpdate(dt);
+                
                 //Callbacks.Log("* CONTROL : FRAME RENDERED", LogVerbosityLevel.DEBUG);
             }
         }
@@ -1128,6 +1137,8 @@ namespace NbCore
             {
                 Mesh = new()
                 {
+                    Hash = (ulong)(name.GetHashCode() ^ DateTime.Now.GetHashCode()),
+                    Type = NbMeshType.Light,
                     MetaData = ls.GetMetaData(),
                     Data = ls.GetData()
                 },
@@ -1136,13 +1147,21 @@ namespace NbCore
             
             n.AddComponent<MeshComponent>(mc);
             ls.Dispose();
-            
+
             //Add Light Component
             LightComponent lc = new()
             {
-                Intensity = intensity,
-                Falloff = attenuation,
-                LightType = lighttype
+                Mesh = EngineRef.renderSys.GeometryMgr.GetPrimitiveMesh((ulong)"default_light_sphere".GetHashCode()),
+                Material = EngineRef.renderSys.MaterialMgr.GetByName("lightMat"),
+                Data = new()
+                {
+                    FOV = 360.0f,
+                    Intensity = intensity,
+                    Falloff = attenuation,
+                    LightType = lighttype,
+                    IsRenderable = true,
+                    IsUpdated = true
+                }
             };
             n.AddComponent<LightComponent>(lc);
 
@@ -1185,6 +1204,13 @@ namespace NbCore
             {
                 MeshComponent mc = node.GetComponent<MeshComponent>() as MeshComponent;
                 renderSys.Renderer.RemoveRenderInstance(ref mc.Mesh, mc);
+            }
+
+            //Mesh Node Disposal
+            if (node.HasComponent<LightComponent>())
+            {
+                LightComponent lc = node.GetComponent<LightComponent>() as LightComponent;
+                renderSys.Renderer.RemoveLightRenderInstance(ref lc.Mesh, lc);
             }
 
             node.Dispose();

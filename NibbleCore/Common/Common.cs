@@ -96,7 +96,23 @@ namespace NbCore.Common
         Space,
         Backspace,
         Enter,
-        Escape
+        Escape,
+        KeyPad1,
+        KeyPad2,
+        KeyPad3,
+        KeyPad4,
+        KeyPad5,
+        KeyPad6,
+        KeyPad7,
+        KeyPad8,
+        KeyPad9,
+        KeyPad0,
+        KeyPadEnter,
+        KeyPadPlus,
+        KeyPadMinus,
+        KeyPadSlash,
+        KeyPadColon,
+        KeyPadAsterisk,
     }
 
     public unsafe struct NbKeyboardState

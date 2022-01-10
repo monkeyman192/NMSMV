@@ -49,7 +49,7 @@ namespace NbCore
                 GL.BufferSubData(BufferTarget.TextureBuffer, IntPtr.Zero, bufferSize, Mesh.InstanceDataBuffer);
             }
             GL.BindBuffer(BufferTarget.TextureBuffer, 0);
-        }
+        } 
 
     }
 }

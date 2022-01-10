@@ -32,6 +32,12 @@ namespace NbCore.Utils
 
     public static class FileUtils
     {
+
+        public static string FixPath(string path)
+        {
+            return Path.GetFullPath(path);
+        }
+
         //Check files
         public static bool compareFileSizes(string filepath1, string filepath2)
         {

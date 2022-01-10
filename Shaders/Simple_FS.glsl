@@ -36,9 +36,7 @@ layout (std140, binding=0) uniform _COMMON_PER_FRAME
 
 layout (std430, binding=1) buffer _COMMON_PER_MESH
 {
-    vec3 color; //Mesh Default Color
-    float skinned;
-    MeshInstance instanceData[]; //Instance world matrices, normal matrices, occlusion and selection status
+    MeshInstance instanceData[512];
 };
 
 in vec4 fragPos;
@@ -48,6 +46,7 @@ in vec3 mTangentSpaceNormalVec3;
 in vec4 uv;
 in mat3 TBN;
 flat in int instanceId;
+in vec3 instanceColor;
 in float isSelected;
 
 //Deferred Shading outputs
@@ -398,7 +397,7 @@ void pbr_lighting(){
 
 
 	} else {
-		lColourVec4 = vec4(color, 1.0);
+		lColourVec4 = vec4(instanceColor, 1.0);
 		lNormalVec3 = mTangentSpaceNormalVec3;
 	}
 
@@ -446,6 +445,8 @@ void pbr_lighting(){
 		vec4 finalColor = lColourVec4;
 
 		#ifndef _F07_UNLIT
+		//TODO: Remove that lighting code, I don't like that at all.
+		//I should find a way to light everything in the light pass
 		if (mpCommonPerFrame.use_lighting > 0.0) {
 			for(int i = 0; i < mpCommonPerFrame.light_count; ++i) 
 		    {

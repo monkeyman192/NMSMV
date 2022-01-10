@@ -36,9 +36,16 @@ namespace NbCore.UI.ImGui
             //Assume that a Popup has begun
             //ImGui.Begin("Info", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
 
+            
 
             if (_model != null)
             {
+                if (_model.IsDisposed())
+                {
+                    _model = null;
+                    return;
+                }
+                    
                 switch (_model.Type)
                 {
                     case SceneNodeType.MODEL:
@@ -194,30 +201,43 @@ namespace NbCore.UI.ImGui
             {
                 LightComponent lc = _model.GetComponent<LightComponent>() as LightComponent;
 
+                
                 if (ImGuiCore.CollapsingHeader("Light Component", ImGuiTreeNodeFlags.DefaultOpen))
                 {
+                    bool light_updated = false;
                     ImGuiCore.Columns(2);
                     ImGuiCore.Text("Intensity");
                     ImGuiCore.NextColumn();
-                    ImGuiCore.InputFloat("##Intensity", ref lc.Intensity);
+                    if (ImGuiCore.InputFloat("##Intensity", ref lc.Data.Intensity))
+                        light_updated = true;
                     ImGuiCore.NextColumn();
                     ImGuiCore.Text("FOV");
                     ImGuiCore.NextColumn();
-                    ImGuiCore.InputFloat("##fov", ref lc.FOV);
+                    if (ImGuiCore.InputFloat("##fov", ref lc.Data.FOV))
+                        light_updated = true;
+                    ImGuiCore.NextColumn();
+                    ImGuiCore.Text("IsRenderable");
+                    ImGuiCore.NextColumn();
+                    if (ImGuiCore.Checkbox("##renderable", ref lc.Data.IsRenderable))
+                        light_updated = true;
                     ImGuiCore.NextColumn();
                     ImGuiCore.Text("FallOff");
                     ImGuiCore.NextColumn();
-                    ImGuiCore.Text(lc.Falloff.ToString());
+                    ImGuiCore.Text(lc.Data.Falloff.ToString());
                     ImGuiCore.NextColumn();
                     ImGuiCore.Text("Color");
                     ImGuiCore.NextColumn();
                     
-                    System.Numerics.Vector3 v = new(lc.Color.X, lc.Color.Y, lc.Color.Z);
+                    System.Numerics.Vector3 v = new(lc.Data.Color.X, lc.Data.Color.Y, lc.Data.Color.Z);
                     if (ImGuiCore.ColorPicker3("##Color", ref v))
                     {
-                        lc.Color = new(v.X, v.Y, v.Z);
+                        lc.Data.Color = new(v.X, v.Y, v.Z);
+                        light_updated = true;
                     }
                     ImGuiCore.Columns(1);
+
+                    if (light_updated)
+                        lc.Data.IsUpdated = true;
                 }
 
             }

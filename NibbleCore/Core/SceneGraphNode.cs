@@ -69,6 +69,11 @@ namespace NbCore
             }
         }
 
+        public bool IsDisposed()
+        {
+            return disposed;
+        }
+
         public void SetRenderableStatusRec(bool status)
         {
             IsRenderable = status;

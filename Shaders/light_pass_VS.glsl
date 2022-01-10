@@ -23,8 +23,10 @@ layout (std140, binding=0) uniform _COMMON_PER_FRAME
     CommonPerFrameUniforms mpCommonPerFrame;
 };
 
-//Other Uniforms
-uniform samplerBuffer lightsTex;
+layout (std430, binding=1) buffer _COMMON_PER_MESH
+{
+    MeshInstance instanceData[512];
+};
 
 //Outputs
 out vec4 screenPos;
@@ -33,37 +35,41 @@ out vec4 lightColor;
 out vec4 lightDirection;
 out vec4 lightParameters;
 
-
 /*
 ** Returns matrix4x4 from texture cache.
 */
-mat4 get_volume_worldMatrix(int offset)
-{
-    return (mat4(texelFetch(lightsTex, offset),
-                 texelFetch(lightsTex, offset + 1),
-                 texelFetch(lightsTex, offset + 2),
-                 texelFetch(lightsTex, offset + 3)));
-}
+// mat4 get_volume_worldMatrix(int offset)
+// {
+//     return (mat4(texelFetch(lightsTex, offset),
+//                  texelFetch(lightsTex, offset + 1),
+//                  texelFetch(lightsTex, offset + 2),
+//                  texelFetch(lightsTex, offset + 3)));
+// }
 
-vec4 get_vec4(int offset)
-{
-    return texelFetch(lightsTex, offset);
-}
+// vec4 get_vec4(int offset)
+// {
+//     return texelFetch(lightsTex, offset);
+// }
 
 void main()
 {
     //Extract Light Information
-    int instanceDataOffset = gl_InstanceID * 8; //Counting vec4s
-    mat4 lWorldMat = get_volume_worldMatrix(instanceDataOffset);
+    mat4 lWorldMat = instanceData[gl_InstanceID].worldMat;
     //Light Position
     lightPos = lWorldMat[3].xyzw;
     //Light Direction
-    lightDirection = get_vec4(instanceDataOffset + 4);
+    //TODO Calculate direction of light based on the transform
+    //lightDirection = get_vec4(instanceDataOffset + 4);
+    lightDirection = vec4(1.0, 0.0, 0.0, 0.0);
     //Light Color
-    lightColor = get_vec4(instanceDataOffset + 5);
+    lightColor.xyz = instanceData[gl_InstanceID].color;
+    lightColor.w = instanceData[gl_InstanceID].uniforms[0].y; //intensity
     //Light Params
-    lightParameters = get_vec4(instanceDataOffset + 6);
-
+    vec4 parameters; //x: falloff, y: fov, z: type, w: empty
+    lightParameters.x = instanceData[gl_InstanceID].uniforms[0].w; //falloff
+    lightParameters.y = instanceData[gl_InstanceID].uniforms[0].x; //fov
+    lightParameters.z = instanceData[gl_InstanceID].uniforms[1].x; //type
+    
     vec4 wPos = lWorldMat * vPosition; //Calculate world Position
     screenPos = mpCommonPerFrame.mvp * mpCommonPerFrame.rotMat * wPos;
     gl_Position = screenPos;

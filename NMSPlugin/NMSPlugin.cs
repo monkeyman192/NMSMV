@@ -223,7 +223,7 @@ namespace NMSPlugin
 
             EngineRef.sceneMgmtSys.ClearScene(EngineRef.GetActiveScene());
             EngineRef.RegisterSceneGraphNode(root);
-        
+            EngineRef.RequestEntityTransformUpdate(root);
         }
 
         public override void Export(string filepath)

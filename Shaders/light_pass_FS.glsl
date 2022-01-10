@@ -97,10 +97,12 @@ void main()
     light.color = lightColor;
     light.parameters = lightParameters;
     
-    finalColor.rgb = calcLighting(light, fragPos, fragNormal.xyz, 
-			mpCommonPerFrame.cameraPosition.xyz, mpCommonPerFrame.cameraDirection.xyz, albedoColor.rgb, lfMetallic, lfRoughness, ao);
+    // finalColor.rgb = calcLighting(light, fragPos, fragNormal.xyz, 
+	// 		mpCommonPerFrame.cameraPosition.xyz, mpCommonPerFrame.cameraDirection.xyz, albedoColor.rgb, lfMetallic, lfRoughness, ao);
     
-    finalColor.a = albedoColor.a;
+	finalColor.rgb = vec3(0.0, 1.0, 0.0);
+
+	finalColor.a = albedoColor.a;
 #else
     finalColor = albedoColor;
 #endif

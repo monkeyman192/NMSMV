@@ -42,6 +42,7 @@ namespace NibbleOBJPlugin
         {
             SceneGraphNode node = ParseObj(filepath);
             EngineRef.RegisterSceneGraphNode(node);
+            EngineRef.RequestEntityTransformUpdate(node);
         }
 
         private NbMesh GenerateMesh(List<NbVector3> lverts, List<NbVector3i> ltris)

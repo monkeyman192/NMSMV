@@ -315,9 +315,7 @@ namespace NMSPlugin
             }
 
             //Load the texture to the sampler
-            
             Util.loadSamplerTexture(sam, texMgr);
-            
             
             return sam;
         }   
@@ -1076,10 +1074,16 @@ namespace NMSPlugin
                 //Add Light Component
                 LightComponent lc = new()
                 {
-                    Intensity = intensity,
-                    FOV = fov,
-                    Falloff = (ATTENUATION_TYPE) Enum.Parse(typeof(ATTENUATION_TYPE), falloff.ToUpper()),
-                    Color = new NbVector3(color_r, color_g, color_b)
+                    Mesh = EngineRef.renderSys.GeometryMgr.GetPrimitiveMesh((ulong)"default_light_sphere".GetHashCode()),
+                    Material = EngineRef.GetMaterialByName("lightMat"),
+                    Data = new()
+                    {
+                        Intensity = intensity,
+                        FOV = fov,
+                        Falloff = (ATTENUATION_TYPE)Enum.Parse(typeof(ATTENUATION_TYPE), falloff.ToUpper()),
+                        Color = new NbVector3(color_r, color_g, color_b),
+                        IsUpdated = true
+                    }
                 };
                 so.AddComponent<LightComponent>(lc);
             

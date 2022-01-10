@@ -11,6 +11,7 @@ namespace NbCore.Managers
         public readonly List<GLSLShaderConfig> GLDeferredShaders = new();
         public readonly List<GLSLShaderConfig> GLForwardTransparentShaders = new();
         public readonly List<GLSLShaderConfig> GLDeferredDecalShaders = new();
+        public readonly Queue<GLSLShaderConfig> CompilationQueue = new();
 
         private readonly Dictionary<SHADER_TYPE, GLSLShaderConfig> GenericShaders = new(); //Generic Shader Map
         private readonly Dictionary<long, GLSLShaderConfig> ShaderHashMap = new();
@@ -51,6 +52,11 @@ namespace NbCore.Managers
         public GLSLShaderConfig GetGenericShader(SHADER_TYPE stype)
         {
             return GenericShaders[stype];
+        }
+
+        public void AddShaderForCompilation(GLSLShaderConfig shader)
+        {
+            CompilationQueue.Enqueue(shader);
         }
 
         public GLSLShaderConfig GetShaderByHash(long hash)

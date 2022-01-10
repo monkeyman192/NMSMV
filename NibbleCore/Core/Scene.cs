@@ -13,11 +13,13 @@ namespace NbCore
         public SceneGraphNode Root = null;
         public readonly List<SceneGraphNode> Nodes = new();
         public readonly List<SceneGraphNode> MeshNodes = new();
-        
+        public readonly List<SceneGraphNode> LightNodes = new();
+
         public Scene()
         {
             Nodes = new();
             MeshNodes = new();
+            LightNodes = new();
         }
 
         public void SetID(int id)
@@ -52,6 +54,9 @@ namespace NbCore
 
             if (n.HasComponent<MeshComponent>())
                 MeshNodes.Add(n);
+            
+            if (n.HasComponent<LightComponent>())
+                LightNodes.Add(n);
         }
 
         public void CacheUninitializedNodes()

@@ -82,7 +82,7 @@ namespace NbCore.Platform.Graphics.OpenGL
 
         //UBO structs
         CommonPerFrameUniforms cpfu;
-        private byte[] atlas_cpmu;
+        private MeshInstance[] atlas_cpmu;
 
         private const int MAX_NUMBER_OF_MESHES = 2000;
         private const int MULTI_BUFFER_COUNT = 3;
@@ -131,10 +131,14 @@ namespace NbCore.Platform.Graphics.OpenGL
             //Setup per Frame UBOs
             setupFrameUBO();
 
+
             //Setup SSBOs
             setupSSBOs(2 * 1024 * 1024); //Init SSBOs to 2MB
             multiBufferActiveId = 0;
             SSBOs["_COMMON_PER_MESH"] = multiBufferSSBOs[0];
+
+            //Setup Atlas Instance array
+            atlas_cpmu = new MeshInstance[1024]; //Support up to 1024 instance for now by default
         }
 
         public void SetProgram(int program_id)
@@ -152,8 +156,7 @@ namespace NbCore.Platform.Graphics.OpenGL
             //int atlas_ssbo_buffer_size = MAX_NUMBER_OF_MESHES * CommonPerMeshUniformsInstanced.SizeInBytes;
             //int atlas_ssbo_buffer_size = MAX_NUMBER_OF_MESHES * CommonPerMeshUniformsInstanced.SizeInBytes; //256 MB just to play safe
             //OpenGL Spec max size for the SSBO is 128 MB, lets stick to that
-            atlas_cpmu = new byte[size];
-
+            
             //Generate 3 Buffers for the Triple buffering UBO
             for (int i = 0; i < MULTI_BUFFER_COUNT; i++)
             {
@@ -182,7 +185,6 @@ namespace NbCore.Platform.Graphics.OpenGL
         private void resizeSSBOs(int size)
         {
             deleteSSBOs();
-            atlas_cpmu = new byte[size];
             setupSSBOs(size);
         }
 
@@ -215,7 +217,7 @@ namespace NbCore.Platform.Graphics.OpenGL
             GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 1, UBOs["_COMMON_PER_SCENE"]);
         }
 
-        private bool prepareCommonPermeshSSBO(GLInstancedMesh m, ref int UBO_Offset)
+        private bool prepareCommonPermeshSSBO(GLInstancedMesh m, uint max_buffer_size, ref int UBO_Offset, ref int instance_counter)
         {
             //if (m.instance_count == 0 || m.visible_instances == 0) //use the visible_instance if we maintain an occluded status
             if (m.Mesh.InstanceCount == 0)
@@ -223,11 +225,11 @@ namespace NbCore.Platform.Graphics.OpenGL
 
             m.UBO_aligned_size = 0;
 
-            //Calculate aligned size
-            int newsize = 4 * m.Mesh.InstanceDataBuffer.Length;
-            newsize = ((newsize >> 8) + 1) * 256;
 
-            if (newsize + UBO_Offset > atlas_cpmu.Length)
+            //Calculate aligned size
+            int newsize = m.Mesh.InstanceCount * Marshal.SizeOf(typeof(MeshInstance));
+            
+            if (newsize + UBO_Offset > max_buffer_size)
             {
 #if DEBUG
                 Console.WriteLine("Mesh overload skipping...");
@@ -237,22 +239,14 @@ namespace NbCore.Platform.Graphics.OpenGL
 
             m.UBO_aligned_size = newsize; //Save new size
 
-            if (m.Mesh.Type == NbMeshType.LightVolume)
-            {
-                ((GLInstancedLightMesh)m).uploadData();
-            }
+            //if (m.Mesh.Type == NbMeshType.LightVolume)
+            //{
+            //    ((GLInstancedLightMesh)m).uploadData();
+            //}
 
-            unsafe
-            {
-                fixed (void* p = m.Mesh.InstanceDataBuffer)
-                {
-                    byte* bptr = (byte*)p;
-
-                    Marshal.Copy((IntPtr)p, atlas_cpmu, UBO_Offset,
-                        m.UBO_aligned_size);
-                }
-            }
-
+            for (int i = 0; i < m.Mesh.InstanceCount; i++)
+                atlas_cpmu[instance_counter++] = m.Mesh.InstanceDataBuffer[i];
+            
             m.UBO_offset = UBO_Offset; //Save offset
             UBO_Offset += m.UBO_aligned_size; //Increase the offset
 
@@ -280,8 +274,9 @@ namespace NbCore.Platform.Graphics.OpenGL
 
             //Prepare UBO data
             int ubo_offset = 0;
-            int max_ubo_offset = atlas_cpmu.Length;
-            //int max_ubo_offset = 1024 * 1024 * 32;
+            int instance_counter = 0;
+            int max_instance_count = atlas_cpmu.Length;
+            int max_ubo_offset = max_instance_count * Marshal.SizeOf(typeof(MeshInstance));
 
             //METHOD 2: Use MAP Buffer
             IntPtr ptr = GL.MapBufferRange(BufferTarget.ShaderStorageBuffer, IntPtr.Zero,
@@ -291,14 +286,18 @@ namespace NbCore.Platform.Graphics.OpenGL
             bool atlas_fine = true;
             foreach (GLInstancedMesh m in MeshMap.Values)
             {
-                atlas_fine &= prepareCommonPermeshSSBO(m, ref ubo_offset);
+                atlas_fine &= prepareCommonPermeshSSBO(m, (uint) max_ubo_offset, ref ubo_offset, ref instance_counter);
             }
 
             //Console.WriteLine("ATLAS SIZE ORIGINAL: " +  atlas_cpmu.Length + " vs  OFFSET " + ubo_offset);
 
-            if (ubo_offset > 0.9 * atlas_cpmu.Length)
+            if (instance_counter > 0.9 * max_instance_count)
             {
-                int new_size = atlas_cpmu.Length + (int)(0.25 * atlas_cpmu.Length);
+                int new_instance_counter = max_instance_count + (int)(0.25 * max_instance_count);
+                atlas_cpmu = new MeshInstance[new_instance_counter];
+
+                int new_size = new_instance_counter * Marshal.SizeOf(typeof(MeshInstance));
+
                 //Unmap and unbind buffer
                 GL.UnmapBuffer(BufferTarget.ShaderStorageBuffer);
                 GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
@@ -322,7 +321,10 @@ namespace NbCore.Platform.Graphics.OpenGL
 
                 unsafe
                 {
-                    Marshal.Copy(atlas_cpmu, 0, ptr, ubo_offset);
+
+                    GCHandle handle = GCHandle.Alloc(atlas_cpmu, GCHandleType.Pinned);
+                    IntPtr handlePtr = handle.AddrOfPinnedObject();
+                    System.Buffer.MemoryCopy(handlePtr.ToPointer(), ptr.ToPointer(), max_ubo_offset, max_ubo_offset);
                 }
             }
 
@@ -365,54 +367,6 @@ namespace NbCore.Platform.Graphics.OpenGL
             cpfu.rotMatInv = RenderState.rotMat._Value.Inverted();
             cpfu.gfTime = (float)time;
             cpfu.MSAA_SAMPLES = gBuffer.msaa_samples;
-        }
-
-        public void SetLightDataPerFrame(List<Entity> lights)
-        {
-            cpfu.light_number = System.Math.Min(32, lights.Count);
-
-            //Upload light information  
-            for (int i = 0; i < System.Math.Min(32, cpfu.light_number); i++)
-            {
-                SceneGraphNode l = lights[i] as SceneGraphNode;
-                Callbacks.Assert(l != null,
-                    "A non scenegraphnode object made it to the list. THis should not happen");
-
-                int offset = (GLLight.SizeInBytes / 4) * i;
-                LightComponent lc = l.GetComponent<LightComponent>() as LightComponent;
-
-                /* NEW WAY TESTING
-                IntPtr ptr = Marshal.AllocHGlobal(size);
-                Marshal.StructureToPtr(l._strct, ptr, true);
-                Marshal.Copy(ptr, cpfu.lights, offset, size);
-                Marshal.FreeHGlobal(ptr);
-                */
-
-                //Position : Offset 0
-                unsafe
-                {
-                    NbVector4 localPosition = TransformationSystem.GetEntityWorldPosition(l);
-                    cpfu.lights[offset + 0] = localPosition.X;
-                    cpfu.lights[offset + 1] = localPosition.Y;
-                    cpfu.lights[offset + 2] = localPosition.Z;
-                    cpfu.lights[offset + 3] = l.IsRenderable ? 1.0f : 0.0f;
-                    //Color : Offset 16(4)
-                    cpfu.lights[offset + 4] = lc.Color.X;
-                    cpfu.lights[offset + 5] = lc.Color.Y;
-                    cpfu.lights[offset + 6] = lc.Color.Z;
-                    cpfu.lights[offset + 7] = lc.Intensity;
-                    //Direction: Offset 32(8)
-                    cpfu.lights[offset + 8] = lc.Direction.X;
-                    cpfu.lights[offset + 9] = lc.Direction.Y;
-                    cpfu.lights[offset + 10] = lc.Direction.Z;
-                    cpfu.lights[offset + 11] = lc.FOV;
-                    //Falloff: Offset 48(12)
-                    cpfu.lights[offset + 12] = (float)lc.Falloff;
-                    //Type: Offset 52(13)
-                    cpfu.lights[offset + 13] = (float)lc.LightType;
-                }
-
-            }
         }
 
         public void ResizeViewport(int w, int h)
@@ -702,17 +656,21 @@ namespace NbCore.Platform.Graphics.OpenGL
 
         public void RenderLightVolume(NbMesh mesh, MeshMaterial mat)
         {
-            GLInstancedLightMesh glmesh = MeshMap[mesh.Hash] as GLInstancedLightMesh;
+            GLInstancedMesh glmesh = MeshMap[mesh.Hash] as GLInstancedMesh;
             
             //Upload Material Information
             GLSLShaderConfig shader = mat.Shader;
 
-            //LightInstanceTex
-            GL.Uniform1(shader.uniformLocations["lightsTex"], 6);
-            GL.ActiveTexture(TextureUnit.Texture6);
-            GL.BindTexture(TextureTarget.TextureBuffer, glmesh.instanceLightTex);
-            GL.TexBuffer(TextureBufferTarget.TextureBuffer,
-                SizedInternalFormat.Rgba32f, glmesh.instanceLightTexTBO);
+            
+            //TODO: Store any light properties in the pre-allocated stuff in the 
+            //comon instance struct.
+
+            ////LightInstanceTex
+            //GL.Uniform1(shader.uniformLocations["lightsTex"], 6);
+            //GL.ActiveTexture(TextureUnit.Texture6);
+            //GL.BindTexture(TextureTarget.TextureBuffer, glmesh.instanceLightTex);
+            //GL.TexBuffer(TextureBufferTarget.TextureBuffer,
+            //    SizedInternalFormat.Rgba32f, glmesh.instanceLightTexTBO);
 
             RenderMesh(glmesh.Mesh, mat);
         }
@@ -865,11 +823,6 @@ namespace NbCore.Platform.Graphics.OpenGL
             }
         }
         
-        public void renderMain(GLInstancedLightMesh mesh, MeshMaterial material)
-        {
-            
-        }
-
         public void SyncGPUCommands()
         {
             //Setup FENCE AFTER ALL THE MAIN GEOMETRY DRAWCALLS ARE ISSUED
@@ -990,6 +943,21 @@ namespace NbCore.Platform.Graphics.OpenGL
         public void RemoveRenderInstance(ref NbMesh mesh, MeshComponent mc)
         {
             GLMeshBufferManager.RemoveRenderInstance(ref mesh, mc);
+        }
+
+        public void AddLightRenderInstance(ref LightComponent lc, TransformData td)
+        {
+            GLLightBufferManager.AddRenderInstance(ref lc, td);
+        }
+
+        public void SetLightInstanceData(LightComponent lc)
+        {
+            GLLightBufferManager.SetLightInstanceData(lc);
+        }
+
+        public void RemoveLightRenderInstance(ref NbMesh mesh, LightComponent lc)
+        {
+            GLLightBufferManager.RemoveRenderInstance(ref mesh, lc);
         }
 
         public void SetInstanceWorldMat(NbMesh mesh, int instanceID, NbMatrix4 mat)
