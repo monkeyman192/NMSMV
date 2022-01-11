@@ -1,22 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk"> 
-  
-  
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-	<!--RuntimeIdentifier>linux-x64</RuntimeIdentifier-->
-	<ApplicationIcon />
+    <!--RuntimeIdentifier>linux-x64</RuntimeIdentifier-->
+    <Configurations>Debug;Release</Configurations>
+    <BaseOutputPath>..\Build</BaseOutputPath>
+    <ApplicationIcon />
     <StartupObject />
-    <BaseOutputPath>..\bin</BaseOutputPath>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
@@ -45,9 +49,13 @@
 
   <!-->Copy Plugins-->
   <Target Name="CopyPlugins" AfterTargets="AfterBuild">
-    <Message Importance="high" Text="$(TargetFramework)" />
-    <Copy SourceFiles="..\bin\plugins\$(Configuration)\$(TargetFramework)\NibbleNMSPlugin.dll" DestinationFolder="$(TargetDir)Plugins" ContinueOnError="true" />
-	<Copy SourceFiles="..\bin\plugins\$(Configuration)\$(TargetFramework)\NibbleOBJPlugin.dll" DestinationFolder="$(TargetDir)Plugins" ContinueOnError="true" />
+    <Message Importance="high" Text="Copying some files and cleaning up" />
+    <Copy SourceFiles="$(SolutionDir)Build\Plugins\$(Configuration)\$(TargetFramework)\win-x64\NibbleNMSPlugin.dll" DestinationFolder="$(TargetDir)Plugins" ContinueOnError="true" />
+    <Copy SourceFiles="$(SolutionDir)Build\Plugins\$(Configuration)\$(TargetFramework)\win-x64\NibbleOBJPlugin.dll" DestinationFolder="$(TargetDir)Plugins" ContinueOnError="true" />
+    <Copy SourceFiles="$(SolutionDir)Build\Plugins\$(Configuration)\$(TargetFramework)\win-x64\libMBIN.dll" DestinationFolder="$(TargetDir)Plugins" ContinueOnError="true" />
+    <Copy SourceFiles="$(SolutionDir)Build\Plugins\$(Configuration)\$(TargetFramework)\win-x64\libPSARC.dll" DestinationFolder="$(TargetDir)Plugins" ContinueOnError="true" />
+    <Copy SourceFiles="$(SolutionDir)Build\Plugins\$(Configuration)\$(TargetFramework)\win-x64\zlib.net.dll" DestinationFolder="$(TargetDir)Plugins" ContinueOnError="true" />
+    <RemoveDir Directories="$(SolutionDir)Build\Plugins" />
   </Target>
 
   <ItemGroup>

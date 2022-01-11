@@ -7,6 +7,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{279AD081-59E7-4A87-9E0E-50EC81D87992}</ProjectGuid>
     <OutputType>WinExe</OutputType>
+    <IsPublishable>false</IsPublishable>
     <RootNamespace>WPFModelViewer</RootNamespace>
     <AssemblyName>NMSMV</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>

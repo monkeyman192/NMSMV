@@ -1,0 +1,33 @@
+name: Nibble
+
+on:
+  # Run on all branches except for the gh-pages branch
+  push:
+    branches-ignore:
+      - 'gh-pages'
+  pull_request:
+    branches-ignore:
+      - 'gh-pages'
+  create:
+
+jobs:
+  build:
+    name: Build Nibble/NMSMV on Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.100'
+      - name: Build Windows .net 5 binary
+        run: dotnet publish -c Debug -f net5.0 -r win-x64
+      - name: Upload binary for release
+        uses: actions/upload-artifact@v2
+        with:
+          name: NMSMV
+          path: |
+            Build/Debug/net5.0/win-x64/Plugins
+            Build/Debug/net5.0/win-x64/Shaders
+            Build/Debug/net5.0/win-x64/*.*
+  # TODO: Add release stuff. Will do this later when we are closer to wanting to release! ;)

@@ -10,6 +10,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WPFModelViewer", "WPFModelViewer\WPFModelViewer.csproj", "{279AD081-59E7-4A87-9E0E-50EC81D87992}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleEditor", "NibbleEditor\NibbleEditor.csproj", "{1B7CCCC6-CCA6-4E87-B3C8-2B07DC6863B6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{15C6FC13-8166-4B74-AED0-5F654BEB26F6} = {15C6FC13-8166-4B74-AED0-5F654BEB26F6}
+		{33FBA2C8-948E-423F-B1AE-F54321DDCA1D} = {33FBA2C8-948E-423F-B1AE-F54321DDCA1D}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleTextureRenderer", "SimpleTextureRenderer\SimpleTextureRenderer.csproj", "{D01A052E-DDAF-4895-8D16-545863C2C781}"
 EndProject
@@ -21,13 +25,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleAssimpPlugin", "Nibbl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nibble", "Nibble\Nibble.csproj", "{8EC54636-F7D7-4213-80BD-46ECB25210EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NibbleOBJPlugin", "NibbleOBJPlugin\NibbleOBJPlugin.csproj", "{33FBA2C8-948E-423F-B1AE-F54321DDCA1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NibbleOBJPlugin", "NibbleOBJPlugin\NibbleOBJPlugin.csproj", "{33FBA2C8-948E-423F-B1AE-F54321DDCA1D}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		NibbleCore\NibbleCore.projitems*{0890732a-e096-4341-865b-8b69b0158cbd}*SharedItemsImports = 4
 		NibbleCore\NibbleCore.projitems*{279ad081-59e7-4a87-9e0e-50ec81d87992}*SharedItemsImports = 4
-		NibbleCore\NibbleCore.projitems*{4f7bdfc7-b030-4f1c-bcda-cd9a61ef468a}*SharedItemsImports = 5
 		NibbleCore\NibbleCore.projitems*{53c00cb6-a20b-47ae-93db-82a187f0d3cd}*SharedItemsImports = 13
 		NibbleCore\NibbleCore.projitems*{8ec54636-f7d7-4213-80bd-46ecb25210ec}*SharedItemsImports = 5
 	EndGlobalSection
